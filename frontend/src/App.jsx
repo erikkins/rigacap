@@ -3100,6 +3100,23 @@ function Dashboard() {
               </div>
             )}
 
+            {/* Last updated timestamp */}
+            {dashboardData?.generated_at && (
+              <p className="text-xs text-gray-400 text-right mb-2 -mt-2">
+                Last updated: {(() => {
+                  const d = new Date(dashboardData.generated_at);
+                  if (isNaN(d.getTime())) return '';
+                  const now = new Date();
+                  const isToday = d.toDateString() === now.toDateString();
+                  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                  if (isToday) return `Today at ${time}`;
+                  const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+                  if (d.toDateString() === yesterday.toDateString()) return `Yesterday at ${time}`;
+                  return `${formatDate(dashboardData.generated_at)} at ${time}`;
+                })()}
+              </p>
+            )}
+
             {/* Two column layout: Buy Signals | Open Positions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* LEFT: Buy Signals */}
