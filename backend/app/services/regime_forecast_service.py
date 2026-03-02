@@ -270,7 +270,7 @@ class RegimeForecastService:
     async def update_regime_history(self, db: AsyncSession) -> dict:
         """
         Incremental update: compute regimes from the latest stored week_date forward.
-        Called daily after scan completes.
+        Called daily after scan completes. Skips if table is empty (needs backfill first).
         """
         from app.services.market_regime import market_regime_service, REGIME_DEFINITIONS
         from app.services.scanner import scanner_service
@@ -289,10 +289,12 @@ class RegimeForecastService:
         )
         latest_row = result.scalar_one_or_none()
 
-        start_date = None
-        if latest_row:
-            # Start from the latest stored date (will be skipped as duplicate)
-            start_date = latest_row
+        if not latest_row:
+            # Table is empty — skip incremental, needs backfill first
+            return {"status": "skipped", "reason": "no existing data, run backfill first"}
+
+        # Start from the latest stored date (will be skipped as duplicate)
+        start_date = latest_row
 
         history = market_regime_service.get_regime_history(
             spy_df=spy_df,
