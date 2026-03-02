@@ -514,7 +514,7 @@ export default function WalkForwardSimulator({ fetchWithAuth }) {
 
     const chartDates = chartData.map(d => d.date);
 
-    return regimePeriods.map(period => {
+    return regimePeriods.map((period, idx) => {
       // Find the first chart date >= period start
       let startIdx = chartDates.findIndex(d => d >= period.start_date);
       if (startIdx === -1) startIdx = 0;
@@ -525,6 +525,16 @@ export default function WalkForwardSimulator({ fetchWithAuth }) {
         if (chartDates[i] <= period.end_date) {
           endIdx = i;
           break;
+        }
+      }
+
+      // Extend x2 to the next chart point so adjacent regime bands meet edge-to-edge
+      // (without this, biweekly chart points leave gaps where regimes change mid-interval)
+      const nextPeriod = regimePeriods[idx + 1];
+      if (nextPeriod && endIdx < chartDates.length - 1) {
+        const nextStartIdx = chartDates.findIndex(d => d >= nextPeriod.start_date);
+        if (nextStartIdx > endIdx) {
+          endIdx = nextStartIdx;
         }
       }
 
