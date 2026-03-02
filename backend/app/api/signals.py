@@ -945,6 +945,27 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
     except Exception as e:
         print(f"Last ensemble entry date error: {e}")
 
+    # --- Fetch top headlines for world-event awareness ---
+    top_headlines = []
+    try:
+        import httpx
+        import xml.etree.ElementTree as ET
+        resp = httpx.get(
+            "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en",
+            timeout=3,
+            follow_redirects=True,
+        )
+        if resp.status_code == 200:
+            root = ET.fromstring(resp.text)
+            for item in root.findall(".//item")[:5]:
+                title = item.findtext("title", "")
+                if title:
+                    top_headlines.append(title)
+            if top_headlines:
+                print(f"📰 Headlines: {top_headlines}")
+    except Exception as hl_err:
+        print(f"⚠️ Headline fetch failed (non-fatal): {hl_err}")
+
     # --- Market context (AI-generated daily briefing) ---
     # Reuse today's cached context if it exists (generate once per day, not per call)
     market_context = None
@@ -1017,9 +1038,15 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                 f"Dropped since yesterday: {dropped_list}{dropped_extra}\n"
                 f"New since yesterday: {added_list}{added_extra}\n"
                 f"Top 5 momentum: {', '.join(top5)}\n"
-                f"SPY: ${spy_price} | VIX: {vix_level}\n"
+                f"S&P 500: ${spy_price} | Market Fear: {vix_level} (VIX)\n"
                 f"Regime: {regime_name}{regime_change}\n"
             )
+
+            # Add headlines if available
+            if top_headlines:
+                headlines_block = "Today's top headlines:\n" + "\n".join(f"- {h}" for h in top_headlines)
+            else:
+                headlines_block = ""
 
             # Classify the day for tone guidance
             if prev_snap and abs(delta) >= 5:
@@ -1036,7 +1063,7 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                 "Your tone: witty, confident, data-driven. You talk like a sharp analyst friend — "
                 "not a robot, not a hype machine. You're briefing someone who trusts your system.\n\n"
                 "Rules:\n"
-                "- Write exactly 1-2 sentences. Max 200 characters.\n"
+                "- Write exactly 1-2 sentences. Max 280 characters.\n"
                 "- Plain text only. No markdown, no bold, no bullets, no emoji.\n"
                 "- Never say 'our algorithm' or 'our model' — say 'the ensemble' or 'our signals'.\n"
                 "- Never give financial advice or say 'buy' / 'sell'.\n"
@@ -1044,6 +1071,13 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                 "- Vary your phrasing. Don't start every sentence the same way.\n"
                 "- If signals dropped hard, be matter-of-fact, not alarming.\n"
                 "- If it's a quiet day, keep it brief and confident.\n"
+                "- NEVER use the term 'VIX' — our audience is everyday investors. Say 'market fear' instead. "
+                "Example: 'market fear elevated at 28' not 'VIX at 28'.\n"
+                "- You may receive today's top news headlines. If there is an extraordinary world event "
+                "(war, pandemic, historic crisis, major geopolitical escalation) that would rattle global markets, "
+                "open with ONE brief factual sentence connecting it to what the data shows. "
+                "Ignore routine finance news (earnings, Fed meetings, jobs reports, analyst upgrades) — "
+                "we are a technical signals service, not a news desk. Only acknowledge the elephant in the room.\n"
             )
 
             tone_hints = {
@@ -1053,9 +1087,11 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                 "normal": "Moderate activity. Note what's interesting without overstating it.",
             }
 
+            headlines_section = f"\n\n{headlines_block}" if headlines_block else ""
             user_prompt = (
                 f"{tone_hints[day_type]}\n\n"
                 f"Today's data:\n{context_block}"
+                f"{headlines_section}"
             )
 
             # Try Claude API (raw HTTP — anthropic SDK not in Lambda)
@@ -1070,7 +1106,7 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                     }
                     payload = {
                         "model": "claude-haiku-4-5-20251001",
-                        "max_tokens": 120,
+                        "max_tokens": 150,
                         "system": system_prompt,
                         "messages": [{"role": "user", "content": user_prompt}],
                     }
@@ -1091,7 +1127,7 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                     if delta < 0:
                         market_context = (
                             f"Ensemble narrowed from {prev_count} to {today_count} signals after today's session. "
-                            f"SPY ${spy_price}, VIX {vix_level}."
+                            f"S&P 500 ${spy_price}, market fear at {vix_level}."
                         )
                     else:
                         market_context = (
@@ -1101,7 +1137,7 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                 elif today_count > 0:
                     market_context = (
                         f"Tracking {today_count} ensemble signals in {regime_name.lower()} regime. "
-                        f"SPY ${spy_price}, VIX {vix_level}."
+                        f"S&P 500 ${spy_price}, market fear at {vix_level}."
                     )
     except Exception as ctx_err:
         print(f"⚠️ Market context generation failed (non-fatal): {ctx_err}")
