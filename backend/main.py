@@ -355,14 +355,16 @@ async def _run_walk_forward_job(job_config: dict):
                 db=db,
                 start_date=start,
                 end_date=end,
-                reoptimization_frequency=job_config["frequency"],
-                min_score_diff=job_config["min_score_diff"],
-                enable_ai_optimization=job_config["enable_ai"],
-                max_symbols=job_config["max_symbols"],
+                reoptimization_frequency=job_config.get("frequency", "biweekly"),
+                min_score_diff=job_config.get("min_score_diff", 10.0),
+                enable_ai_optimization=job_config.get("enable_ai", False),
+                max_symbols=job_config.get("max_symbols", 100),
                 existing_job_id=job_id,
                 fixed_strategy_id=job_config.get("strategy_id"),
                 n_trials=job_config.get("n_trials", 30),
-                carry_positions=job_config.get("carry_positions", False)
+                carry_positions=job_config.get("carry_positions", False),
+                max_positions=job_config.get("max_positions"),
+                position_size_pct=job_config.get("position_size_pct")
             )
 
             print(f"[ASYNC-WF] Job {job_id} completed: return={sim_result.total_return_pct}%")

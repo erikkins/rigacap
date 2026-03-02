@@ -446,7 +446,9 @@ class WalkForwardService:
         ticker_list: List[str] = None,
         strategy_name: str = "AI-Optimized",
         initial_positions: Optional[Dict[str, dict]] = None,
-        force_close_at_end: bool = True
+        force_close_at_end: bool = True,
+        max_positions_override: Optional[int] = None,
+        position_size_pct_override: Optional[float] = None
     ) -> Tuple[float, float, str, List[PeriodTrade], Dict[str, dict]]:
         """
         Simulate trading for a period using custom parameters (for AI-generated strategies).
@@ -459,6 +461,10 @@ class WalkForwardService:
             backtester = CustomBacktester()
             backtester.configure(strategy_params)
             backtester.initial_capital = starting_capital
+            if max_positions_override is not None:
+                backtester.max_positions = max_positions_override
+            if position_size_pct_override is not None:
+                backtester.position_size_pct = position_size_pct_override / 100
 
             result = backtester.run_backtest(
                 start_date=start_date,
@@ -526,7 +532,9 @@ class WalkForwardService:
         starting_capital: float,
         ticker_list: List[str] = None,
         initial_positions: Optional[Dict[str, dict]] = None,
-        force_close_at_end: bool = True
+        force_close_at_end: bool = True,
+        max_positions_override: Optional[int] = None,
+        position_size_pct_override: Optional[float] = None
     ) -> Tuple[float, List[Dict], float, str, List[PeriodTrade], Dict[str, dict]]:
         """
         Simulate trading for a single period using a specific strategy.
@@ -539,6 +547,10 @@ class WalkForwardService:
         backtester = CustomBacktester()
         backtester.configure(params)
         backtester.initial_capital = starting_capital
+        if max_positions_override is not None:
+            backtester.max_positions = max_positions_override
+        if position_size_pct_override is not None:
+            backtester.position_size_pct = position_size_pct_override / 100
 
         try:
             result = backtester.run_backtest(
@@ -624,7 +636,9 @@ class WalkForwardService:
         existing_job_id: int = None,
         fixed_strategy_id: int = None,  # If set, use only this strategy (no switching)
         n_trials: int = 30,  # Number of Optuna optimization trials per period
-        carry_positions: bool = False  # Carry positions across periods (default: force-close each period)
+        carry_positions: bool = False,  # Carry positions across periods (default: force-close each period)
+        max_positions: Optional[int] = None,  # Override strategy's max_positions for A/B testing
+        position_size_pct: Optional[float] = None  # Override strategy's position_size_pct for A/B testing
     ) -> WalkForwardResult:
         """
         Run walk-forward simulation with AI optimization over a historical period.
@@ -655,7 +669,7 @@ class WalkForwardService:
         """
         import logging
         logger = logging.getLogger()
-        print(f"[WF-SERVICE] Starting simulation: {start_date} to {end_date}, ai={enable_ai_optimization}, fixed_strategy={fixed_strategy_id}")
+        print(f"[WF-SERVICE] Starting simulation: {start_date} to {end_date}, ai={enable_ai_optimization}, fixed_strategy={fixed_strategy_id}, max_positions={max_positions}, position_size_pct={position_size_pct}")
 
         # Load all strategies
         result = await db.execute(
@@ -952,7 +966,9 @@ class WalkForwardService:
                     active_params, active_strategy_type, period_start, period_end,
                     capital, ticker_list=top_symbols, strategy_name="AI-Optimized",
                     initial_positions=carry_in if carry_in else None,
-                    force_close_at_end=force_close
+                    force_close_at_end=force_close,
+                    max_positions_override=max_positions,
+                    position_size_pct_override=position_size_pct
                 )
                 strategy_name = "AI-Optimized"
                 if error:
@@ -962,7 +978,9 @@ class WalkForwardService:
                 new_capital, period_equity, period_return, error, period_trades, new_carried = self._simulate_period_trading(
                     active_strategy, period_start, period_end, capital, ticker_list=top_symbols,
                     initial_positions=carry_in if carry_in else None,
-                    force_close_at_end=force_close
+                    force_close_at_end=force_close,
+                    max_positions_override=max_positions,
+                    position_size_pct_override=position_size_pct
                 )
                 strategy_name = active_strategy.name
                 if error:
