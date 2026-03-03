@@ -84,21 +84,27 @@ export default function RegimeBadge({
       style={[styles.banner, { borderLeftColor: color }]}
       onPress={() => setExpanded((v) => !v)}
     >
-      <View style={[styles.dot, { backgroundColor: color }]} />
-      <Text style={styles.bannerLabel}>Market Regime</Text>
-      <Text style={[styles.bannerValue, { color }]} numberOfLines={1}>{label}</Text>
-      <View style={{ flex: 1 }} />
-      {marketStats?.spy_price != null && (
-        <Text style={styles.spyBanner}>
-          SPY {marketStats.spy_price.toFixed(2)}
-          {marketStats.spy_change_pct != null && (
-            <Text style={{ color: marketStats.spy_change_pct >= 0 ? Colors.green : Colors.red }}>
-              {' '}({marketStats.spy_change_pct >= 0 ? '+' : ''}{marketStats.spy_change_pct.toFixed(2)}%)
+      <View style={styles.bannerContent}>
+        <View style={styles.bannerTopRow}>
+          <View style={[styles.dot, { backgroundColor: color }]} />
+          <Text style={styles.bannerLabel}>Market Regime</Text>
+          <Text style={[styles.bannerValue, { color }]}>{label}</Text>
+          <View style={{ flex: 1 }} />
+          <Text style={styles.chevron}>{expanded ? '▲' : '▼'}</Text>
+        </View>
+        {marketStats?.spy_price != null && (
+          <View style={styles.bannerBottomRow}>
+            <Text style={styles.spyBanner}>
+              SPY {marketStats.spy_price.toFixed(2)}
+              {marketStats.spy_change_pct != null && (
+                <Text style={{ color: marketStats.spy_change_pct >= 0 ? Colors.green : Colors.red }}>
+                  {' '}({marketStats.spy_change_pct >= 0 ? '+' : ''}{marketStats.spy_change_pct.toFixed(2)}%)
+                </Text>
+              )}
             </Text>
-          )}
-        </Text>
-      )}
-      <Text style={styles.chevron}>{expanded ? '▲' : '▼'}</Text>
+          </View>
+        )}
+      </View>
     </Pressable>
   );
 
@@ -256,13 +262,23 @@ export default function RegimeBadge({
 
 const styles = StyleSheet.create({
   banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: Colors.card,
     borderRadius: 8,
     borderLeftWidth: 3,
     padding: Spacing.md,
+  },
+  bannerContent: {
+    gap: 4,
+  },
+  bannerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.sm,
+  },
+  bannerBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 16,
   },
   bannerLabel: {
     color: Colors.textSecondary,
@@ -271,7 +287,6 @@ const styles = StyleSheet.create({
   bannerValue: {
     fontSize: FontSize.md,
     fontWeight: '700',
-    flexShrink: 1,
   },
   chevron: {
     color: Colors.textMuted,
@@ -333,7 +348,6 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontSize: FontSize.sm,
     fontWeight: '600',
-    flexShrink: 0,
   },
 
   // Market stats in expanded
