@@ -696,6 +696,10 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
         vix_df = scanner_service.data_cache.get('^VIX')
         if spy_df is not None and len(spy_df) > 0:
             market_stats['spy_price'] = round(float(spy_df.iloc[-1]['close']), 2)
+            if len(spy_df) >= 2:
+                prev_close = float(spy_df.iloc[-2]['close'])
+                if prev_close > 0:
+                    market_stats['spy_change_pct'] = round((market_stats['spy_price'] / prev_close - 1) * 100, 2)
         if vix_df is not None and len(vix_df) > 0:
             market_stats['vix_level'] = round(float(vix_df.iloc[-1]['close']), 2)
         if regime_forecast_data:
@@ -1500,6 +1504,10 @@ async def _compute_dashboard_live(
             vix_df = _truncate_df(vix_df, effective_date)
         if spy_df is not None and len(spy_df) > 0:
             market_stats['spy_price'] = round(float(spy_df.iloc[-1]['close']), 2)
+            if len(spy_df) >= 2:
+                prev_close = float(spy_df.iloc[-2]['close'])
+                if prev_close > 0:
+                    market_stats['spy_change_pct'] = round((market_stats['spy_price'] / prev_close - 1) * 100, 2)
         if vix_df is not None and len(vix_df) > 0:
             market_stats['vix_level'] = round(float(vix_df.iloc[-1]['close']), 2)
         if regime_forecast_data:

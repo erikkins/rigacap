@@ -2754,7 +2754,17 @@ function Dashboard() {
                         ? 'Caution: market weakening. Consider tightening stops.'
                         : 'Market under stress. Protect your positions.'}
                     </span>
-                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${regimeExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {dashboardData.market_stats?.spy_price && (
+                      <span className="text-sm font-medium text-gray-900 flex-shrink-0">
+                        SPY {dashboardData.market_stats.spy_price.toFixed(2)}
+                        {dashboardData.market_stats.spy_change_pct != null && (
+                          <span className={`ml-1 ${dashboardData.market_stats.spy_change_pct >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            ({dashboardData.market_stats.spy_change_pct >= 0 ? '+' : ''}{dashboardData.market_stats.spy_change_pct.toFixed(2)}%)
+                          </span>
+                        )}
+                      </span>
+                    )}
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${regimeExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -2927,7 +2937,14 @@ function Dashboard() {
                           {dashboardData.market_stats?.spy_price && (
                             <>
                               <span className="text-gray-400">|</span>
-                              <span className="text-gray-600 text-sm">S&P 500 ${dashboardData.market_stats.spy_price.toFixed(2)}</span>
+                              <span className="text-gray-600 text-sm">
+                                SPY ${dashboardData.market_stats.spy_price.toFixed(2)}
+                                {dashboardData.market_stats.spy_change_pct != null && (
+                                  <span className={`ml-1 font-medium ${dashboardData.market_stats.spy_change_pct >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                    ({dashboardData.market_stats.spy_change_pct >= 0 ? '+' : ''}{dashboardData.market_stats.spy_change_pct.toFixed(2)}%)
+                                  </span>
+                                )}
+                              </span>
                             </>
                           )}
                           {dashboardData.market_stats?.vix_level && (
