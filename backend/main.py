@@ -1434,7 +1434,7 @@ def handler(event, context):
             from datetime import date
 
             async with async_sess() as db:
-                # Query all open positions with user email
+                # Query all open user positions with user email
                 result = await db.execute(
                     select(DBPosition, DBUser.email, DBUser.name)
                     .join(DBUser, DBPosition.user_id == DBUser.id)
@@ -1442,11 +1442,18 @@ def handler(event, context):
                 )
                 rows = result.all()
 
-                if not rows:
-                    return {"status": "success", "positions_checked": 0, "alerts_sent": 0, "message": "No open positions"}
+                # Also include model portfolio symbols for exit checks
+                from app.core.database import ModelPosition as MPModel
+                mp_result = await db.execute(
+                    select(MPModel.symbol).where(MPModel.status == "open", MPModel.portfolio_type == "live")
+                )
+                model_syms = {r[0] for r in mp_result.all()}
+
+                if not rows and not model_syms:
+                    return {"status": "success", "positions_checked": 0, "alerts_sent": 0, "model_closed": 0, "message": "No open positions"}
 
                 # Fetch live prices via DualSourceProvider
-                symbols = list({row[0].symbol for row in rows})
+                symbols = list({row[0].symbol for row in rows} | model_syms)
                 live_prices = {}
                 day_highs = {}
                 quote_data = await market_data_provider.fetch_quotes(symbols)
@@ -1516,11 +1523,24 @@ def handler(event, context):
 
                 await db.commit()
 
+                # --- Model portfolio: check live trailing stop / regime exits ---
+                model_closed = []
+                try:
+                    from app.services.model_portfolio_service import model_portfolio_service
+                    model_closed = await model_portfolio_service.process_live_exits(
+                        db, live_prices, regime_forecast, day_highs=day_highs
+                    )
+                    if model_closed:
+                        print(f"📈 [MODEL-LIVE] Closed {len(model_closed)} position(s): {[c.get('symbol') for c in model_closed]}")
+                except Exception as e:
+                    print(f"⚠️ [MODEL-LIVE] Exit check failed: {e}")
+
                 return {
                     "status": "success",
                     "positions_checked": len(rows),
                     "symbols_priced": len(live_prices),
                     "alerts_sent": alerts_sent,
+                    "model_closed": len(model_closed),
                     "regime": regime_forecast.get("recommended_action") if regime_forecast else None,
                     "details": details,
                 }
