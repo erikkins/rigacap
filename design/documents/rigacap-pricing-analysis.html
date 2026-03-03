@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap — Market &amp; Pricing Analysis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  :root {
+    --navy: #172554;
+    --navy-mid: #1e3a5f;
+    --gold: #f59e0b;
+    --gold-light: #fbbf24;
+    --gold-pale: #fef3c7;
+    --green: #22c55e;
+    --dark: #111827;
+    --gray: #64748b;
+    --light-gray: #f8fafc;
+    --border: #e2e8f0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--dark);
+    line-height: 1.6;
+    background: #fff;
+  }
+
+  @page { size: letter; margin: 0.6in 0.7in; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page-break { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+  }
+
+  /* Header bar */
+  .header {
+    background: linear-gradient(135deg, #0c1a3a 0%, var(--navy) 100%);
+    color: #fff;
+    padding: 2.5rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header .logo {
+    font-size: 0.9rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--gold);
+  }
+  .header .logo .beacon {
+    display: inline-block;
+    width: 7px; height: 7px;
+    background: var(--gold);
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    box-shadow: 0 0 10px rgba(245,158,11,0.6);
+  }
+  .header h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 0%, var(--gold-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header .date {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .content { max-width: 800px; margin: 0 auto; padding: 2rem 2rem; }
+
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 2rem 0 0.8rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--gold);
+  }
+
+  p { margin-bottom: 0.8rem; color: #374151; font-size: 0.92rem; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.8rem 0 1.5rem;
+    font-size: 0.85rem;
+  }
+  th {
+    background: var(--navy);
+    color: #fff;
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) { background: var(--light-gray); }
+  tr.highlight { background: var(--gold-pale) !important; font-weight: 600; }
+  tr.highlight td { border-bottom: 2px solid var(--gold); }
+
+  .stat-row { display: flex; gap: 1rem; margin: 1.2rem 0; }
+  .stat-card {
+    flex: 1;
+    background: var(--light-gray);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+  .stat-card .number { font-size: 1.6rem; font-weight: 800; color: var(--navy); }
+  .stat-card .label { font-size: 0.72rem; color: var(--gray); margin-top: 0.2rem; }
+  .stat-card.gold { background: var(--gold-pale); border-color: var(--gold); }
+  .stat-card.gold .number { color: #92400e; }
+
+  .callout {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border-left: 4px solid var(--gold);
+    padding: 1rem 1.2rem;
+    border-radius: 0 8px 8px 0;
+    margin: 1.2rem 0;
+    font-size: 0.88rem;
+  }
+  .callout p { margin: 0; font-weight: 500; }
+  .callout .lbl {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #92400e;
+    margin-bottom: 0.2rem;
+  }
+
+  .footer-note {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--gray);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo"><svg style="display:inline-block;vertical-align:middle;margin-right:8px;" width="24" height="24" viewBox="0 -128 1280 1280"><g transform="matrix(5.266369152845155 0 0 5.266369152845155 639.7474324688749 511.4611892669334)"><g><g transform="matrix(0.447842401165958 0 0 0.447842401165958 -22.37905439059665 -28.76675371508702)"><path fill="#67B3E9" d="M 215.4926147 348.1326294 C 215.4926147 341.4343262 220.5519104 335.9767151 227.0464782 335.2184448 L 241.64198299999998 278.3557434 C 238.3174896 275.98690799999997 236.13209529999997 272.1211853 236.13209529999997 267.7279358 C 236.13209529999997 260.5114746 241.98225399999998 254.66130070000003 249.19871519999998 254.66130070000003 C 255.88706969999998 254.66130070000003 261.3387146 259.70529180000005 262.1099243 266.18612670000005 L 309.18218989999997 278.15957640000005 C 311.5494384 274.8219604 315.4248962 272.62802120000003 319.82827749999996 272.62802120000003 C 323.99932849999993 272.62802120000003 327.67044059999995 274.6184387 330.06295769999997 277.6614685 L 391.39083859999994 258.8470459 C 391.8676757999999 252.0640717 397.4616393999999 246.6927338 404.36566159999995 246.6927338 C 405.08795159999994 246.6927338 405.78381349999995 246.79251100000002 406.47412109999993 246.9051972 L 420.4002074999999 223.132248 C 395.4410094999999 205.1961365 364.83840939999993 194.61979680000002 331.7564086999999 194.61979680000002 C 247.7547149999999 194.61979680000002 179.6581725999999 262.7163392 179.6581725999999 346.71804810000003 C 179.6581725999999 357.0606384 180.7147979999999 367.15197750000004 182.68611139999987 376.91201780000006 L 216.05313109999986 351.71652220000004 C 215.7245789 350.5704346 215.4926147 349.3842468 215.4926147 348.1326294 z"/></g><g transform="matrix(0.447842401165958 0 0 0.447842401165958 -11.05489640960161 -8.986830154000359)"><path fill="#3298E2" d="M 427.8859863 228.8635559 L 414.53790280000004 251.6500549 C 416.32159420000005 253.88394159999999 417.43228150000004 256.67834469999997 417.43228150000004 259.75936889999997 C 417.43228150000004 266.9758301 411.58212280000004 272.82598879999995 404.36566160000007 272.82598879999995 C 400.1946106000001 272.82598879999995 396.5232849000001 270.83538819999995 394.13079830000004 267.7923279 L 332.80288690000003 286.60696409999997 C 332.3262634 293.38973999999996 326.73229970000006 298.7614746 319.8282775 298.7614746 C 313.1401366 298.7614746 307.68869010000003 293.7178955 306.9169005 287.23745729999996 L 259.8444213 275.2633972 C 257.7556457 278.2080688 254.4786376 280.2024536 250.71150200000002 280.6423034 L 236.11599720000004 337.5046081 C 239.44068900000005 339.8734741 241.62588490000005 343.7393798 241.62588490000005 348.13262929999996 C 241.62588490000005 355.34927359999995 235.77590930000005 361.19924919999994 228.55924980000003 361.19924919999994 C 226.02284230000004 361.19924919999994 223.67565910000002 360.44515979999994 221.67153920000004 359.19454949999994 L 185.03727710000004 386.8588560999999 C 189.38798510000004 402.7608335999999 196.24627670000004 417.6278685999999 205.16970810000004 431.00256339999993 L 343.5092162 312.1214903999999 L 408.03659050000005 312.1214903999999 L 465.59317010000007 274.40634149999994 C 456.0913391 256.8570251 443.2310181 241.3963165 427.8859863 228.8635559 z"/></g><g transform="matrix(0.447842401165958 0 0 0.447842401165958 73.82936460708436 -37.11089695025285)"><polygon fill="#172554" points="-45.30519105000002,-14.32876589999998 45.30519104999996,-39.44079589999998 -12.74574285,39.44079590000001 -17.06205755000002,3.2839356000000066"/></g><g transform="matrix(0.447842401165958 0 0 0.447842401165958 -48.16632626991975 25.662112400608095)"><path fill="#172554" d="M 297.690155 513.3757935 C 291.8544922 512.1848145 286.1323242 510.6825867 280.5290222 508.9088135 L 280.5290222 405.3008118 L 233.16218569999998 446.0053406 L 233.16218569999998 485.1845703 C 189.93139649999998 454.3132019 161.66641239999998 403.77075190000005 161.66641239999998 346.71844480000004 C 161.66641239999998 321.47900390000007 167.2343445 297.52935790000004 177.14006049999998 275.9688110000001 L 153.41162119999998 275.9688110000001 C 144.68853769999998 297.8789672000001 139.83914199999998 321.7362060000001 139.83914199999998 346.71844480000004 C 139.83914199999998 452.54183960000006 225.93339549999996 538.6345215 331.7568056 538.6345215 C 336.23214740000003 538.6345215 340.6571657 538.4249878 345.0569765 538.1221314000001 L 345.0569765 349.8493347 L 297.69015520000005 390.5536499 L 297.69015520000005 513.3757935 z"/></g><g transform="matrix(0.447842401165958 0 0 0.447842401165958 41.62493388227972 31.445543033824293)"><path fill="#172554" d="M 523.1578979 333.3830872 L 501.27337639999996 333.3830872 C 501.617218 337.78863529999995 501.8457946 342.22619629999997 501.8457946 346.71844489999995 C 501.8457946 380.9995423 491.63201899999996 412.92395029999994 474.11251819999995 439.65051279999994 L 474.11251819999995 304.23995979999995 L 426.74587999999994 335.27807629999995 L 426.74587999999994 487.65298469999993 C 421.24215689999994 491.3716430999999 415.51919539999994 494.78399669999993 409.5847471999999 497.85028079999995 L 409.5847471999999 341.7442017 L 362.217926 341.7442017 L 362.217926 536.1913453 C 453.612976 521.5502931 523.6730957 442.17498789999996 523.6730957 346.7184449 C 523.6730957 342.2309875 523.4624023 337.7946167 523.1578979 333.3830872 z"/></g><g transform="matrix(0.447842401165958 0 0 0.447842401165958 -11.758155759779243 -60.819370702594256)"><path fill="#172554" d="M 331.7522278 169.315979 C 390.4548645 169.315979 442.57946780000003 197.9828644 474.8894653 242.0440826 L 483.06436149999996 239.7783813 C 449.4578552 192.3684234 394.1588134 161.3654937 331.75222769999993 161.3654937 C 258.06015009999993 161.3654937 194.28051749999995 204.5952758 164.42543019999994 267.0239257 L 173.28724659999995 267.0239257 C 202.5275574 209.120697 262.5750122 169.315979 331.7522278 169.315979 z"/></g></g></g></svg>RigaCap</div>
+    <h1>Market &amp; Pricing Analysis</h1>
+  </div>
+  <div class="date">March 2026 &middot; Confidential</div>
+</div>
+
+<div class="content">
+
+<h2>Addressable Market</h2>
+
+<div class="stat-row">
+  <div class="stat-card">
+    <div class="number">$2.5&ndash;6.5B</div>
+    <div class="label">Total Addressable Market (US)</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">1.5&ndash;2M</div>
+    <div class="label">Serviceable Market (subscribers)</div>
+  </div>
+  <div class="stat-card gold">
+    <div class="number">$2.34M</div>
+    <div class="label">Target ARR (5K subs @ $39/mo)</div>
+  </div>
+</div>
+
+<table>
+  <tr><th>Segment</th><th>Size</th><th>Avg Spend/Year</th><th>Revenue</th></tr>
+  <tr><td>Active self-directed investors who pay for tools</td><td>8&ndash;10M</td><td>$200&ndash;500</td><td>$2&ndash;5B</td></tr>
+  <tr><td>Casual investors willing to pay for stock picks</td><td>5&ndash;8M</td><td>$100&ndash;200</td><td>$0.5&ndash;1.6B</td></tr>
+  <tr class="highlight"><td><strong>Total US TAM</strong></td><td></td><td></td><td><strong>$2.5&ndash;6.5B</strong></td></tr>
+</table>
+
+<p>Reference points: Motley Fool (~$169M/yr, 500K+ subscribers), top 3 publishers combined (~$2B), Investment Research Management Platform market ($3.2B in 2024).</p>
+
+<table>
+  <tr><th>Milestone</th><th>Timeline</th><th>Subscribers</th><th>ARR</th></tr>
+  <tr><td>Launch</td><td>Month 0&ndash;6</td><td>100&ndash;500</td><td>$47K&ndash;234K</td></tr>
+  <tr><td>Traction</td><td>Month 6&ndash;18</td><td>500&ndash;2,000</td><td>$234K&ndash;936K</td></tr>
+  <tr><td>Growth</td><td>Year 2&ndash;3</td><td>2,000&ndash;5,000</td><td>$936K&ndash;2.34M</td></tr>
+  <tr class="highlight"><td><strong>Scale</strong></td><td><strong>Year 3&ndash;5</strong></td><td><strong>5,000&ndash;15,000</strong></td><td><strong>$2.34M&ndash;7.0M</strong></td></tr>
+</table>
+
+
+<h2>Competitive Pricing</h2>
+
+<h3 style="font-size:1rem; margin:1.2rem 0 0.5rem; color:var(--navy); font-weight:600;">Signal &amp; Pick Services</h3>
+<table>
+  <tr><th>Service</th><th>Price</th><th>Eff. Monthly</th><th>Track Record / Differentiator</th></tr>
+  <tr><td>Motley Fool Stock Advisor</td><td>$99&ndash;199/yr</td><td>$8&ndash;17</td><td>30-year brand, mixed performance</td></tr>
+  <tr><td>Zacks Premium</td><td>$249/yr</td><td>~$21</td><td>Quant rank system, massive brand</td></tr>
+  <tr><td>Danelfin</td><td>$29/mo+</td><td>$29+</td><td>AI Score (1&ndash;10)</td></tr>
+  <tr><td>AltIndex</td><td>$29&ndash;99/mo</td><td>$29&ndash;99</td><td>Alternative data signals</td></tr>
+  <tr><td>Seeking Alpha Alpha Picks</td><td>$449&ndash;499/yr</td><td>$37&ndash;42</td><td>+284% return (closest performance comp)</td></tr>
+  <tr class="highlight"><td><strong>RigaCap</strong></td><td><strong>$39/mo &middot; $349/yr</strong></td><td><strong>$29&ndash;39</strong></td><td><strong>+289% walk-forward, 7-regime AI, sell signals</strong></td></tr>
+  <tr><td>Mindful Trader</td><td>$47/mo</td><td>$47</td><td>Stanford economist, radical transparency</td></tr>
+  <tr><td>IBD Leaderboard</td><td>$69/mo ($699/yr)</td><td>$58&ndash;69</td><td>CAN SLIM methodology</td></tr>
+  <tr><td>Gorilla Trades</td><td>~$500/yr</td><td>~$42</td><td>Algorithmic picks</td></tr>
+</table>
+
+<h3 style="font-size:1rem; margin:1.2rem 0 0.5rem; color:var(--navy); font-weight:600;">AI / Tool Platforms (Higher Tier)</h3>
+<table>
+  <tr><th>Service</th><th>Price</th><th>Eff. Monthly</th><th>Type</th></tr>
+  <tr><td>LevelFields</td><td>$99&ndash;167/mo</td><td>$99&ndash;167</td><td>Event-driven AI alerts</td></tr>
+  <tr><td>Trade Ideas (Holly AI)</td><td>$178&ndash;254/mo</td><td>$178&ndash;254</td><td>AI scanner platform</td></tr>
+  <tr><td>VectorVest</td><td>$695&ndash;1,495/yr</td><td>$58&ndash;125</td><td>Timing + stock rating</td></tr>
+  <tr><td>MarketSurge (IBD)</td><td>$149.95/mo</td><td>$150</td><td>Advanced charting + screens</td></tr>
+  <tr><td>Timothy Sykes</td><td>$149.95/mo</td><td>$150</td><td>Penny stock guru</td></tr>
+</table>
+
+<div class="callout">
+  <div class="lbl">Key Takeaway</div>
+  <p>Seeking Alpha Alpha Picks (+284%) is RigaCap's closest performance comp and charges $37&ndash;42/mo. RigaCap at $39/mo offers comparable returns plus features no competitor provides: 7-regime market detection, explicit sell signals with trailing stops, and an AI-powered content engine. We're competitively positioned against the best, well below the $100+/mo AI platforms.</p>
+</div>
+
+<h2>Conversion Benchmarks</h2>
+<table>
+  <tr><th>Metric</th><th>Industry Benchmark</th><th>RigaCap Target</th></tr>
+  <tr><td>Trial-to-paid conversion</td><td>19.4% (fintech avg)</td><td>15&ndash;25%</td></tr>
+  <tr><td>Monthly churn</td><td>3&ndash;5%</td><td>&lt;5%</td></tr>
+  <tr><td>Annual churn</td><td>12&ndash;24% (fintech)</td><td>&lt;15%</td></tr>
+  <tr><td>12-month retention</td><td>37% (consumer fintech)</td><td>60%+</td></tr>
+  <tr><td>CAC payback period</td><td>6&ndash;12 months</td><td>&lt;6 months</td></tr>
+</table>
+
+<p class="footer-note">RigaCap Signal Intelligence &middot; Confidential &middot; March 2026</p>
+
+</div>
+</body>
+</html>
