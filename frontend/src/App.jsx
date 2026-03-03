@@ -2290,7 +2290,7 @@ function Dashboard() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="relative mx-auto mb-4 w-16 h-16">
-            <svg width="64" height="64" viewBox="0 0 1280 1024" className="mx-auto">
+            <svg width="64" height="64" viewBox="0 -128 1280 1280" className="mx-auto">
               <g transform="matrix(5.266369152845155 0 0 5.266369152845155 639.7474324688749 511.4611892669334)">
                 <g>
                   <g transform="matrix(0.447842401165958 0 0 0.447842401165958 -22.37905439059665 -28.76675371508702)">
@@ -2366,7 +2366,7 @@ function Dashboard() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <svg width="32" height="32" viewBox="0 0 1280 1024" className="shrink-0 sm:w-10 sm:h-10">
+            <svg width="32" height="32" viewBox="0 -128 1280 1280" className="shrink-0 sm:w-10 sm:h-10">
               <g transform="matrix(5.266369152845155 0 0 5.266369152845155 639.7474324688749 511.4611892669334)">
                 <g>
                   <g transform="matrix(0.447842401165958 0 0 0.447842401165958 -22.37905439059665 -28.76675371508702)">
