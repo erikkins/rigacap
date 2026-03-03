@@ -574,6 +574,11 @@ def handler(event, context):
     import os
     global _mangum_handler
 
+    # Log every non-warmer event for debugging (EventBridge async invocations were failing silently)
+    if not event.get("warmer"):
+        event_keys = [k for k in event.keys() if not k.startswith("_")]
+        print(f"🔔 Lambda handler invoked: keys={event_keys}")
+
     # Pipeline health report — runs WITHOUT pickle (lightweight S3/CW/DB checks only)
     # Must be handled BEFORE _ensure_lambda_data_loaded() to skip the 2+ GB pickle load
     if event.get("pipeline_health_report"):

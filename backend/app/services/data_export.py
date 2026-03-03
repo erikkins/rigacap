@@ -370,6 +370,9 @@ class DataExportService:
             if not clean_cache:
                 return {"success": False, "message": "No valid data to export", "count": 0}
 
+            num_symbols = len(clean_cache)
+            symbol_names = list(clean_cache.keys())
+
             # Stream pickle to disk first to avoid holding ~1 GB in RAM
             # (pkl_bytes ~639 MB + gzipped ~344 MB would exceed 3008 MB Lambda limit)
             import tempfile, os
@@ -400,13 +403,13 @@ class DataExportService:
                 os.remove(tmp_path)
 
             self.last_export = datetime.now()
-            self.exported_symbols = list(clean_cache.keys())
+            self.exported_symbols = symbol_names
 
-            print(f"✅ Exported pickle with {len(clean_cache)} symbols ({file_size / 1024 / 1024:.1f} MB)")
+            print(f"✅ Exported pickle with {num_symbols} symbols ({file_size / 1024 / 1024:.1f} MB)")
 
             return {
                 "success": True,
-                "count": len(clean_cache),
+                "count": num_symbols,
                 "total_size_mb": round(file_size / 1024 / 1024, 2),
                 "storage": storage_type,
                 "bucket": S3_BUCKET if self._use_s3() else None,
