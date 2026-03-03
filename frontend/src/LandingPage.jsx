@@ -549,7 +549,7 @@ const Footer = () => (
 );
 
 const RigaCapLogo = ({ size = 40, className = '' }) => (
-  <svg width={size} height={size} viewBox="0 -128 1280 1280" className={className}>
+  <svg width={size} height={size} viewBox="94 -35 1092 1092" className={className}>
     <g transform="matrix(5.266369152845155 0 0 5.266369152845155 639.7474324688749 511.4611892669334)">
       <g>
         <g transform="matrix(0.447842401165958 0 0 0.447842401165958 -22.37905439059665 -28.76675371508702)">
