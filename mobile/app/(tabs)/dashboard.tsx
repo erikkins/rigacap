@@ -14,7 +14,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
 import {
   useDashboard,
@@ -46,20 +46,20 @@ export default function DashboardScreen() {
 
   // Load sector filter from storage on mount
   useEffect(() => {
-    AsyncStorage.getItem('rigacap_sector_filters').then(v => {
+    SecureStore.getItemAsync('rigacap_sector_filters').then(v => {
       if (v) try { setExcludedSectors(JSON.parse(v)); } catch {}
     });
-    AsyncStorage.getItem('rigacap_sector_filter_open').then(v => {
+    SecureStore.getItemAsync('rigacap_sector_filter_open').then(v => {
       if (v === 'true') setSectorFilterOpen(true);
     });
   }, []);
 
   // Persist sector filter changes
   useEffect(() => {
-    AsyncStorage.setItem('rigacap_sector_filters', JSON.stringify(excludedSectors));
+    SecureStore.setItemAsync('rigacap_sector_filters', JSON.stringify(excludedSectors));
   }, [excludedSectors]);
   useEffect(() => {
-    AsyncStorage.setItem('rigacap_sector_filter_open', String(sectorFilterOpen));
+    SecureStore.setItemAsync('rigacap_sector_filter_open', String(sectorFilterOpen));
   }, [sectorFilterOpen]);
 
   // Track modal state
