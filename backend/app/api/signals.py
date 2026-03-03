@@ -655,6 +655,25 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
             -x['ensemble_score']
         ))
 
+        # Enrich signals with missing sector data from yfinance
+        missing_sector_symbols = [s['symbol'] for s in buy_signals if not s.get('sector')]
+        if missing_sector_symbols:
+            import yfinance as yf
+            for symbol in missing_sector_symbols:
+                try:
+                    ticker = yf.Ticker(symbol)
+                    info = ticker.info or {}
+                    sector = info.get('sector', '')
+                    if sector:
+                        # Update signal and universe cache
+                        for s in buy_signals:
+                            if s['symbol'] == symbol:
+                                s['sector'] = sector
+                        if symbol in stock_universe_service.symbol_info:
+                            stock_universe_service.symbol_info[symbol]['sector'] = sector
+                except Exception:
+                    pass
+
         # Build watchlist from same momentum rankings (no second call)
         for symbol, mom in momentum_by_symbol.items():
             df = scanner_service.data_cache.get(symbol)
@@ -1187,7 +1206,7 @@ async def _get_positions_with_guidance(db: AsyncSession, user, regime_forecast_d
                 'entry_date': p.created_at.strftime('%Y-%m-%d') if p.created_at else None,
                 'current_price': current_price,
                 'highest_price': float(getattr(p, 'highest_price', None) or p.entry_price),
-                'sector': p.sector or '',
+                'sector': getattr(p, 'sector', '') or '',
             })
 
         if pos_dicts:
