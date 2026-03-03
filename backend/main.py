@@ -808,10 +808,28 @@ def handler(event, context):
             except Exception as pe:
                 print(f"⚠️ Signal persistence failed (non-fatal): {pe}")
 
-            # 7. Auto-trigger model portfolio entries from fresh signals
-            entry_result = None
+            # 7a. Check model portfolio exits using closing prices (catches trailing stops
+            # that triggered in the last 5 min after the final intraday check at 3:55 PM)
+            exit_result = []
             try:
                 from app.services.model_portfolio_service import model_portfolio_service
+                close_prices = {}
+                for sym, df in scanner_service.data_cache.items():
+                    if df is not None and not df.empty:
+                        close_prices[sym] = float(df["close"].iloc[-1])
+                regime_forecast = data.get("regime_forecast") if data else None
+                async with async_session() as exit_db:
+                    exit_result = await model_portfolio_service.process_live_exits(
+                        exit_db, close_prices, regime_forecast
+                    )
+                    if exit_result:
+                        print(f"📈 [MODEL-LIVE] EOD exits: {len(exit_result)} closed — {[c.get('symbol') for c in exit_result]}")
+            except Exception as pe:
+                print(f"⚠️ Portfolio exit processing failed (non-fatal): {pe}")
+
+            # 7b. Auto-trigger model portfolio entries from fresh signals
+            entry_result = None
+            try:
                 async with async_session() as mp_db:
                     entry_result = await model_portfolio_service.process_entries(mp_db, "live")
                     print(f"📈 Live portfolio entries: {entry_result}")
