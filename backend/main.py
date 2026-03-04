@@ -663,6 +663,42 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"statusCode": 500, "error": str(e)}
 
+    # Run DB migrations — lightweight, no pickle needed
+    if event.get("run_migration"):
+        print("🔧 Running DB migrations via Lambda event")
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            async def _run_migrations():
+                from sqlalchemy import text
+                from app.core.database import async_session
+                results = []
+                migrations = [
+                    "ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS comped_at TIMESTAMP",
+                    "ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS comped_by UUID REFERENCES users(id)",
+                ]
+                async with async_session() as db:
+                    for sql in migrations:
+                        try:
+                            await db.execute(text(sql))
+                            results.append({"sql": sql[:80], "status": "ok"})
+                        except Exception as e:
+                            results.append({"sql": sql[:80], "status": "error", "error": str(e)})
+                    await db.commit()
+                return results
+
+            result = loop.run_until_complete(_run_migrations())
+            print(f"🔧 Migration results: {result}")
+            return {"statusCode": 200, "body": {"migrations": result}}
+        except Exception as e:
+            import traceback
+            print(f"❌ Migration failed: {e}")
+            print(traceback.format_exc())
+            return {"statusCode": 500, "error": str(e)}
+
     # Ensure data is loaded on cold start
     _ensure_lambda_data_loaded()
 
