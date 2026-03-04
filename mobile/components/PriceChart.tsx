@@ -362,7 +362,7 @@ export default function PriceChart({
                     y={PADDING.top - 4}
                     fontSize={9}
                     fill={Colors.gold}
-                    textAnchor="middle"
+                    textAnchor={breakoutX.x > chartWidth - 50 ? 'end' : breakoutX.x < PADDING.left + 50 ? 'start' : 'middle'}
                     fontWeight="600"
                   >
                     BREAKOUT
@@ -388,7 +388,7 @@ export default function PriceChart({
                     y={PADDING.top - 4}
                     fontSize={9}
                     fill={Colors.green}
-                    textAnchor="middle"
+                    textAnchor={entryX.x > chartWidth - 40 ? 'end' : entryX.x < PADDING.left + 40 ? 'start' : 'middle'}
                     fontWeight="600"
                   >
                     ENTRY
