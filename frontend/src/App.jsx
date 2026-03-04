@@ -2254,26 +2254,26 @@ function Dashboard() {
   }, []);
 
 
-  // Reload positions after a buy/sell - user data only, no backtest fallback
+  // Reload dashboard + positions after a buy/sell
   const reloadPositions = async () => {
     try {
-      // Get real positions from database only
-      const posResult = await api.get('/api/portfolio/positions');
-      const userPositions = posResult.positions || [];
-      setPositions(userPositions);
-      setCache(CACHE_KEYS.POSITIONS, userPositions);
+      // Reload full dashboard (signals + positions with guidance) for accurate data
+      const res = await fetch(`${API_BASE}/api/signals/dashboard`, {
+        headers: api._authHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDashboardData(data);
+        setCache(CACHE_KEYS.DASHBOARD, data);
+      }
 
       // Also reload trades
       const tradesResult = await api.get('/api/portfolio/trades?limit=50');
       if (tradesResult.trades) {
         setTrades(tradesResult.trades);
       }
-
-      // Update signals to exclude stocks user now has positions in
-      const positionSymbols = new Set(userPositions.map(p => p.symbol));
-      setSignals(prev => prev.filter(s => !positionSymbols.has(s.symbol)));
     } catch (err) {
-      console.log('Could not reload positions:', err);
+      console.log('Could not reload after trade:', err);
     }
   };
 
@@ -3999,8 +3999,8 @@ function Dashboard() {
       {showLoginModal && <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />}
       {chartModal && <StockChartModal {...chartModal} viewMode={viewMode} liveQuote={liveQuotes[chartModal.symbol]} timeTravelDate={timeTravelDate} onClose={() => setChartModal(null)} onAction={(positionData) => {
         setChartModal(null);
-        // Optimistic update: add position immediately so UI feels instant
         if (positionData) {
+          // BUY: Optimistic update — move signal to positions instantly
           const optimistic = {
             id: positionData.id,
             symbol: positionData.symbol,
@@ -4015,9 +4015,20 @@ function Dashboard() {
             trailing_stop_pct: 12,
             distance_to_stop_pct: 12,
             sell_signal: 'hold',
+            action: 'hold',
           };
-          setPositions(prev => [optimistic, ...prev]);
-          setSignals(prev => prev.filter(s => s.symbol !== positionData.symbol));
+          setDashboardData(prev => prev ? {
+            ...prev,
+            buy_signals: (prev.buy_signals || []).filter(s => s.symbol !== positionData.symbol),
+            positions_with_guidance: [optimistic, ...(prev.positions_with_guidance || [])],
+          } : prev);
+        } else {
+          // SELL: Optimistic update — remove position instantly
+          const sym = chartModal.symbol;
+          setDashboardData(prev => prev ? {
+            ...prev,
+            positions_with_guidance: (prev.positions_with_guidance || []).filter(p => p.symbol !== sym),
+          } : prev);
         }
         // Full reload in background for accurate data
         reloadPositions();
