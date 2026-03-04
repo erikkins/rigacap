@@ -196,7 +196,7 @@ class AlpacaProvider(MarketDataProvider):
                             continue
 
                         df = pd.DataFrame(rows)
-                        df['date'] = pd.to_datetime(df['date']).dt.tz_localize(None)
+                        df['date'] = pd.to_datetime(df['date']).dt.tz_localize(None).normalize()
                         df = df.set_index('date').sort_index()
                         # Remove duplicate dates (keep last)
                         df = df[~df.index.duplicated(keep='last')]
@@ -329,9 +329,10 @@ class YfinanceProvider(MarketDataProvider):
 
                         df['date'] = pd.to_datetime(df['date'])
                         df = df.set_index('date').sort_index()
-                        # Strip timezone to keep everything tz-naive
+                        # Strip timezone and normalize to midnight
                         if hasattr(df.index, 'tz') and df.index.tz is not None:
                             df.index = df.index.tz_localize(None)
+                        df.index = df.index.normalize()
                         result[symbol] = df
 
                     except Exception as e:

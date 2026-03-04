@@ -292,6 +292,7 @@ class ScannerService:
                 last_date = self.data_cache[symbol].index.max()
                 if hasattr(last_date, 'tz') and last_date.tz is not None:
                     last_date = last_date.tz_localize(None)
+                last_date = pd.Timestamp(last_date).normalize()
                 if last_date >= today - timedelta(days=1):
                     skipped += 1
                     continue
