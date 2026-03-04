@@ -1158,6 +1158,12 @@ def handler(event, context):
         print(f"📝 CSV export triggered - {len(scanner_service.data_cache)} symbols in cache")
         from app.services.data_export import data_export_service
         try:
+            # Load pickle if cache is empty (cold start)
+            if not scanner_service.data_cache:
+                print("📦 Cache empty, loading pickle from S3 for CSV export...")
+                loaded = data_export_service.import_all()
+                scanner_service.data_cache.update(loaded)
+                print(f"📦 Loaded {len(scanner_service.data_cache)} symbols from pickle")
             csv_result = data_export_service.export_all(scanner_service.data_cache)
             print(f"💾 CSVs saved: {csv_result.get('count', 0)} symbols")
             return {"status": "success", "csvs": csv_result}
