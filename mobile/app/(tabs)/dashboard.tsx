@@ -363,8 +363,8 @@ export default function DashboardScreen() {
             </Text>
           </View>
           <View style={styles.modalRow}>
-            <Text style={styles.modalLabel}>Ensemble Score</Text>
-            <Text style={styles.modalValue}>{(trackModal.signal.ensemble_score ?? 0).toFixed(0)}</Text>
+            <Text style={styles.modalLabel}>Strength</Text>
+            <Text style={styles.modalValue}>{trackModal.signal.signal_strength_label || 'Moderate'}</Text>
           </View>
         </ConfirmModal>
       )}
@@ -579,8 +579,10 @@ function PositionsTab({
               <Text style={styles.positionDetailValue}>${(pos.highest_price ?? 0).toFixed(2)}</Text>
             </View>
             <View style={styles.positionDetail}>
-              <Text style={styles.positionDetailLabel}>Shares</Text>
-              <Text style={styles.positionDetailValue}>{pos.shares}</Text>
+              <Text style={styles.positionDetailLabel}>Stop</Text>
+              <Text style={styles.positionDetailValue}>
+                {pos.trailing_stop_level ? `$${pos.trailing_stop_level.toFixed(2)}` : `$${((pos.highest_price ?? 0) * 0.88).toFixed(2)}`}
+              </Text>
             </View>
           </View>
           {pos.sell_guidance && (

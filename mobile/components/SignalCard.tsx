@@ -48,7 +48,10 @@ export default function SignalCard({ signal, onPress }: SignalCardProps) {
       <View style={styles.stats}>
         <StatItem label="Breakout" value={`+${(signal.pct_above_dwap ?? 0).toFixed(1)}%`} />
         <StatItem label="Rank" value={`#${signal.momentum_rank ?? '—'}`} />
-        <StatItem label="Score" value={(signal.ensemble_score ?? 0).toFixed(0)} />
+        <StatItem label="Days" value={
+          signal.days_since_entry != null ? `${signal.days_since_entry}d` :
+          signal.days_since_crossover != null ? `${signal.days_since_crossover}d` : '—'
+        } />
         {signal.sector ? <StatItem label="Sector" value={signal.sector} /> : null}
       </View>
     </Pressable>

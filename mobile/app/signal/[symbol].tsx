@@ -41,6 +41,7 @@ interface StockData {
   days_since_crossover?: number | null;
   days_since_entry?: number | null;
   sector?: string;
+  signal_strength_label?: string;
   // Position fields
   entry_price?: number;
   entry_date?: string | null;
@@ -326,23 +327,36 @@ export default function SignalDetailScreen() {
       )}
 
       {/* Signal-specific data */}
-      {d.source === 'signal' && (
-        <>
-          <View style={styles.scoreCard}>
-            <Text style={styles.scoreLabel}>Ensemble Score</Text>
-            <Text style={styles.scoreValue}>{(d.ensemble_score ?? 0).toFixed(1)}</Text>
-          </View>
-          <View style={styles.grid}>
-            <DetailRow label="Breakout %" value={`+${(d.pct_above_dwap ?? 0).toFixed(1)}%`} />
-            <DetailRow label="Momentum Rank" value={`#${d.momentum_rank}`} />
-            <DetailRow label="Breakout Date" value={d.dwap_crossover_date || '—'} />
-            <DetailRow label="Days Since Breakout" value={d.days_since_crossover != null ? `${d.days_since_crossover}` : '—'} />
-            <DetailRow label="Ensemble Entry" value={d.ensemble_entry_date || '—'} />
-            <DetailRow label="Days Since Entry" value={d.days_since_entry != null ? `${d.days_since_entry}` : '—'} />
-            {d.sector && <DetailRow label="Sector" value={d.sector} />}
-          </View>
-        </>
-      )}
+      {d.source === 'signal' && (() => {
+        const label = d.signal_strength_label || (() => {
+          const s = d.ensemble_score || 0;
+          if (s >= 88) return 'Very Strong';
+          if (s >= 75) return 'Strong';
+          if (s >= 61) return 'Moderate';
+          return 'Weak';
+        })();
+        const color = label === 'Very Strong' ? Colors.green
+          : label === 'Strong' ? '#86EFAC'
+          : label === 'Moderate' ? '#F59E0B'
+          : Colors.textMuted;
+        return (
+          <>
+            <View style={[styles.strengthCard, { borderColor: color + '33', backgroundColor: color + '15' }]}>
+              <Text style={[styles.strengthCardLabel, { color }]}>Signal Strength</Text>
+              <Text style={[styles.strengthCardValue, { color }]}>{label}</Text>
+            </View>
+            <View style={styles.grid}>
+              <DetailRow label="Breakout %" value={`+${(d.pct_above_dwap ?? 0).toFixed(1)}%`} />
+              <DetailRow label="Momentum Rank" value={`#${d.momentum_rank}`} />
+              <DetailRow label="Breakout Date" value={d.dwap_crossover_date || '—'} />
+              <DetailRow label="Days Since Breakout" value={d.days_since_crossover != null ? `${d.days_since_crossover}` : '—'} />
+              <DetailRow label="Entry Date" value={d.ensemble_entry_date || '—'} />
+              <DetailRow label="Days Since Entry" value={d.days_since_entry != null ? `${d.days_since_entry}` : '—'} />
+              {d.sector && <DetailRow label="Sector" value={d.sector} />}
+            </View>
+          </>
+        );
+      })()}
 
       {/* Position-specific data */}
       {d.source === 'position' && (
@@ -590,6 +604,21 @@ const styles = StyleSheet.create({
   scoreValue: {
     color: Colors.gold,
     fontSize: 48,
+    fontWeight: '800',
+  },
+  strengthCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: Spacing.lg,
+    alignItems: 'center',
+  },
+  strengthCardLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+    marginBottom: Spacing.xs,
+  },
+  strengthCardValue: {
+    fontSize: FontSize.xxl,
     fontWeight: '800',
   },
   grid: {
