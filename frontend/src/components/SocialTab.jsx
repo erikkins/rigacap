@@ -63,7 +63,7 @@ const TYPE_LABELS = {
 };
 
 function RigaCapLogo({ size = 40, className = '' }) {
-  return <img src="/favicon.svg" alt="RigaCap" width={size} height={size} className={className} />;
+  return <img src="/icon-halo.svg" alt="RigaCap" width={size} height={size} className={className} />;
 }
 
 export default function SocialTab({ fetchWithAuth }) {

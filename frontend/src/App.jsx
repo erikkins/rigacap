@@ -2290,7 +2290,7 @@ function Dashboard() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="relative mx-auto mb-4 w-16 h-16">
-            <img src="/favicon.svg" alt="RigaCap" width="64" height="64" className="mx-auto" />
+            <img src="/icon-halo.svg" alt="RigaCap" width="64" height="64" className="mx-auto" />
             <Loader2 className="w-5 h-5 text-amber-500 animate-spin absolute -bottom-1 -right-1" />
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading RigaCap</h2>
@@ -2343,7 +2343,7 @@ function Dashboard() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <img src="/favicon.svg" alt="RigaCap" width="32" height="32" className="shrink-0 sm:w-10 sm:h-10" />
+            <img src="/icon-halo.svg" alt="RigaCap" width="32" height="32" className="shrink-0 sm:w-10 sm:h-10" />
             <div>
               <h1 className="text-base sm:text-xl font-bold text-gray-900">RigaCap</h1>
               <p className="text-xs text-gray-500 hidden sm:block">Ensemble Trading System</p>

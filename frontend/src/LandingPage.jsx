@@ -557,7 +557,7 @@ const Footer = () => (
 );
 
 const RigaCapLogo = ({ size = 40, className = '' }) => (
-  <img src="/favicon.svg" alt="RigaCap" width={size} height={size} className={className} />
+  <img src="/icon-halo.svg" alt="RigaCap" width={size} height={size} className={className} />
 );
 
 const Navbar = ({ onGetStarted }) => (
