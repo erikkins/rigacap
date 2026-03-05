@@ -2061,11 +2061,12 @@ def handler(event, context):
             if cache_size == 0:
                 return {"status": "error", "error": "No cached data to refresh"}
 
-            # Detect gaps across all symbols (last 15 trading days)
+            # Detect gaps across all symbols
             gaps_found = {}
             check_days = replace_days + 5
-            cutoff = pd.Timestamp.now().normalize() - pd.Timedelta(days=check_days)
-            trading_days = pd.bdate_range(cutoff, pd.Timestamp.now().normalize())
+            today = pd.Timestamp.now().normalize()
+            cutoff = today - pd.Timedelta(days=check_days)
+            expected_dates = set(d.date() for d in pd.bdate_range(cutoff, today))
 
             for sym, df in scanner_service.data_cache.items():
                 if df.empty:
@@ -2073,17 +2074,23 @@ def handler(event, context):
                 idx = df.index
                 if hasattr(idx, 'tz') and idx.tz is not None:
                     idx = idx.tz_localize(None)
-                recent = idx[idx >= cutoff]
-                if len(recent) == 0:
-                    gaps_found[sym] = {"gap_days": len(trading_days), "last_date": str(idx.max().date()) if len(idx) > 0 else "N/A"}
-                    continue
-                expected = trading_days[trading_days <= idx.max()]
-                missing = expected.difference(recent)
+                actual_dates = set(d.date() for d in idx if d >= cutoff)
+                last_date = idx.max()
+                # Only check expected dates up to symbol's last date
+                expected_for_sym = set(d for d in expected_dates if d <= last_date.date())
+                missing = sorted(expected_for_sym - actual_dates)
                 if len(missing) > 0:
                     gaps_found[sym] = {
                         "gap_days": len(missing),
-                        "missing_dates": [str(d.date()) for d in sorted(missing)],
-                        "last_date": str(idx.max().date()),
+                        "missing_dates": [str(d) for d in missing],
+                        "last_date": str(last_date.date()),
+                    }
+                elif last_date.date() < min(expected_dates):
+                    # Symbol's data ends before our check window entirely
+                    gaps_found[sym] = {
+                        "gap_days": len(expected_dates),
+                        "last_date": str(last_date.date()),
+                        "stale": True,
                     }
 
             print(f"🔍 Gap detection: {len(gaps_found)} symbols with gaps")
