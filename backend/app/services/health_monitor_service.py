@@ -308,9 +308,9 @@ class HealthMonitorService:
         )
 
     async def _check_daily_snapshot(self) -> HealthCheck:
-        """Check if today's (or last market day's) dashboard snapshot exists."""
+        """Check yesterday's (most recent past) market day snapshot exists."""
         today_et = datetime.now(_ET).date()
-        target = _last_market_day(today_et)
+        target = _last_market_day(today_et - timedelta(days=1))
         key = f"snapshots/{target.isoformat()}/dashboard.json"
         last_mod = self._s3_last_modified(key)
 
