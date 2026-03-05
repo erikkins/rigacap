@@ -2050,22 +2050,42 @@ def handler(event, context):
             from app.services.scanner import scanner_service
             from app.services.data_export import data_export_service
 
-            # When targeting specific symbols, use lightweight CSV import (no full pickle)
+            # When targeting specific symbols, do a lightweight fresh fetch (no full pickle)
             if target_symbols and not detect_only:
-                print(f"📦 Lightweight mode: loading {len(target_symbols)} symbols from individual CSVs...")
+                from app.services.market_data_provider import market_data_provider
+
+                print(f"📦 Lightweight mode: fresh fetch for {len(target_symbols)} symbols...")
+
+                # Try loading existing data from individual CSVs first
                 cached_data = data_export_service.import_symbols(target_symbols)
-                scanner_service.data_cache = cached_data
-                print(f"📦 Loaded {len(cached_data)} symbols")
+                missing_syms = [s for s in target_symbols if s not in cached_data]
 
-                if not cached_data:
-                    return {"status": "error", "error": f"No CSV data found for {target_symbols}"}
+                if cached_data:
+                    scanner_service.data_cache = cached_data
+                    print(f"📦 Loaded {len(cached_data)} symbols from CSVs")
 
-                # Re-fetch data
-                print(f"🔄 Refreshing {len(target_symbols)} symbols (replace_days={replace_days})...")
-                result = await scanner_service.fetch_incremental(symbols=target_symbols, replace_days=replace_days)
-                print(f"🔄 Refresh result: {result}")
+                # For symbols without CSVs, fetch full history directly
+                if missing_syms:
+                    start = (pd.Timestamp.now() - pd.Timedelta(days=800)).strftime('%Y-%m-%d')
+                    print(f"📡 Fetching full history for {len(missing_syms)} symbols without CSVs: {missing_syms}")
+                    bars = await market_data_provider.fetch_bars(missing_syms, start)
+                    for sym, df in bars.items():
+                        if df is not None and not df.empty:
+                            if hasattr(df.index, 'tz') and df.index.tz is not None:
+                                df.index = df.index.tz_localize(None)
+                            scanner_service.data_cache[sym] = df[['open', 'high', 'low', 'close', 'volume']]
+                            print(f"  ✅ {sym}: {len(df)} rows fetched")
+                        else:
+                            print(f"  ❌ {sym}: no data returned")
 
-                # Save back individual CSVs (not the full consolidated file)
+                # For symbols WITH existing CSVs, do incremental replace
+                csv_syms = [s for s in target_symbols if s in cached_data]
+                if csv_syms:
+                    print(f"🔄 Incremental refresh for {len(csv_syms)} symbols with existing CSVs...")
+                    result = await scanner_service.fetch_incremental(symbols=csv_syms, replace_days=replace_days)
+                    print(f"🔄 Refresh result: {result}")
+
+                # Save all targeted symbols as individual CSVs
                 print("💾 Saving updated CSVs...")
                 export = data_export_service.export_all(scanner_service.data_cache)
                 print(f"💾 Export: {export}")
@@ -2075,9 +2095,9 @@ def handler(event, context):
                     "mode": "targeted",
                     "replace_days": replace_days,
                     "symbols": target_symbols,
-                    "symbols_refreshed": result.get("updated", 0),
-                    "source": result.get("source", "unknown"),
-                    "failed": result.get("failed", 0),
+                    "fresh_fetched": missing_syms,
+                    "incremental_refreshed": csv_syms,
+                    "total_in_cache": len(scanner_service.data_cache),
                 }
 
             # Full mode: load entire cache for gap detection or bulk refresh
