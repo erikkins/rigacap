@@ -1566,6 +1566,142 @@ class ModelPortfolioService:
             ],
         }
 
+    async def backfill_signal_track_record(
+        self,
+        db: AsyncSession,
+        as_of_date: str = "2026-02-01",
+        force: bool = False,
+    ) -> dict:
+        """
+        Backfill signal track record from a historical date through today.
+
+        Walks through each trading day, enters ALL fresh signals from snapshots,
+        checks trailing stop exits using daily close prices. No position limit,
+        no cash logic — flat $10K notional per pick.
+        """
+        import pandas as pd
+        from sqlalchemy import delete
+
+        if force:
+            await db.execute(
+                delete(ModelPosition).where(
+                    ModelPosition.portfolio_type == SIGNAL_TRACK_RECORD
+                )
+            )
+            await db.execute(
+                delete(ModelPortfolioState).where(
+                    ModelPortfolioState.portfolio_type == SIGNAL_TRACK_RECORD
+                )
+            )
+            await db.flush()
+            logger.info("[SIGNAL-TRACK-BACKFILL] Reset signal track record")
+
+        from app.services.scanner import scanner_service
+
+        spy_df = scanner_service.data_cache.get("SPY")
+        if spy_df is None or spy_df.empty:
+            return {"error": "SPY data not in cache — run a scan first"}
+
+        start = pd.Timestamp(as_of_date).normalize()
+        today = pd.Timestamp(date.today()).normalize()
+
+        trading_days = sorted([
+            d.date() if hasattr(d, 'date') else d
+            for d in spy_df.index
+            if start.date() <= (d.date() if hasattr(d, 'date') else d) <= today.date()
+        ])
+        if not trading_days:
+            return {"error": f"No trading days found between {as_of_date} and today"}
+
+        summary = {
+            "start_date": str(start.date()),
+            "end_date": str(today.date()),
+            "trading_days": len(trading_days),
+            "entries": 0,
+            "exits": 0,
+        }
+
+        logger.info(
+            f"[SIGNAL-TRACK-BACKFILL] {len(trading_days)} trading days "
+            f"from {as_of_date}"
+        )
+
+        for day_date in trading_days:
+            open_positions = await self._get_open_positions(db, SIGNAL_TRACK_RECORD)
+
+            # --- Check exits (trailing stop) ---
+            for pos in open_positions:
+                df = scanner_service.data_cache.get(pos.symbol)
+                if df is None or df.empty:
+                    continue
+
+                close_price = self._get_close_for_date(df, day_date)
+                if close_price is None:
+                    continue
+
+                # Update HWM
+                if close_price > (pos.highest_price or pos.entry_price):
+                    pos.highest_price = close_price
+
+                hwm = pos.highest_price or pos.entry_price
+                stop_level = hwm * (1 - TRAILING_STOP_PCT / 100)
+                if close_price <= stop_level:
+                    pnl_dollars = (close_price - pos.entry_price) * pos.shares
+                    pnl_pct = ((close_price / pos.entry_price) - 1) * 100
+
+                    pos.exit_date = datetime.combine(day_date, datetime.min.time())
+                    pos.exit_price = close_price
+                    pos.exit_reason = "trailing_stop"
+                    pos.pnl_dollars = round(pnl_dollars, 2)
+                    pos.pnl_pct = round(pnl_pct, 2)
+                    pos.status = "closed"
+                    summary["exits"] += 1
+
+            await db.flush()
+
+            # --- Enter fresh signals for this date ---
+            signals = await self._get_signals_for_date(day_date)
+            if signals:
+                held = {p.symbol for p in await self._get_open_positions(db, SIGNAL_TRACK_RECORD)}
+                fresh = [s for s in signals if s.get("is_fresh") and s["symbol"] not in held]
+
+                for sig in fresh:
+                    symbol = sig["symbol"]
+                    df = scanner_service.data_cache.get(symbol)
+                    if df is None or df.empty:
+                        continue
+
+                    price = self._get_close_for_date(df, day_date)
+                    if price is None or price <= 0:
+                        continue
+
+                    shares = SIGNAL_TRACK_NOTIONAL / price
+                    pos = ModelPosition(
+                        portfolio_type=SIGNAL_TRACK_RECORD,
+                        symbol=symbol,
+                        entry_date=datetime.combine(day_date, datetime.min.time()),
+                        entry_price=price,
+                        shares=shares,
+                        cost_basis=SIGNAL_TRACK_NOTIONAL,
+                        highest_price=price,
+                        status="open",
+                        signal_data_json=json.dumps(sig),
+                    )
+                    db.add(pos)
+                    summary["entries"] += 1
+
+            # Flush periodically
+            if (summary["entries"] + summary["exits"]) % 20 == 0:
+                await db.flush()
+
+        await db.commit()
+
+        logger.info(
+            f"[SIGNAL-TRACK-BACKFILL] Complete: {summary['entries']} entries, "
+            f"{summary['exits']} exits over {summary['trading_days']} days"
+        )
+        return summary
+
 
 # Singleton
 model_portfolio_service = ModelPortfolioService()
