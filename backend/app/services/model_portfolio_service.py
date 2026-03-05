@@ -30,6 +30,10 @@ STARTING_CAPITAL = 100_000.0
 WF_ANCHOR_DATE = date(2026, 2, 1)  # Canonical biweekly boundaries
 WF_PERIOD_DAYS = 14
 
+# Signal track record: tracks EVERY fresh pick (no position limit, flat sizing)
+SIGNAL_TRACK_RECORD = "signal_track_record"
+SIGNAL_TRACK_NOTIONAL = 10000.0  # Flat $10K per pick for clean % tracking
+
 # Ghost portfolio configurations for parallel universe comparison
 GHOST_CONFIGS = {
     "ghost_aggressive": {"trailing_stop": 8.0, "max_positions": 8, "position_size": 0.12,
@@ -39,7 +43,7 @@ GHOST_CONFIGS = {
     "ghost_top3": {"trailing_stop": 12.0, "max_positions": 3, "position_size": 0.30,
                    "label": "Top-3 Only", "description": "Concentrated best picks"},
 }
-ALL_PORTFOLIO_TYPES = PORTFOLIO_TYPES + tuple(GHOST_CONFIGS.keys())
+ALL_PORTFOLIO_TYPES = PORTFOLIO_TYPES + tuple(GHOST_CONFIGS.keys()) + (SIGNAL_TRACK_RECORD,)
 
 
 class ModelPortfolioService:
@@ -1331,6 +1335,235 @@ class ModelPortfolioService:
             "total_trades": state.total_trades,
             "inception_date": inception_date,
             "active_since_days": active_days,
+        }
+
+
+    # ------------------------------------------------------------------
+    # Signal Track Record — every fresh pick, no position limits
+    # ------------------------------------------------------------------
+
+    async def process_signal_track_entries(self, db: AsyncSession) -> dict:
+        """
+        Enter EVERY fresh signal into the signal track record.
+        No position limit, no cash gating — flat $10K notional per pick.
+        """
+        from app.services.data_export import data_export_service
+
+        dashboard = data_export_service.read_dashboard_json()
+        if not dashboard:
+            return {"entries": 0, "reason": "No dashboard cache available"}
+
+        buy_signals = dashboard.get("buy_signals", [])
+        fresh_signals = [s for s in buy_signals if s.get("is_fresh")]
+        if not fresh_signals:
+            return {"entries": 0, "reason": "No fresh signals"}
+
+        # Skip symbols already open in signal track record
+        open_positions = await self._get_open_positions(db, SIGNAL_TRACK_RECORD)
+        held_symbols = {p.symbol for p in open_positions}
+
+        entries = 0
+        for sig in fresh_signals:
+            symbol = sig["symbol"]
+            if symbol in held_symbols:
+                continue
+
+            price = sig.get("price", 0)
+            if price <= 0:
+                continue
+
+            shares = SIGNAL_TRACK_NOTIONAL / price
+
+            pos = ModelPosition(
+                portfolio_type=SIGNAL_TRACK_RECORD,
+                symbol=symbol,
+                entry_date=datetime.utcnow(),
+                entry_price=price,
+                shares=shares,
+                cost_basis=SIGNAL_TRACK_NOTIONAL,
+                highest_price=price,
+                status="open",
+                signal_data_json=json.dumps(sig),
+            )
+            db.add(pos)
+            entries += 1
+            held_symbols.add(symbol)
+
+            logger.info(
+                f"[SIGNAL-TRACK] Entered {symbol} @ ${price:.2f} "
+                f"(${SIGNAL_TRACK_NOTIONAL:,.0f} notional)"
+            )
+
+        if entries:
+            await db.commit()
+
+        return {"entries": entries, "open_total": len(held_symbols)}
+
+    async def process_signal_track_exits(self, db: AsyncSession) -> List[dict]:
+        """
+        Daily close exit check for signal track record positions.
+        Trailing stop (12%) from HWM. No rebalance force-close.
+        """
+        from app.services.scanner import scanner_service
+
+        positions = await self._get_open_positions(db, SIGNAL_TRACK_RECORD)
+        if not positions:
+            return []
+
+        closed = []
+        for pos in positions:
+            df = scanner_service.data_cache.get(pos.symbol)
+            if df is None or df.empty:
+                continue
+
+            close_price = float(df["close"].iloc[-1])
+
+            # Update HWM
+            if close_price > (pos.highest_price or pos.entry_price):
+                pos.highest_price = close_price
+
+            # Check trailing stop
+            hwm = pos.highest_price or pos.entry_price
+            trailing_stop_level = hwm * (1 - TRAILING_STOP_PCT / 100)
+
+            if close_price <= trailing_stop_level:
+                result = await self._close_position(
+                    db, pos, close_price, "trailing_stop"
+                )
+                closed.append(result)
+
+        if closed:
+            await db.commit()
+
+        return closed
+
+    async def get_signal_track_stats(self, db: AsyncSession) -> dict:
+        """
+        Compute aggregate stats for the signal track record.
+        Returns win rate, avg gain/loss, best/worst, holding days, recent trades.
+        """
+        from sqlalchemy import func as sqlfunc
+
+        # All closed positions
+        closed_result = await db.execute(
+            select(ModelPosition).where(
+                ModelPosition.portfolio_type == SIGNAL_TRACK_RECORD,
+                ModelPosition.status == "closed",
+            )
+        )
+        closed_positions = list(closed_result.scalars().all())
+
+        # Open positions
+        open_positions = await self._get_open_positions(db, SIGNAL_TRACK_RECORD)
+
+        total_picks = len(closed_positions) + len(open_positions)
+        if not total_picks:
+            return {
+                "total_picks": 0,
+                "open_count": 0,
+                "closed_count": 0,
+                "win_rate": 0,
+                "avg_gain_pct": 0,
+                "avg_loss_pct": 0,
+                "avg_pnl_pct": 0,
+                "avg_holding_days": 0,
+                "best_pick": None,
+                "worst_pick": None,
+                "recent_closed": [],
+            }
+
+        # Win/loss stats from closed trades
+        winners = [p for p in closed_positions if p.pnl_pct and p.pnl_pct > 0]
+        losers = [p for p in closed_positions if p.pnl_pct is not None and p.pnl_pct <= 0]
+
+        win_rate = (len(winners) / len(closed_positions) * 100) if closed_positions else 0
+        avg_gain = (
+            sum(p.pnl_pct for p in winners) / len(winners)
+            if winners else 0
+        )
+        avg_loss = (
+            sum(p.pnl_pct for p in losers) / len(losers)
+            if losers else 0
+        )
+        avg_pnl = (
+            sum(p.pnl_pct for p in closed_positions) / len(closed_positions)
+            if closed_positions else 0
+        )
+
+        # Holding days
+        holding_days = []
+        for p in closed_positions:
+            if p.entry_date and p.exit_date:
+                holding_days.append((p.exit_date - p.entry_date).days)
+        avg_holding = sum(holding_days) / len(holding_days) if holding_days else 0
+
+        # Best/worst picks
+        best = max(closed_positions, key=lambda p: p.pnl_pct or 0, default=None)
+        worst = min(closed_positions, key=lambda p: p.pnl_pct or 0, default=None)
+
+        def _pick_summary(p):
+            if not p:
+                return None
+            return {
+                "symbol": p.symbol,
+                "pnl_pct": round(p.pnl_pct, 2) if p.pnl_pct else 0,
+                "entry_date": p.entry_date.isoformat() if p.entry_date else None,
+                "exit_date": p.exit_date.isoformat() if p.exit_date else None,
+                "exit_reason": p.exit_reason,
+            }
+
+        # Recent closed (last 20)
+        recent = sorted(
+            closed_positions,
+            key=lambda p: p.exit_date or datetime.min,
+            reverse=True,
+        )[:20]
+
+        # Open positions with current unrealized P&L
+        from app.services.scanner import scanner_service
+
+        open_data = []
+        for pos in open_positions:
+            df = scanner_service.data_cache.get(pos.symbol)
+            current_price = (
+                float(df["close"].iloc[-1])
+                if df is not None and not df.empty
+                else pos.entry_price
+            )
+            pnl_pct = ((current_price / pos.entry_price) - 1) * 100
+            open_data.append({
+                "symbol": pos.symbol,
+                "entry_date": pos.entry_date.isoformat() if pos.entry_date else None,
+                "entry_price": pos.entry_price,
+                "current_price": round(current_price, 2),
+                "pnl_pct": round(pnl_pct, 2),
+                "highest_price": pos.highest_price,
+            })
+
+        return {
+            "total_picks": total_picks,
+            "open_count": len(open_positions),
+            "closed_count": len(closed_positions),
+            "win_rate": round(win_rate, 1),
+            "avg_gain_pct": round(avg_gain, 2),
+            "avg_loss_pct": round(avg_loss, 2),
+            "avg_pnl_pct": round(avg_pnl, 2),
+            "avg_holding_days": round(avg_holding, 1),
+            "best_pick": _pick_summary(best),
+            "worst_pick": _pick_summary(worst),
+            "open_positions": open_data,
+            "recent_closed": [
+                {
+                    "symbol": t.symbol,
+                    "entry_date": t.entry_date.isoformat() if t.entry_date else None,
+                    "exit_date": t.exit_date.isoformat() if t.exit_date else None,
+                    "entry_price": t.entry_price,
+                    "exit_price": t.exit_price,
+                    "pnl_pct": round(t.pnl_pct, 2) if t.pnl_pct else 0,
+                    "exit_reason": t.exit_reason,
+                }
+                for t in recent
+            ],
         }
 
 

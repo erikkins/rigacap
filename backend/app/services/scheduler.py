@@ -198,6 +198,16 @@ class SchedulerService:
                     if wf_closed:
                         logger.info(f"[MODEL-WF] Closed {len(wf_closed)} position(s)")
 
+                    # Signal track record: enter ALL fresh signals (no position limit)
+                    track_entries = await model_portfolio_service.process_signal_track_entries(mp_db)
+                    if track_entries.get("entries"):
+                        logger.info(f"[SIGNAL-TRACK] Entered {track_entries['entries']} pick(s)")
+
+                    # Signal track record: daily exit checks (trailing stop only)
+                    track_closed = await model_portfolio_service.process_signal_track_exits(mp_db)
+                    if track_closed:
+                        logger.info(f"[SIGNAL-TRACK] Closed {len(track_closed)} pick(s)")
+
                     # Take daily equity curve snapshot
                     snap_result = await model_portfolio_service.take_daily_snapshot(mp_db)
                     logger.info(f"[MODEL-SNAPSHOT] {snap_result}")

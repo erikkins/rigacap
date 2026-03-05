@@ -41,6 +41,21 @@ async def subscriber_what_if(
     return await model_portfolio_service.calculate_what_if(db, start_date, capital)
 
 
+# ============================================================================
+# Signal Track Record — every pick, win/loss stats
+# ============================================================================
+
+@router.get("/signal-track-record")
+async def get_signal_track_record(
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin-only: aggregate stats for every fresh signal pick (no position limit)."""
+    from app.services.model_portfolio_service import model_portfolio_service
+
+    return await model_portfolio_service.get_signal_track_stats(db)
+
+
 # Pydantic models for API
 class SignalResponse(BaseModel):
     id: Optional[int] = None
