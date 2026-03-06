@@ -121,7 +121,7 @@ class AlpacaProvider(MarketDataProvider):
             logger.warning("alpaca-py not installed")
             return False
         except Exception as e:
-            logger.error(f"Alpaca client init failed: {e}")
+            print(f"❌ Alpaca client init failed: {e}")
             return False
 
     def supports_symbol(self, symbol: str) -> bool:
@@ -208,7 +208,9 @@ class AlpacaProvider(MarketDataProvider):
                         logger.debug(f"Alpaca parse error for {alpaca_sym}: {e}")
 
             except Exception as e:
-                logger.error(f"Alpaca batch fetch failed ({len(batch)} symbols): {e}")
+                import traceback
+                print(f"❌ Alpaca batch fetch failed ({len(batch)} symbols): {e}")
+                traceback.print_exc()
 
             # Rate limit: 10k req/min (Pro) — minimal delay between batches
             if i + BATCH_SIZE < len(alpaca_formatted):
