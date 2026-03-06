@@ -177,7 +177,15 @@ class AlpacaProvider(MarketDataProvider):
                 bar_data = bars.data if hasattr(bars, 'data') else {}
                 if i == 0:  # Log first batch for debugging
                     bar_keys = list(bar_data.keys())[:5] if bar_data else []
-                    print(f"🔍 Alpaca batch 0: {len(bar_data)} symbols returned, first keys: {bar_keys}, requested: {batch[:5]}")
+                    bar_key_types = [type(k).__name__ for k in bar_keys] if bar_keys else []
+                    first_val = list(bar_data.values())[0] if bar_data else None
+                    first_val_type = type(first_val).__name__ if first_val is not None else "None"
+                    first_val_len = len(first_val) if first_val is not None and hasattr(first_val, '__len__') else "N/A"
+                    # Test lookup
+                    test_key = batch[0] if batch else None
+                    test_lookup = bar_data.get(test_key) if test_key else None
+                    test_result = f"found ({len(test_lookup)} bars)" if test_lookup else f"NOT FOUND (tried '{test_key}')"
+                    print(f"🔍 Alpaca batch 0: {len(bar_data)} syms, keys: {bar_keys}, key_types: {bar_key_types}, val_type: {first_val_type}({first_val_len}), lookup '{test_key}': {test_result}")
                 for alpaca_sym in batch:
                     try:
                         symbol_bars = bar_data.get(alpaca_sym, [])
