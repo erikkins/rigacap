@@ -1712,7 +1712,7 @@ Unsubscribe: https://rigacap.com/unsubscribe
             <td style="padding: 0 24px 24px;">
                 <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center;">
                     This is not financial advice. Always do your own research before trading.
-                    Past performance does not guarantee future results.
+                    <br>Past performance does not guarantee future results.
                 </p>
             </td>
         </tr>
@@ -1743,7 +1743,8 @@ Unsubscribe: https://rigacap.com/unsubscribe
             "View dashboard: https://rigacap.com/app",
             "",
             "---",
-            "This is not financial advice. Past performance does not guarantee future results.",
+            "This is not financial advice. Always do your own research before trading.",
+            "Past performance does not guarantee future results.",
         ])
 
         return await self.send_email(
@@ -1942,7 +1943,7 @@ Unsubscribe: https://rigacap.com/unsubscribe
             <td style="padding: 0 24px 24px;">
                 <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center;">
                     This is not financial advice. Always do your own research before trading.
-                    Past performance does not guarantee future results.
+                    <br>Past performance does not guarantee future results.
                 </p>
             </td>
         </tr>
@@ -1981,7 +1982,8 @@ Unsubscribe: https://rigacap.com/unsubscribe
             "View full dashboard: https://rigacap.com/app",
             "",
             "---",
-            "This is not financial advice. Past performance does not guarantee future results.",
+            "This is not financial advice. Always do your own research before trading.",
+            "Past performance does not guarantee future results.",
         ])
 
         return await self.send_email(
@@ -2114,7 +2116,7 @@ Unsubscribe: https://rigacap.com/unsubscribe
             <td style="padding: 0 24px 24px;">
                 <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center;">
                     This is not financial advice. Always do your own research before trading.
-                    Past performance does not guarantee future results.
+                    <br>Past performance does not guarantee future results.
                 </p>
             </td>
         </tr>
@@ -2150,7 +2152,8 @@ Unsubscribe: https://rigacap.com/unsubscribe
             "View dashboard: https://rigacap.com/app",
             "",
             "---",
-            "This is not financial advice. Past performance does not guarantee future results.",
+            "This is not financial advice. Always do your own research before trading.",
+            "Past performance does not guarantee future results.",
         ])
 
         return await self.send_email(
