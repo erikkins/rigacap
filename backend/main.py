@@ -90,6 +90,77 @@ def get_split_adjusted_price(symbol: str, entry_date: datetime, fallback_price: 
         return fallback_price
 
 
+async def _wait_for_alpaca_settlement(
+    lambda_context=None,
+    max_retries: int = 10,
+    retry_interval: int = 30,
+    min_spy_volume: int = 10_000_000,
+) -> dict:
+    """
+    Pre-flight: wait for Alpaca to settle today's bars before bulk fetch.
+    Fetches SPY from Alpaca only. Checks today's bar exists with real volume.
+    Returns dict with settled, attempts, elapsed, fallback_to_yfinance.
+    """
+    import asyncio
+    import time
+    from zoneinfo import ZoneInfo
+    from app.services.market_data_provider import AlpacaProvider
+    from app.services.health_monitor_service import _last_market_day
+
+    now_et = datetime.now(ZoneInfo('America/New_York'))
+    expected_date = _last_market_day(now_et.date())
+    start = time.time()
+    result = {"settled": False, "attempts": 0, "spy_date": None,
+              "spy_volume": None, "fallback_to_yfinance": False}
+
+    alpaca = AlpacaProvider()
+    five_days_ago = (expected_date - timedelta(days=7)).strftime("%Y-%m-%d")
+
+    for attempt in range(1, max_retries + 1):
+        result["attempts"] = attempt
+
+        # Bail if Lambda running low on time (need 10 min for scan+export)
+        if lambda_context:
+            remaining = lambda_context.get_remaining_time_in_millis()
+            if remaining < 600_000:
+                print(f"⏰ Settlement check: bailing, only {remaining/1000:.0f}s left")
+                break
+
+        try:
+            bars = await alpaca.fetch_bars(["SPY"], start_date=five_days_ago)
+            spy_df = bars.get("SPY")
+            if spy_df is not None and len(spy_df) > 0:
+                last_date = spy_df.index.max()
+                last_date_normalized = pd.Timestamp(last_date).normalize().tz_localize(None)
+                expected_ts = pd.Timestamp(expected_date)
+                last_vol = int(spy_df.iloc[-1].get("volume", 0))
+                result["spy_date"] = str(last_date_normalized.date())
+                result["spy_volume"] = last_vol
+
+                if last_date_normalized >= expected_ts and last_vol >= min_spy_volume:
+                    result["settled"] = True
+                    print(f"📡 Alpaca settled: attempt {attempt}, "
+                          f"SPY {last_date_normalized.date()}, vol={last_vol:,}")
+                    break
+                else:
+                    print(f"📡 Settlement attempt {attempt}/{max_retries}: "
+                          f"SPY date={last_date_normalized.date()} (need {expected_date}), "
+                          f"vol={last_vol:,} (need {min_spy_volume:,}) — waiting {retry_interval}s...")
+            else:
+                print(f"📡 Settlement attempt {attempt}/{max_retries}: "
+                      f"no SPY data from Alpaca — waiting {retry_interval}s...")
+        except Exception as e:
+            print(f"📡 Settlement attempt {attempt}/{max_retries}: error {e} — waiting {retry_interval}s...")
+
+        if attempt < max_retries:
+            await asyncio.sleep(retry_interval)
+
+    result["elapsed_seconds"] = time.time() - start
+    if not result["settled"]:
+        result["fallback_to_yfinance"] = True
+    return result
+
+
 # ============================================================================
 # Pydantic Models
 # ============================================================================
@@ -773,9 +844,24 @@ def handler(event, context):
                 from app.services.market_data_provider import market_data_provider as mdp
                 mdp.force_source = force_source
                 print(f"📡 Forcing data source: {force_source}")
+
+            # 1c-pre. Pre-flight: wait for Alpaca bar settlement
+            if not force_source:
+                from app.services.market_data_provider import market_data_provider as mdp
+                settlement = await _wait_for_alpaca_settlement(lambda_context=lambda_context)
+                print(f"📡 Settlement result: {settlement}")
+                if not settlement["settled"]:
+                    print(f"⚠️ Alpaca not settled after {settlement['attempts']} attempts "
+                          f"({settlement['elapsed_seconds']:.0f}s). Using yfinance for this scan.")
+                    mdp.force_source = "yfinance"
+            else:
+                settlement = {"settled": "skipped", "reason": f"force_source={force_source}"}
+
+            import time as _time
+            fetch_start_time = _time.time()
             print(f"📡 Incremental update for {len(existing_symbols)} cached symbols..." + (f" [replace_days={replace_days}]" if replace_days else ""))
             inc_result = await scanner_service.fetch_incremental(replace_days=replace_days)
-            if force_source:
+            if force_source or (not settlement.get("settled") and settlement.get("fallback_to_yfinance")):
                 mdp.force_source = None
             print(f"📡 Incremental: {inc_result}")
 
@@ -850,6 +936,37 @@ def handler(event, context):
                 )
                 print(f"✅ Re-fetched {len(gapped)} gapped symbols with 45-day lookback")
 
+            # 1g. Persist fetch metadata to S3 for health monitoring
+            try:
+                import json as _json
+                fetch_end_time = _time.time()
+                from zoneinfo import ZoneInfo as _ZI
+                now_et_str = datetime.now(_ZI('America/New_York')).strftime("%Y-%m-%d %H:%M:%S ET")
+                # Determine which source actually delivered the data
+                actual_source = inc_result.get("source", "unknown")
+                used_fallback = settlement.get("fallback_to_yfinance", False) or "+retry" in str(actual_source)
+                fetch_meta = {
+                    "fetch_date": now_et_str,
+                    "data_source": actual_source,
+                    "settlement_check": settlement,
+                    "used_fallback": used_fallback,
+                    "fetch_start_utc": datetime.utcfromtimestamp(fetch_start_time).strftime("%Y-%m-%d %H:%M:%S"),
+                    "fetch_end_utc": datetime.utcfromtimestamp(fetch_end_time).strftime("%Y-%m-%d %H:%M:%S"),
+                    "fetch_duration_seconds": round(fetch_end_time - fetch_start_time, 1),
+                    "symbols_updated": inc_result.get("updated", 0),
+                    "symbols_failed": inc_result.get("failed", 0),
+                }
+                import boto3 as _boto3
+                _boto3.client('s3', region_name='us-east-1').put_object(
+                    Bucket=os.environ.get("PRICE_DATA_BUCKET", "rigacap-prod-price-data-149218244179"),
+                    Key="signals/last_fetch_meta.json",
+                    Body=_json.dumps(fetch_meta, default=str).encode('utf-8'),
+                    ContentType='application/json',
+                )
+                print(f"📡 Fetch metadata saved: source={actual_source}, duration={fetch_meta['fetch_duration_seconds']}s, fallback={used_fallback}")
+            except Exception as fm_err:
+                print(f"⚠️ Failed to save fetch metadata (non-fatal): {fm_err}")
+
             # 2. Run scan on fresh data
             signals = await scanner_service.scan(refresh_data=False)
             print(f"📡 Scan complete: {len(signals)} signals")
@@ -917,6 +1034,7 @@ def handler(event, context):
                     "dashboard": {"deferred": True},
                     "snapshot": {"deferred": True},
                     "ensemble_signals_persisted": "deferred",
+                    "settlement_check": settlement,
                 }
 
             # 4. Persist refreshed cache to S3 pickle (slow — only if time permits)
@@ -1036,6 +1154,7 @@ def handler(event, context):
                 "snapshot": snap_result,
                 "ensemble_signals_persisted": persisted,
                 "portfolio_entries": entry_result,
+                "settlement_check": settlement,
             }
 
         try:

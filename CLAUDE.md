@@ -342,6 +342,15 @@ cat /tmp/result.json | python3 -m json.tool
 
 ### Deployment
 
+**CRITICAL: Database migration safety.** NEVER deploy new SQLAlchemy model columns and the DB migration in the same commit. SQLAlchemy auto-includes all model columns in SELECT queries — if the column doesn't exist in the DB, ALL queries break (including auth), causing full outage. Use the **migration-first pattern:**
+1. Deploy migration SQL only (via `run_migration` Lambda event or admin endpoint)
+2. Run migration, verify columns exist
+3. THEN deploy the SQLAlchemy model changes in a second commit
+
+**NEVER deploy breaking schema changes during business hours.** Schedule for off-hours or use the pattern above.
+
+**Emergency migration:** Invoke `{"run_migration": true}` on the worker Lambda — it runs ALTER TABLE directly without needing auth.
+
 **CI/CD handles deployment automatically** — pushing to `main` triggers GitHub Actions which builds and deploys the Lambda container. Do NOT run `scripts/deploy-container.sh` manually unless CI/CD is broken.
 
 **Terraform** (infrastructure changes only — not needed for code deploys):

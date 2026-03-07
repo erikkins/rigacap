@@ -164,6 +164,7 @@ class HealthMonitorService:
             self._check_worker_log_errors,
             self._check_daily_snapshot,
             self._check_data_source_health,
+            self._check_last_data_fetch,
         ]
 
         for method in check_methods:
@@ -828,6 +829,91 @@ class HealthMonitorService:
                 threshold="Both sources responding",
                 message=f"Could not check: {str(e)[:80]}",
             )
+
+
+    async def _check_last_data_fetch(self) -> HealthCheck:
+        """Check the last daily scan data fetch: source, timing, fallback status."""
+        import json
+
+        try:
+            resp = self.s3.get_object(Bucket=S3_BUCKET, Key="signals/last_fetch_meta.json")
+            meta = json.loads(resp["Body"].read().decode("utf-8"))
+        except Exception as e:
+            err_str = str(e)
+            if "NoSuchKey" in err_str or "does not exist" in err_str:
+                return HealthCheck(
+                    category="Data Freshness", name="Last Data Fetch",
+                    status=HealthStatus.YELLOW, value="No data",
+                    threshold="Fetch metadata exists",
+                    message="No fetch metadata found — daily scan may not have run yet",
+                    resolution="Run daily_scan on Worker Lambda",
+                )
+            return HealthCheck(
+                category="Data Freshness", name="Last Data Fetch",
+                status=HealthStatus.YELLOW, value="ERROR",
+                threshold="Fetch metadata exists",
+                message=f"Could not read fetch metadata: {err_str[:80]}",
+                resolution="Check S3 bucket access",
+            )
+
+        source = meta.get("data_source", "unknown")
+        fetch_date = meta.get("fetch_date", "unknown")
+        duration = meta.get("fetch_duration_seconds", "?")
+        used_fallback = meta.get("used_fallback", False)
+        settlement = meta.get("settlement_check", {})
+        settled = settlement.get("settled", False)
+        settle_attempts = settlement.get("attempts", 0)
+        fetch_start = meta.get("fetch_start_utc", "?")
+        fetch_end = meta.get("fetch_end_utc", "?")
+        symbols_updated = meta.get("symbols_updated", 0)
+        symbols_failed = meta.get("symbols_failed", 0)
+
+        # Check freshness — metadata should be from the last market day
+        last_mod = self._s3_last_modified("signals/last_fetch_meta.json")
+        hours_ago = _hours_since(last_mod) if last_mod else 999
+
+        # Determine status
+        if used_fallback and symbols_failed > 50:
+            status = HealthStatus.RED
+            resolution = "Primary source failed with high error count — check Alpaca/yfinance health"
+        elif used_fallback:
+            status = HealthStatus.YELLOW
+            resolution = f"Fell back from primary — check if Alpaca bars are settling in time"
+        elif self._freshness_status(hours_ago, 20, 28, 68, 92) == HealthStatus.RED:
+            status = HealthStatus.RED
+            resolution = "Fetch metadata is stale — daily scan may not be running"
+        else:
+            status = HealthStatus.GREEN
+            resolution = ""
+
+        # Build display value: "Alpaca | 4:22-4:25 PM ET | 182s"
+        # Extract just times from the full datetime strings
+        start_time = fetch_start.split(" ")[-1] if " " in fetch_start else fetch_start
+        end_time = fetch_end.split(" ")[-1] if " " in fetch_end else fetch_end
+        value = f"{source} | {start_time}–{end_time} UTC | {duration}s"
+        if used_fallback:
+            value += " (fallback)"
+
+        settle_msg = ""
+        if settled == "skipped":
+            settle_msg = "settlement skipped (forced source)"
+        elif settled:
+            settle_msg = f"settled on attempt {settle_attempts}"
+        else:
+            settle_msg = f"NOT settled after {settle_attempts} attempts"
+
+        message = (
+            f"{fetch_date}: {symbols_updated} symbols updated, "
+            f"{symbols_failed} failed, {settle_msg}"
+        )
+
+        return HealthCheck(
+            category="Data Freshness", name="Last Data Fetch",
+            status=status, value=value,
+            threshold="Primary source, no fallback",
+            message=message,
+            resolution=resolution,
+        )
 
 
 health_monitor_service = HealthMonitorService()

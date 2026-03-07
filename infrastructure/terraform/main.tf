@@ -799,8 +799,8 @@ resource "aws_db_instance" "main" {
 
 resource "aws_cloudwatch_event_rule" "scanner" {
   name                = "${local.prefix}-scanner"
-  description         = "Run market scan at 4 PM ET on weekdays"
-  schedule_expression = "cron(0 21 ? * MON-FRI *)" # 4 PM ET = 9 PM UTC
+  description         = "Run market scan at 4:20 PM ET on weekdays (20 min after close for Alpaca bar settlement)"
+  schedule_expression = "cron(20 21 ? * MON-FRI *)" # 4:20 PM ET = 9:20 PM UTC
 }
 
 resource "aws_cloudwatch_event_target" "scanner" {

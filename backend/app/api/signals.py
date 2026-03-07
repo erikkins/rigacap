@@ -1014,9 +1014,13 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
         existing_dashboard = data_export_service.read_dashboard_json()
         if existing_dashboard and existing_dashboard.get('market_context'):
             generated = existing_dashboard.get('generated_at', '')
-            if date.today().isoformat() in generated:
+            cached_regime = existing_dashboard.get('regime_forecast', {}).get('current_regime')
+            current_regime = regime_forecast_data.get('current_regime') if regime_forecast_data else None
+            if date.today().isoformat() in generated and cached_regime == current_regime:
                 market_context = existing_dashboard['market_context']
-                print(f"📝 Market context (cached): {market_context}")
+                print(f"📝 Market context (cached, regime={cached_regime}): {market_context}")
+            elif cached_regime != current_regime:
+                print(f"📝 Market context cache invalidated: regime changed {cached_regime} → {current_regime}")
 
         # Only generate if not already cached for today
         if not market_context:
