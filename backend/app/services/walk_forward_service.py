@@ -691,12 +691,18 @@ class WalkForwardService:
             print(f"[WF-SERVICE] Using FIXED strategy: {fixed_strategy.name} (id={fixed_strategy_id}), ai={enable_ai_optimization}")
 
         # Get symbol universe for simulation
-        # max_symbols=0 means use full universe (no volume pre-filter), matching production scan behavior
+        # max_symbols=0 means use full production universe: all symbols that could plausibly
+        # pass the ensemble entry criteria (volume >= 500K, price >= $15 on any recent day).
+        # This is NOT a signal filter — the backtester still applies the full entry criteria
+        # on every date. This just avoids iterating ~5000 symbols that always fail immediately.
         if max_symbols == 0:
             from app.services.scanner import scanner_service, _EXCLUDED_SET
-            top_symbols = [s for s in scanner_service.data_cache.keys()
-                           if s not in _EXCLUDED_SET and len(scanner_service.data_cache[s]) >= 200]
-            print(f"[WF-SERVICE] Using FULL universe: {len(top_symbols)} symbols (no volume pre-filter)")
+            top_symbols = [s for s, df in scanner_service.data_cache.items()
+                           if s not in _EXCLUDED_SET and len(df) >= 200
+                           and 'volume' in df.columns and 'close' in df.columns
+                           and df['volume'].max() >= 500_000 and df['close'].max() >= 15.0]
+            print(f"[WF-SERVICE] Using PRODUCTION universe: {len(top_symbols)} symbols "
+                  f"(from {len(scanner_service.data_cache)} total, filtered by entry criteria eligibility)")
         else:
             top_symbols = get_top_liquid_symbols(max_symbols=max_symbols)
             print(f"[WF-SERVICE] Got {len(top_symbols) if top_symbols else 0} top symbols (by volume)")
@@ -1268,9 +1274,11 @@ class WalkForwardService:
         _max_symbols = config.get("max_symbols", 50)
         if _max_symbols == 0:
             from app.services.scanner import scanner_service, _EXCLUDED_SET
-            top_symbols = [s for s in scanner_service.data_cache.keys()
-                           if s not in _EXCLUDED_SET and len(scanner_service.data_cache[s]) >= 200]
-            print(f"[WF-INIT] Using FULL universe: {len(top_symbols)} symbols")
+            top_symbols = [s for s, df in scanner_service.data_cache.items()
+                           if s not in _EXCLUDED_SET and len(df) >= 200
+                           and 'volume' in df.columns and 'close' in df.columns
+                           and df['volume'].max() >= 500_000 and df['close'].max() >= 15.0]
+            print(f"[WF-INIT] Using PRODUCTION universe: {len(top_symbols)} symbols")
         else:
             top_symbols = get_top_liquid_symbols(max_symbols=_max_symbols)
         if not top_symbols:
@@ -1384,8 +1392,10 @@ class WalkForwardService:
         _max_symbols = config.get("max_symbols", 50)
         if _max_symbols == 0:
             from app.services.scanner import scanner_service, _EXCLUDED_SET
-            top_symbols = [s for s in scanner_service.data_cache.keys()
-                           if s not in _EXCLUDED_SET and len(scanner_service.data_cache[s]) >= 200]
+            top_symbols = [s for s, df in scanner_service.data_cache.items()
+                           if s not in _EXCLUDED_SET and len(df) >= 200
+                           and 'volume' in df.columns and 'close' in df.columns
+                           and df['volume'].max() >= 500_000 and df['close'].max() >= 15.0]
         else:
             top_symbols = get_top_liquid_symbols(max_symbols=_max_symbols)
 
