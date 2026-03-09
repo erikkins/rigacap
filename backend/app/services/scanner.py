@@ -325,6 +325,12 @@ class ScannerService:
                 if hasattr(new_df.index, 'tz') and new_df.index.tz is not None:
                     new_df.index = new_df.index.tz_localize(None)
 
+                # Strip tz from existing data too (pickles may have mixed tz)
+                if hasattr(existing_df.index, 'tz') and existing_df.index.tz is not None:
+                    existing_df = existing_df.copy()
+                    existing_df.index = existing_df.index.tz_localize(None)
+                    self.data_cache[symbol] = existing_df
+
                 if replace_days > 0:
                     # Replace mode: drop old rows in the replace window, use fresh data
                     cutoff_ts = today - timedelta(days=replace_days)
@@ -354,7 +360,7 @@ class ScannerService:
                 updated += 1
 
             except Exception as e:
-                logger.debug(f"Failed to update {symbol}: {e}")
+                logger.warning(f"❌ Failed to update {symbol}: {e}")
                 failed += 1
 
         # Free bulk fetch result and reclaim memory
