@@ -133,6 +133,7 @@ class WalkForwardResult:
     parameter_evolution: List[ParameterSnapshot] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)  # Simulation errors for debugging
     trades: List[PeriodTrade] = field(default_factory=list)  # All trades across all periods
+    continuation_state: Optional[Dict] = None  # Non-None if more chunks remain (self-chaining)
 
 
 class WalkForwardService:
@@ -638,7 +639,9 @@ class WalkForwardService:
         n_trials: int = 30,  # Number of Optuna optimization trials per period
         carry_positions: bool = False,  # Carry positions across periods (default: force-close each period)
         max_positions: Optional[int] = None,  # Override strategy's max_positions for A/B testing
-        position_size_pct: Optional[float] = None  # Override strategy's position_size_pct for A/B testing
+        position_size_pct: Optional[float] = None,  # Override strategy's position_size_pct for A/B testing
+        periods_limit: int = 0,  # Max periods per chunk (0 = unlimited, for self-chaining)
+        continuation_state: Optional[Dict] = None  # Restored state from previous chunk
     ) -> WalkForwardResult:
         """
         Run walk-forward simulation with AI optimization over a historical period.
@@ -669,7 +672,13 @@ class WalkForwardService:
         """
         import logging
         logger = logging.getLogger()
-        print(f"[WF-SERVICE] Starting simulation: {start_date} to {end_date}, ai={enable_ai_optimization}, fixed_strategy={fixed_strategy_id}, max_positions={max_positions}, position_size_pct={position_size_pct}")
+        is_continuation = continuation_state is not None
+        start_period = continuation_state.get("period_index", 0) if is_continuation else 0
+        print(f"[WF-SERVICE] {'Resuming' if is_continuation else 'Starting'} simulation: {start_date} to {end_date}, "
+              f"ai={enable_ai_optimization}, fixed_strategy={fixed_strategy_id}, "
+              f"max_positions={max_positions}, position_size_pct={position_size_pct}"
+              + (f", resuming from period {start_period}" if is_continuation else "")
+              + (f", periods_limit={periods_limit}" if periods_limit else ""))
 
         # Load all strategies
         result = await db.execute(
@@ -711,37 +720,78 @@ class WalkForwardService:
 
         # Get period boundaries
         periods = self._get_period_dates(start_date, end_date, reoptimization_frequency)
-        print(f"[WF-SERVICE] Processing {len(periods)} periods")
+        print(f"[WF-SERVICE] Processing {len(periods)} periods (starting at {start_period})")
 
-        # Initialize simulation state
-        capital = self.initial_capital
-        active_strategy = strategies[0]  # Will be replaced by first analysis
-        active_strategy_score = 0.0
-        active_strategy_type = strategies[0].strategy_type
-        active_params: Optional[Dict] = None  # None means using existing strategy
-        using_ai_params = False
+        # Initialize or restore simulation state
+        if is_continuation:
+            # Restore accumulated state from previous chunk
+            capital = continuation_state["capital"]
+            carried_positions = continuation_state.get("carried_positions", {})
+            equity_curve = continuation_state.get("equity_curve", [])
+            all_trades_raw = continuation_state.get("all_trades", [])
+            # Reconstruct PeriodTrade objects from dicts
+            all_trades: List[PeriodTrade] = [PeriodTrade(**t) for t in all_trades_raw]
+            switch_history_raw = continuation_state.get("switch_history", [])
+            switch_history: List[SwitchEvent] = [SwitchEvent(**s) for s in switch_history_raw]
+            simulation_errors = continuation_state.get("simulation_errors", [])
+            spy_start_price = continuation_state.get("spy_start_price")
+            previous_best_params = continuation_state.get("warm_start_params")
 
-        switch_history: List[SwitchEvent] = []
-        equity_curve: List[Dict] = []
+            # Restore active strategy state
+            _active_id = continuation_state.get("active_strategy_id")
+            active_strategy_score = continuation_state.get("active_strategy_score", 0.0)
+            active_strategy_type = continuation_state.get("active_strategy_type", "ensemble")
+            active_params = continuation_state.get("active_params")
+            using_ai_params = continuation_state.get("using_ai_params", False)
+
+            if _active_id and not using_ai_params:
+                active_strategy = next((s for s in strategies if s.id == _active_id), strategies[0])
+            else:
+                active_strategy = None if using_ai_params else strategies[0]
+
+            prev_active_strategy_id = continuation_state.get("prev_active_strategy_id")
+            prev_using_ai_params = continuation_state.get("prev_using_ai_params", False)
+
+            print(f"[WF-SERVICE] Restored state: capital=${capital:,.2f}, {len(equity_curve)} equity points, "
+                  f"{len(all_trades)} trades, {len(carried_positions)} carried positions")
+        else:
+            # Fresh start
+            capital = self.initial_capital
+            active_strategy = strategies[0]  # Will be replaced by first analysis
+            active_strategy_score = 0.0
+            active_strategy_type = strategies[0].strategy_type
+            active_params: Optional[Dict] = None  # None means using existing strategy
+            using_ai_params = False
+
+            switch_history: List[SwitchEvent] = []
+            equity_curve: List[Dict] = []
+            all_trades: List[PeriodTrade] = []  # All trades across all periods
+            simulation_errors: List[str] = []  # Track errors for debugging
+            previous_best_params: Optional[Dict[str, Any]] = None
+            carried_positions: Dict[str, dict] = {}
+            prev_active_strategy_id = None
+            prev_using_ai_params = False
+
+            # Get SPY starting price for benchmark line
+            spy_start_price = None
+
+        # These are per-chunk only (not persisted across chunks)
         period_details: List[SimulationPeriod] = []
         ai_optimizations: List[AIOptimizationResult] = []
         parameter_evolution: List[ParameterSnapshot] = []
-        simulation_errors: List[str] = []  # Track errors for debugging
-        all_trades: List[PeriodTrade] = []  # All trades across all periods
 
-        # Get SPY starting price for benchmark line
-        spy_start_price = None
+        # SPY benchmark setup
         spy_df = None
         if 'SPY' in scanner_service.data_cache:
             spy_df = scanner_service.data_cache['SPY']
-            start_ts = pd.Timestamp(start_date)
-            # Handle timezone-aware index
-            if spy_df.index.tz is not None:
-                start_ts = start_ts.tz_localize(spy_df.index.tz) if start_ts.tz is None else start_ts.tz_convert(spy_df.index.tz)
-            spy_at_start = spy_df[spy_df.index >= start_ts]
-            if len(spy_at_start) > 0:
-                spy_start_price = spy_at_start.iloc[0]['close']
-                print(f"[WF-SERVICE] SPY start price: ${spy_start_price:.2f}")
+            if spy_start_price is None:
+                start_ts = pd.Timestamp(start_date)
+                if spy_df.index.tz is not None:
+                    start_ts = start_ts.tz_localize(spy_df.index.tz) if start_ts.tz is None else start_ts.tz_convert(spy_df.index.tz)
+                spy_at_start = spy_df[spy_df.index >= start_ts]
+                if len(spy_at_start) > 0:
+                    spy_start_price = spy_at_start.iloc[0]['close']
+                    print(f"[WF-SERVICE] SPY start price: ${spy_start_price:.2f}")
 
         def get_spy_equity(date_str: str) -> float:
             """Get SPY equity normalized to initial capital"""
@@ -760,27 +810,92 @@ class WalkForwardService:
                 pass
             return None
 
-        # Add initial point
-        equity_curve.append({
-            "date": start_date.strftime('%Y-%m-%d'),
-            "equity": capital,
-            "spy_equity": self.initial_capital,
-            "strategy": "Initial",
-            "is_switch": False
-        })
+        # Add initial equity point (only on fresh start)
+        if not is_continuation:
+            equity_curve.append({
+                "date": start_date.strftime('%Y-%m-%d'),
+                "equity": capital,
+                "spy_equity": self.initial_capital,
+                "strategy": "Initial",
+                "is_switch": False
+            })
 
-        # Track previous period's best AI params for warm-starting
-        previous_best_params: Optional[Dict[str, Any]] = None
-
-        # Track carried positions between periods
-        carried_positions: Dict[str, dict] = {}
-        # Track previous period's active strategy for detecting switches
-        prev_active_strategy_id = None
-        prev_using_ai_params = False
-
-        # Process each period
-        print(f"[WF-SERVICE] Starting simulation loop: {len(periods)} periods, initial capital=${capital:,.2f}")
+        # Process each period (skip already-completed periods on continuation)
+        periods_processed_this_chunk = 0
+        print(f"[WF-SERVICE] Starting simulation loop: {len(periods)} total periods, "
+              f"starting at {start_period}, initial capital=${capital:,.2f}")
         for i, (period_start, period_end) in enumerate(periods):
+            # Skip already-completed periods
+            if i < start_period:
+                continue
+
+            # Check chunk limit
+            if periods_limit > 0 and periods_processed_this_chunk >= periods_limit:
+                print(f"[WF-SERVICE] Chunk limit reached ({periods_limit} periods). "
+                      f"Saving state for continuation at period {i}/{len(periods)}.")
+                # Build continuation state
+                cont_state = {
+                    "period_index": i,
+                    "capital": capital,
+                    "carried_positions": carried_positions,
+                    "equity_curve": equity_curve,
+                    "all_trades": [
+                        {
+                            "period_start": t.period_start, "period_end": t.period_end,
+                            "strategy_name": t.strategy_name, "symbol": t.symbol,
+                            "entry_date": t.entry_date, "exit_date": t.exit_date,
+                            "entry_price": t.entry_price, "exit_price": t.exit_price,
+                            "shares": t.shares, "pnl_pct": t.pnl_pct,
+                            "pnl_dollars": t.pnl_dollars, "exit_reason": t.exit_reason,
+                            "momentum_score": t.momentum_score, "momentum_rank": t.momentum_rank,
+                            "pct_above_dwap_at_entry": t.pct_above_dwap_at_entry,
+                            "num_candidates": t.num_candidates,
+                            "dwap_at_entry": t.dwap_at_entry, "dwap_age": t.dwap_age,
+                            "short_mom": t.short_mom, "long_mom": t.long_mom,
+                            "volatility": t.volatility, "dist_from_high": t.dist_from_high,
+                            "vol_ratio": t.vol_ratio, "spy_trend": t.spy_trend,
+                        }
+                        for t in all_trades
+                    ],
+                    "switch_history": [
+                        {
+                            "date": s.date, "from_strategy_id": s.from_strategy_id,
+                            "from_strategy_name": s.from_strategy_name,
+                            "to_strategy_id": s.to_strategy_id,
+                            "to_strategy_name": s.to_strategy_name,
+                            "reason": s.reason, "score_before": s.score_before,
+                            "score_after": s.score_after,
+                            "is_ai_generated": s.is_ai_generated,
+                            "ai_params": s.ai_params,
+                        }
+                        for s in switch_history
+                    ],
+                    "simulation_errors": simulation_errors,
+                    "spy_start_price": spy_start_price,
+                    "active_strategy_id": active_strategy.id if active_strategy else None,
+                    "active_strategy_name": active_strategy.name if active_strategy else "AI-Optimized",
+                    "active_strategy_type": active_strategy_type,
+                    "active_strategy_score": active_strategy_score,
+                    "active_params": active_params,
+                    "using_ai_params": using_ai_params,
+                    "warm_start_params": previous_best_params,
+                    "prev_active_strategy_id": prev_active_strategy_id,
+                    "prev_using_ai_params": prev_using_ai_params,
+                }
+                return WalkForwardResult(
+                    start_date=start_date.strftime('%Y-%m-%d'),
+                    end_date=end_date.strftime('%Y-%m-%d'),
+                    reoptimization_frequency=reoptimization_frequency,
+                    total_return_pct=0, sharpe_ratio=0, max_drawdown_pct=0,
+                    num_strategy_switches=0, benchmark_return_pct=0,
+                    switch_history=switch_history, equity_curve=equity_curve,
+                    period_details=period_details,
+                    errors=simulation_errors[:10],
+                    trades=all_trades,
+                    continuation_state=cont_state,
+                )
+
+            periods_processed_this_chunk += 1
             print(f"[WF-SERVICE] Period {i+1}/{len(periods)}: {period_start.strftime('%Y-%m-%d')} to {period_end.strftime('%Y-%m-%d')}")
             period_ai_opt = None
 

@@ -374,8 +374,17 @@ def _ensure_lambda_data_loaded():
         _lambda_data_loaded = True
 
 
-async def _run_walk_forward_job(job_config: dict):
-    """Run walk-forward simulation job asynchronously."""
+async def _run_walk_forward_job(job_config: dict, wf_state_key: str = None):
+    """Run walk-forward simulation job asynchronously.
+
+    Supports self-chaining for large simulations that exceed Lambda's 900s timeout.
+    When periods_limit > 0, processes a chunk of periods, saves state to S3,
+    and async-invokes self for the next chunk.
+
+    Args:
+        job_config: Walk-forward job configuration dict
+        wf_state_key: S3 key for continuation state (set by self-chaining)
+    """
     import json
     from datetime import datetime
     from app.services.walk_forward_service import walk_forward_service
@@ -383,10 +392,27 @@ async def _run_walk_forward_job(job_config: dict):
     from app.core.database import WalkForwardSimulation
 
     job_id = job_config.get("job_id")
+    periods_limit = job_config.get("periods_limit", 0)
+    continuation_state = None
+
+    # Load continuation state from S3 if resuming
+    if wf_state_key:
+        try:
+            import boto3
+            from app.services.data_export import S3_BUCKET
+            s3 = boto3.client('s3', region_name='us-east-1')
+            resp = s3.get_object(Bucket=S3_BUCKET, Key=wf_state_key)
+            continuation_state = json.loads(resp['Body'].read())
+            job_id = continuation_state.get("job_id", job_id)
+            print(f"[ASYNC-WF] Loaded continuation state from s3://{S3_BUCKET}/{wf_state_key}, "
+                  f"job_id={job_id}, period_index={continuation_state.get('period_index')}")
+        except Exception as e:
+            print(f"[ASYNC-WF] Failed to load continuation state: {e}")
+            return {"status": "failed", "error": f"Failed to load continuation state: {e}"}
 
     async with async_session() as db:
         try:
-            # If no job_id provided, create a new job record
+            # If no job_id provided, create a new job record (first chunk only)
             if not job_id:
                 start = datetime.strptime(job_config["start_date"], "%Y-%m-%d")
                 end = datetime.strptime(job_config["end_date"], "%Y-%m-%d")
@@ -407,8 +433,8 @@ async def _run_walk_forward_job(job_config: dict):
                 await db.refresh(new_job)
                 job_id = new_job.id
                 print(f"[ASYNC-WF] Created new job {job_id}")
-            else:
-                # Update existing job status to running
+            elif not wf_state_key:
+                # First invocation with explicit job_id — update status
                 result = await db.execute(
                     select(WalkForwardSimulation).where(WalkForwardSimulation.id == job_id)
                 )
@@ -417,7 +443,8 @@ async def _run_walk_forward_job(job_config: dict):
                     job.status = "running"
                     await db.commit()
 
-            print(f"[ASYNC-WF] Starting walk-forward job {job_id}")
+            chunk_label = f"period {continuation_state['period_index']}" if continuation_state else "start"
+            print(f"[ASYNC-WF] Walk-forward job {job_id} ({chunk_label}), periods_limit={periods_limit}")
 
             # Run the simulation
             start = datetime.strptime(job_config["start_date"], "%Y-%m-%d")
@@ -436,11 +463,62 @@ async def _run_walk_forward_job(job_config: dict):
                 n_trials=job_config.get("n_trials", 30),
                 carry_positions=job_config.get("carry_positions", False),
                 max_positions=job_config.get("max_positions"),
-                position_size_pct=job_config.get("position_size_pct")
+                position_size_pct=job_config.get("position_size_pct"),
+                periods_limit=periods_limit,
+                continuation_state=continuation_state,
             )
 
-            print(f"[ASYNC-WF] Job {job_id} completed: return={sim_result.total_return_pct}%")
-            return {"status": "completed", "job_id": job_id}
+            # Check if more chunks are needed
+            if sim_result.continuation_state:
+                # Save state to S3 and self-chain
+                import boto3
+                from app.services.data_export import S3_BUCKET
+                s3 = boto3.client('s3', region_name='us-east-1')
+                state_key = f"wf-state/{job_id}.json"
+                state_data = sim_result.continuation_state
+                state_data["job_id"] = job_id  # Ensure job_id is in state
+                s3.put_object(
+                    Bucket=S3_BUCKET,
+                    Key=state_key,
+                    Body=json.dumps(state_data),
+                    ContentType='application/json',
+                )
+                next_period = state_data.get("period_index", "?")
+                print(f"[ASYNC-WF] Saved state to s3://{S3_BUCKET}/{state_key} (next period: {next_period})")
+
+                # Self-invoke for next chunk
+                chain_payload = {
+                    "walk_forward_job": job_config,
+                    "wf_state_key": state_key,
+                }
+                # Ensure job_id is in the config for continuation
+                chain_payload["walk_forward_job"]["job_id"] = job_id
+                boto3.client('lambda', region_name='us-east-1').invoke(
+                    FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker'),
+                    InvocationType='Event',  # async fire-and-forget
+                    Payload=json.dumps(chain_payload),
+                )
+                print(f"[ASYNC-WF] 🔗 Self-chained job {job_id} for period {next_period}")
+                return {
+                    "status": "chaining",
+                    "job_id": job_id,
+                    "next_period": next_period,
+                    "state_key": state_key,
+                }
+            else:
+                # Simulation complete — clean up S3 state file
+                if wf_state_key:
+                    try:
+                        import boto3
+                        from app.services.data_export import S3_BUCKET
+                        s3 = boto3.client('s3', region_name='us-east-1')
+                        s3.delete_object(Bucket=S3_BUCKET, Key=wf_state_key)
+                        print(f"[ASYNC-WF] Cleaned up state file: {wf_state_key}")
+                    except Exception as cleanup_err:
+                        print(f"[ASYNC-WF] Warning: failed to clean up state file: {cleanup_err}")
+
+                print(f"[ASYNC-WF] Job {job_id} completed: return={sim_result.total_return_pct}%")
+                return {"status": "completed", "job_id": job_id}
 
         except Exception as e:
             import traceback
@@ -2112,15 +2190,18 @@ def handler(event, context):
         result = loop.run_until_complete(_run_model_portfolio())
         return result
 
-    # Handle async walk-forward jobs
+    # Handle async walk-forward jobs (supports self-chaining via wf_state_key)
     if event.get("walk_forward_job"):
-        print(f"📊 Walk-forward async job received - {len(scanner_service.data_cache)} symbols in cache, SPY={'SPY' in scanner_service.data_cache}")
+        wf_state_key = event.get("wf_state_key")
+        print(f"📊 Walk-forward async job received - {len(scanner_service.data_cache)} symbols in cache, "
+              f"SPY={'SPY' in scanner_service.data_cache}"
+              + (f", continuation={wf_state_key}" if wf_state_key else ""))
         job_config = event["walk_forward_job"]
         loop = asyncio.get_event_loop()
         if loop.is_closed():
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(_run_walk_forward_job(job_config))
+        result = loop.run_until_complete(_run_walk_forward_job(job_config, wf_state_key=wf_state_key))
         return result
 
     # Handle Step Functions walk-forward: init
