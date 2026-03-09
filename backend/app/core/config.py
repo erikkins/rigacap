@@ -107,6 +107,9 @@ class Settings(BaseSettings):
     ALPACA_BASE_URL: str = os.getenv("ALPACA_BASE_URL", "https://api.alpaca.markets")
     DATA_SOURCE_PRIMARY: str = os.getenv("DATA_SOURCE_PRIMARY", "alpaca")  # "alpaca" (Pro/SIP — consolidated volume) or "yfinance" (fallback)
 
+    # Signal universe filter — 0 = full universe, >0 = top N by 60-day avg volume
+    SIGNAL_UNIVERSE_SIZE: int = int(os.getenv("SIGNAL_UNIVERSE_SIZE", "0"))
+
     # Track Record — canonical walk-forward sim IDs (yearly sims stitched to +289%)
     TRACK_RECORD_SIM_IDS: List[int] = [113, 114, 115, 116, 112]
 

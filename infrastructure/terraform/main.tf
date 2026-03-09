@@ -665,7 +665,8 @@ resource "aws_lambda_function" "worker" {
 
   environment {
     variables = merge(local.lambda_env_vars, {
-      LAMBDA_ROLE = "worker"
+      LAMBDA_ROLE          = "worker"
+      SIGNAL_UNIVERSE_SIZE = "500"
     })
   }
 

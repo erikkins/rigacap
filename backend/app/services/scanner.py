@@ -15,7 +15,7 @@ import resource
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Set
 from dataclasses import dataclass, asdict
 import asyncio
 import logging
@@ -422,6 +422,16 @@ class ScannerService:
             df['high_52w'] = self.high_52w(df['close'])
         return df
 
+    def _get_signal_universe(self) -> Optional[Set[str]]:
+        """Return set of liquid symbols if SIGNAL_UNIVERSE_SIZE is configured, else None (no filter)."""
+        size = settings.SIGNAL_UNIVERSE_SIZE
+        if size <= 0:
+            return None
+        from app.services.strategy_analyzer import get_top_liquid_symbols
+        symbols = set(get_top_liquid_symbols(max_symbols=size))
+        logger.info(f"Signal universe filter active: top {size} liquid symbols ({len(symbols)} found)")
+        return symbols
+
     def _ensure_momentum_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
         """Compute momentum indicators if missing (lazy computation)"""
         if 'short_mom' not in df.columns:
@@ -461,8 +471,11 @@ class ScannerService:
                 logger.warning(f"Market filter check failed: {e}")
 
         candidates = []
+        signal_universe = self._get_signal_universe()
 
         for symbol in self.data_cache:
+            if signal_universe is not None and symbol not in signal_universe:
+                continue
             if symbol in _EXCLUDED_SET:
                 continue
 
@@ -726,8 +739,11 @@ class ScannerService:
             logger.warning(f"Market analysis unavailable: {e}")
 
         self.signals = []
+        signal_universe = self._get_signal_universe()
 
         for symbol in self.data_cache:
+            if signal_universe is not None and symbol not in signal_universe:
+                continue
             if symbol in _EXCLUDED_SET:
                 continue
             signal = self.analyze_stock(symbol, as_of_date=as_of_date)
