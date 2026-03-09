@@ -800,7 +800,7 @@ resource "aws_db_instance" "main" {
 resource "aws_cloudwatch_event_rule" "scanner" {
   name                = "${local.prefix}-scanner"
   description         = "Run market scan at 4:20 PM ET on weekdays (20 min after close for Alpaca bar settlement)"
-  schedule_expression = "cron(20 21 ? * MON-FRI *)" # 4:20 PM ET = 9:20 PM UTC
+  schedule_expression = "cron(20 20 ? * MON-FRI *)" # 4:20 PM EDT = 8:20 PM UTC
 }
 
 resource "aws_cloudwatch_event_target" "scanner" {
@@ -844,13 +844,13 @@ resource "aws_lambda_permission" "warmer" {
 }
 
 # ============================================================================
-# EventBridge - Daily Email Digest (6 PM ET = 23:00 UTC, Mon-Fri)
+# EventBridge - Daily Email Digest (6 PM ET = 22:00 UTC during EDT)
 # ============================================================================
 
 resource "aws_cloudwatch_event_rule" "daily_emails" {
   name                = "${local.prefix}-daily-emails"
   description         = "Send daily email digest at 6 PM ET weekdays"
-  schedule_expression = "cron(0 23 ? * MON-FRI *)"
+  schedule_expression = "cron(0 22 ? * MON-FRI *)"
 }
 
 resource "aws_cloudwatch_event_target" "daily_emails" {
@@ -869,13 +869,13 @@ resource "aws_lambda_permission" "daily_emails" {
 }
 
 # ============================================================================
-# EventBridge - Double Signal Alerts (5 PM ET = 22:00 UTC, Mon-Fri)
+# EventBridge - Double Signal Alerts (5 PM ET = 21:00 UTC during EDT)
 # ============================================================================
 
 resource "aws_cloudwatch_event_rule" "double_signals" {
   name                = "${local.prefix}-double-signals"
   description         = "Check for double signal alerts at 5 PM ET weekdays"
-  schedule_expression = "cron(0 22 ? * MON-FRI *)"
+  schedule_expression = "cron(0 21 ? * MON-FRI *)"
 }
 
 resource "aws_cloudwatch_event_target" "double_signals" {
@@ -894,13 +894,13 @@ resource "aws_lambda_permission" "double_signals" {
 }
 
 # ============================================================================
-# EventBridge - Ticker Health Check (7 AM ET = 12:00 UTC, Mon-Fri)
+# EventBridge - Ticker Health Check (7 AM ET = 11:00 UTC during EDT)
 # ============================================================================
 
 resource "aws_cloudwatch_event_rule" "ticker_health" {
   name                = "${local.prefix}-ticker-health"
   description         = "Run ticker health check at 7 AM ET weekdays"
-  schedule_expression = "cron(0 12 ? * MON-FRI *)"
+  schedule_expression = "cron(0 11 ? * MON-FRI *)"
 }
 
 resource "aws_cloudwatch_event_target" "ticker_health" {
@@ -919,13 +919,13 @@ resource "aws_lambda_permission" "ticker_health" {
 }
 
 # ============================================================================
-# EventBridge - Nightly Walk-Forward + Social Posts (8 PM ET = 01:00 UTC next day, Tue-Sat)
+# EventBridge - Nightly Walk-Forward + Social Posts (8 PM ET = 00:00 UTC next day during EDT, Tue-Sat)
 # ============================================================================
 
 resource "aws_cloudwatch_event_rule" "nightly_wf" {
   name                = "${local.prefix}-nightly-wf"
   description         = "Run nightly walk-forward and generate social posts"
-  schedule_expression = "cron(0 1 ? * TUE-SAT *)"
+  schedule_expression = "cron(0 0 ? * TUE-SAT *)"
 }
 
 resource "aws_cloudwatch_event_target" "nightly_wf" {
@@ -944,13 +944,13 @@ resource "aws_lambda_permission" "nightly_wf" {
 }
 
 # ============================================================================
-# EventBridge - Intraday Position Monitor (every 5 min, 9 AM-3 PM ET = 14-20 UTC, Mon-Fri)
+# EventBridge - Intraday Position Monitor (every 5 min, 9 AM-3 PM ET = 13-19 UTC during EDT, Mon-Fri)
 # ============================================================================
 
 resource "aws_cloudwatch_event_rule" "intraday_monitor" {
   name                = "${local.prefix}-intraday-monitor"
   description         = "Monitor positions intraday during market hours"
-  schedule_expression = "cron(0/5 14-20 ? * MON-FRI *)"
+  schedule_expression = "cron(0/5 13-19 ? * MON-FRI *)"
 }
 
 resource "aws_cloudwatch_event_target" "intraday_monitor" {
@@ -1019,13 +1019,13 @@ resource "aws_lambda_permission" "post_notifications" {
 }
 
 # ============================================================================
-# EventBridge - Strategy Auto-Analysis (Fri 6:30 PM ET = 23:30 UTC)
+# EventBridge - Strategy Auto-Analysis (Fri 6:30 PM ET = 22:30 UTC during EDT)
 # ============================================================================
 
 resource "aws_cloudwatch_event_rule" "strategy_analysis" {
   name                = "${local.prefix}-strategy-analysis"
   description         = "Run weekly strategy auto-analysis Friday 6:30 PM ET"
-  schedule_expression = "cron(30 23 ? * FRI *)"
+  schedule_expression = "cron(30 22 ? * FRI *)"
 }
 
 resource "aws_cloudwatch_event_target" "strategy_analysis" {
@@ -1044,13 +1044,13 @@ resource "aws_lambda_permission" "strategy_analysis" {
 }
 
 # ============================================================================
-# EventBridge - Onboarding Drip Emails (10 AM ET = 15:00 UTC, daily)
+# EventBridge - Onboarding Drip Emails (10 AM ET = 14:00 UTC during EDT, daily)
 # ============================================================================
 
 resource "aws_cloudwatch_event_rule" "onboarding_drip" {
   name                = "${local.prefix}-onboarding-drip"
   description         = "Send onboarding drip emails at 10 AM ET daily"
-  schedule_expression = "cron(0 15 * * ? *)"
+  schedule_expression = "cron(0 14 * * ? *)"
 }
 
 resource "aws_cloudwatch_event_target" "onboarding_drip" {
@@ -1068,12 +1068,12 @@ resource "aws_lambda_permission" "onboarding_drip" {
   source_arn    = aws_cloudwatch_event_rule.onboarding_drip.arn
 }
 
-# Weekly pickle rebuild — Saturday 8 PM ET (Sunday 01:00 UTC)
+# Weekly pickle rebuild — Saturday 8 PM ET (Sunday 00:00 UTC during EDT)
 # Catches new symbols added to universe, rebuilds missing symbol cache
 resource "aws_cloudwatch_event_rule" "pickle_rebuild" {
   name                = "${local.prefix}-pickle-rebuild"
   description         = "Weekly pickle rebuild for missing universe symbols"
-  schedule_expression = "cron(0 1 ? * SUN *)"
+  schedule_expression = "cron(0 0 ? * SUN *)"
 }
 
 resource "aws_cloudwatch_event_target" "pickle_rebuild" {
@@ -1092,7 +1092,7 @@ resource "aws_lambda_permission" "pickle_rebuild" {
 }
 
 # ============================================================================
-# EventBridge - Daily Pipeline Health Report (7:30 AM ET = 12:30 UTC, daily)
+# EventBridge - Daily Pipeline Health Report (7:30 AM ET = 11:30 UTC during EDT, daily)
 # Runs lightweight checks (S3 HEAD, CloudWatch, DB counts) — no pickle loading.
 # Emails admins only when warnings/errors are detected.
 # ============================================================================
@@ -1100,7 +1100,7 @@ resource "aws_lambda_permission" "pickle_rebuild" {
 resource "aws_cloudwatch_event_rule" "pipeline_health" {
   name                = "${local.prefix}-pipeline-health"
   description         = "Daily pipeline health report at 7:30 AM ET"
-  schedule_expression = "cron(30 12 * * ? *)"
+  schedule_expression = "cron(30 11 * * ? *)"
 }
 
 resource "aws_cloudwatch_event_target" "pipeline_health" {
@@ -1121,7 +1121,7 @@ resource "aws_lambda_permission" "pipeline_health" {
 resource "aws_cloudwatch_event_rule" "generate_social_posts" {
   name                = "${local.prefix}-generate-social-posts"
   description         = "Generate AI social posts from live portfolio trades at 9 PM ET"
-  schedule_expression = "cron(0 2 ? * TUE-SAT *)"
+  schedule_expression = "cron(0 1 ? * TUE-SAT *)"
 }
 
 resource "aws_cloudwatch_event_target" "generate_social_posts" {
