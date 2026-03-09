@@ -1370,6 +1370,95 @@ def handler(event, context):
             traceback.print_exc()
             return {"status": "failed", "error": str(e)}
 
+    # Handle data-only pickle update (no signals, no dashboard, no portfolio)
+    if event.get("data_fill"):
+        print(f"📡 Data fill triggered - {len(scanner_service.data_cache)} symbols in cache")
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        async def _data_fill():
+            import pickle, gzip, time as _time
+            from app.services.data_export import data_export_service, S3_BUCKET
+
+            # 1. Load pickle if cache is empty (cold start)
+            if not scanner_service.data_cache:
+                print("📦 Cache empty, loading pickle from S3...")
+                loaded = data_export_service.import_all()
+                scanner_service.data_cache.update(loaded)
+                print(f"📦 Loaded {len(scanner_service.data_cache)} symbols from pickle")
+
+            if not scanner_service.data_cache:
+                return {"status": "failed", "error": "No data in cache after load attempt"}
+
+            # 2. Apply force_source if specified
+            force_source = event.get("force_source")
+            if force_source:
+                from app.services.market_data_provider import market_data_provider as mdp
+                mdp.force_source = force_source
+                print(f"📡 Forcing data source: {force_source}")
+
+            # 3. Incremental fetch — appends new bars to in-memory cache
+            replace_days = event.get("replace_days", 0)
+            print(f"📡 Running fetch_incremental (replace_days={replace_days})...")
+            t0 = _time.time()
+            inc_result = await scanner_service.fetch_incremental(replace_days=replace_days)
+            fetch_time = _time.time() - t0
+            print(f"📡 Fetch complete in {fetch_time:.1f}s: {inc_result}")
+
+            # Reset force_source
+            if force_source:
+                from app.services.market_data_provider import market_data_provider as mdp
+                mdp.force_source = None
+
+            # 4. Stream pickle to /tmp → S3
+            clean_cache = {s: df for s, df in scanner_service.data_cache.items() if len(df) >= 50}
+            tmp_path = "/tmp/all_data.pkl.gz"
+            print(f"💾 Writing {len(clean_cache)} symbols to {tmp_path}...")
+            t0 = _time.time()
+            with gzip.open(tmp_path, "wb", compresslevel=1) as f:
+                pickle.dump(clean_cache, f, protocol=pickle.HIGHEST_PROTOCOL)
+            file_size = os.path.getsize(tmp_path)
+            print(f"💾 Pickle file: {file_size / 1024 / 1024:.1f} MB in {_time.time() - t0:.1f}s")
+
+            s3 = data_export_service._get_s3_client()
+            s3.upload_file(tmp_path, S3_BUCKET, "prices/all_data.pkl.gz")
+            os.remove(tmp_path)
+            print(f"✅ Pickle uploaded to S3")
+
+            # 5. Chain CSV export if requested (default: true)
+            if event.get("export_csvs", True):
+                try:
+                    import boto3, json as _json
+                    boto3.client('lambda', region_name='us-east-1').invoke(
+                        FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker'),
+                        InvocationType='Event',
+                        Payload=_json.dumps({"csv_export_from_scan": True})
+                    )
+                    print("🔗 Chained CSV export")
+                except Exception as ce:
+                    print(f"⚠️ Failed to chain CSV export: {ce}")
+
+            return {
+                "status": "success",
+                "fetch_result": inc_result,
+                "fetch_time_seconds": round(fetch_time, 1),
+                "pickle_size_mb": round(file_size / 1024 / 1024, 2),
+                "symbols": len(clean_cache),
+                "export_csvs": event.get("export_csvs", True),
+            }
+
+        try:
+            result = loop.run_until_complete(_data_fill())
+            print(f"📡 Data fill result: {result}")
+            return result
+        except Exception as e:
+            import traceback
+            print(f"❌ Data fill failed: {e}")
+            traceback.print_exc()
+            return {"status": "failed", "error": str(e)}
+
     # Handle pickle rebuild (self-chaining catch-up queue for missing symbols)
     if event.get("pickle_rebuild"):
         print(f"🔨 Pickle rebuild triggered - {len(scanner_service.data_cache)} symbols in cache")
