@@ -385,7 +385,7 @@ async def _run_walk_forward_job(job_config: dict, wf_state_key: str = None):
         job_config: Walk-forward job configuration dict
         wf_state_key: S3 key for continuation state (set by self-chaining)
     """
-    import json
+    import json, os
     from datetime import datetime
     from app.services.walk_forward_service import walk_forward_service
     from sqlalchemy import select
