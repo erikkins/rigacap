@@ -690,9 +690,16 @@ class WalkForwardService:
                 raise RuntimeError(f"Strategy with id {fixed_strategy_id} not found")
             print(f"[WF-SERVICE] Using FIXED strategy: {fixed_strategy.name} (id={fixed_strategy_id}), ai={enable_ai_optimization}")
 
-        # Get top liquid symbols (use max_symbols param for full universe testing)
-        top_symbols = get_top_liquid_symbols(max_symbols=max_symbols)
-        print(f"[WF-SERVICE] Got {len(top_symbols) if top_symbols else 0} top symbols")
+        # Get symbol universe for simulation
+        # max_symbols=0 means use full universe (no volume pre-filter), matching production scan behavior
+        if max_symbols == 0:
+            from app.services.scanner import scanner_service, _EXCLUDED_SET
+            top_symbols = [s for s in scanner_service.data_cache.keys()
+                           if s not in _EXCLUDED_SET and len(scanner_service.data_cache[s]) >= 200]
+            print(f"[WF-SERVICE] Using FULL universe: {len(top_symbols)} symbols (no volume pre-filter)")
+        else:
+            top_symbols = get_top_liquid_symbols(max_symbols=max_symbols)
+            print(f"[WF-SERVICE] Got {len(top_symbols) if top_symbols else 0} top symbols (by volume)")
         if not top_symbols:
             raise RuntimeError("No liquid symbols found. Ensure data is loaded.")
 
@@ -1257,8 +1264,15 @@ class WalkForwardService:
         total_periods = len(periods)
         print(f"[WF-INIT] {total_periods} periods, {len(strategies)} strategies")
 
-        # Get top symbols
-        top_symbols = get_top_liquid_symbols(max_symbols=config.get("max_symbols", 50))
+        # Get symbol universe
+        _max_symbols = config.get("max_symbols", 50)
+        if _max_symbols == 0:
+            from app.services.scanner import scanner_service, _EXCLUDED_SET
+            top_symbols = [s for s in scanner_service.data_cache.keys()
+                           if s not in _EXCLUDED_SET and len(scanner_service.data_cache[s]) >= 200]
+            print(f"[WF-INIT] Using FULL universe: {len(top_symbols)} symbols")
+        else:
+            top_symbols = get_top_liquid_symbols(max_symbols=_max_symbols)
         if not top_symbols:
             raise RuntimeError("No liquid symbols found. Ensure data is loaded.")
 
@@ -1366,8 +1380,14 @@ class WalkForwardService:
         )
         strategies = result.scalars().all()
 
-        # Get top symbols
-        top_symbols = get_top_liquid_symbols(max_symbols=config.get("max_symbols", 50))
+        # Get symbol universe
+        _max_symbols = config.get("max_symbols", 50)
+        if _max_symbols == 0:
+            from app.services.scanner import scanner_service, _EXCLUDED_SET
+            top_symbols = [s for s in scanner_service.data_cache.keys()
+                           if s not in _EXCLUDED_SET and len(scanner_service.data_cache[s]) >= 200]
+        else:
+            top_symbols = get_top_liquid_symbols(max_symbols=_max_symbols)
 
         # Reconstruct active state from state dict
         active_strategy = None
