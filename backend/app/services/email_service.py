@@ -2328,6 +2328,10 @@ Trading involves risk. Past performance does not guarantee future results.
             arrow = "↑" if pct >= 0 else "↓"
             vix_delta = f' <span style="color:{"#EF4444" if pct >= 0 else "#10B981"}">{arrow}{abs(pct):.1f}%</span>'
 
+        # Pre-format values for HTML template (avoid nested f-string issues on Lambda)
+        spy_display = f"${spy_close:.2f}" if spy_close else "N/A"
+        vix_display = f"{vix_close:.1f}" if vix_close else "N/A"
+
         # Transition probabilities
         probs_raw = latest.get('probabilities')
         probs = {}
@@ -2420,7 +2424,7 @@ Trading involves risk. Past performance does not guarantee future results.
         <tr>
           <td width="50%" style="text-align:center;padding:12px;background:#f9fafb;border-radius:8px 0 0 8px;">
             <p style="margin:0;font-size:12px;color:#6b7280;text-transform:uppercase;">S&amp;P 500</p>
-            <p style="margin:4px 0 0 0;font-size:20px;font-weight:700;color:#172554;">${spy_close:.2f if spy_close else 'N/A'}{spy_delta}</p>
+            <p style="margin:4px 0 0 0;font-size:20px;font-weight:700;color:#172554;">{spy_display}{spy_delta}</p>
           </td>
           <td width="50%" style="text-align:center;padding:12px;background:#f9fafb;border-radius:0 8px 8px 0;">
             <p style="margin:0;font-size:12px;color:#6b7280;text-transform:uppercase;">Market Fear</p>
