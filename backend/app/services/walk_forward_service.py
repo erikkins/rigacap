@@ -705,7 +705,7 @@ class WalkForwardService:
         # This is NOT a signal filter — the backtester still applies the full entry criteria
         # on every date. This just avoids iterating ~5000 symbols that always fail immediately.
         if max_symbols == 0:
-            from app.services.scanner import scanner_service, _EXCLUDED_SET
+            from app.services.scanner import _EXCLUDED_SET
             top_symbols = [s for s, df in scanner_service.data_cache.items()
                            if s not in _EXCLUDED_SET and len(df) >= 200
                            and 'volume' in df.columns and 'close' in df.columns
@@ -1388,7 +1388,7 @@ class WalkForwardService:
         # Get symbol universe
         _max_symbols = config.get("max_symbols", 50)
         if _max_symbols == 0:
-            from app.services.scanner import scanner_service, _EXCLUDED_SET
+            from app.services.scanner import _EXCLUDED_SET
             top_symbols = [s for s, df in scanner_service.data_cache.items()
                            if s not in _EXCLUDED_SET and len(df) >= 200
                            and 'volume' in df.columns and 'close' in df.columns
@@ -1506,7 +1506,7 @@ class WalkForwardService:
         # Get symbol universe
         _max_symbols = config.get("max_symbols", 50)
         if _max_symbols == 0:
-            from app.services.scanner import scanner_service, _EXCLUDED_SET
+            from app.services.scanner import _EXCLUDED_SET
             top_symbols = [s for s, df in scanner_service.data_cache.items()
                            if s not in _EXCLUDED_SET and len(df) >= 200
                            and 'volume' in df.columns and 'close' in df.columns
