@@ -1086,7 +1086,7 @@ def handler(event, context):
 
                 import boto3, json as _json
                 _lambda = boto3.client('lambda', region_name='us-east-1')
-                _worker = os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-api')
+                _worker = os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker')
                 # Defer pickle rebuild
                 _lambda.invoke(
                     FunctionName=_worker,
@@ -1216,13 +1216,25 @@ def handler(event, context):
             try:
                 import boto3, json as _json
                 boto3.client('lambda', region_name='us-east-1').invoke(
-                    FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-api'),
+                    FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker'),
                     InvocationType='Event',
                     Payload=_json.dumps({"daily_wf_cache": True})
                 )
                 print("📊 Chained daily WF cache refresh")
             except Exception as ce:
                 print(f"⚠️ Failed to chain WF cache (non-fatal): {ce}")
+
+            # 10. Chain CSV export (async, separate Lambda invocation)
+            try:
+                import boto3, json as _json
+                boto3.client('lambda', region_name='us-east-1').invoke(
+                    FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker'),
+                    InvocationType='Event',
+                    Payload=_json.dumps({"csv_export_from_scan": True})
+                )
+                print("📝 Chained CSV export")
+            except Exception as ce:
+                print(f"⚠️ Failed to chain CSV export: {ce}")
 
             return {
                 "status": "success",
@@ -1343,7 +1355,7 @@ def handler(event, context):
                 try:
                     import boto3, json as _json
                     boto3.client('lambda', region_name='us-east-1').invoke(
-                        FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-api'),
+                        FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker'),
                         InvocationType='Event',
                         Payload=_json.dumps({"daily_wf_cache": True})
                     )
@@ -1404,7 +1416,7 @@ def handler(event, context):
             try:
                 import boto3, json as _json
                 boto3.client('lambda', region_name='us-east-1').invoke(
-                    FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-api'),
+                    FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker'),
                     InvocationType='Event',
                     Payload=_json.dumps({"csv_export_from_scan": True})
                 )
@@ -1597,7 +1609,7 @@ def handler(event, context):
                 import boto3, json as _json
                 print(f"🔗 Self-chaining for {remaining_after} remaining symbols...")
                 boto3.client('lambda', region_name='us-east-1').invoke(
-                    FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-api'),
+                    FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker'),
                     InvocationType='Event',  # async fire-and-forget
                     Payload=_json.dumps({"pickle_rebuild": True})
                 )
