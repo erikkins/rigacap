@@ -140,8 +140,15 @@ SP500_ADDITIONS = [
 ]
 
 EXCLUDED_SYMBOLS = [
+    # Leveraged/inverse index ETFs
     'VXX', 'UVXY', 'SVXY', 'SSO', 'SDS', 'SPXU', 'TQQQ', 'SQQQ',
     'QLD', 'QID', 'FAS', 'FAZ', 'TNA', 'TZA',
+    # Leveraged/inverse single-stock ETFs (Direxion, GraniteShares, etc.)
+    'TSLS', 'TSLQ', 'TSLL', 'NVDL', 'NVDS', 'NVDQ',
+    'AAPD', 'AAPU', 'AMZU', 'AMZD', 'MSFU', 'MSFD',
+    'METU', 'METD', 'CONL', 'CONY',
+    # Crypto leveraged ETFs
+    'BITX', 'BITU', 'SBIT',
 ]
 
 def get_universe():
