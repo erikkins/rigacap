@@ -1377,9 +1377,19 @@ class SchedulerService:
                 for sig in new_signals:
                     logger.info(f"   • {sig['symbol']}: ${sig['price']:.2f} (+{sig['pct_above_dwap']:.1f}%) - Mom #{sig['momentum_rank']}")
 
-                # Get market regime for context
-                from app.services.market_analysis import market_analysis_service
-                regime = market_analysis_service.get_market_regime()
+                # Get market regime from S3 dashboard (not in-memory — may be stale on cold start)
+                regime = None
+                try:
+                    from app.services.data_export import data_export_service
+                    dash = data_export_service.read_dashboard_json()
+                    if dash:
+                        ms = dash.get('market_stats', {})
+                        regime = {
+                            'regime': ms.get('regime', 'neutral'),
+                            'spy_price': ms.get('spy_price', 0),
+                        }
+                except Exception as dash_err:
+                    logger.warning(f"Failed to load dashboard for regime context: {dash_err}")
 
                 # Query subscribers with valid subscriptions
                 from app.core.database import async_session as async_sess, User as DBUser2, Subscription as DBSub2
