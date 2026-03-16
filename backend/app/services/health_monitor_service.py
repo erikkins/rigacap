@@ -206,11 +206,36 @@ class HealthMonitorService:
         self, hours: float, weekday_yellow: float, weekday_red: float,
         weekend_yellow: float, weekend_red: float
     ) -> HealthStatus:
-        """Determine status based on hours since update and day-of-week aware thresholds."""
+        """Determine status based on hours since update and day-of-week aware thresholds.
+
+        Uses relaxed (weekend) thresholds when no scan is expected to have run
+        since the data was last refreshed — weekends, holidays, and the period
+        before today's scan completes (e.g. Monday 7:30 AM, data from Friday).
+        """
         now_et = datetime.now(_ET)
-        is_weekend = now_et.weekday() >= 5
-        yellow = weekend_yellow if is_weekend else weekday_yellow
-        red = weekend_red if is_weekend else weekday_red
+        today = now_et.date()
+
+        # Has today's scan already run? Scan is at 4:30 PM ET, allow until 5 PM.
+        todays_scan_done = _is_market_day(today) and now_et.hour >= 17
+
+        if todays_scan_done:
+            # Today is a market day and scan should be done — expect fresh data
+            yellow, red = weekday_yellow, weekday_red
+        elif _is_market_day(today) and now_et.hour < 17:
+            # Today is a market day but scan hasn't run yet.
+            # Check if there's a weekend/holiday gap since last market day.
+            prev_mkt = _last_market_day(today - timedelta(days=1))
+            gap_days = (today - prev_mkt).days
+            if gap_days >= 2:
+                # Weekend/holiday gap (e.g. Monday morning) — relax thresholds
+                yellow, red = weekend_yellow, weekend_red
+            else:
+                # Normal weekday morning (Tue-Fri) — yesterday's scan should exist
+                yellow, red = weekday_yellow, weekday_red
+        else:
+            # Weekend or holiday — no scan expected
+            yellow, red = weekend_yellow, weekend_red
+
         if hours >= red:
             return HealthStatus.RED
         if hours >= yellow:

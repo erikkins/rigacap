@@ -24,7 +24,7 @@ const TABS = [
 
 export default function AdminDashboard() {
   const { fetchWithAuth, isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('rigacap_admin_tab') || 'overview');
   const [stats, setStats] = useState(null);
   const [serviceStatus, setServiceStatus] = useState(null);
   const [users, setUsers] = useState([]);
@@ -259,6 +259,11 @@ export default function AdminDashboard() {
       alert('Failed to activate strategy');
     }
   };
+
+  // Persist admin sub-tab to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem('rigacap_admin_tab', activeTab);
+  }, [activeTab]);
 
   // Initial load
   useEffect(() => {

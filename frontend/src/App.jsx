@@ -1702,7 +1702,11 @@ function Dashboard() {
   const [backtest, setBacktest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('signals');
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = sessionStorage.getItem('rigacap_active_tab');
+    if (saved === 'admin' && !isAdmin) return 'signals';
+    return saved || 'signals';
+  });
   const [dashboardData, setDashboardData] = useState(null); // Unified dashboard data
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -1863,6 +1867,11 @@ function Dashboard() {
 
     return () => clearInterval(interval);
   }, [positions.length, signals.length, timeTravelDate]); // Re-run when positions or signals change
+
+  // Persist active tab to sessionStorage (survives refresh, clears on tab close)
+  useEffect(() => {
+    sessionStorage.setItem('rigacap_active_tab', activeTab);
+  }, [activeTab]);
 
   // Persist view mode to localStorage
   useEffect(() => {
