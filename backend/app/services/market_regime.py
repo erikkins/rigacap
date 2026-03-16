@@ -280,6 +280,12 @@ class MarketRegimeService:
         self._cache: Dict[str, MarketRegime] = {}
         self._regime_history: List[MarketRegime] = []
         self._current_regime_type: Optional[object] = None  # sticky regime for hysteresis
+        self._last_detected_regime: Optional[MarketRegime] = None
+
+    def get_current_regime(self) -> Optional[MarketRegime]:
+        """Return the most recently detected MarketRegime from cache.
+        predict_transitions() / detect_regime() must be called first."""
+        return self._last_detected_regime
 
     def calculate_conditions(
         self,
@@ -502,6 +508,7 @@ class MarketRegimeService:
         )
 
         self._cache[conditions.date] = regime
+        self._last_detected_regime = regime
         return regime
 
     def predict_transitions(
@@ -895,3 +902,83 @@ class MarketRegimeService:
 
 # Singleton instance
 market_regime_service = MarketRegimeService()
+
+
+def get_regime_adjusted_params(regime: MarketRegime) -> dict:
+    """
+    Apply regime param_adjustments offsets to base config values.
+
+    Returns dict with:
+      - 'effective': {param: adjusted_value} for each adjustable param
+      - 'changes': list of {param, base, offset, effective, description} for non-zero offsets
+      - 'regime_name': current regime name
+      - 'risk_level': current risk level
+    """
+    from app.core.config import settings
+
+    # Base values from global config
+    base_params = {
+        'trailing_stop_pct': settings.TRAILING_STOP_PCT,
+        'near_50d_high_pct': settings.NEAR_50D_HIGH_PCT,
+        'max_positions': settings.MAX_POSITIONS,
+        'position_size_pct': settings.POSITION_SIZE_PCT,
+    }
+
+    # Safety bounds
+    bounds = {
+        'trailing_stop_pct': (5.0, 25.0),
+        'near_50d_high_pct': (1.0, 15.0),
+        'max_positions': (2, 10),
+        'position_size_pct': (5.0, 30.0),
+    }
+
+    # Human-readable descriptions for each parameter change direction
+    descriptions = {
+        'trailing_stop_pct': {'+': 'widened', '-': 'tightened'},
+        'near_50d_high_pct': {'+': 'relaxed', '-': 'tightened'},
+        'max_positions': {'+': 'increased', '-': 'reduced'},
+        'position_size_pct': {'+': 'increased', '-': 'reduced'},
+    }
+
+    labels = {
+        'trailing_stop_pct': 'Trailing Stop',
+        'near_50d_high_pct': 'Breakout Filter',
+        'max_positions': 'Max Positions',
+        'position_size_pct': 'Position Size',
+    }
+
+    adjustments = regime.param_adjustments or {}
+    effective = {}
+    changes = []
+
+    for param, base_val in base_params.items():
+        offset = adjustments.get(param, 0)
+        adjusted = base_val + offset
+        lo, hi = bounds[param]
+        # Preserve int type for max_positions
+        if isinstance(base_val, int):
+            adjusted = int(max(lo, min(hi, adjusted)))
+        else:
+            adjusted = round(max(lo, min(hi, adjusted)), 1)
+        effective[param] = adjusted
+
+        if offset != 0:
+            direction = '+' if offset > 0 else '-'
+            desc_word = descriptions.get(param, {}).get(direction, 'adjusted')
+            unit = '%' if 'pct' in param else ''
+            sign = '+' if offset > 0 else ''
+            changes.append({
+                'param': param,
+                'label': labels.get(param, param),
+                'base': base_val,
+                'offset': offset,
+                'effective': adjusted,
+                'description': f"{labels.get(param, param)} {desc_word} to {adjusted}{unit} (base {base_val}{unit}, {sign}{offset})",
+            })
+
+    return {
+        'effective': effective,
+        'changes': changes,
+        'regime_name': regime.regime_name,
+        'risk_level': regime.risk_level,
+    }

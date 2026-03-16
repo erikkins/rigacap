@@ -444,7 +444,7 @@ class ScannerService:
             df['dist_from_50d_high'] = self.distance_from_high(df['close'], 50)
         return df
 
-    def rank_stocks_momentum(self, apply_market_filter: bool = True, as_of_date=None) -> List[MomentumSignalData]:
+    def rank_stocks_momentum(self, apply_market_filter: bool = True, as_of_date=None, regime_params: dict = None) -> List[MomentumSignalData]:
         """
         Rank all stocks by momentum composite score (v2 strategy)
 
@@ -518,7 +518,8 @@ class ScannerService:
             passes_trend = price > ma_20 > 0 and price > ma_50 > 0
 
             # Quality filter: near 50-day high (within NEAR_50D_HIGH_PCT)
-            passes_breakout = dist_from_high >= -settings.NEAR_50D_HIGH_PCT
+            near_50d_high = regime_params.get('near_50d_high_pct', settings.NEAR_50D_HIGH_PCT) if regime_params else settings.NEAR_50D_HIGH_PCT
+            passes_breakout = dist_from_high >= -near_50d_high
 
             passes_quality = passes_trend and passes_breakout
 
@@ -530,7 +531,8 @@ class ScannerService:
             )
 
             # Calculate trailing stop
-            trailing_stop = price * (1 - settings.TRAILING_STOP_PCT / 100)
+            trailing_stop_pct = regime_params.get('trailing_stop_pct', settings.TRAILING_STOP_PCT) if regime_params else settings.TRAILING_STOP_PCT
+            trailing_stop = price * (1 - trailing_stop_pct / 100)
 
             signal_ts = str(as_of_date)[:10] if as_of_date else datetime.now().isoformat()
             candidates.append(MomentumSignalData(

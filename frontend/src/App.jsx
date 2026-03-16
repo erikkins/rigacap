@@ -3002,6 +3002,11 @@ function Dashboard() {
                           }`}>
                             {dashboardData.regime_forecast.recommended_action.replace(/_/g, ' ')}
                           </span>
+                          {dashboardData.regime_adjustments?.changes?.length > 0 && (
+                            <span className="text-xs px-2 py-0.5 rounded font-medium bg-blue-100 text-blue-700">
+                              {dashboardData.regime_adjustments.changes.length} param{dashboardData.regime_adjustments.changes.length > 1 ? 's' : ''} adjusted
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -3118,6 +3123,21 @@ function Dashboard() {
                             );
                           })}
                         </div>
+
+                        {/* Regime-adaptive parameter adjustments */}
+                        {dashboardData.regime_adjustments?.changes?.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <p className="text-xs text-gray-500 font-medium mb-2">Active Parameter Adjustments</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                              {dashboardData.regime_adjustments.changes.map(change => (
+                                <div key={change.param} className="flex items-center gap-2 text-xs">
+                                  <div className={`w-1.5 h-1.5 rounded-full ${change.offset > 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                                  <span className="text-gray-700">{change.description}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}

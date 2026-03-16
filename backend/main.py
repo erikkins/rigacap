@@ -856,6 +856,55 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"statusCode": 500, "error": str(e)}
 
+    # Unwind pre-universe-change model portfolio positions
+    if event.get("unwind_old_positions"):
+        print("🔄 Unwinding pre-universe-change model portfolio positions")
+        try:
+            cutoff_date = event.get("cutoff_date", "2026-03-09")
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            async def _unwind():
+                from sqlalchemy import text
+                from app.core.database import async_session
+                async with async_session() as db:
+                    # Close pre-cutoff positions
+                    close_result = await db.execute(text(
+                        "UPDATE model_positions "
+                        "SET status = 'closed', exit_date = NOW(), exit_reason = 'universe_change' "
+                        "WHERE status = 'open' AND entry_date < :cutoff"
+                    ), {"cutoff": cutoff_date})
+                    closed_count = close_result.rowcount
+
+                    # Recalculate cash from closed positions (return capital)
+                    cash_result = await db.execute(text(
+                        "SELECT COALESCE(SUM(shares * COALESCE(exit_price, entry_price)), 0) "
+                        "FROM model_positions "
+                        "WHERE exit_reason = 'universe_change' AND status = 'closed'"
+                    ))
+                    returned_capital = float(cash_result.scalar() or 0)
+
+                    # Update portfolio state
+                    await db.execute(text(
+                        "UPDATE model_portfolio_state "
+                        "SET current_cash = current_cash + :capital "
+                        "WHERE portfolio_type = 'ensemble'"
+                    ), {"capital": returned_capital})
+
+                    await db.commit()
+                    return {"closed": closed_count, "returned_capital": round(returned_capital, 2)}
+
+            result = loop.run_until_complete(_unwind())
+            print(f"🔄 Unwind result: {result}")
+            return {"statusCode": 200, "body": result}
+        except Exception as e:
+            import traceback
+            print(f"❌ Unwind failed: {e}")
+            print(traceback.format_exc())
+            return {"statusCode": 500, "error": str(e)}
+
     # Ensure data is loaded on cold start
     _ensure_lambda_data_loaded()
 

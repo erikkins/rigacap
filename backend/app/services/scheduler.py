@@ -1351,8 +1351,21 @@ class SchedulerService:
             from sqlalchemy import select
             from app.api.signals import find_dwap_crossover_date
 
+            # Compute regime-adjusted params for consistency with dashboard
+            regime_effective_params = None
+            try:
+                from app.services.market_regime import market_regime_service, get_regime_adjusted_params
+                current_regime = market_regime_service.get_current_regime()
+                if current_regime:
+                    regime_effective_params = get_regime_adjusted_params(current_regime)['effective']
+            except Exception as re_err:
+                logger.warning(f"Regime params for double signals (non-fatal): {re_err}")
+
             # Get momentum rankings (top 20)
-            momentum_rankings = scanner_service.rank_stocks_momentum(apply_market_filter=True)
+            momentum_rankings = scanner_service.rank_stocks_momentum(
+                apply_market_filter=True,
+                regime_params=regime_effective_params,
+            )
             top_momentum = {
                 r.symbol: {'rank': i + 1, 'data': r}
                 for i, r in enumerate(momentum_rankings[:20])
@@ -1536,9 +1549,22 @@ class SchedulerService:
                 logger.warning("📧 No persisted signals found, falling back to live scan")
                 from app.api.signals import find_dwap_crossover_date, find_ensemble_entry_date, compute_signal_strength, get_signal_strength_label, compute_spy_trend
 
+                # Compute regime-adjusted params for consistency
+                regime_effective_params = None
+                try:
+                    from app.services.market_regime import market_regime_service, get_regime_adjusted_params
+                    current_regime = market_regime_service.get_current_regime()
+                    if current_regime:
+                        regime_effective_params = get_regime_adjusted_params(current_regime)['effective']
+                except Exception:
+                    pass
+
                 dwap_signals = await scanner_service.scan(refresh_data=False, apply_market_filter=True)
                 dwap_by_symbol = {s.symbol: s for s in dwap_signals}
-                momentum_rankings = scanner_service.rank_stocks_momentum(apply_market_filter=True)
+                momentum_rankings = scanner_service.rank_stocks_momentum(
+                    apply_market_filter=True,
+                    regime_params=regime_effective_params,
+                )
                 momentum_top_n = 30
                 fresh_days = 5
                 momentum_by_symbol = {

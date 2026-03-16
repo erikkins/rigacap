@@ -582,6 +582,18 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
         print(f"Regime forecast error: {e}")
         traceback.print_exc()
 
+    # --- Regime-adaptive parameters ---
+    regime_adjustments = None
+    regime_effective_params = None
+    try:
+        from app.services.market_regime import market_regime_service, get_regime_adjusted_params
+        current_regime = market_regime_service.get_current_regime()
+        if current_regime:
+            regime_adjustments = get_regime_adjusted_params(current_regime)
+            regime_effective_params = regime_adjustments['effective']
+    except Exception as e:
+        print(f"Regime adjustments error (non-fatal): {e}")
+
     # --- Buy signals + Watchlist (single momentum ranking call) ---
     buy_signals = []
     watchlist = []
@@ -590,7 +602,10 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
         dwap_by_symbol = {s.symbol: s for s in dwap_signals}
 
         # Single momentum ranking call — reused for both buy signals and watchlist
-        momentum_rankings = scanner_service.rank_stocks_momentum(apply_market_filter=True)
+        momentum_rankings = scanner_service.rank_stocks_momentum(
+            apply_market_filter=True,
+            regime_params=regime_effective_params,
+        )
         momentum_by_symbol = {
             r.symbol: {'rank': i + 1, 'data': r}
             for i, r in enumerate(momentum_rankings[:momentum_top_n])
@@ -746,7 +761,7 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
 
     # --- Missed opportunities ---
     missed_opportunities = []
-    TRAILING_STOP_PCT = 0.12
+    TRAILING_STOP_PCT = (regime_effective_params['trailing_stop_pct'] / 100) if regime_effective_params else 0.12
     try:
         from app.core.database import WalkForwardSimulation
         import json as _json
@@ -1195,6 +1210,7 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
 
     return {
         'regime_forecast': regime_forecast_data,
+        'regime_adjustments': regime_adjustments,
         'buy_signals': buy_signals,
         'watchlist': watchlist,
         'market_stats': market_stats,
@@ -1254,9 +1270,18 @@ async def _get_positions_with_guidance(db: AsyncSession, user, regime_forecast_d
                 except Exception:
                     pass
 
+            # Use regime-adjusted trailing stop if available
+            from app.services.market_regime import get_regime_adjusted_params
+            regime_trailing_stop = settings.TRAILING_STOP_PCT
+            current_regime = market_regime_service.get_current_regime()
+            if current_regime:
+                adjusted = get_regime_adjusted_params(current_regime)
+                regime_trailing_stop = adjusted['effective']['trailing_stop_pct']
+
             positions_with_guidance = scanner_service.generate_sell_signals(
                 positions=pos_dicts,
                 regime_forecast=regime_forecast_obj,
+                trailing_stop_pct=regime_trailing_stop,
             )
     except Exception as e:
         print(f"Positions guidance error: {e}")
