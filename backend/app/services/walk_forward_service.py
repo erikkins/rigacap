@@ -24,6 +24,7 @@ from app.services.strategy_analyzer import StrategyAnalyzerService, CustomBackte
 from app.services.scanner import scanner_service
 from app.services.market_regime import market_regime_service, MarketRegime, REGIME_DEFINITIONS
 from app.services.optuna_optimizer import StrategyOptimizer
+from app.services.optuna_optimizer_v2 import StrategyOptimizerV2
 
 
 @dataclass
@@ -312,35 +313,94 @@ class WalkForwardService:
         lookback_days: int,
         ticker_list: List[str],
         warm_start_params: Optional[Dict[str, Any]] = None,
-        n_trials: int = 30
+        n_trials: int = 30,
+        optimizer_version: str = "v1",
+        risk_preference: float = 0.5
     ) -> Optional[AIOptimizationResult]:
         """
         Run AI parameter optimization using Optuna Bayesian search.
 
-        Uses TPE (Tree-structured Parzen Estimator) over a continuous
-        parameter space with regime-specific constraints and warm-starting
-        from the previous period's best params.
+        V1: Single-objective (adaptive_score), 8 params.
+        V2: Multi-objective (return vs drawdown Pareto), 22 params with 7 alpha levers.
         """
         regime = self._detect_market_regime_at_date(as_of_date)
 
         # Build base params (non-tuned parameters)
         if strategy_type in ("momentum", "ensemble"):
             base_params = {
-                "long_momentum_days": 60,
                 "min_volume": 500_000,
                 "min_price": 20.0,
                 "market_filter_enabled": True,
             }
+            # V1 hardcodes long_momentum_days; V2 tunes it
+            if optimizer_version == "v1":
+                base_params["long_momentum_days"] = 60
         else:
             base_params = {
                 "min_volume": 500_000,
                 "min_price": 20.0,
             }
 
-        # Objective: merge Optuna-suggested params with base, run backtest, return score
         combinations_tested = 0
         best_full_result = {"data": None}
 
+        if optimizer_version == "v2":
+            # V2: Multi-objective, returns (return_pct, max_drawdown_pct) tuple
+            # We store full_params (base + suggested) in suggested_params dict so the
+            # optimizer's trial_results contain params usable by StrategyParams(**params).
+            def objective_v2(suggested_params: Dict[str, Any]) -> Optional[Tuple[float, float]]:
+                nonlocal combinations_tested
+                # V2 may suggest optimization_lookback_days — use it for this trial's backtest
+                trial_lookback = suggested_params.pop("optimization_lookback_days", lookback_days)
+                # Merge base params INTO suggested_params so trial_results stores full params
+                for k, v in base_params.items():
+                    if k not in suggested_params:
+                        suggested_params[k] = v
+                result_data = self._test_param_combination(
+                    suggested_params, strategy_type, as_of_date, trial_lookback, ticker_list, regime
+                )
+                combinations_tested += 1
+                if result_data is None:
+                    return None
+                # Track for metadata
+                if best_full_result["data"] is None or result_data["total_return_pct"] > best_full_result["data"]["total_return_pct"]:
+                    best_full_result["data"] = result_data
+                return (result_data["total_return_pct"], result_data["max_drawdown_pct"])
+
+            optimizer = StrategyOptimizerV2()
+            opt_result = optimizer.optimize(
+                strategy_type=strategy_type,
+                objective_fn=objective_v2,
+                regime_risk_level=regime.risk_level,
+                warm_start_params=warm_start_params,
+                n_trials=n_trials,
+                seed_date=as_of_date,
+                risk_preference=risk_preference,
+            )
+
+            if opt_result:
+                best = best_full_result["data"] or {}
+                return AIOptimizationResult(
+                    date=as_of_date.strftime('%Y-%m-%d'),
+                    best_params=opt_result["best_params"],
+                    expected_sharpe=best.get("sharpe_ratio", 0),
+                    expected_return_pct=opt_result["best_return"],
+                    strategy_type=strategy_type,
+                    market_regime=regime.regime_type.value,
+                    was_adopted=False,
+                    reason="",
+                    expected_sortino=best.get("sortino_ratio", 0),
+                    expected_calmar=best.get("calmar_ratio", 0),
+                    expected_profit_factor=best.get("profit_factor", 0),
+                    expected_max_dd=opt_result["best_drawdown"],
+                    combinations_tested=combinations_tested,
+                    regime_confidence=regime.confidence,
+                    regime_risk_level=regime.risk_level,
+                    adaptive_score=opt_result["best_return"],  # Use return as score for V2
+                )
+            return None
+
+        # V1: Single-objective (adaptive_score)
         def objective(suggested_params: Dict[str, Any]) -> Optional[float]:
             nonlocal combinations_tested
             test_params = {**base_params, **suggested_params}
@@ -350,7 +410,6 @@ class WalkForwardService:
             combinations_tested += 1
             if result_data is None:
                 return None
-            # Track the full result for the best trial
             if best_full_result["data"] is None or result_data["adaptive_score"] > best_full_result["data"]["adaptive_score"]:
                 best_full_result["data"] = result_data
             return result_data["adaptive_score"]
@@ -388,6 +447,35 @@ class WalkForwardService:
 
         return None
 
+    def _apply_sector_cap(self, ticker_list: List[str], sector_cap: int) -> List[str]:
+        """
+        Filter ticker list to enforce max N stocks per GICS sector.
+        Uses stock_universe_service for sector metadata.
+        Stocks with unknown sector are not capped.
+        """
+        if sector_cap <= 0:
+            return ticker_list
+
+        try:
+            from app.services.stock_universe import stock_universe_service
+        except ImportError:
+            return ticker_list
+
+        sector_counts: Dict[str, int] = {}
+        filtered = []
+        for symbol in ticker_list:
+            info = stock_universe_service.get_symbol_info(symbol)
+            sector = (info.get("sector", "") if info else "") or ""
+            if not sector:
+                filtered.append(symbol)
+                continue
+            count = sector_counts.get(sector, 0)
+            if count < sector_cap:
+                filtered.append(symbol)
+                sector_counts[sector] = count + 1
+
+        return filtered
+
     def _test_param_combination(
         self,
         test_params: Dict[str, Any],
@@ -405,11 +493,16 @@ class WalkForwardService:
             backtester = CustomBacktester()
             backtester.configure(params)
 
+            # Apply sector cap to ticker list if V2 param is set
+            effective_tickers = ticker_list
+            if params.sector_cap > 0:
+                effective_tickers = self._apply_sector_cap(ticker_list, params.sector_cap)
+
             result = backtester.run_backtest(
                 lookback_days=lookback_days,
                 end_date=as_of_date,
                 strategy_type=strategy_type,
-                ticker_list=ticker_list
+                ticker_list=effective_tickers
             )
 
             metrics = {
@@ -467,11 +560,16 @@ class WalkForwardService:
             if position_size_pct_override is not None:
                 backtester.position_size_pct = position_size_pct_override / 100
 
+            # Apply sector cap to ticker list if V2 param is set
+            effective_tickers = ticker_list
+            if strategy_params.sector_cap > 0 and ticker_list:
+                effective_tickers = self._apply_sector_cap(ticker_list, strategy_params.sector_cap)
+
             result = backtester.run_backtest(
                 start_date=start_date,
                 end_date=end_date,
                 strategy_type=strategy_type,
-                ticker_list=ticker_list,
+                ticker_list=effective_tickers,
                 force_close_at_end=force_close_at_end,
                 initial_positions=initial_positions
             )
@@ -641,7 +739,9 @@ class WalkForwardService:
         max_positions: Optional[int] = None,  # Override strategy's max_positions for A/B testing
         position_size_pct: Optional[float] = None,  # Override strategy's position_size_pct for A/B testing
         periods_limit: int = 0,  # Max periods per chunk (0 = unlimited, for self-chaining)
-        continuation_state: Optional[Dict] = None  # Restored state from previous chunk
+        continuation_state: Optional[Dict] = None,  # Restored state from previous chunk
+        optimizer_version: str = "v1",  # "v1" or "v2" — V2 uses multi-objective Pareto
+        risk_preference: float = 0.5,  # V2 only: 0.0=conservative, 1.0=aggressive
     ) -> WalkForwardResult:
         """
         Run walk-forward simulation with AI optimization over a historical period.
@@ -676,7 +776,8 @@ class WalkForwardService:
         start_period = continuation_state.get("period_index", 0) if is_continuation else 0
         print(f"[WF-SERVICE] {'Resuming' if is_continuation else 'Starting'} simulation: {start_date} to {end_date}, "
               f"ai={enable_ai_optimization}, fixed_strategy={fixed_strategy_id}, "
-              f"max_positions={max_positions}, position_size_pct={position_size_pct}"
+              f"max_positions={max_positions}, position_size_pct={position_size_pct}, "
+              f"optimizer={optimizer_version}, risk_pref={risk_preference}"
               + (f", resuming from period {start_period}" if is_continuation else "")
               + (f", periods_limit={periods_limit}" if periods_limit else ""))
 
@@ -751,6 +852,9 @@ class WalkForwardService:
 
             prev_active_strategy_id = continuation_state.get("prev_active_strategy_id")
             prev_using_ai_params = continuation_state.get("prev_using_ai_params", False)
+            # Restore V2 params from continuation state (override function args)
+            optimizer_version = continuation_state.get("optimizer_version", optimizer_version)
+            risk_preference = continuation_state.get("risk_preference", risk_preference)
 
             print(f"[WF-SERVICE] Restored state: capital=${capital:,.2f}, {len(equity_curve)} equity points, "
                   f"{len(all_trades)} trades, {len(carried_positions)} carried positions")
@@ -881,6 +985,8 @@ class WalkForwardService:
                     "warm_start_params": previous_best_params,
                     "prev_active_strategy_id": prev_active_strategy_id,
                     "prev_using_ai_params": prev_using_ai_params,
+                    "optimizer_version": optimizer_version,
+                    "risk_preference": risk_preference,
                 }
                 return WalkForwardResult(
                     start_date=start_date.strftime('%Y-%m-%d'),
@@ -941,7 +1047,9 @@ class WalkForwardService:
                     ai_result = self._run_ai_optimization_at_date(
                         period_start, ai_strategy_type, lookback_days, top_symbols,
                         warm_start_params=previous_best_params,
-                        n_trials=n_trials
+                        n_trials=n_trials,
+                        optimizer_version=optimizer_version,
+                        risk_preference=risk_preference,
                     )
                     if ai_result:
                         period_ai_opt = ai_result

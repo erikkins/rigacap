@@ -466,6 +466,8 @@ async def _run_walk_forward_job(job_config: dict, wf_state_key: str = None):
                 position_size_pct=job_config.get("position_size_pct"),
                 periods_limit=periods_limit,
                 continuation_state=continuation_state,
+                optimizer_version=job_config.get("optimizer_version", "v1"),
+                risk_preference=job_config.get("risk_preference", 0.5),
             )
 
             # Check if more chunks are needed

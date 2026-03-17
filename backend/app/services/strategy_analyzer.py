@@ -48,6 +48,15 @@ class StrategyParams:
     # DWAP Hybrid uses: dwap_threshold_pct (entry), trailing_stop_pct (exit)
     # It combines DWAP entry signals with momentum-style trailing stops
 
+    # V2 params (backward compatible defaults = disabled/no-op)
+    rsi_oversold_filter: int = 100          # RSI threshold; 100 = disabled
+    volume_ratio_min: float = 0.0           # Min vol/20d avg ratio; 0 = disabled
+    exit_type: str = "trailing_stop"        # "trailing_stop", "hybrid", "time_capped"
+    hybrid_initial_target_pct: float = 15.0
+    hybrid_trailing_pct: float = 8.0
+    max_hold_days: int = 60
+    sector_cap: int = 0                     # Max positions per sector; 0 = disabled
+
     @classmethod
     def from_json(cls, json_str: str) -> "StrategyParams":
         """Create StrategyParams from JSON string"""
@@ -97,6 +106,15 @@ class CustomBacktester(BacktesterService):
         self.long_mom_weight = params.long_mom_weight
         self.volatility_penalty = params.volatility_penalty
         self.near_50d_high_pct = params.near_50d_high_pct
+
+        # V2 params
+        self.rsi_oversold_filter = params.rsi_oversold_filter
+        self.volume_ratio_min = params.volume_ratio_min
+        self.exit_type = params.exit_type
+        self.hybrid_initial_target_pct = params.hybrid_initial_target_pct
+        self.hybrid_trailing_pct = params.hybrid_trailing_pct
+        self.max_hold_days = params.max_hold_days
+        self.sector_cap = params.sector_cap
 
 
 class StrategyAnalyzerService:

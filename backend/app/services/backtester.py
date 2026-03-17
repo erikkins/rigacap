@@ -204,6 +204,14 @@ class BacktesterService:
         self.long_mom_weight = settings.LONG_MOM_WEIGHT
         self.volatility_penalty = settings.VOLATILITY_PENALTY
         self.near_50d_high_pct = settings.NEAR_50D_HIGH_PCT
+        # V2 params (defaults = disabled/no-op for backward compatibility)
+        self.rsi_oversold_filter = 100   # 100 = disabled
+        self.volume_ratio_min = 0.0      # 0 = disabled
+        self.exit_type = "trailing_stop"
+        self.hybrid_initial_target_pct = 15.0
+        self.hybrid_trailing_pct = 8.0
+        self.max_hold_days = 60
+        self.sector_cap = 0              # 0 = disabled
 
     def _calculate_enhanced_metrics(
         self,
@@ -554,6 +562,22 @@ class BacktesterService:
         if price < self.min_price or volume < self.min_volume:
             return None
 
+        # V2: Volume ratio filter (reject if today's volume / 20d avg < threshold)
+        if self.volume_ratio_min > 0:
+            vol_20d_avg = df['volume'].iloc[max(0, loc-19):loc+1].mean()
+            if vol_20d_avg > 0 and (volume / vol_20d_avg) < self.volume_ratio_min:
+                return None
+
+        # V2: RSI filter (reject if RSI > threshold, i.e. overextended)
+        if self.rsi_oversold_filter < 100:
+            closes_for_rsi = df['close'].iloc[max(0, loc-14):loc+1]
+            if len(closes_for_rsi) >= 15:
+                from app.services.strategy_params_v2 import compute_rsi
+                rsi_series = compute_rsi(closes_for_rsi, period=14)
+                current_rsi = rsi_series.iloc[-1]
+                if not pd.isna(current_rsi) and current_rsi > self.rsi_oversold_filter:
+                    return None
+
         # Calculate momentum
         short_mom_price = df.iloc[loc - self.short_mom_days]['close']
         long_mom_price = df.iloc[loc - self.long_mom_days]['close']
@@ -653,11 +677,25 @@ class BacktesterService:
                     stop_loss_pct=self.stop_loss_pct * 100 if self.stop_loss_pct > 0 else 0
                 )
             elif strategy_type == "ensemble":
-                # ENSEMBLE: DWAP entry timing + momentum quality filter + trailing stop exit
-                exit_strategy = ExitStrategyConfig(
-                    strategy_type=ExitStrategyType.TRAILING_STOP,
-                    trailing_stop_pct=self.trailing_stop_pct * 100
-                )
+                # ENSEMBLE: DWAP entry timing + momentum quality filter + configurable exit
+                if self.exit_type == "hybrid":
+                    exit_strategy = ExitStrategyConfig(
+                        strategy_type=ExitStrategyType.HYBRID,
+                        hybrid_initial_target_pct=self.hybrid_initial_target_pct,
+                        hybrid_trailing_pct=self.hybrid_trailing_pct,
+                        trailing_stop_pct=self.trailing_stop_pct * 100,
+                    )
+                elif self.exit_type == "time_capped":
+                    exit_strategy = ExitStrategyConfig(
+                        strategy_type=ExitStrategyType.TIME_BASED,
+                        max_hold_days=self.max_hold_days,
+                        trailing_stop_pct=self.trailing_stop_pct * 100,
+                    )
+                else:
+                    exit_strategy = ExitStrategyConfig(
+                        strategy_type=ExitStrategyType.TRAILING_STOP,
+                        trailing_stop_pct=self.trailing_stop_pct * 100,
+                    )
             else:  # "dwap" - legacy
                 exit_strategy = ExitStrategyConfig(
                     strategy_type=ExitStrategyType.STOP_LOSS_TARGET,
