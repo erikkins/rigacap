@@ -76,6 +76,7 @@ class StrategyOptimizerV2:
             seed=seed,
             n_startup_trials=max(n_trials // 3, 3),
             multivariate=True,
+            warn_independent_sampling=False,  # Expected for conditional params
         )
 
         study = optuna.create_study(
