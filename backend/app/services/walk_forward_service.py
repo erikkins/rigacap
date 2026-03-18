@@ -306,6 +306,39 @@ class WalkForwardService:
             as_of_date=as_of_date
         )
 
+    def _get_top_symbols_as_of(self, as_of_date: datetime, max_symbols: int) -> List[str]:
+        """
+        Get top liquid symbols by 60-day average volume AS OF a specific date.
+        Eliminates survivorship bias by only considering volume data available at that point.
+        If max_symbols=0, returns the full production universe (no filtering).
+        """
+        from app.services.scanner import _EXCLUDED_SET
+
+        if max_symbols == 0:
+            # Full production universe — all symbols meeting basic eligibility
+            return [s for s, df in scanner_service.data_cache.items()
+                    if s not in _EXCLUDED_SET and len(df) >= 200
+                    and 'volume' in df.columns and 'close' in df.columns
+                    and df['volume'].max() >= 500_000 and df['close'].max() >= 15.0]
+
+        as_of_ts = pd.Timestamp(as_of_date)
+        symbol_volumes = []
+        for symbol, df in scanner_service.data_cache.items():
+            if symbol in _EXCLUDED_SET:
+                continue
+            # Only use data up to as_of_date
+            hist = df[df.index <= as_of_ts]
+            if len(hist) < 200:
+                continue
+            if 'volume' not in hist.columns or 'close' not in hist.columns:
+                continue
+            # 60-day avg volume as of this date
+            avg_vol = hist['volume'].tail(60).mean()
+            symbol_volumes.append((symbol, avg_vol))
+
+        symbol_volumes.sort(key=lambda x: x[1], reverse=True)
+        return [s[0] for s in symbol_volumes[:max_symbols]]
+
     def _run_ai_optimization_at_date(
         self,
         as_of_date: datetime,
@@ -805,19 +838,13 @@ class WalkForwardService:
         # pass the ensemble entry criteria (volume >= 500K, price >= $15 on any recent day).
         # This is NOT a signal filter — the backtester still applies the full entry criteria
         # on every date. This just avoids iterating ~5000 symbols that always fail immediately.
-        if max_symbols == 0:
-            from app.services.scanner import _EXCLUDED_SET
-            top_symbols = [s for s, df in scanner_service.data_cache.items()
-                           if s not in _EXCLUDED_SET and len(df) >= 200
-                           and 'volume' in df.columns and 'close' in df.columns
-                           and df['volume'].max() >= 500_000 and df['close'].max() >= 15.0]
-            print(f"[WF-SERVICE] Using PRODUCTION universe: {len(top_symbols)} symbols "
-                  f"(from {len(scanner_service.data_cache)} total, filtered by entry criteria eligibility)")
-        else:
-            top_symbols = get_top_liquid_symbols(max_symbols=max_symbols)
-            print(f"[WF-SERVICE] Got {len(top_symbols) if top_symbols else 0} top symbols (by volume)")
+        # Symbol universe is now recomputed per-period using _get_top_symbols_as_of()
+        # to eliminate survivorship bias. Initial check just validates data is available.
+        top_symbols = self._get_top_symbols_as_of(start_date, max_symbols)
         if not top_symbols:
             raise RuntimeError("No liquid symbols found. Ensure data is loaded.")
+        print(f"[WF-SERVICE] Initial universe: {len(top_symbols)} symbols (max_symbols={max_symbols}, "
+              f"recomputed per-period to avoid survivorship bias)")
 
         # Get period boundaries
         periods = self._get_period_dates(start_date, end_date, reoptimization_frequency)
@@ -1002,7 +1029,11 @@ class WalkForwardService:
                 )
 
             periods_processed_this_chunk += 1
-            print(f"[WF-SERVICE] Period {i+1}/{len(periods)}: {period_start.strftime('%Y-%m-%d')} to {period_end.strftime('%Y-%m-%d')}")
+
+            # Recompute symbol universe as of this period's start date (survivorship-bias-free)
+            top_symbols = self._get_top_symbols_as_of(period_start, max_symbols)
+            print(f"[WF-SERVICE] Period {i+1}/{len(periods)}: {period_start.strftime('%Y-%m-%d')} to {period_end.strftime('%Y-%m-%d')} "
+                  f"({len(top_symbols)} symbols)")
             period_ai_opt = None
 
             # If using fixed strategy, skip strategy evaluation (but AI optimization still runs)
@@ -1497,19 +1528,12 @@ class WalkForwardService:
         total_periods = len(periods)
         print(f"[WF-INIT] {total_periods} periods, {len(strategies)} strategies")
 
-        # Get symbol universe
+        # Get symbol universe (initial check — recomputed per-period in run_single_period)
         _max_symbols = config.get("max_symbols", 50)
-        if _max_symbols == 0:
-            from app.services.scanner import _EXCLUDED_SET
-            top_symbols = [s for s, df in scanner_service.data_cache.items()
-                           if s not in _EXCLUDED_SET and len(df) >= 200
-                           and 'volume' in df.columns and 'close' in df.columns
-                           and df['volume'].max() >= 500_000 and df['close'].max() >= 15.0]
-            print(f"[WF-INIT] Using PRODUCTION universe: {len(top_symbols)} symbols")
-        else:
-            top_symbols = get_top_liquid_symbols(max_symbols=_max_symbols)
+        top_symbols = self._get_top_symbols_as_of(start_date, _max_symbols)
         if not top_symbols:
             raise RuntimeError("No liquid symbols found. Ensure data is loaded.")
+        print(f"[WF-INIT] Initial universe: {len(top_symbols)} symbols (recomputed per-period)")
 
         # Create or update simulation record
         job_id = config.get("job_id")
@@ -1617,16 +1641,10 @@ class WalkForwardService:
         )
         strategies = result.scalars().all()
 
-        # Get symbol universe
+        # Get symbol universe as of this period's start date (survivorship-bias-free)
         _max_symbols = config.get("max_symbols", 50)
-        if _max_symbols == 0:
-            from app.services.scanner import _EXCLUDED_SET
-            top_symbols = [s for s, df in scanner_service.data_cache.items()
-                           if s not in _EXCLUDED_SET and len(df) >= 200
-                           and 'volume' in df.columns and 'close' in df.columns
-                           and df['volume'].max() >= 500_000 and df['close'].max() >= 15.0]
-        else:
-            top_symbols = get_top_liquid_symbols(max_symbols=_max_symbols)
+        top_symbols = self._get_top_symbols_as_of(period_start, _max_symbols)
+        print(f"[WF-PERIOD] Universe: {len(top_symbols)} symbols as of {period_start.strftime('%Y-%m-%d')}")
 
         # Reconstruct active state from state dict
         active_strategy = None
