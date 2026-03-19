@@ -184,8 +184,10 @@ class SchedulerService:
 
             # Model portfolio: process entries + WF exits after dashboard cache
             try:
-                from app.services.model_portfolio_service import model_portfolio_service
+                from app.services.model_portfolio_service import model_portfolio_service, _get_regime_trailing_stop
                 from app.core.database import async_session as mp_session
+
+                sched_regime_stop = _get_regime_trailing_stop(dashboard_data)
 
                 async with mp_session() as mp_db:
                     for ptype in ("live", "walkforward"):
@@ -194,7 +196,9 @@ class SchedulerService:
                             logger.info(f"[MODEL-{ptype.upper()}] Entered {entry_result['entries']} position(s)")
 
                     # WF daily close exit check (trailing stop + rebalance boundary)
-                    wf_closed = await model_portfolio_service.process_wf_exits(mp_db)
+                    wf_closed = await model_portfolio_service.process_wf_exits(
+                        mp_db, trailing_stop_pct=sched_regime_stop
+                    )
                     if wf_closed:
                         logger.info(f"[MODEL-WF] Closed {len(wf_closed)} position(s)")
 
@@ -203,8 +207,10 @@ class SchedulerService:
                     if track_entries.get("entries"):
                         logger.info(f"[SIGNAL-TRACK] Entered {track_entries['entries']} pick(s)")
 
-                    # Signal track record: daily exit checks (trailing stop only)
-                    track_closed = await model_portfolio_service.process_signal_track_exits(mp_db)
+                    # Signal track record: daily exit checks (regime-adjusted trailing stop)
+                    track_closed = await model_portfolio_service.process_signal_track_exits(
+                        mp_db, trailing_stop_pct=sched_regime_stop
+                    )
                     if track_closed:
                         logger.info(f"[SIGNAL-TRACK] Closed {len(track_closed)} pick(s)")
 
@@ -560,10 +566,13 @@ class SchedulerService:
 
                 # 3. Get regime forecast from cached dashboard data
                 regime_forecast = None
+                regime_stop = None
                 try:
                     dashboard_data = data_export_service.read_dashboard_json()
                     if dashboard_data:
                         regime_forecast = dashboard_data.get('regime_forecast')
+                        from app.services.model_portfolio_service import _get_regime_trailing_stop
+                        regime_stop = _get_regime_trailing_stop(dashboard_data)
                 except Exception as e:
                     logger.warning(f"📡 Could not read regime forecast: {e}")
 
@@ -583,9 +592,10 @@ class SchedulerService:
                     if hwm_price > (position.highest_price or position.entry_price):
                         position.highest_price = hwm_price
 
-                    # Check sell trigger
+                    # Check sell trigger (regime-adjusted stop)
                     guidance = self._check_sell_trigger(
-                        position, live_price, regime_forecast
+                        position, live_price, regime_forecast,
+                        trailing_stop_pct=regime_stop or 12.0,
                     )
 
                     if guidance and guidance['action'] in ('sell', 'warning'):
@@ -628,11 +638,12 @@ class SchedulerService:
                 # Persist high water mark updates
                 await db.commit()
 
-                # --- Model portfolio: check live exits (intraday) ---
+                # --- Model portfolio: check live exits (intraday, regime-adjusted stop) ---
                 try:
                     from app.services.model_portfolio_service import model_portfolio_service
                     mp_closed = await model_portfolio_service.process_live_exits(
-                        db, live_prices, regime_forecast, day_highs=day_highs
+                        db, live_prices, regime_forecast, day_highs=day_highs,
+                        trailing_stop_pct=regime_stop,
                     )
                     if mp_closed:
                         logger.info(f"[MODEL-LIVE] Closed {len(mp_closed)} position(s)")

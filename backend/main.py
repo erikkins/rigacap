@@ -1207,15 +1207,17 @@ def handler(event, context):
             # that triggered in the last 5 min after the final intraday check at 3:55 PM)
             exit_result = []
             try:
-                from app.services.model_portfolio_service import model_portfolio_service
+                from app.services.model_portfolio_service import model_portfolio_service, _get_regime_trailing_stop
                 close_prices = {}
                 for sym, df in scanner_service.data_cache.items():
                     if df is not None and not df.empty:
                         close_prices[sym] = float(df["close"].iloc[-1])
                 regime_forecast = data.get("regime_forecast") if data else None
+                regime_stop = _get_regime_trailing_stop(data)
                 async with async_session() as exit_db:
                     exit_result = await model_portfolio_service.process_live_exits(
-                        exit_db, close_prices, regime_forecast
+                        exit_db, close_prices, regime_forecast,
+                        trailing_stop_pct=regime_stop,
                     )
                     if exit_result:
                         print(f"📈 [MODEL-LIVE] EOD exits: {len(exit_result)} closed — {[c.get('symbol') for c in exit_result]}")
@@ -1246,6 +1248,19 @@ def handler(event, context):
                         await _notify_portfolio_change("BUY", buy_trades)
             except Exception as pe:
                 print(f"⚠️ Portfolio entry processing failed (non-fatal): {pe}")
+
+            # 7c. Signal track record: enter ALL fresh signals + check exits (regime-aware)
+            try:
+                from app.services.model_portfolio_service import model_portfolio_service, _get_regime_trailing_stop
+                regime_stop = _get_regime_trailing_stop(data)
+                async with async_session() as st_db:
+                    st_exits = await model_portfolio_service.process_signal_track_exits(
+                        st_db, trailing_stop_pct=regime_stop
+                    )
+                    st_entries = await model_portfolio_service.process_signal_track_entries(st_db)
+                    print(f"📊 [SIGNAL-TRACK] exits={len(st_exits)}, entries={st_entries} (stop={regime_stop}%)")
+            except Exception as ste:
+                print(f"⚠️ Signal track record processing failed (non-fatal): {ste}")
 
             # 8. Regime forecast snapshot (writes to DB for weekly report)
             try:

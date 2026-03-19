@@ -46,6 +46,17 @@ GHOST_CONFIGS = {
 ALL_PORTFOLIO_TYPES = PORTFOLIO_TYPES + tuple(GHOST_CONFIGS.keys()) + (SIGNAL_TRACK_RECORD,)
 
 
+def _get_regime_trailing_stop(dashboard_data: Optional[dict] = None) -> float:
+    """Extract regime-adjusted trailing stop from dashboard cache. Falls back to 12%."""
+    if dashboard_data:
+        regime_adj = dashboard_data.get("regime_adjustments")
+        if regime_adj and isinstance(regime_adj, dict):
+            adjusted = regime_adj.get("effective", {}).get("trailing_stop_pct")
+            if adjusted is not None:
+                return float(adjusted)
+    return TRAILING_STOP_PCT
+
+
 class ModelPortfolioService:
     """Track dual model portfolios: live (intraday) and walk-forward (biweekly)."""
 
@@ -196,10 +207,11 @@ class ModelPortfolioService:
         live_prices: Dict[str, float],
         regime_forecast: Optional[dict] = None,
         day_highs: Optional[Dict[str, float]] = None,
+        trailing_stop_pct: Optional[float] = None,
     ) -> List[dict]:
         """
         Called by intraday monitor every 5 min.
-        Checks all open live positions for trailing stop (12% from HWM) and regime exit.
+        Checks all open live positions for trailing stop and regime exit.
         Updates highest_price using day_high to capture peaks between checks.
         """
         positions = await self._get_open_positions(db, "live")
@@ -218,7 +230,8 @@ class ModelPortfolioService:
                 pos.highest_price = hwm_price
 
             hwm = pos.highest_price or pos.entry_price
-            trailing_stop_level = hwm * (1 - TRAILING_STOP_PCT / 100)
+            stop_pct = trailing_stop_pct if trailing_stop_pct is not None else TRAILING_STOP_PCT
+            trailing_stop_level = hwm * (1 - stop_pct / 100)
 
             exit_reason = None
 
@@ -245,7 +258,9 @@ class ModelPortfolioService:
     # Exit logic — Walk-Forward (daily close)
     # ------------------------------------------------------------------
 
-    async def process_wf_exits(self, db: AsyncSession) -> List[dict]:
+    async def process_wf_exits(
+        self, db: AsyncSession, trailing_stop_pct: Optional[float] = None
+    ) -> List[dict]:
         """
         Called once daily after market close.
         Checks all open WF positions using daily close prices.
@@ -285,7 +300,8 @@ class ModelPortfolioService:
             else:
                 # Check trailing stop
                 hwm = pos.highest_price or pos.entry_price
-                trailing_stop_level = hwm * (1 - TRAILING_STOP_PCT / 100)
+                stop_pct = trailing_stop_pct if trailing_stop_pct is not None else TRAILING_STOP_PCT
+                trailing_stop_level = hwm * (1 - stop_pct / 100)
                 if close_price <= trailing_stop_level:
                     exit_reason = "trailing_stop"
 
@@ -1412,10 +1428,12 @@ class ModelPortfolioService:
 
         return {"entries": entries, "open_total": len(held_symbols)}
 
-    async def process_signal_track_exits(self, db: AsyncSession) -> List[dict]:
+    async def process_signal_track_exits(
+        self, db: AsyncSession, trailing_stop_pct: Optional[float] = None
+    ) -> List[dict]:
         """
         Daily close exit check for signal track record positions.
-        Trailing stop (12%) from HWM. No rebalance force-close.
+        Regime-adjusted trailing stop from HWM. No rebalance force-close.
         """
         from app.services.scanner import scanner_service
 
@@ -1437,7 +1455,8 @@ class ModelPortfolioService:
 
             # Check trailing stop
             hwm = pos.highest_price or pos.entry_price
-            trailing_stop_level = hwm * (1 - TRAILING_STOP_PCT / 100)
+            stop_pct = trailing_stop_pct if trailing_stop_pct is not None else TRAILING_STOP_PCT
+            trailing_stop_level = hwm * (1 - stop_pct / 100)
 
             if close_price <= trailing_stop_level:
                 result = await self._close_position(
