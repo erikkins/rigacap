@@ -1835,10 +1835,11 @@ function Dashboard() {
       // Skip if not authenticated (CDN data doesn't need live quotes)
       if (!localStorage.getItem('accessToken')) { if (isInitial) setQuotesReady(true); return; }
 
-      // Get symbols from positions and signals
+      // Get symbols from positions, signals, and recent signals
       const positionSymbols = positions.map(p => p.symbol);
       const signalSymbols = signals.slice(0, 10).map(s => s.symbol); // Top 10 signals
-      const allSymbols = [...new Set([...positionSymbols, ...signalSymbols])];
+      const recentSignalSymbols = (dashboardData?.recent_signals || []).map(rs => rs.symbol);
+      const allSymbols = [...new Set([...positionSymbols, ...signalSymbols, ...recentSignalSymbols])];
 
       if (allSymbols.length === 0) { if (isInitial) setQuotesReady(true); return; }
 
@@ -1855,7 +1856,8 @@ function Dashboard() {
     };
 
     // Initial fetch — reset quotesReady so positions show skeleton until live prices arrive
-    if (positions.length > 0 || signals.length > 0) {
+    const recentCount = (dashboardData?.recent_signals || []).length;
+    if (positions.length > 0 || signals.length > 0 || recentCount > 0) {
       setQuotesReady(false);
       fetchLiveQuotes(true);
     } else {
@@ -1866,7 +1868,7 @@ function Dashboard() {
     const interval = setInterval(() => fetchLiveQuotes(false), 30000);
 
     return () => clearInterval(interval);
-  }, [positions.length, signals.length, timeTravelDate]); // Re-run when positions or signals change
+  }, [positions.length, signals.length, dashboardData?.recent_signals?.length, timeTravelDate]);
 
   // Persist active tab to sessionStorage (survives refresh, clears on tab close)
   useEffect(() => {
@@ -3693,17 +3695,24 @@ function Dashboard() {
                         <div>
                           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Recent Signals</p>
                           <div className="flex flex-wrap gap-2">
-                            {dashboardData.recent_signals.map(rs => (
+                            {dashboardData.recent_signals.map(rs => {
+                              const quote = liveQuotes[rs.symbol];
+                              const livePrice = quote?.price;
+                              const perfPct = livePrice && rs.signal_price > 0
+                                ? Math.round((livePrice / rs.signal_price - 1) * 1000) / 10
+                                : rs.performance_pct;
+                              return (
                               <div key={`${rs.symbol}-${rs.signal_date}`} className="flex items-center gap-1.5 text-xs bg-gray-100 px-2.5 py-1.5 rounded-lg">
                                 <span className="font-semibold text-gray-800">{rs.symbol}</span>
                                 <span className="text-gray-500">{formatDate(rs.signal_date)}</span>
-                                {rs.performance_pct != null && (
-                                  <span className={`font-medium ${rs.performance_pct >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                    {rs.performance_pct >= 0 ? '+' : ''}{rs.performance_pct}%
+                                {perfPct != null && (
+                                  <span className={`font-medium ${perfPct >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                    {perfPct >= 0 ? '+' : ''}{perfPct}%
                                   </span>
                                 )}
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       )}

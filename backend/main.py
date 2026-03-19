@@ -2381,9 +2381,9 @@ def handler(event, context):
             return {"error": str(e)}
 
     # Handle nightly walk-forward job (direct Lambda invocation)
-    if event.get("nightly_wf_job"):
+    if "nightly_wf_job" in event:
         print(f"🌙 Nightly WF job received - {len(scanner_service.data_cache)} symbols in cache")
-        config = event["nightly_wf_job"]
+        config = event["nightly_wf_job"] or {}
         loop = asyncio.get_event_loop()
         if loop.is_closed():
             loop = asyncio.new_event_loop()
