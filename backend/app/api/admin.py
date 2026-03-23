@@ -1005,6 +1005,21 @@ async def get_service_status(
     )
 
 
+@router.get("/pipeline-log")
+async def get_pipeline_log(admin: User = Depends(get_admin_user)):
+    """Get the structured log from the last daily scan pipeline run."""
+    import os
+    import boto3
+    bucket = os.environ.get("PRICE_DATA_BUCKET", "rigacap-prod-price-data-149218244179")
+    try:
+        resp = boto3.client('s3', region_name='us-east-1').get_object(
+            Bucket=bucket, Key="signals/pipeline_log.json"
+        )
+        return json.loads(resp["Body"].read())
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"No pipeline log found: {str(e)[:100]}")
+
+
 @router.post("/ticker-health-check")
 async def run_ticker_health_check(
     admin: User = Depends(get_admin_user)

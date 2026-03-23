@@ -43,6 +43,9 @@ export default function AdminDashboard() {
   // AWS Health state
   const [awsHealth, setAwsHealth] = useState(null);
 
+  // Pipeline log state
+  const [pipelineLog, setPipelineLog] = useState(null);
+
   // Strategy Lab state
   const [showStrategyEditor, setShowStrategyEditor] = useState(false);
   const [editingStrategy, setEditingStrategy] = useState(null);
@@ -83,6 +86,16 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error('Failed to fetch AWS health:', err);
+    }
+  };
+
+  // Fetch pipeline log
+  const fetchPipelineLog = async () => {
+    try {
+      const response = await fetchWithAuth(`${API_URL}/api/admin/pipeline-log`);
+      if (response.ok) setPipelineLog(await response.json());
+    } catch (err) {
+      console.error('Failed to fetch pipeline log:', err);
     }
   };
 
@@ -273,6 +286,7 @@ export default function AdminDashboard() {
         fetchStats(),
         fetchServiceStatus(),
         fetchAwsHealth(),
+        fetchPipelineLog(),
         fetchUsers(),
         fetchStrategies(),
         fetchLatestAnalysis(),
@@ -364,6 +378,7 @@ export default function AdminDashboard() {
           serviceStatus={serviceStatus}
           activeStrategy={activeStrategy}
           awsHealth={awsHealth}
+          pipelineLog={pipelineLog}
         />
       )}
 
@@ -426,7 +441,7 @@ export default function AdminDashboard() {
 }
 
 // Overview Tab Component
-function OverviewTab({ stats, serviceStatus, activeStrategy, awsHealth }) {
+function OverviewTab({ stats, serviceStatus, activeStrategy, awsHealth, pipelineLog }) {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -618,6 +633,98 @@ function OverviewTab({ stats, serviceStatus, activeStrategy, awsHealth }) {
           </>
         )}
       </div>
+
+      {/* Pipeline Log */}
+      {pipelineLog && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Activity size={20} className="text-gray-700" />
+              <h3 className="text-lg font-semibold text-gray-900">Last Pipeline Run</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                pipelineLog.status === 'success' ? 'bg-green-100 text-green-800' :
+                pipelineLog.status === 'aborted' ? 'bg-yellow-100 text-yellow-800' :
+                'bg-red-100 text-red-800'
+              }`}>
+                {pipelineLog.status}
+              </span>
+              {pipelineLog.completed_at && (
+                <span className="text-xs text-gray-500">
+                  {(() => {
+                    const diff = Date.now() - new Date(pipelineLog.completed_at).getTime();
+                    const mins = Math.floor(diff / 60000);
+                    if (mins < 60) return `${mins}m ago`;
+                    const hrs = Math.floor(mins / 60);
+                    if (hrs < 24) return `${hrs}h ago`;
+                    return `${Math.floor(hrs / 24)}d ago`;
+                  })()}
+                </span>
+              )}
+              <span className="text-xs text-gray-400">{pipelineLog.duration_seconds}s</span>
+            </div>
+          </div>
+
+          {/* Market Summary */}
+          {pipelineLog.market && (
+            <div className="flex flex-wrap gap-3 mb-4 text-sm">
+              {pipelineLog.market.regime && (
+                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                  {pipelineLog.market.regime.replace(/_/g, ' ')}
+                </span>
+              )}
+              {pipelineLog.market.spy_price && (
+                <span className="text-gray-600">SPY ${Number(pipelineLog.market.spy_price).toFixed(2)}</span>
+              )}
+              {pipelineLog.market.vix_level && (
+                <span className="text-gray-600">VIX {Number(pipelineLog.market.vix_level).toFixed(1)}</span>
+              )}
+              <span className="text-gray-600">{pipelineLog.market.signals} signals</span>
+            </div>
+          )}
+
+          {/* Portfolio Summary */}
+          {pipelineLog.portfolio && (pipelineLog.portfolio.live_value || pipelineLog.portfolio.entries > 0 || pipelineLog.portfolio.exits > 0) && (
+            <div className="flex flex-wrap gap-3 mb-4 text-sm">
+              {pipelineLog.portfolio.live_value && (
+                <span className="text-gray-600">Portfolio ${Number(pipelineLog.portfolio.live_value).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+              )}
+              {pipelineLog.portfolio.positions != null && (
+                <span className="text-gray-600">{pipelineLog.portfolio.positions} positions</span>
+              )}
+              {pipelineLog.portfolio.entries > 0 && (
+                <span className="text-green-600 font-medium">+{pipelineLog.portfolio.entries} entries</span>
+              )}
+              {pipelineLog.portfolio.exits > 0 && (
+                <span className="text-red-600 font-medium">{pipelineLog.portfolio.exits} exits</span>
+              )}
+              {pipelineLog.portfolio.regime_stop_pct && (
+                <span className="text-gray-500">stop {pipelineLog.portfolio.regime_stop_pct}%</span>
+              )}
+            </div>
+          )}
+
+          {/* Steps */}
+          {pipelineLog.steps && pipelineLog.steps.length > 0 && (
+            <div className="space-y-1">
+              {pipelineLog.steps.map((step, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm py-0.5">
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                    step.status === 'ok' ? 'bg-green-500' :
+                    step.status === 'warning' ? 'bg-yellow-500' :
+                    step.status === 'error' ? 'bg-red-500' :
+                    'bg-gray-400'
+                  }`} />
+                  <span className="text-gray-700 font-medium w-36 flex-shrink-0">{step.name}</span>
+                  <span className="text-gray-400 w-12 text-right flex-shrink-0">{step.duration_s}s</span>
+                  <span className="text-gray-500 truncate">{step.detail}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Active Strategy Summary */}
       {activeStrategy && (

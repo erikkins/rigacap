@@ -957,6 +957,61 @@ def handler(event, context):
             from app.services.data_export import data_export_service
             from app.api.signals import compute_shared_dashboard_data
             from datetime import date
+            import time as _time_mod
+
+            # Pipeline log accumulator
+            _steps = []
+            _scan_t0 = _time_mod.time()
+            _step_t0 = _scan_t0
+
+            def _log_step(name, status, detail=""):
+                nonlocal _step_t0
+                now = _time_mod.time()
+                _steps.append({
+                    "name": name,
+                    "status": status,
+                    "duration_s": round(now - _step_t0, 1),
+                    "detail": str(detail)[:300],
+                })
+                _step_t0 = now
+
+            def _write_pipeline_log(log_status, signals_count=0, data=None, snap_result=None, entry_result=None, exit_result=None, regime_stop=None):
+                """Write structured pipeline log to S3 (best-effort, non-fatal)."""
+                try:
+                    from zoneinfo import ZoneInfo
+                    now_et = datetime.now(ZoneInfo('America/New_York'))
+                    pipeline_log = {
+                        "status": log_status,
+                        "date": now_et.date().isoformat(),
+                        "started_at": datetime.utcfromtimestamp(_scan_t0).isoformat() + "Z",
+                        "completed_at": datetime.utcnow().isoformat() + "Z",
+                        "duration_seconds": round(_time_mod.time() - _scan_t0, 1),
+                        "market": {
+                            "regime": data.get("regime_forecast", {}).get("current_regime") if data else None,
+                            "spy_price": data.get("market_stats", {}).get("spy_price") if data else None,
+                            "vix_level": data.get("market_stats", {}).get("vix_level") if data else None,
+                            "signals": signals_count,
+                        },
+                        "portfolio": {
+                            "live_value": snap_result.get("live", {}).get("total_value") if isinstance(snap_result, dict) else None,
+                            "positions": snap_result.get("live", {}).get("num_positions") if isinstance(snap_result, dict) else None,
+                            "entries": entry_result.get("entries", 0) if isinstance(entry_result, dict) else 0,
+                            "exits": len(exit_result) if exit_result else 0,
+                            "regime_stop_pct": regime_stop,
+                        },
+                        "steps": _steps,
+                    }
+                    import boto3 as _b3
+                    import json as _pj
+                    _b3.client('s3', region_name='us-east-1').put_object(
+                        Bucket=os.environ.get("PRICE_DATA_BUCKET", "rigacap-prod-price-data-149218244179"),
+                        Key="signals/pipeline_log.json",
+                        Body=_pj.dumps(pipeline_log, default=str).encode('utf-8'),
+                        ContentType='application/json',
+                    )
+                    print(f"📋 Pipeline log written: status={log_status}, {len(_steps)} steps, {round(_time_mod.time() - _scan_t0, 1)}s total")
+                except Exception as pl_err:
+                    print(f"⚠️ Pipeline log write failed (non-fatal): {pl_err}")
 
             # 1a. Ensure universe is loaded (may have new symbols since last pickle)
             await scanner_service.ensure_universe_loaded()
@@ -967,6 +1022,7 @@ def handler(event, context):
             new_symbols = universe_symbols - existing_symbols
             if new_symbols:
                 print(f"ℹ️ {len(new_symbols)} new symbols in universe not in cache (skipping — will be included on next pickle rebuild)")
+            _log_step("Universe Check", "ok", f"{len(existing_symbols)} cached, {len(new_symbols)} new")
 
             # 1c. Incremental update for existing cached symbols (today's prices only)
             replace_days = event.get("replace_days", 0)
@@ -987,6 +1043,9 @@ def handler(event, context):
                     mdp.force_source = "yfinance"
             else:
                 settlement = {"settled": "skipped", "reason": f"force_source={force_source}"}
+            _log_step("Settlement Check",
+                       "ok" if settlement.get("settled") in (True, "skipped") else "warning",
+                       f"settled={settlement.get('settled')}, attempts={settlement.get('attempts', 0)}")
 
             import time as _time
             fetch_start_time = _time.time()
@@ -995,6 +1054,9 @@ def handler(event, context):
             if force_source or (not settlement.get("settled") and settlement.get("fallback_to_yfinance")):
                 mdp.force_source = None
             print(f"📡 Incremental: {inc_result}")
+
+            _log_step("Incremental Update", "ok",
+                       f"{inc_result.get('updated', 0)} updated, {inc_result.get('failed', 0)} failed, source={inc_result.get('source', '?')}")
 
             # 1d. Auto-retry with alternate source if >10% symbols failed
             if inc_result.get("failed", 0) > len(existing_symbols) * 0.1:
@@ -1009,6 +1071,7 @@ def handler(event, context):
                 inc_result["updated"] += retry_result.get("updated", 0)
                 inc_result["failed"] = retry_result.get("failed", 0)
                 inc_result["source"] = f"{inc_result.get('source', 'unknown')}+{alt}_retry"
+                _log_step("Auto-Retry", "warning", f"retried with {alt}: +{retry_result.get('updated', 0)} updated, {retry_result.get('failed', 0)} still failed")
 
             # 1e. Freshness gate: verify SPY has today's data before generating signals
             from zoneinfo import ZoneInfo
@@ -1020,7 +1083,9 @@ def handler(event, context):
                     spy_last_date = spy_last_date.date()
                 now_et = datetime.now(ZoneInfo('America/New_York'))
                 expected_date = _last_market_day(now_et.date())
-                if spy_last_date < expected_date:
+                if spy_last_date >= expected_date:
+                    _log_step("SPY Freshness", "ok", f"SPY at {spy_last_date}")
+                elif spy_last_date < expected_date:
                     print(f"⚠️ STALE DATA: SPY last date {spy_last_date}, expected {expected_date} — retrying with yfinance...")
                     from app.services.market_data_provider import market_data_provider
                     market_data_provider.force_source = "yfinance"
@@ -1053,9 +1118,12 @@ def handler(event, context):
                                         )
                         except Exception as alert_err:
                             print(f"⚠️ Failed to send stale data admin alert: {alert_err}")
+                        _log_step("SPY Freshness", "error", f"ABORT: SPY at {spy_last_date}, expected {expected_date}")
+                        _write_pipeline_log("aborted")
                         return {"status": "aborted", "reason": f"stale_data: SPY at {spy_last_date}, expected {expected_date}"}
                     else:
                         print(f"✅ SPY freshness recovered after yfinance retry: {spy_last_date}")
+                        _log_step("SPY Freshness", "ok", f"recovered via yfinance: {spy_last_date}")
 
             # 1f. Gap detection: find symbols with missing business days
             gapped = scanner_service.validate_data_continuity(lookback_days=30)
@@ -1097,10 +1165,12 @@ def handler(event, context):
                 print(f"📡 Fetch metadata saved: source={actual_source}, duration={fetch_meta['fetch_duration_seconds']}s, fallback={used_fallback}")
             except Exception as fm_err:
                 print(f"⚠️ Failed to save fetch metadata (non-fatal): {fm_err}")
+            _log_step("Fetch Metadata", "ok")
 
             # 2. Run scan on fresh data
             signals = await scanner_service.scan(refresh_data=False)
             print(f"📡 Scan complete: {len(signals)} signals")
+            _log_step("Signal Scan", "ok", f"{len(signals)} signals from {len(scanner_service.data_cache)} symbols")
 
             # 3. Store signals in DB + export to S3 (fast, do before time check)
             await store_signals_callback(signals)
@@ -1156,6 +1226,8 @@ def handler(event, context):
                         "include_ensemble": True
                     })
                 )
+                _log_step("Deferred Export", "ok", "pickle + dashboard + CSV deferred to async invocations")
+                _write_pipeline_log("success", signals_count=len(signals))
                 return {
                     "status": "success",
                     "signals": len(signals),
@@ -1171,6 +1243,7 @@ def handler(event, context):
             # 4. Persist refreshed cache to S3 pickle (slow — only if time permits)
             export_result = data_export_service.export_pickle(scanner_service.data_cache)
             print(f"💾 Data cache persisted to S3: {export_result.get('count', 0)} symbols")
+            _log_step("Pickle Export", "ok", f"{export_result.get('count', 0)} symbols, {export_result.get('size_mb', '?')} MB")
 
             # GC after pickle export to reclaim serialization buffers
             import gc
@@ -1184,6 +1257,7 @@ def handler(event, context):
                 today_et = datetime.now(ZoneInfo('America/New_York')).date()
                 today_str = data.get('data_date') or today_et.strftime("%Y-%m-%d")
                 snap_result = data_export_service.export_snapshot(today_str, data)
+            _log_step("Dashboard Export", "ok")
 
             # 6. Persist ensemble signals to DB for audit trail + email consistency
             persisted = 0
@@ -1202,6 +1276,8 @@ def handler(event, context):
                         print(f"📝 Persisted {persisted} ensemble signal(s)")
             except Exception as pe:
                 print(f"⚠️ Signal persistence failed (non-fatal): {pe}")
+            _log_step("Signal Persistence", "ok" if persisted > 0 or not data.get('buy_signals') else "warning",
+                       f"{persisted} persisted")
 
             # 7a. Check model portfolio exits using closing prices (catches trailing stops
             # that triggered in the last 5 min after the final intraday check at 3:55 PM)
@@ -1224,6 +1300,8 @@ def handler(event, context):
                         await _notify_portfolio_change("SELL", exit_result)
             except Exception as pe:
                 print(f"⚠️ Portfolio exit processing failed (non-fatal): {pe}")
+            _log_step("Portfolio Exits", "ok",
+                       f"{len(exit_result) if exit_result else 0} exits, regime_stop={regime_stop if 'regime_stop' in dir() else '?'}%")
 
             # 7b. Auto-trigger model portfolio entries from fresh signals
             entry_result = None
@@ -1248,6 +1326,8 @@ def handler(event, context):
                         await _notify_portfolio_change("BUY", buy_trades)
             except Exception as pe:
                 print(f"⚠️ Portfolio entry processing failed (non-fatal): {pe}")
+            _log_step("Portfolio Entries", "ok",
+                       f"{entry_result.get('entries', 0) if isinstance(entry_result, dict) else 0} entries, cash={entry_result.get('remaining_cash', '?') if isinstance(entry_result, dict) else '?'}")
 
             # 7c. Signal track record: enter ALL fresh signals + check exits (regime-aware)
             try:
@@ -1261,6 +1341,8 @@ def handler(event, context):
                     print(f"📊 [SIGNAL-TRACK] exits={len(st_exits)}, entries={st_entries} (stop={regime_stop}%)")
             except Exception as ste:
                 print(f"⚠️ Signal track record processing failed (non-fatal): {ste}")
+            _log_step("Signal Track Record", "ok",
+                       f"exits={len(st_exits) if 'st_exits' in dir() else '?'}, entries={st_entries if 'st_entries' in dir() else '?'}")
 
             # 7d. Daily equity curve snapshot (for journey banner / what-if)
             try:
@@ -1269,6 +1351,10 @@ def handler(event, context):
                     print(f"📊 [SNAPSHOT] {snap_result}")
             except Exception as sne:
                 print(f"⚠️ Daily snapshot failed (non-fatal): {sne}")
+            snap_detail = ""
+            if isinstance(snap_result, dict) and snap_result.get("live"):
+                snap_detail = f"live=${snap_result['live'].get('total_value', '?')}, {snap_result['live'].get('num_positions', '?')} positions"
+            _log_step("Daily Snapshot", "ok", snap_detail)
 
             # 8. Regime forecast snapshot (writes to DB for weekly report)
             try:
@@ -1287,6 +1373,8 @@ def handler(event, context):
                     print(f"📊 Regime history update: {rh_result}")
             except Exception as rhe:
                 print(f"⚠️ Regime history update failed (non-fatal): {rhe}")
+            regime_name = data.get("regime_forecast", {}).get("current_regime", "?") if data else "?"
+            _log_step("Regime Snapshot", "ok", f"regime={regime_name}")
 
             # 9. Chain daily WF cache refresh (async, separate Lambda invocation)
             try:
@@ -1299,6 +1387,7 @@ def handler(event, context):
                 print("📊 Chained daily WF cache refresh")
             except Exception as ce:
                 print(f"⚠️ Failed to chain WF cache (non-fatal): {ce}")
+            _log_step("WF Cache Chain", "ok", "async fire-and-forget")
 
             # 10. Chain CSV export (async, separate Lambda invocation)
             try:
@@ -1311,6 +1400,18 @@ def handler(event, context):
                 print("📝 Chained CSV export")
             except Exception as ce:
                 print(f"⚠️ Failed to chain CSV export: {ce}")
+            _log_step("CSV Export Chain", "ok", "async fire-and-forget")
+
+            # Write structured pipeline log to S3
+            _write_pipeline_log(
+                "success",
+                signals_count=len(signals),
+                data=data,
+                snap_result=snap_result,
+                entry_result=entry_result,
+                exit_result=exit_result,
+                regime_stop=regime_stop if 'regime_stop' in dir() else None,
+            )
 
             return {
                 "status": "success",
@@ -1331,6 +1432,28 @@ def handler(event, context):
             import traceback
             print(f"❌ Daily scan failed: {e}")
             traceback.print_exc()
+            # Write error pipeline log to S3
+            try:
+                import boto3 as _b3e, json as _je, time as _te
+                from zoneinfo import ZoneInfo
+                _b3e.client('s3', region_name='us-east-1').put_object(
+                    Bucket=os.environ.get("PRICE_DATA_BUCKET", "rigacap-prod-price-data-149218244179"),
+                    Key="signals/pipeline_log.json",
+                    Body=_je.dumps({
+                        "status": "failed",
+                        "date": datetime.now(ZoneInfo('America/New_York')).date().isoformat(),
+                        "started_at": datetime.utcnow().isoformat() + "Z",
+                        "completed_at": datetime.utcnow().isoformat() + "Z",
+                        "duration_seconds": 0,
+                        "error": str(e)[:500],
+                        "market": {"regime": None, "spy_price": None, "vix_level": None, "signals": 0},
+                        "portfolio": {"live_value": None, "positions": None, "entries": 0, "exits": 0, "regime_stop_pct": None},
+                        "steps": [],
+                    }, default=str).encode('utf-8'),
+                    ContentType='application/json',
+                )
+            except Exception:
+                pass
             return {"status": "failed", "error": str(e)}
 
     # Handle dashboard cache export
