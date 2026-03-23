@@ -1105,7 +1105,7 @@ function PostBadges({ post }) {
 
 function ActionButtons({ post, actionLoading, onApprove, onReject, onRegenerate, onDelete, onPublish, onSchedule, onCancel, publishingLive, extraButtons }) {
   const isLoading = !!actionLoading;
-  const canModify = post.status === 'draft' || post.status === 'rejected' || post.status === 'scheduled';
+  const canModify = post.status === 'draft' || post.status === 'rejected' || post.status === 'scheduled' || post.status === 'posted';
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
