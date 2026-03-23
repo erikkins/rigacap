@@ -109,7 +109,7 @@ async def approve_post(
 
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
-    if post.status not in ("draft", "rejected", "scheduled"):
+    if post.status not in ("draft", "rejected", "scheduled", "posted"):
         raise HTTPException(status_code=400, detail=f"Cannot approve post with status '{post.status}'")
 
     post.status = "approved"

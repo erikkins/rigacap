@@ -384,17 +384,29 @@ class ChartCardGenerator:
                     color=BRAND_GOLD, va='center', ha='center',
                     fontfamily='sans-serif')
 
-        # --- Body text (wrapped) ---
+        # --- Body text (wrapped, preserving paragraph breaks) ---
         # Strip hashtags for the card
         clean_text = text.split('#')[0].strip() if '#' in text else text
-        wrapped = textwrap.fill(clean_text, width=40)
-        lines = wrapped.split('\n')
+        # Preserve original line breaks, wrap each paragraph separately
+        paragraphs = clean_text.split('\n')
+        all_lines = []
+        for para in paragraphs:
+            para = para.strip()
+            if not para:
+                all_lines.append('')  # blank line between paragraphs
+            else:
+                all_lines.extend(textwrap.fill(para, width=38).split('\n'))
         start_y = 0.65 if headline else 0.72
-        line_spacing = 0.04
-        for i, line in enumerate(lines[:12]):  # max 12 lines
-            ax.text(0.5, start_y - i * line_spacing, line,
-                    fontsize=20, color='white', va='center', ha='center',
-                    fontfamily='sans-serif', linespacing=1.5)
+        line_spacing = 0.038
+        line_idx = 0
+        for line in all_lines[:15]:  # max 15 lines
+            if not line:
+                line_idx += 0.6  # smaller gap for blank lines
+                continue
+            ax.text(0.5, start_y - line_idx * line_spacing, line,
+                    fontsize=19, color='white', va='center', ha='center',
+                    fontfamily='sans-serif')
+            line_idx += 1
 
         # --- Gold divider ---
         ax.plot([0.08, 0.92], [0.20, 0.20], color=BRAND_ACCENT, lw=1.5, alpha=0.6)

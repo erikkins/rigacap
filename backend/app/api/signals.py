@@ -2542,6 +2542,134 @@ async def get_public_track_record(db: AsyncSession = Depends(get_db)):
     return response
 
 
+@public_router.get("/track-record-10y")
+async def get_public_track_record_10y(db: AsyncSession = Depends(get_db)):
+    """
+    Public 10-year track record data — no auth required.
+    Returns equity curve from the 10-year walk-forward sim + regime periods.
+    """
+    from app.core.database import WalkForwardSimulation
+    from app.services.regime_forecast_service import regime_forecast_service
+    from fastapi.responses import JSONResponse
+    import json
+    from datetime import datetime as dt
+
+    # Find the 10yr sim: start <= 2016-03-01 and end >= 2026-01-01
+    result = await db.execute(
+        select(WalkForwardSimulation).where(
+            WalkForwardSimulation.start_date <= dt(2016, 3, 1),
+            WalkForwardSimulation.end_date >= dt(2026, 1, 1),
+            WalkForwardSimulation.status == "completed",
+            WalkForwardSimulation.is_daily_cache == False,
+        ).order_by(WalkForwardSimulation.simulation_date.desc()).limit(1)
+    )
+    sim = result.scalar_one_or_none()
+
+    if not sim or not sim.equity_curve_json:
+        raise HTTPException(status_code=404, detail="10-year track record data not available")
+
+    curve = json.loads(sim.equity_curve_json)
+    if not curve:
+        raise HTTPException(status_code=404, detail="Empty equity curve")
+
+    # Format equity curve
+    equity_curve = []
+    for point in curve:
+        equity_curve.append({
+            "date": point["date"],
+            "equity": round(point["equity"], 2),
+            "spy_equity": round(point.get("spy_equity", 100000), 2),
+        })
+
+    # Compute yearly stats from equity curve
+    yearly_stats = []
+    years = {}
+    for point in equity_curve:
+        year = point["date"][:4]
+        if year not in years:
+            years[year] = []
+        years[year].append(point)
+
+    # Group into Feb-Feb periods to match biweekly rebalance boundaries
+    period_boundaries = []
+    for y in range(2016, 2026):
+        period_boundaries.append((f"{y}-02-01", f"{y+1}-02-01", f"{y}\u2013{y+1}"))
+
+    for start_str, end_str, label in period_boundaries:
+        period_points = [p for p in equity_curve if start_str <= p["date"] < end_str]
+        if len(period_points) < 2:
+            continue
+
+        start_eq = period_points[0]["equity"]
+        end_eq = period_points[-1]["equity"]
+        ret = (end_eq / start_eq - 1) * 100
+
+        # Max drawdown within period
+        peak = period_points[0]["equity"]
+        max_dd = 0
+        for p in period_points:
+            if p["equity"] > peak:
+                peak = p["equity"]
+            dd = (p["equity"] / peak - 1) * 100
+            if dd < max_dd:
+                max_dd = dd
+
+        # Simple Sharpe from daily returns
+        daily_returns = []
+        for j in range(1, len(period_points)):
+            dr = period_points[j]["equity"] / period_points[j-1]["equity"] - 1
+            daily_returns.append(dr)
+
+        if daily_returns:
+            import numpy as np
+            mean_r = np.mean(daily_returns)
+            std_r = np.std(daily_returns)
+            sharpe = (mean_r / std_r * np.sqrt(252)) if std_r > 0 else 0
+        else:
+            sharpe = 0
+
+        yearly_stats.append({
+            "period": label,
+            "return_pct": round(ret, 1),
+            "sharpe": round(sharpe, 2),
+            "max_dd_pct": round(max_dd, 1),
+            "positive": ret > 0,
+        })
+
+    # Get regime periods for 10-year range
+    regime_data = await regime_forecast_service.get_regime_periods_from_db(
+        db, start_date="2016-02-01", end_date="2026-02-01"
+    )
+    regime_periods = regime_data.get("periods", []) if regime_data else []
+
+    # Compute overall metrics
+    total_return = round((equity_curve[-1]["equity"] / equity_curve[0]["equity"] - 1) * 100, 1)
+    benchmark_return = round((equity_curve[-1]["spy_equity"] / equity_curve[0]["spy_equity"] - 1) * 100, 1)
+    positive_years = sum(1 for y in yearly_stats if y["positive"])
+    win_rate = round(positive_years / len(yearly_stats) * 100) if yearly_stats else 0
+
+    response_data = {
+        "equity_curve": equity_curve,
+        "regime_periods": regime_periods,
+        "yearly_stats": yearly_stats,
+        "metrics": {
+            "total_return_pct": total_return,
+            "benchmark_return_pct": benchmark_return,
+            "sharpe_ratio": sim.sharpe_ratio,
+            "max_drawdown_pct": sim.max_drawdown_pct,
+            "win_rate": win_rate,
+            "total_trades": len(json.loads(sim.trades_json)) if sim.trades_json else 0,
+            "years": 10,
+            "positive_years": positive_years,
+            "total_years": len(yearly_stats),
+        },
+    }
+
+    response = JSONResponse(content=response_data)
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
+
+
 @public_router.get("/regime-report")
 async def get_public_regime_report(db: AsyncSession = Depends(get_db)):
     """

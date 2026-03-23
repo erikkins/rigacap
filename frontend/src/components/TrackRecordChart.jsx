@@ -65,13 +65,15 @@ function CustomTooltip({ active, payload, compact }) {
   );
 }
 
-export default function TrackRecordChart({ compact = false }) {
+export default function TrackRecordChart({ compact = false, apiUrl = null }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const url = apiUrl || `${API_BASE}/api/public/track-record`;
+
   useEffect(() => {
-    fetch(`${API_BASE}/api/public/track-record`)
+    fetch(url)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load track record');
         return res.json();
@@ -79,7 +81,7 @@ export default function TrackRecordChart({ compact = false }) {
       .then(setData)
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [url]);
 
   // Annotate chart data with regime info for tooltip
   const chartData = useMemo(() => {
