@@ -2050,8 +2050,8 @@ def handler(event, context):
                         df.columns = [c[0].lower() for c in df.columns]
                     else:
                         df.columns = [c.lower() for c in df.columns]
-                scanner_service.data_cache["SPY"] = spy_raw
-                scanner_service.data_cache["^VIX"] = vix_raw
+                # Replace full cache — avoids iterating 8k+ symbols for breadth calc
+                scanner_service.data_cache = {"SPY": spy_raw, "^VIX": vix_raw}
                 print(f"✅ SPY: {len(spy_raw)} bars, VIX: {len(vix_raw)} bars")
             elif pickle_key:
                 import boto3
