@@ -2044,12 +2044,12 @@ def handler(event, context):
                 print(f"📥 Fetching SPY + VIX from yfinance ({period})...")
                 spy_raw = yf.download("SPY", period=period, progress=False)
                 vix_raw = yf.download("^VIX", period=period, progress=False)
-                # Normalize columns to lowercase
+                # Normalize columns to lowercase (MultiIndex check FIRST)
                 for df in [spy_raw, vix_raw]:
-                    df.columns = [c.lower() if isinstance(c, str) else c for c in df.columns]
-                    # Handle MultiIndex from yfinance
                     if isinstance(df.columns, pd.MultiIndex):
                         df.columns = [c[0].lower() for c in df.columns]
+                    else:
+                        df.columns = [c.lower() for c in df.columns]
                 scanner_service.data_cache["SPY"] = spy_raw
                 scanner_service.data_cache["^VIX"] = vix_raw
                 print(f"✅ SPY: {len(spy_raw)} bars, VIX: {len(vix_raw)} bars")
