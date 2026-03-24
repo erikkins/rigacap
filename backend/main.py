@@ -3987,32 +3987,28 @@ def handler(event, context):
 
             print(f"📊 {len(weekly_dates)} weekly snapshots from {weekly_dates[0].date()} to {weekly_dates[-1].date()}")
 
-            # Compute cap tiers via 60-day avg dollar volume (price × volume)
-            # Uses percentile cutoffs so tiers are meaningful regardless of universe size:
-            # top 1% = Mega, next 5% = Large, next 20% = Mid, rest = Small
-            dollar_vol_ranks = []
-            for sym, df in scanner_service.data_cache.items():
-                if len(df) < 60:
-                    continue
-                tail = df.tail(60)
-                avg_dv = (tail["close"] * tail["volume"]).mean()
-                dollar_vol_ranks.append((sym, avg_dv))
-            dollar_vol_ranks.sort(key=lambda x: x[1], reverse=True)
-            n_syms = len(dollar_vol_ranks)
-            mega_cutoff = max(int(n_syms * 0.01), 10)
-            large_cutoff = mega_cutoff + max(int(n_syms * 0.05), 30)
-            mid_cutoff = large_cutoff + max(int(n_syms * 0.20), 100)
+            # Classify cap tiers from actual market cap data (symbols_cache.json)
+            # Standard boundaries: Mega >$200B, Large $10-200B, Mid $2-10B, Small <$2B
+            from app.services.stock_universe import stock_universe_service
             cap_tier_map = {}
-            for i, (sym, _) in enumerate(dollar_vol_ranks):
-                if i < mega_cutoff:
+            _tier_counts = {"M": 0, "L": 0, "D": 0, "S": 0}
+            for sym in scanner_service.data_cache:
+                info = stock_universe_service.get_symbol_info(sym)
+                mc_str = (info.get("market_cap", "") if info else "") or ""
+                try:
+                    mc = int(mc_str.replace(",", ""))
+                except (ValueError, AttributeError):
+                    mc = 0
+                if mc >= 200_000_000_000:
                     cap_tier_map[sym] = "M"
-                elif i < large_cutoff:
+                elif mc >= 10_000_000_000:
                     cap_tier_map[sym] = "L"
-                elif i < mid_cutoff:
+                elif mc >= 2_000_000_000:
                     cap_tier_map[sym] = "D"
                 else:
                     cap_tier_map[sym] = "S"
-            print(f"📊 Cap tiers: {n_syms} symbols, M<{mega_cutoff} L<{large_cutoff} D<{mid_cutoff} S>={mid_cutoff}")
+                _tier_counts[cap_tier_map[sym]] += 1
+            print(f"📊 Cap tiers (market cap): M={_tier_counts['M']} L={_tier_counts['L']} D={_tier_counts['D']} S={_tier_counts['S']}")
 
             # Generate rankings for each weekly date
             rankings_out = {}
