@@ -3961,7 +3961,7 @@ def handler(event, context):
         print(f"📊 Generating ranking history: lookback={_rh_lookback}d, top_n={_rh_top_n}")
 
         try:
-            import pandas as pd
+            import pandas as pd, json as _rh_j2, boto3 as _rh_boto
             from datetime import datetime, timedelta
             from app.services.data_export import S3_BUCKET as _rh_bucket
 
@@ -3989,7 +3989,6 @@ def handler(event, context):
 
             # Classify cap tiers from actual market cap data (S3 symbols_cache.json)
             # Standard boundaries: Mega >$200B, Large $10-200B, Mid $2-10B, Small <$2B
-            import json as _rh_j2
             _rh_s3 = _rh_boto.client("s3", region_name="us-east-1")
             try:
                 _cache_resp = _rh_s3.get_object(Bucket=_rh_bucket, Key="universe/symbols_cache.json")
@@ -4055,8 +4054,7 @@ def handler(event, context):
                 "rankings": rankings_out,
             }
 
-            import json as _rh_json, boto3 as _rh_boto
-            body = _rh_json.dumps(payload, separators=(",", ":"))
+            body = _rh_j2.dumps(payload, separators=(",", ":"))
             s3 = _rh_boto.client("s3", region_name="us-east-1")
             s3.put_object(
                 Bucket=_rh_bucket,
