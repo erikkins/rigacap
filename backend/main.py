@@ -3987,14 +3987,23 @@ def handler(event, context):
 
             print(f"📊 {len(weekly_dates)} weekly snapshots from {weekly_dates[0].date()} to {weekly_dates[-1].date()}")
 
-            # Classify cap tiers from actual market cap data (symbols_cache.json)
+            # Classify cap tiers from actual market cap data (S3 symbols_cache.json)
             # Standard boundaries: Mega >$200B, Large $10-200B, Mid $2-10B, Small <$2B
-            from app.services.stock_universe import stock_universe_service
+            import json as _rh_j2
+            _rh_s3 = _rh_boto.client("s3", region_name="us-east-1")
+            try:
+                _cache_resp = _rh_s3.get_object(Bucket=_rh_bucket, Key="universe/symbols_cache.json")
+                _cache_data = _rh_j2.loads(_cache_resp["Body"].read().decode("utf-8"))
+                _sym_info = _cache_data.get("symbol_info", {})
+                print(f"📊 Loaded symbol_info for {len(_sym_info)} symbols from S3")
+            except Exception as _ce:
+                print(f"⚠️ Could not load symbols_cache.json: {_ce}, all tiers will be S")
+                _sym_info = {}
             cap_tier_map = {}
             _tier_counts = {"M": 0, "L": 0, "D": 0, "S": 0}
             for sym in scanner_service.data_cache:
-                info = stock_universe_service.get_symbol_info(sym)
-                mc_str = (info.get("market_cap", "") if info else "") or ""
+                info = _sym_info.get(sym, {})
+                mc_str = info.get("market_cap", "") or ""
                 try:
                     mc = int(mc_str.replace(",", ""))
                 except (ValueError, AttributeError):
