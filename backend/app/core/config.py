@@ -159,8 +159,9 @@ EXCLUDED_SYMBOLS = [
     # Commodity ETFs (not equity momentum)
     'GLD', 'IAU', 'GLDM', 'IAUM', 'SGOL', 'SLV', 'SIVR',
     'DBC', 'DBA', 'USO', 'UNG', 'PDBC', 'GSG',
-    # Bond/Treasury ETFs (not equity momentum)
+    # Bond/Treasury/Fixed-income ETFs (not equity momentum)
     'TLT', 'TLH', 'IEF', 'SHY', 'SPTL', 'AGG', 'BND', 'LQD', 'HYG', 'JNK',
+    'JAAA', 'VTEB', 'USHY', 'JEPQ',
     # Crypto leveraged ETFs
     'BITX', 'BITU', 'SBIT',
 ]

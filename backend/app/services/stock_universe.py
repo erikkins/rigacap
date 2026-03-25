@@ -52,11 +52,14 @@ EXCLUDED_PATTERNS = [
     'DBC', 'DBA', 'DBB', 'DBO', 'USO', 'BNO', 'UNG', 'PDBC', 'GSG', 'COMT',
     # Leveraged commodity ETFs (2x/inverse)
     'AGQ', 'ZSL', 'UGL', 'GLL',
-    # Bond/Treasury ETFs (not equity momentum)
+    # Bond/Treasury/Fixed-income ETFs (not equity momentum)
     'TLT', 'TLH', 'IEF', 'IEI', 'SHY', 'BIL', 'SPTL', 'SPTI', 'SPTS',
     'AGG', 'BND', 'BNDX', 'LQD', 'HYG', 'JNK', 'MBB', 'VMBS', 'MUB',
     'GOVT', 'VGSH', 'VGIT', 'VGLT', 'VCSH', 'VCIT', 'VCLT',
     'SCHZ', 'SCHQ', 'SCHO', 'SCHR',
+    'JAAA', 'VTEB', 'USHY', 'JEPQ',
+    # Index symbols (not tradeable)
+    '^DJI', '^GSPC', '^IXIC',
     # Crypto leveraged ETFs
     'BITX', 'BITU', 'SBIT',
     # Volatility products (contango decay)
