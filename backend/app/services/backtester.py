@@ -736,6 +736,14 @@ class BacktesterService:
         if not symbols:
             raise RuntimeError("Not enough historical data for backtest")
 
+        # Ensure SPY indicators are computed for market regime check
+        # (SPY may be excluded from trading but is needed for the regime filter)
+        if 'SPY' in scanner_service.data_cache:
+            spy_df = scanner_service.data_cache['SPY']
+            if 'ma_200' not in spy_df.columns or spy_df['ma_200'].isna().all():
+                spy_df = scanner_service._ensure_indicators(spy_df)
+                scanner_service.data_cache['SPY'] = spy_df
+
         # Initialize tracking
         capital = self.initial_capital
         positions: Dict[str, dict] = {}  # symbol -> position info
