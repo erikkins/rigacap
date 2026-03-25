@@ -34,30 +34,6 @@ logger = logging.getLogger(__name__)
 # Fast set lookup for excluded symbols — union of both lists (single source of truth)
 _EXCLUDED_SET = set(EXCLUDED_PATTERNS) | set(EXCLUDED_SYMBOLS)
 
-# Walk-forward exclusion: ONLY structurally problematic symbols (leveraged, inverse, volatility, untradeable indices)
-# Regular ETFs (SPY, QQQ, sector ETFs) are allowed in WF sims for accurate historical backtesting
-# The daily scan uses _EXCLUDED_SET (full ETF exclusion) for customer-facing signals
-_WF_EXCLUDED_SET = {
-    # Leveraged/Inverse (daily decay makes them structurally unsuitable)
-    'TQQQ', 'SQQQ', 'QLD', 'QID', 'SPXU', 'SPXS', 'UPRO', 'SSO', 'SDS', 'SH',
-    'TNA', 'TZA', 'FAS', 'FAZ', 'LABU', 'LABD', 'NUGT', 'DUST', 'JNUG', 'JDST',
-    'FNGD', 'FNGU', 'SOXL', 'SOXS', 'TECL', 'TECS', 'CURE', 'PILL',
-    'TMF', 'TMV', 'TYD', 'TYO', 'DRN', 'DRV', 'DFEN', 'WEBS',
-    'ERX', 'ERY', 'GUSH', 'DRIP', 'NAIL', 'REK',
-    'AGQ', 'ZSL', 'UGL', 'GLL',
-    # Leveraged/inverse single-stock ETFs
-    'TSLS', 'TSLQ', 'TSLL', 'NVDL', 'NVDS', 'NVDQ', 'NVD',
-    'AAPD', 'AAPU', 'AMZU', 'AMZD', 'MSFU', 'MSFD',
-    'METU', 'METD', 'CONL', 'CONY', 'MSTX', 'MSTU',
-    # Crypto leveraged
-    'BITX', 'BITU', 'SBIT',
-    # Volatility products (contango decay)
-    'UVXY', 'SVXY', 'VXX', 'VIXY', 'TVIX',
-    # Untradeable index symbols
-    '^DJI', '^GSPC', '^IXIC',
-    # Other problematic
-    'DWAC', 'PHUN',
-}
 
 
 @dataclass
