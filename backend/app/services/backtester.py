@@ -213,6 +213,7 @@ class BacktesterService:
         self.max_hold_days = 60
         self.sector_cap = 0              # 0 = disabled
         self.regime_reentry_mode = False  # False = classic (SPY>MA200 only), True = smart re-entry
+        self.bear_keep_pct = 0.0         # 0.0 = close all on regime exit, 0.5 = keep top 50% of positions
         # Liquidity tier bonus (injected by walk-forward service per period)
         self.tier1_set: set = set()
         self.tier1_bonus: float = 0.0
@@ -887,11 +888,33 @@ class BacktesterService:
             if strategy_type in ("momentum", "dwap_hybrid", "ensemble") and settings.MARKET_FILTER_ENABLED:
                 market_favorable = self._check_market_regime(date)
 
-                # If market turns unfavorable, close all positions
+                # If market turns unfavorable, close positions (all or partial)
                 if not market_favorable and not in_cash_mode:
                     in_cash_mode = True
                     cash_mode_day_count = 0
-                    for symbol in list(positions.keys()):
+
+                    # Determine which positions to close
+                    symbols_to_close = list(positions.keys())
+                    if self.bear_keep_pct > 0 and len(positions) > 1:
+                        # Rank positions by current PnL%, keep the top performers
+                        pos_pnl = []
+                        for sym in positions:
+                            pos = positions[sym]
+                            df = scanner_service.data_cache.get(sym)
+                            if df is None:
+                                pos_pnl.append((sym, -999))
+                                continue
+                            row = self._get_row_for_date(df, date)
+                            if row is None:
+                                pos_pnl.append((sym, -999))
+                                continue
+                            pnl = (row['close'] - pos['entry_price']) / pos['entry_price']
+                            pos_pnl.append((sym, pnl))
+                        pos_pnl.sort(key=lambda x: x[1], reverse=True)
+                        n_keep = max(1, int(len(pos_pnl) * self.bear_keep_pct))
+                        symbols_to_close = [sym for sym, _ in pos_pnl[n_keep:]]
+
+                    for symbol in symbols_to_close:
                         pos = positions[symbol]
                         df = scanner_service.data_cache[symbol]
                         row = self._get_row_for_date(df, date)
@@ -927,7 +950,7 @@ class BacktesterService:
                             spy_trend=pos.get('spy_trend', 0),
                         ))
                         capital += pos['shares'] * current_price
-                    positions.clear()
+                        del positions[symbol]
 
                 elif in_cash_mode:
                     cash_mode_day_count += 1
