@@ -1103,6 +1103,59 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
             if prev_regime and prev_regime != market_stats.get("regime"):
                 regime_change = f" (was {prev_regime.replace('_', ' ')})"
 
+            # Cross-asset context: bonds, gold, sectors
+            cross_asset_lines = []
+            try:
+                import yfinance as yf
+                cross_tickers = {
+                    'TLT': '20Y Treasuries',
+                    'GLD': 'Gold',
+                    'QQQ': 'Nasdaq-100',
+                    'IWM': 'Small Caps',
+                    'XLE': 'Energy',
+                    'XLK': 'Tech',
+                }
+                cross_data = yf.download(list(cross_tickers.keys()), period='5d', progress=False)
+                if cross_data is not None and 'Close' in cross_data.columns.get_level_values(0):
+                    closes = cross_data['Close']
+                    if len(closes) >= 2:
+                        today_close = closes.iloc[-1]
+                        prev_close = closes.iloc[-2]
+                        moves = []
+                        all_down = True
+                        for ticker, name in cross_tickers.items():
+                            if ticker in today_close and ticker in prev_close:
+                                chg = (today_close[ticker] / prev_close[ticker] - 1) * 100
+                                if not pd.isna(chg):
+                                    direction = "+" if chg >= 0 else ""
+                                    moves.append(f"{name} {direction}{chg:.1f}%")
+                                    if chg >= 0:
+                                        all_down = False
+                        if moves:
+                            cross_asset_lines.append("Cross-asset moves: " + ", ".join(moves))
+                        if all_down and len(moves) >= 3:
+                            cross_asset_lines.append("NOTE: Stocks, bonds, and gold ALL fell — a 'nowhere to hide' session.")
+            except Exception as ca_err:
+                print(f"⚠️ Cross-asset data failed (non-fatal): {ca_err}")
+
+            # SPY technical context
+            spy_technical = ""
+            try:
+                spy_cache = scanner_service.data_cache.get('SPY')
+                if spy_cache is not None and len(spy_cache) >= 5:
+                    spy_5d_ret = (spy_cache['close'].iloc[-1] / spy_cache['close'].iloc[-5] - 1) * 100
+                    spy_20d_high = spy_cache['close'].iloc[-20:].max() if len(spy_cache) >= 20 else None
+                    spy_pct_from_high = ((spy_cache['close'].iloc[-1] / spy_20d_high - 1) * 100) if spy_20d_high else None
+                    parts = [f"SPY 5-day: {'+' if spy_5d_ret >= 0 else ''}{spy_5d_ret:.1f}%"]
+                    if spy_pct_from_high is not None and spy_pct_from_high < -3:
+                        parts.append(f"{spy_pct_from_high:.1f}% from 20-day high")
+                    spy_technical = " | ".join(parts)
+            except Exception:
+                pass
+
+            cross_asset_block = "\n".join(cross_asset_lines) + "\n" if cross_asset_lines else ""
+            spy_tech_line = f"SPY technicals: {spy_technical}\n" if spy_technical else ""
+
             context_block = (
                 f"Signal count: {today_count} ensemble signals{change_note}\n"
                 f"Fresh entries today: {fresh_count}{fresh_note}\n"
@@ -1110,6 +1163,8 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                 f"New since yesterday: {added_list}{added_extra}\n"
                 f"Top 5 momentum: {', '.join(top5)}\n"
                 f"S&P 500: ${spy_price} | Market Fear: {vix_level} (VIX)\n"
+                f"{spy_tech_line}"
+                f"{cross_asset_block}"
                 f"Regime: {regime_name}{regime_change}\n"
             )
 
@@ -1139,7 +1194,9 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                 "- Never say 'our algorithm' or 'our model' — say 'the ensemble' or 'our signals'.\n"
                 "- Never give financial advice or say 'buy' / 'sell'.\n"
                 "- Reference specific tickers, regimes, or data points when interesting.\n"
-                "- Vary your phrasing. Don't start every sentence the same way.\n"
+                "- Vary your phrasing. Don't start every sentence the same way. Change up structure daily.\n"
+                "- If cross-asset data shows something notable (everything down, rotation happening, "
+                "bonds diverging from stocks), LEAD with that — it's more interesting than signal counts.\n"
                 "- If signals dropped hard, be matter-of-fact, not alarming.\n"
                 "- If it's a quiet day, keep it brief and confident.\n"
                 "- NEVER use the term 'VIX' — our audience is everyday investors. Say 'market fear' instead. "
