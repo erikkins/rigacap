@@ -214,6 +214,7 @@ class BacktesterService:
         self.sector_cap = 0              # 0 = disabled
         self.regime_reentry_mode = False  # False = classic (SPY>MA200 only), True = smart re-entry
         self.bear_keep_pct = 0.0         # 0.0 = close all on regime exit, 0.5 = keep top 50% of positions
+        self.graduated_reentry = False   # Graduated re-entry: deploy partial capital on recovery signals
         # Liquidity tier bonus (injected by walk-forward service per period)
         self.tier1_set: set = set()
         self.tier1_bonus: float = 0.0
@@ -507,6 +508,96 @@ class BacktesterService:
                     return True
 
         return False
+
+    def _compute_breadth(self, date: pd.Timestamp, symbols: List[str], ma_period: int = 50) -> float:
+        """Compute market breadth: % of symbols trading above their N-day MA."""
+        above = 0
+        total = 0
+        for sym in symbols:
+            if sym in ('SPY', '^VIX') or sym not in scanner_service.data_cache:
+                continue
+            df = scanner_service.data_cache[sym]
+            row = self._get_row_for_date(df, date)
+            if row is None:
+                continue
+            ma_key = f'ma_{ma_period}'
+            ma_val = row.get(ma_key, np.nan)
+            if pd.isna(ma_val):
+                continue
+            total += 1
+            if row['close'] > ma_val:
+                above += 1
+        return (above / total * 100) if total > 0 else 50.0
+
+    def _check_graduated_reentry(self, date: pd.Timestamp, symbols: List[str],
+                                  cash_mode_days: int, prev_breadth: float) -> tuple:
+        """
+        Graduated re-entry: returns (deploy_pct, reason) based on recovery signals.
+
+        Instead of binary cash/invested, detects early recovery signals and
+        deploys capital gradually:
+          - 0.0  = stay in full cash (no recovery signals)
+          - 0.30 = breadth thrust detected (cautious deployment)
+          - 0.50 = SPY > MA50 + VIX falling (moderate deployment)
+          - 1.0  = SPY > MA200 (full re-entry, same as classic)
+
+        Returns (deploy_pct, reason_string).
+        """
+        if cash_mode_days < 5:
+            return 0.0, "cooldown"
+
+        if 'SPY' not in scanner_service.data_cache:
+            return 0.0, "no_spy"
+
+        spy_df = scanner_service.data_cache['SPY']
+        row = self._get_row_for_date(spy_df, date)
+        if row is None:
+            return 0.0, "no_data"
+
+        spy_price = row['close']
+        spy_ma50 = row.get('ma_50', np.nan)
+        spy_ma200 = row.get('ma_200', np.nan)
+
+        # Full re-entry: SPY > MA200
+        if not pd.isna(spy_ma200) and spy_price > spy_ma200:
+            return 1.0, "spy_above_ma200"
+
+        # Compute current breadth
+        breadth = self._compute_breadth(date, symbols, ma_period=50)
+
+        # Breadth thrust: rapid improvement from oversold (prev < 30% → current > 55%)
+        breadth_thrust = prev_breadth < 30 and breadth > 55
+
+        # VIX check: is VIX falling?
+        vix_falling = False
+        vix_df = scanner_service.data_cache.get('^VIX')
+        if vix_df is not None:
+            try:
+                loc = vix_df.index.get_indexer([date], method='ffill')[0]
+                if loc >= 20:
+                    vix_now = vix_df['close'].iloc[loc]
+                    vix_ma20 = vix_df['close'].iloc[loc-19:loc+1].mean()
+                    vix_falling = vix_now < vix_ma20
+            except Exception:
+                pass
+
+        # Moderate deployment: SPY > MA50 + VIX falling
+        if not pd.isna(spy_ma50) and spy_price > spy_ma50 and vix_falling:
+            return 0.50, "spy_above_ma50_vix_falling"
+
+        # Cautious deployment: breadth thrust detected
+        if breadth_thrust:
+            return 0.30, "breadth_thrust"
+
+        # SPY > MA50 alone (without VIX confirmation) — lighter deployment
+        if not pd.isna(spy_ma50) and spy_price > spy_ma50:
+            return 0.30, "spy_above_ma50"
+
+        # VIX falling alone — very cautious
+        if vix_falling and breadth > 40:
+            return 0.20, "vix_falling_breadth_improving"
+
+        return 0.0, "no_signal"
 
     def _check_exit_condition(
         self,
@@ -812,6 +903,8 @@ class BacktesterService:
         last_rebalance: Optional[pd.Timestamp] = None
         in_cash_mode = False  # True when market is unfavorable
         cash_mode_day_count = 0  # Days spent in cash mode (for anti-churn cooldown)
+        graduated_deploy_pct = 0.0  # Current graduated deployment level (0-1)
+        prev_breadth = 50.0  # Previous day's breadth for thrust detection
 
         # Seed carried positions from previous walk-forward period
         if initial_positions:
@@ -954,8 +1047,19 @@ class BacktesterService:
 
                 elif in_cash_mode:
                     cash_mode_day_count += 1
-                    # Smart re-entry: use enhanced logic if enabled, else classic SPY>MA200
-                    if self.regime_reentry_mode:
+                    if self.graduated_reentry:
+                        # Graduated re-entry: check recovery signals for partial deployment
+                        deploy_pct, deploy_reason = self._check_graduated_reentry(
+                            date, symbols, cash_mode_day_count, prev_breadth
+                        )
+                        # Update breadth for next day's thrust detection
+                        prev_breadth = self._compute_breadth(date, symbols, ma_period=50)
+                        graduated_deploy_pct = deploy_pct
+                        if deploy_pct >= 1.0:
+                            in_cash_mode = False
+                            graduated_deploy_pct = 0.0
+                    elif self.regime_reentry_mode:
+                        # Smart re-entry: use enhanced logic if enabled, else classic SPY>MA200
                         if self._check_regime_reentry(date, cash_mode_day_count):
                             in_cash_mode = False
                     elif market_favorable:
@@ -1013,7 +1117,8 @@ class BacktesterService:
                 del positions[symbol]
 
             # Skip new entries if in cash mode (unfavorable market)
-            if in_cash_mode:
+            # Exception: graduated re-entry allows partial deployment
+            if in_cash_mode and graduated_deploy_pct <= 0:
                 debug_cash_mode_days += 1
                 position_value = 0.0
                 for sym, pos in positions.items():
@@ -1031,8 +1136,16 @@ class BacktesterService:
                 else True  # DWAP and hybrid check signals daily
             )
 
+            # Graduated re-entry: limit positions and sizing based on deployment level
+            effective_max_positions = self.max_positions
+            effective_position_size_pct = self.position_size_pct
+            if in_cash_mode and graduated_deploy_pct > 0:
+                # Scale down: 30% deploy → max 2 positions at reduced size
+                effective_max_positions = max(1, int(self.max_positions * graduated_deploy_pct))
+                effective_position_size_pct = self.position_size_pct * graduated_deploy_pct
+
             # Look for new entries if we have room and it's rebalance time
-            if len(positions) < self.max_positions and should_rebalance:
+            if len(positions) < effective_max_positions and should_rebalance:
                 candidates = []
 
                 if strategy_type == "momentum":
@@ -1069,10 +1182,10 @@ class BacktesterService:
 
                     # Enter positions up to max
                     for cand in candidates:
-                        if len(positions) >= self.max_positions:
+                        if len(positions) >= effective_max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct
+                        position_value = self.initial_capital * effective_position_size_pct
                         if position_value > capital:
                             continue
 
@@ -1164,10 +1277,10 @@ class BacktesterService:
                         cand['num_candidates'] = num_cands
 
                     for cand in candidates:
-                        if len(positions) >= self.max_positions:
+                        if len(positions) >= effective_max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct
+                        position_value = self.initial_capital * effective_position_size_pct
                         if position_value > capital:
                             continue
 
@@ -1266,10 +1379,10 @@ class BacktesterService:
                         cand['num_candidates'] = num_cands
 
                     for cand in candidates:
-                        if len(positions) >= self.max_positions:
+                        if len(positions) >= effective_max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct
+                        position_value = self.initial_capital * effective_position_size_pct
                         if position_value > capital:
                             continue
 
@@ -1353,10 +1466,10 @@ class BacktesterService:
                         cand['num_candidates'] = num_cands
 
                     for cand in candidates:
-                        if len(positions) >= self.max_positions:
+                        if len(positions) >= effective_max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct
+                        position_value = self.initial_capital * effective_position_size_pct
                         if position_value > capital:
                             continue
 

@@ -475,6 +475,7 @@ async def _run_walk_forward_job(job_config: dict, wf_state_key: str = None):
                 trailing_stop_pct=job_config.get("trailing_stop_pct"),
                 regime_reentry_mode=job_config.get("regime_reentry_mode", False),
                 bear_keep_pct=job_config.get("bear_keep_pct", 0.0),
+                graduated_reentry=job_config.get("graduated_reentry", False),
             )
 
             # Check if more chunks are needed

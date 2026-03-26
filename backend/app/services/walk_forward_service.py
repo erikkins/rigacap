@@ -585,6 +585,7 @@ class WalkForwardService:
         trailing_stop_pct_override: Optional[float] = None,
         regime_reentry_mode: bool = False,
         bear_keep_pct: float = 0.0,
+        graduated_reentry: bool = False,
     ) -> Tuple[float, float, str, List[PeriodTrade], Dict[str, dict]]:
         """
         Simulate trading for a period using custom parameters (for AI-generated strategies).
@@ -612,6 +613,7 @@ class WalkForwardService:
                 backtester.trailing_stop_pct = trailing_stop_pct_override / 100
             backtester.regime_reentry_mode = regime_reentry_mode
             backtester.bear_keep_pct = bear_keep_pct
+            backtester.graduated_reentry = graduated_reentry
 
             # Apply sector cap to ticker list if V2 param is set
             effective_tickers = ticker_list
@@ -694,6 +696,7 @@ class WalkForwardService:
         trailing_stop_pct_override: Optional[float] = None,
         regime_reentry_mode: bool = False,
         bear_keep_pct: float = 0.0,
+        graduated_reentry: bool = False,
     ) -> Tuple[float, List[Dict], float, str, List[PeriodTrade], Dict[str, dict]]:
         """
         Simulate trading for a single period using a specific strategy.
@@ -820,6 +823,7 @@ class WalkForwardService:
         trailing_stop_pct: Optional[float] = None,  # Override trailing stop (e.g., 15.0 for 15%)
         regime_reentry_mode: bool = False,  # Smart regime re-entry (MA50 + V-recovery detection)
         bear_keep_pct: float = 0.0,  # Partial cash: keep top N% positions during bear (0.0 = close all)
+        graduated_reentry: bool = False,  # Graduated re-entry with breadth thrust / VIX signals
     ) -> WalkForwardResult:
         """
         Run walk-forward simulation with AI optimization over a historical period.
@@ -1294,6 +1298,7 @@ class WalkForwardService:
                     trailing_stop_pct_override=trailing_stop_pct,
                     regime_reentry_mode=regime_reentry_mode,
                     bear_keep_pct=bear_keep_pct,
+                    graduated_reentry=graduated_reentry,
                 )
                 strategy_name = "AI-Optimized"
                 if error:
@@ -1313,6 +1318,7 @@ class WalkForwardService:
                     trailing_stop_pct_override=trailing_stop_pct,
                     regime_reentry_mode=regime_reentry_mode,
                     bear_keep_pct=bear_keep_pct,
+                    graduated_reentry=graduated_reentry,
                 )
                 strategy_name = active_strategy.name
                 if error:
@@ -1908,6 +1914,7 @@ class WalkForwardService:
             _trailing_stop = config.get("trailing_stop_pct")
             _regime_reentry = config.get("regime_reentry_mode", False)
             _bear_keep_pct = config.get("bear_keep_pct", 0.0)
+            _graduated_reentry = config.get("graduated_reentry", False)
 
             if using_ai_params and active_params:
                 new_capital, period_return, info, period_trades, new_carried = self._simulate_period_with_params(
@@ -1922,6 +1929,7 @@ class WalkForwardService:
                     trailing_stop_pct_override=_trailing_stop,
                     regime_reentry_mode=_regime_reentry,
                     bear_keep_pct=_bear_keep_pct,
+                    graduated_reentry=_graduated_reentry,
                 )
                 strategy_name = "AI-Optimized"
                 if info:
@@ -1942,6 +1950,7 @@ class WalkForwardService:
                     trailing_stop_pct_override=_trailing_stop,
                     regime_reentry_mode=_regime_reentry,
                     bear_keep_pct=_bear_keep_pct,
+                    graduated_reentry=_graduated_reentry,
                 )
                 strategy_name = active_strategy.name
                 if info:
