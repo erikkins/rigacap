@@ -403,6 +403,9 @@ async def _run_walk_forward_job(job_config: dict, wf_state_key: str = None):
             s3 = boto3.client('s3', region_name='us-east-1')
             resp = s3.get_object(Bucket=S3_BUCKET, Key=wf_state_key)
             continuation_state = json.loads(resp['Body'].read())
+            if continuation_state.get("completed"):
+                print(f"[ASYNC-WF] Job already completed (return={continuation_state.get('total_return_pct')}%), skipping")
+                return {"status": "already_completed", "job_id": continuation_state.get("job_id")}
             job_id = continuation_state.get("job_id", job_id)
             print(f"[ASYNC-WF] Loaded continuation state from s3://{S3_BUCKET}/{wf_state_key}, "
                   f"job_id={job_id}, period_index={continuation_state.get('period_index')}")
@@ -516,16 +519,28 @@ async def _run_walk_forward_job(job_config: dict, wf_state_key: str = None):
                     "state_key": state_key,
                 }
             else:
-                # Simulation complete — clean up S3 state file
+                # Simulation complete — mark state file as done (don't delete, for monitoring)
                 if wf_state_key:
                     try:
                         import boto3
                         from app.services.data_export import S3_BUCKET
                         s3 = boto3.client('s3', region_name='us-east-1')
-                        s3.delete_object(Bucket=S3_BUCKET, Key=wf_state_key)
-                        print(f"[ASYNC-WF] Cleaned up state file: {wf_state_key}")
+                        s3.put_object(
+                            Bucket=S3_BUCKET,
+                            Key=wf_state_key,
+                            Body=json.dumps({
+                                "completed": True,
+                                "job_id": job_id,
+                                "total_return_pct": sim_result.total_return_pct,
+                                "sharpe_ratio": getattr(sim_result, 'sharpe_ratio', None),
+                                "max_drawdown_pct": getattr(sim_result, 'max_drawdown_pct', None),
+                                "total_trades": getattr(sim_result, 'total_trades', None),
+                            }, default=str),
+                            ContentType='application/json',
+                        )
+                        print(f"[ASYNC-WF] Marked state file complete: {wf_state_key}")
                     except Exception as cleanup_err:
-                        print(f"[ASYNC-WF] Warning: failed to clean up state file: {cleanup_err}")
+                        print(f"[ASYNC-WF] Warning: failed to update state file: {cleanup_err}")
 
                 print(f"[ASYNC-WF] Job {job_id} completed: return={sim_result.total_return_pct}%")
                 return {"status": "completed", "job_id": job_id}
