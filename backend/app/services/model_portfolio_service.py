@@ -1161,11 +1161,11 @@ class ModelPortfolioService:
         """
         start_dt = datetime.strptime(start_date, "%Y-%m-%d")
 
-        # Get WF snapshots from start_date onward
+        # Get live portfolio snapshots from start_date onward
         result = await db.execute(
             select(ModelPortfolioSnapshot)
             .where(
-                ModelPortfolioSnapshot.portfolio_type == "walkforward",
+                ModelPortfolioSnapshot.portfolio_type == "live",
                 ModelPortfolioSnapshot.snapshot_date >= start_dt,
             )
             .order_by(asc(ModelPortfolioSnapshot.snapshot_date))
@@ -1215,12 +1215,12 @@ class ModelPortfolioService:
             spy_return = ((snapshots[-1].spy_close / first_spy) - 1) * 100
             alpha = total_return - spy_return
 
-        # Inception return — earliest WF snapshot to latest
+        # Inception return — earliest live snapshot to latest
         inception_return_pct = None
         inception_date = None
         inception_result = await db.execute(
             select(ModelPortfolioSnapshot)
-            .where(ModelPortfolioSnapshot.portfolio_type == "walkforward")
+            .where(ModelPortfolioSnapshot.portfolio_type == "live")
             .order_by(asc(ModelPortfolioSnapshot.snapshot_date))
             .limit(1)
         )
@@ -1236,7 +1236,7 @@ class ModelPortfolioService:
         best_trade_result = await db.execute(
             select(ModelPosition)
             .where(
-                ModelPosition.portfolio_type == "walkforward",
+                ModelPosition.portfolio_type == "live",
                 ModelPosition.status == "closed",
                 ModelPosition.entry_date >= start_dt,
                 ModelPosition.pnl_pct.isnot(None),
@@ -1253,7 +1253,7 @@ class ModelPortfolioService:
                 func.count().filter(ModelPosition.pnl_pct > 0).label("wins"),
             )
             .where(
-                ModelPosition.portfolio_type == "walkforward",
+                ModelPosition.portfolio_type == "live",
                 ModelPosition.status == "closed",
                 ModelPosition.entry_date >= start_dt,
             )
