@@ -1045,6 +1045,12 @@ class BacktesterService:
                         capital += pos['shares'] * current_price
                         del positions[symbol]
 
+                    # Safety: clear any orphan positions that couldn't be priced
+                    if self.bear_keep_pct <= 0 and positions:
+                        for sym in list(positions.keys()):
+                            print(f"[BACKTEST] WARNING: orphan position {sym} cleared on regime exit (no price data)")
+                            del positions[sym]
+
                 elif in_cash_mode:
                     cash_mode_day_count += 1
                     if self.graduated_reentry:
