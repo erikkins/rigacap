@@ -211,17 +211,11 @@ async def store_signals_callback(signals):
     if not signals:
         return
 
-    # Export signals to S3 as static JSON for CDN delivery
-    try:
-        result = data_export_service.export_signals_json(signals)
-        if result.get("success"):
-            print(f"📤 Exported {result['count']} signals to S3 for CDN")
-        else:
-            print(f"⚠️ Signal export failed: {result.get('message')}")
-    except Exception as e:
-        print(f"⚠️ Signal export error: {e}")
+    # NOTE: latest.json (legacy DWAP signal export) is DEPRECATED.
+    # dashboard.json is the single source of truth for all signals.
+    # See signal consistency rule (Mar 27 2026 incident).
 
-    # Also store in database for historical tracking
+    # Store in database for historical tracking
     try:
         async with async_session() as db:
             for sig in signals:
