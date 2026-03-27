@@ -981,33 +981,11 @@ class BacktesterService:
             if strategy_type in ("momentum", "dwap_hybrid", "ensemble") and settings.MARKET_FILTER_ENABLED:
                 market_favorable = self._check_market_regime(date)
 
-                # If market turns unfavorable, close positions (all or partial)
+                # If market turns unfavorable, close all positions
                 if not market_favorable and not in_cash_mode:
                     in_cash_mode = True
                     cash_mode_day_count = 0
-
-                    # Determine which positions to close
-                    symbols_to_close = list(positions.keys())
-                    if self.bear_keep_pct > 0 and len(positions) > 1:
-                        # Rank positions by current PnL%, keep the top performers
-                        pos_pnl = []
-                        for sym in positions:
-                            pos = positions[sym]
-                            df = scanner_service.data_cache.get(sym)
-                            if df is None:
-                                pos_pnl.append((sym, -999))
-                                continue
-                            row = self._get_row_for_date(df, date)
-                            if row is None:
-                                pos_pnl.append((sym, -999))
-                                continue
-                            pnl = (row['close'] - pos['entry_price']) / pos['entry_price']
-                            pos_pnl.append((sym, pnl))
-                        pos_pnl.sort(key=lambda x: x[1], reverse=True)
-                        n_keep = max(1, int(len(pos_pnl) * self.bear_keep_pct))
-                        symbols_to_close = [sym for sym, _ in pos_pnl[n_keep:]]
-
-                    for symbol in symbols_to_close:
+                    for symbol in list(positions.keys()):
                         pos = positions[symbol]
                         df = scanner_service.data_cache[symbol]
                         row = self._get_row_for_date(df, date)
@@ -1043,33 +1021,10 @@ class BacktesterService:
                             spy_trend=pos.get('spy_trend', 0),
                         ))
                         capital += pos['shares'] * current_price
-                        del positions[symbol]
+                    positions.clear()
 
-                    # Safety: clear any orphan positions that couldn't be priced
-                    if self.bear_keep_pct <= 0 and positions:
-                        for sym in list(positions.keys()):
-                            print(f"[BACKTEST] WARNING: orphan position {sym} cleared on regime exit (no price data)")
-                            del positions[sym]
-
-                elif in_cash_mode:
-                    cash_mode_day_count += 1
-                    if self.graduated_reentry:
-                        # Graduated re-entry: check recovery signals for partial deployment
-                        deploy_pct, deploy_reason = self._check_graduated_reentry(
-                            date, symbols, cash_mode_day_count, prev_breadth
-                        )
-                        # Update breadth for next day's thrust detection
-                        prev_breadth = self._compute_breadth(date, symbols, ma_period=50)
-                        graduated_deploy_pct = deploy_pct
-                        if deploy_pct >= 1.0:
-                            in_cash_mode = False
-                            graduated_deploy_pct = 0.0
-                    elif self.regime_reentry_mode:
-                        # Smart re-entry: use enhanced logic if enabled, else classic SPY>MA200
-                        if self._check_regime_reentry(date, cash_mode_day_count):
-                            in_cash_mode = False
-                    elif market_favorable:
-                        in_cash_mode = False
+                elif market_favorable:
+                    in_cash_mode = False
 
             # Check existing positions for exits
             symbols_to_close = []
@@ -1123,8 +1078,7 @@ class BacktesterService:
                 del positions[symbol]
 
             # Skip new entries if in cash mode (unfavorable market)
-            # Exception: graduated re-entry allows partial deployment
-            if in_cash_mode and graduated_deploy_pct <= 0:
+            if in_cash_mode:
                 debug_cash_mode_days += 1
                 position_value = 0.0
                 for sym, pos in positions.items():
@@ -1142,16 +1096,8 @@ class BacktesterService:
                 else True  # DWAP and hybrid check signals daily
             )
 
-            # Graduated re-entry: limit positions and sizing based on deployment level
-            effective_max_positions = self.max_positions
-            effective_position_size_pct = self.position_size_pct
-            if in_cash_mode and graduated_deploy_pct > 0:
-                # Scale down: 30% deploy → max 2 positions at reduced size
-                effective_max_positions = max(1, int(self.max_positions * graduated_deploy_pct))
-                effective_position_size_pct = self.position_size_pct * graduated_deploy_pct
-
             # Look for new entries if we have room and it's rebalance time
-            if len(positions) < effective_max_positions and should_rebalance:
+            if len(positions) < self.max_positions and should_rebalance:
                 candidates = []
 
                 if strategy_type == "momentum":
@@ -1188,10 +1134,10 @@ class BacktesterService:
 
                     # Enter positions up to max
                     for cand in candidates:
-                        if len(positions) >= effective_max_positions:
+                        if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * effective_position_size_pct
+                        position_value = self.initial_capital * self.position_size_pct
                         if position_value > capital:
                             continue
 
@@ -1283,10 +1229,10 @@ class BacktesterService:
                         cand['num_candidates'] = num_cands
 
                     for cand in candidates:
-                        if len(positions) >= effective_max_positions:
+                        if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * effective_position_size_pct
+                        position_value = self.initial_capital * self.position_size_pct
                         if position_value > capital:
                             continue
 
@@ -1385,10 +1331,10 @@ class BacktesterService:
                         cand['num_candidates'] = num_cands
 
                     for cand in candidates:
-                        if len(positions) >= effective_max_positions:
+                        if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * effective_position_size_pct
+                        position_value = self.initial_capital * self.position_size_pct
                         if position_value > capital:
                             continue
 
@@ -1472,10 +1418,10 @@ class BacktesterService:
                         cand['num_candidates'] = num_cands
 
                     for cand in candidates:
-                        if len(positions) >= effective_max_positions:
+                        if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * effective_position_size_pct
+                        position_value = self.initial_capital * self.position_size_pct
                         if position_value > capital:
                             continue
 
