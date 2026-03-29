@@ -56,6 +56,43 @@ V2_PARAM_SPACES: Dict[str, Dict[str, Any]] = {
     },
 }
 
+# === V2 CONSTRAINED Parameter Space ===
+# Tight bounds around proven winners from A/B testing (Mar 25-28 2026).
+# Reduces optimizer variance while preserving ability to adapt.
+# Use via optimizer_version="v2c" in WF payload.
+V2_CONSTRAINED_PARAM_SPACES: Dict[str, Dict[str, Any]] = {
+    "ensemble": {
+        # Core params: narrow bands around proven values
+        "dwap_threshold_pct": {"low": 4.0, "high": 6.0, "step": 0.5},       # proven: 5%
+        "trailing_stop_pct": {"low": 10.0, "high": 14.0, "step": 1.0},      # proven: 12%
+        "max_positions": {"low": 5, "high": 7, "step": 1},                   # proven: 6
+        "position_size_pct": {"low": 13.0, "high": 18.0, "step": 1.0},      # proven: 15%
+        "near_50d_high_pct": {"low": 3.0, "high": 7.0, "step": 1.0},        # proven: 5%
+
+        # Momentum weights: narrow
+        "short_mom_weight": {"low": 0.4, "high": 0.6, "step": 0.05},
+        "long_mom_weight": {"low": 0.2, "high": 0.4, "step": 0.05},
+        "volatility_penalty": {"low": 0.10, "high": 0.25, "step": 0.05},
+
+        # Momentum lookback: keep flexible (these have less variance impact)
+        "short_momentum_days": {"type": "categorical", "choices": [5, 10, 15, 20]},
+        "long_momentum_days": {"type": "categorical", "choices": [40, 60, 90, 120]},
+
+        # Entry filters: keep loose (don't over-filter)
+        "rsi_oversold_filter": {"low": 80, "high": 100, "step": 10},         # mostly disabled
+        "volume_ratio_min": {"low": 0.0, "high": 0.6, "step": 0.3},         # mostly disabled
+
+        # Exit: trailing stop ONLY (hybrid/time_capped both tested worse)
+        "exit_type": {"type": "categorical", "choices": ["trailing_stop"]},
+        "hybrid_initial_target_pct": {"low": 15.0, "high": 15.0, "step": 2.5},  # unused
+        "hybrid_trailing_pct": {"low": 8.0, "high": 8.0, "step": 1.0},          # unused
+        "max_hold_days": {"low": 60, "high": 60, "step": 10},                   # unused
+
+        # Sector cap: disabled (proven best)
+        "sector_cap": {"low": 0, "high": 2, "step": 1},
+    },
+}
+
 # Conditional parameters: only sampled when parent param matches
 V2_CONDITIONAL_PARAMS = {
     "hybrid_initial_target_pct": {"parent": "exit_type", "condition": "hybrid"},

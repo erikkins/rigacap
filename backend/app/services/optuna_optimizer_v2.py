@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from app.services.strategy_params_v2 import (
     V2_PARAM_SPACES,
+    V2_CONSTRAINED_PARAM_SPACES,
     V2_CONDITIONAL_PARAMS,
     V2_REGIME_CONSTRAINTS,
 )
@@ -36,6 +37,7 @@ class StrategyOptimizerV2:
         n_trials: int = 30,
         seed_date: Optional[datetime] = None,
         risk_preference: float = 0.5,
+        use_constrained: bool = False,
     ) -> Optional[Dict[str, Any]]:
         """
         Run multi-objective Bayesian optimization.
@@ -65,7 +67,8 @@ class StrategyOptimizerV2:
         else:
             seed = 42
 
-        space = V2_PARAM_SPACES.get(strategy_type)
+        param_source = V2_CONSTRAINED_PARAM_SPACES if use_constrained else V2_PARAM_SPACES
+        space = param_source.get(strategy_type)
         if not space:
             return None
 

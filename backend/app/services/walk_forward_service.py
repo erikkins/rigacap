@@ -379,8 +379,8 @@ class WalkForwardService:
         combinations_tested = 0
         best_full_result = {"data": None}
 
-        if optimizer_version == "v2":
-            # V2: Multi-objective, returns (return_pct, max_drawdown_pct) tuple
+        if optimizer_version in ("v2", "v2c"):
+            # V2/V2C: Multi-objective, returns (return_pct, max_drawdown_pct) tuple
             # We store full_params (base + suggested) in suggested_params dict so the
             # optimizer's trial_results contain params usable by StrategyParams(**params).
             def objective_v2(suggested_params: Dict[str, Any]) -> Optional[Tuple[float, float]]:
@@ -411,6 +411,7 @@ class WalkForwardService:
                 n_trials=n_trials,
                 seed_date=as_of_date,
                 risk_preference=risk_preference,
+                use_constrained=(optimizer_version == "v2c"),
             )
 
             if opt_result:
@@ -1177,7 +1178,7 @@ class WalkForwardService:
                     # First period - always pick best
                     should_switch = True
                     switch_reason = "initial_selection"
-                elif optimizer_version == "v2" and best.get("is_ai"):
+                elif optimizer_version in ("v2", "v2c") and best.get("is_ai"):
                     # V2: always re-adopt fresh AI params every period
                     should_switch = True
                     switch_reason = f"v2_reoptimize_{score_diff:+.1f}pts"
