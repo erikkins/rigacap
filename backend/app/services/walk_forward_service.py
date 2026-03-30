@@ -825,6 +825,8 @@ class WalkForwardService:
         regime_reentry_mode: bool = False,  # Smart regime re-entry (MA50 + V-recovery detection)
         bear_keep_pct: float = 0.0,  # Partial cash: keep top N% positions during bear (0.0 = close all)
         graduated_reentry: bool = False,  # Graduated re-entry with breadth thrust / VIX signals
+        param_smoothing: float = 0.0,  # 0.0=no smoothing, 0.7=blend 70% previous + 30% new optimizer params
+        warmup_periods: int = 0,  # Use fixed params for first N periods before enabling optimizer
     ) -> WalkForwardResult:
         """
         Run walk-forward simulation with AI optimization over a historical period.
@@ -1121,8 +1123,9 @@ class WalkForwardService:
                         metrics["is_ai"] = False
                         evaluations.append(metrics)
 
-            # Step 2: Run AI optimization if enabled
-            if enable_ai_optimization:
+            # Step 2: Run AI optimization if enabled (skip during warmup)
+            in_warmup = warmup_periods > 0 and i < warmup_periods
+            if enable_ai_optimization and not in_warmup:
                 try:
                     # Use the active strategy's type for AI optimization
                     ai_strategy_type = active_strategy_type if active_strategy_type else "ensemble"
@@ -1772,8 +1775,10 @@ class WalkForwardService:
                         metrics["is_ai"] = False
                         evaluations.append(metrics)
 
-            # -- AI optimization --
-            if enable_ai:
+            # -- AI optimization (skip during warmup) --
+            _warmup_periods = config.get("warmup_periods", 0)
+            _in_warmup = _warmup_periods > 0 and period_index < _warmup_periods
+            if enable_ai and not _in_warmup:
                 try:
                     ai_strategy_type = active_strategy_type if active_strategy_type else "ensemble"
                     print(f"[WF-PERIOD] Running AI optimization ({ai_strategy_type})")
@@ -1880,9 +1885,23 @@ class WalkForwardService:
                             period_ai_opt.was_adopted = False
                             period_ai_opt.reason = "existing_strategy_better"
 
-            # Update warm-start params
+            # Update warm-start params (with optional smoothing)
             if period_ai_opt:
-                warm_start_params = period_ai_opt.best_params
+                new_params = period_ai_opt.best_params
+                if param_smoothing > 0 and warm_start_params and new_params:
+                    # Blend: smoothed = α * previous + (1-α) * new
+                    smoothed = {}
+                    for key, new_val in new_params.items():
+                        old_val = warm_start_params.get(key)
+                        if old_val is not None and isinstance(new_val, (int, float)) and isinstance(old_val, (int, float)):
+                            blended = param_smoothing * old_val + (1 - param_smoothing) * new_val
+                            # Preserve type (int params stay int)
+                            smoothed[key] = int(round(blended)) if isinstance(new_val, int) else round(blended, 2)
+                        else:
+                            smoothed[key] = new_val  # Non-numeric params (exit_type, etc.) take new value
+                    warm_start_params = smoothed
+                else:
+                    warm_start_params = new_params
 
             # -- Determine position carry-over --
             is_last_period = (period_index == state["total_periods"] - 1)
@@ -1990,6 +2009,23 @@ class WalkForwardService:
                     "params": json.loads(active_strategy.parameters),
                     "source": "existing"
                 }
+
+            # Update warm_start_params (with optional smoothing)
+            if period_ai_opt:
+                new_params = period_ai_opt.best_params
+                _smoothing = config.get("param_smoothing", 0.0)
+                if _smoothing > 0 and warm_start_params and new_params:
+                    smoothed = {}
+                    for key, new_val in new_params.items():
+                        old_val = warm_start_params.get(key)
+                        if old_val is not None and isinstance(new_val, (int, float)) and isinstance(old_val, (int, float)):
+                            blended = _smoothing * old_val + (1 - _smoothing) * new_val
+                            smoothed[key] = int(round(blended)) if isinstance(new_val, int) else round(blended, 2)
+                        else:
+                            smoothed[key] = new_val
+                    warm_start_params = smoothed
+                else:
+                    warm_start_params = new_params
 
         except Exception as e:
             import traceback
