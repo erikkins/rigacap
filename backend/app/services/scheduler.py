@@ -1423,7 +1423,7 @@ class SchedulerService:
                     if pd.isna(dwap_val) or dwap_val <= 0:
                         continue
                     pct_above = (price / dwap_val - 1) * 100
-                    if 3.0 <= pct_above < 5.0:
+                    if 2.0 <= pct_above < 5.0:
                         approaching.append({
                             'symbol': r.symbol,
                             'price': float(price),

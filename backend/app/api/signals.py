@@ -719,7 +719,7 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
 
             pct_above = (price / dwap_val - 1) * 100
 
-            if 3.0 <= pct_above < 5.0:
+            if 2.0 <= pct_above < 5.0:
                 mom_data = mom['data']
                 info = stock_universe_service.symbol_info.get(symbol, {})
                 watchlist.append({
@@ -1622,7 +1622,7 @@ async def _compute_dashboard_live(
 
             pct_above = (price / dwap_val - 1) * 100
 
-            if 3.0 <= pct_above < 5.0:
+            if 2.0 <= pct_above < 5.0:
                 mom_data = mom['data']
                 info = stock_universe_service.symbol_info.get(symbol, {})
                 watchlist.append({
