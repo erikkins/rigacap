@@ -1227,6 +1227,10 @@ function ModelPortfolioTab({ fetchWithAuth }) {
   const [processing, setProcessing] = useState(false);
   const [liveQuotes, setLiveQuotes] = useState({});
   const [signalTrackStats, setSignalTrackStats] = useState(null);
+  const [chartSymbol, setChartSymbol] = useState(null);
+  const [chartData, setChartData] = useState([]);
+  const [chartLoading, setChartLoading] = useState(false);
+  const [chartTrade, setChartTrade] = useState(null); // { entry_date, entry_price, exit_date?, exit_price? }
 
   const fetchPortfolio = async () => {
     try {
@@ -1390,6 +1394,41 @@ function ModelPortfolioTab({ fetchWithAuth }) {
     return adjusted;
   }, [data, liveQuotes]);
 
+  const openChart = async (symbol, trade = null) => {
+    setChartSymbol(symbol);
+    setChartTrade(trade);
+    setChartLoading(true);
+    setChartData([]);
+    try {
+      // Fetch enough data to show trade context
+      let days = 252;
+      if (trade?.entry_date) {
+        const entryDate = new Date(trade.entry_date);
+        const daysSince = Math.ceil((Date.now() - entryDate.getTime()) / 86400000);
+        days = Math.max(days, daysSince + 30);
+      }
+      const res = await fetchWithAuth(`/api/stock/${symbol}/history?days=${days}`);
+      let prices = res?.data || res || [];
+      if (!Array.isArray(prices)) prices = [];
+
+      // Annotate chart data with buy/sell markers
+      if (trade && prices.length > 0) {
+        const entryStr = trade.entry_date?.slice(0, 10);
+        const exitStr = trade.exit_date?.slice(0, 10);
+        prices = prices.map(p => ({
+          ...p,
+          buyMarker: p.date === entryStr ? trade.entry_price : null,
+          sellMarker: p.date === exitStr ? trade.exit_price : null,
+        }));
+      }
+      setChartData(prices);
+    } catch (err) {
+      console.error('Chart fetch failed:', err);
+    } finally {
+      setChartLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPortfolio();
     fetchEquityCurve();
@@ -1540,7 +1579,7 @@ function ModelPortfolioTab({ fetchWithAuth }) {
                           const daysHeld = pos.entry_date ? Math.floor((Date.now() - new Date(pos.entry_date).getTime()) / 86400000) : null;
                           return (
                             <tr key={pos.symbol} className="border-b border-gray-50">
-                              <td className="py-2 pr-3 font-medium text-gray-900">{pos.symbol}</td>
+                              <td className="py-2 pr-3 font-medium text-indigo-600 cursor-pointer hover:text-indigo-800 hover:underline" onClick={() => openChart(pos.symbol, { entry_date: pos.entry_date, entry_price: pos.entry_price })}>{pos.symbol}</td>
                               <td className="py-2 pr-3 text-gray-500 text-xs">{formatDate(pos.entry_date) || '—'}</td>
                               <td className="py-2 pr-3 text-gray-600">${pos.entry_price?.toFixed(2)}</td>
                               <td className="py-2 pr-3 text-gray-600">${pos.current_price?.toFixed(2)}</td>
@@ -1584,7 +1623,7 @@ function ModelPortfolioTab({ fetchWithAuth }) {
                           const tPnlColor = (t.pnl_pct || 0) > 0 ? 'text-green-600' : (t.pnl_pct || 0) < 0 ? 'text-red-600' : 'text-gray-600';
                           return (
                             <tr key={t.id} className="border-b border-gray-50">
-                              <td className="py-1.5 pr-3 font-medium text-gray-900">{t.symbol}</td>
+                              <td className="py-1.5 pr-3 font-medium text-indigo-600 cursor-pointer hover:text-indigo-800 hover:underline" onClick={() => openChart(t.symbol, { entry_date: t.entry_date, entry_price: t.entry_price, exit_date: t.exit_date, exit_price: t.exit_price })}>{t.symbol}</td>
                               <td className="py-1.5 pr-3 text-gray-500 text-xs">
                                 {formatDate(t.entry_date) || '—'}
                                 <span className="text-gray-400 ml-1">${t.entry_price?.toFixed(2)}</span>
@@ -1694,7 +1733,7 @@ function ModelPortfolioTab({ fetchWithAuth }) {
                       const pnlColor = pos.pnl_pct > 0 ? 'text-green-600' : pos.pnl_pct < 0 ? 'text-red-600' : 'text-gray-600';
                       return (
                         <tr key={pos.symbol} className="border-b border-gray-50">
-                          <td className="py-2 pr-3 font-medium text-gray-900">{pos.symbol}</td>
+                          <td className="py-2 pr-3 font-medium text-indigo-600 cursor-pointer hover:text-indigo-800 hover:underline" onClick={() => openChart(pos.symbol)}>{pos.symbol}</td>
                           <td className="py-2 pr-3 text-gray-500 text-xs">{formatDate(pos.entry_date) || '—'}</td>
                           <td className="py-2 pr-3 text-gray-600">${pos.entry_price?.toFixed(2)}</td>
                           <td className="py-2 pr-3 text-gray-600">${pos.current_price?.toFixed(2)}</td>
@@ -2077,7 +2116,7 @@ function ModelPortfolioTab({ fetchWithAuth }) {
               <h4 className="text-sm font-medium text-slate-300 mb-2">Current Positions</h4>
               <div className="flex flex-wrap gap-2">
                 {mergeQuotes(subscriberPreview.open_positions).map((pos) => (
-                  <div key={pos.symbol} className="flex items-center gap-2 bg-slate-700/50 rounded-lg px-3 py-1.5">
+                  <div key={pos.symbol} className="flex items-center gap-2 bg-slate-700/50 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-slate-600/50" onClick={() => openChart(pos.symbol)}>
                     <span className="font-semibold text-sm text-slate-100">{pos.symbol}</span>
                     <span className={`text-sm font-medium ${pos.pnl_pct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {pos.pnl_pct >= 0 ? '+' : ''}{pos.pnl_pct?.toFixed(1)}%
@@ -2133,6 +2172,68 @@ function ModelPortfolioTab({ fetchWithAuth }) {
           {processing ? 'Running...' : 'Backfill Ghosts'}
         </button>
       </div>
+
+      {/* Chart Modal Overlay */}
+      {chartSymbol && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setChartSymbol(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-bold text-gray-900">{chartSymbol}</h3>
+              <button onClick={() => setChartSymbol(null)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+            </div>
+            <div className="p-4">
+              {chartTrade && (
+                <div className="flex gap-4 mb-3 text-sm">
+                  {chartTrade.entry_date && (
+                    <span className="flex items-center gap-1">
+                      <span className="inline-block w-3 h-3 rounded-full bg-green-500" />
+                      Buy {formatDate(chartTrade.entry_date)} @ ${chartTrade.entry_price?.toFixed(2)}
+                    </span>
+                  )}
+                  {chartTrade.exit_date && (
+                    <span className="flex items-center gap-1">
+                      <span className="inline-block w-3 h-3 rounded-full bg-red-500" />
+                      Sell {formatDate(chartTrade.exit_date)} @ ${chartTrade.exit_price?.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              )}
+              {chartLoading ? (
+                <div className="flex items-center justify-center h-64 text-gray-400">Loading chart...</div>
+              ) : chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={350}>
+                  <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={d => d?.slice(5)} interval={Math.floor(chartData.length / 8)} />
+                    <YAxis tick={{ fontSize: 11 }} domain={['auto', 'auto']} tickFormatter={v => `$${v?.toFixed(0)}`} />
+                    <Tooltip formatter={(v, name) => {
+                      if (name === 'buyMarker') return [`$${Number(v).toFixed(2)}`, 'BUY'];
+                      if (name === 'sellMarker') return [`$${Number(v).toFixed(2)}`, 'SELL'];
+                      return [`$${Number(v).toFixed(2)}`, name];
+                    }} labelFormatter={d => d} />
+                    <Line type="monotone" dataKey="close" stroke="#4f46e5" dot={false} strokeWidth={2} name="Close" />
+                    {chartData[0]?.ma_50 && <Line type="monotone" dataKey="ma_50" stroke="#f59e0b" dot={false} strokeWidth={1} strokeDasharray="4 4" name="MA50" />}
+                    {chartData[0]?.ma_200 && <Line type="monotone" dataKey="ma_200" stroke="#ef4444" dot={false} strokeWidth={1} strokeDasharray="4 4" name="MA200" />}
+                    {chartTrade?.entry_date && (
+                      <Line type="monotone" dataKey="buyMarker" stroke="none" dot={({ cx, cy, payload }) => payload.buyMarker ? (
+                        <svg x={cx - 8} y={cy - 16} width={16} height={16}><polygon points="8,0 16,16 0,16" fill="#22c55e" /></svg>
+                      ) : null} name="BUY" legendType="none" connectNulls={false} />
+                    )}
+                    {chartTrade?.exit_date && (
+                      <Line type="monotone" dataKey="sellMarker" stroke="none" dot={({ cx, cy, payload }) => payload.sellMarker ? (
+                        <svg x={cx - 8} y={cy} width={16} height={16}><polygon points="8,16 16,0 0,0" fill="#ef4444" /></svg>
+                      ) : null} name="SELL" legendType="none" connectNulls={false} />
+                    )}
+                    <Legend />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-64 text-gray-400">No chart data available</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
