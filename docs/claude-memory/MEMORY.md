@@ -95,7 +95,8 @@
 - **DWAP stale crosses perform BETTER** — stale (90+d) = 56.8% win vs fresh (0-10d) = 49.6%
 
 ## Active Tasks
-- [Pickle fix verification](project_pickle_fix_apr1.md) — check at 4:45 PM EDT Apr 1 that pickle exports correctly
+- [Pickle fix verification](project_pickle_fix_apr1.md) — VERIFIED Apr 1 4:34 PM, 256.5 MB, working
+- [WF job dedup](project_wf_dedup.md) — add dedup check before creating WF jobs (dupes waste Lambda $)
 
 ## Other
 - [Concurrency rules](feedback_concurrency_guardrail.md) — NEVER launch >3 WF jobs during market hours
