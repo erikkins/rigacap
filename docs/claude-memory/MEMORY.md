@@ -102,7 +102,7 @@
 - [Erik — solopreneur founder](user_profile.md) — actor background, lean budget, wants full automation from content to video to leads
 
 ## Marketing Pipeline (Future)
-- **Content → Video → Social → Leads:** Social Intelligence Engine → Synthesia/HeyGen API → Buffer → HubSpot
+- **Content → Video → Social → Leads:** Social Intelligence Engine → HeyGen API (chosen over Synthesia — API from $5 PAYG vs $1k+/mo) → Buffer → HubSpot
 - **Two content tracks:** AI avatar videos (automated) + founder-led videos (Erik shoots/edits)
 - **Admin centralized:** Manage everything from RigaCap admin tab
 - **NOT investing until strategy is locked at 20%+ annualized and live track record established**
