@@ -39,6 +39,7 @@ class StrategyOptimizerV2:
         seed_date: Optional[datetime] = None,
         risk_preference: float = 0.5,
         use_constrained: bool = False,
+        seed_offset: int = 0,
     ) -> Optional[Dict[str, Any]]:
         """
         Run multi-objective Bayesian optimization.
@@ -53,6 +54,7 @@ class StrategyOptimizerV2:
             seed_date: Date for deterministic seeding
             risk_preference: 0.0=conservative (lowest DD), 1.0=aggressive (highest return),
                             0.5=balanced (best return/DD ratio)
+            seed_offset: Added to the seed for ensemble runs (each seed produces different results)
 
         Returns:
             Dict with "best_params", "best_return", "best_drawdown", "pareto_size",
@@ -64,9 +66,9 @@ class StrategyOptimizerV2:
         optuna.logging.set_verbosity(optuna.logging.WARNING)
 
         if seed_date:
-            seed = int(seed_date.timestamp()) % (2**31)
+            seed = (int(seed_date.timestamp()) + seed_offset) % (2**31)
         else:
-            seed = 42
+            seed = 42 + seed_offset
 
         if use_constrained == "medium":
             param_source = V2_MEDIUM_PARAM_SPACES

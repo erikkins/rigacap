@@ -341,6 +341,155 @@ class WalkForwardService:
         symbol_volumes.sort(key=lambda x: x[1], reverse=True)
         return [s[0] for s in symbol_volumes[:max_symbols]]
 
+    def _run_ensemble_optimization(
+        self,
+        as_of_date: datetime,
+        strategy_type: str,
+        lookback_days: int,
+        ticker_list: List[str],
+        warm_start_params: Optional[Dict[str, Any]],
+        n_trials: int,
+        optimizer_version: str,
+        risk_preference: float,
+        ensemble_seeds: int,
+    ) -> Optional[AIOptimizationResult]:
+        """
+        Run AI optimization N times with different seeds and take median of params.
+
+        For numeric params: take the median across all N runs.
+        For categorical params (e.g., exit_type): take the mode (most common value).
+
+        Returns a single AIOptimizationResult with the ensembled params.
+        """
+        from statistics import median, mode as stats_mode
+
+        all_results: List[AIOptimizationResult] = []
+        for seed_idx in range(ensemble_seeds):
+            result = self._run_ai_optimization_at_date(
+                as_of_date, strategy_type, lookback_days, ticker_list,
+                warm_start_params=warm_start_params,
+                n_trials=n_trials,
+                optimizer_version=optimizer_version,
+                risk_preference=risk_preference,
+                seed_offset=seed_idx,
+            )
+            if result:
+                all_results.append(result)
+                print(f"[WF-ENSEMBLE] Seed {seed_idx}: return={result.expected_return_pct:.1f}%, "
+                      f"params={result.best_params}")
+
+        if not all_results:
+            return None
+
+        if len(all_results) == 1:
+            return all_results[0]
+
+        # Ensemble: median for numeric, mode for categorical
+        all_params = [r.best_params for r in all_results]
+        ensembled_params: Dict[str, Any] = {}
+        all_keys = set()
+        for p in all_params:
+            all_keys.update(p.keys())
+
+        for key in all_keys:
+            values = [p[key] for p in all_params if key in p]
+            if not values:
+                continue
+            if isinstance(values[0], (int, float)):
+                med_val = median(values)
+                # Preserve int type
+                if all(isinstance(v, int) for v in values):
+                    ensembled_params[key] = int(round(med_val))
+                else:
+                    ensembled_params[key] = round(float(med_val), 4)
+            else:
+                # Categorical: take mode
+                try:
+                    ensembled_params[key] = stats_mode(values)
+                except Exception:
+                    ensembled_params[key] = values[0]
+
+        # Use the first result as template, replace params with ensembled
+        best = all_results[0]
+        # Average the expected metrics across seeds
+        avg_return = sum(r.expected_return_pct for r in all_results) / len(all_results)
+        avg_sharpe = sum(r.expected_sharpe for r in all_results) / len(all_results)
+        total_combos = sum(r.combinations_tested for r in all_results)
+
+        print(f"[WF-ENSEMBLE] Ensembled {len(all_results)}/{ensemble_seeds} seeds: "
+              f"avg_return={avg_return:.1f}%, params={ensembled_params}")
+
+        return AIOptimizationResult(
+            date=best.date,
+            best_params=ensembled_params,
+            expected_sharpe=avg_sharpe,
+            expected_return_pct=avg_return,
+            strategy_type=best.strategy_type,
+            market_regime=best.market_regime,
+            was_adopted=False,
+            reason="",
+            expected_sortino=best.expected_sortino,
+            expected_calmar=best.expected_calmar,
+            expected_profit_factor=best.expected_profit_factor,
+            expected_max_dd=best.expected_max_dd,
+            combinations_tested=total_combos,
+            regime_confidence=best.regime_confidence,
+            regime_risk_level=best.regime_risk_level,
+            adaptive_score=avg_return,
+        )
+
+    def _get_regime_fixed_params(
+        self,
+        as_of_date: datetime,
+        regime_fixed_params: Dict[str, Dict[str, Any]],
+    ) -> Optional[AIOptimizationResult]:
+        """
+        Look up fixed params for the current market regime.
+
+        Instead of running the optimizer, returns pre-defined params based on
+        the detected regime. Useful for testing regime-adaptive strategies
+        without optimizer variance.
+
+        Args:
+            as_of_date: Date to detect regime at
+            regime_fixed_params: Map of regime_name → param dict
+
+        Returns:
+            AIOptimizationResult with fixed params, or None if regime not in map
+        """
+        regime = self._detect_market_regime_at_date(as_of_date)
+        regime_name = regime.regime_type.value  # e.g., "strong_bull"
+
+        params = regime_fixed_params.get(regime_name)
+        if params is None:
+            # Fall back to a "default" key if provided
+            params = regime_fixed_params.get("default")
+        if params is None:
+            print(f"[WF-REGIME-FIXED] No fixed params for regime '{regime_name}', skipping")
+            return None
+
+        print(f"[WF-REGIME-FIXED] Regime={regime_name} (conf={regime.confidence:.0f}%), "
+              f"using fixed params: {params}")
+
+        return AIOptimizationResult(
+            date=as_of_date.strftime('%Y-%m-%d'),
+            best_params=params.copy(),
+            expected_sharpe=0.0,
+            expected_return_pct=0.0,
+            strategy_type="ensemble",
+            market_regime=regime_name,
+            was_adopted=False,
+            reason="",
+            expected_sortino=0.0,
+            expected_calmar=0.0,
+            expected_profit_factor=0.0,
+            expected_max_dd=0.0,
+            combinations_tested=0,
+            regime_confidence=regime.confidence,
+            regime_risk_level=regime.risk_level,
+            adaptive_score=50.0,  # Neutral score — let switching logic decide
+        )
+
     def _run_ai_optimization_at_date(
         self,
         as_of_date: datetime,
@@ -350,7 +499,8 @@ class WalkForwardService:
         warm_start_params: Optional[Dict[str, Any]] = None,
         n_trials: int = 30,
         optimizer_version: str = "v1",
-        risk_preference: float = 0.5
+        risk_preference: float = 0.5,
+        seed_offset: int = 0,
     ) -> Optional[AIOptimizationResult]:
         """
         Run AI parameter optimization using Optuna Bayesian search.
@@ -412,6 +562,7 @@ class WalkForwardService:
                 seed_date=as_of_date,
                 risk_preference=risk_preference,
                 use_constrained="medium" if optimizer_version == "v2m" else (optimizer_version == "v2c"),
+                seed_offset=seed_offset,
             )
 
             if opt_result:
@@ -827,6 +978,8 @@ class WalkForwardService:
         graduated_reentry: bool = False,  # Graduated re-entry with breadth thrust / VIX signals
         param_smoothing: float = 0.0,  # 0.0=no smoothing, 0.7=blend 70% previous + 30% new optimizer params
         warmup_periods: int = 0,  # Use fixed params for first N periods before enabling optimizer
+        ensemble_seeds: int = 0,  # Run optimizer N times with different seeds, take median (0=disabled)
+        regime_fixed_params: Optional[Dict[str, Dict[str, Any]]] = None,  # Map regime→params, skip optimizer
     ) -> WalkForwardResult:
         """
         Run walk-forward simulation with AI optimization over a historical period.
@@ -934,6 +1087,8 @@ class WalkForwardService:
             # Restore V2 params from continuation state (override function args)
             optimizer_version = continuation_state.get("optimizer_version", optimizer_version)
             risk_preference = continuation_state.get("risk_preference", risk_preference)
+            ensemble_seeds = continuation_state.get("ensemble_seeds", ensemble_seeds)
+            regime_fixed_params = continuation_state.get("regime_fixed_params", regime_fixed_params)
 
             print(f"[WF-SERVICE] Restored state: capital=${capital:,.2f}, {len(equity_curve)} equity points, "
                   f"{len(all_trades)} trades, {len(carried_positions)} carried positions")
@@ -1066,6 +1221,8 @@ class WalkForwardService:
                     "prev_using_ai_params": prev_using_ai_params,
                     "optimizer_version": optimizer_version,
                     "risk_preference": risk_preference,
+                    "ensemble_seeds": ensemble_seeds,
+                    "regime_fixed_params": regime_fixed_params,
                 }
                 return WalkForwardResult(
                     start_date=start_date.strftime('%Y-%m-%d'),
@@ -1125,48 +1282,67 @@ class WalkForwardService:
 
             # Step 2: Run AI optimization if enabled (skip during warmup)
             in_warmup = warmup_periods > 0 and i < warmup_periods
-            if enable_ai_optimization and not in_warmup:
+            ai_result = None
+
+            # Feature 2: Regime-adaptive fixed params (bypasses optimizer entirely)
+            if regime_fixed_params and not in_warmup:
                 try:
-                    # Use the active strategy's type for AI optimization
+                    ai_result = self._get_regime_fixed_params(period_start, regime_fixed_params)
+                except Exception as rfp_err:
+                    print(f"[WF-SERVICE] Regime fixed params failed for period {i+1}: {rfp_err}")
+
+            # Feature 1 & standard: Run optimizer (ensemble or single seed)
+            elif enable_ai_optimization and not in_warmup:
+                try:
                     ai_strategy_type = active_strategy_type if active_strategy_type else "ensemble"
-                    print(f"[WF-SERVICE] Running AI optimization ({ai_strategy_type}) for period {i+1}/{len(periods)}")
-                    ai_result = self._run_ai_optimization_at_date(
-                        period_start, ai_strategy_type, lookback_days, top_symbols,
-                        warm_start_params=previous_best_params,
-                        n_trials=n_trials,
-                        optimizer_version=optimizer_version,
-                        risk_preference=risk_preference,
-                    )
-                    if ai_result:
-                        period_ai_opt = ai_result
-                        # Add AI result to evaluations for comparison
-                        # Use adaptive score for AI, calculated with regime-specific weights
-                        evaluations.append({
-                            "strategy_id": None,
-                            "name": f"AI-{ai_result.market_regime.replace('_', '-').title()}",
-                            "strategy_type": ai_result.strategy_type,
-                            "sharpe_ratio": ai_result.expected_sharpe,
-                            "total_return_pct": ai_result.expected_return_pct,
-                            "max_drawdown_pct": ai_result.expected_max_dd,
-                            "sortino_ratio": ai_result.expected_sortino,
-                            "calmar_ratio": ai_result.expected_calmar,
-                            "profit_factor": ai_result.expected_profit_factor,
-                            "score": ai_result.adaptive_score,  # Use adaptive score
-                            "is_ai": True,
-                            "ai_params": ai_result.best_params,
-                            "market_regime": ai_result.market_regime,
-                            "regime_risk_level": ai_result.regime_risk_level,
-                            "regime_confidence": ai_result.regime_confidence,
-                            "combinations_tested": ai_result.combinations_tested
-                        })
-                        print(f"[WF-SERVICE] AI optimization complete: regime={ai_result.market_regime} "
-                              f"(risk={ai_result.regime_risk_level}, conf={ai_result.regime_confidence:.0%}), "
-                              f"tested={ai_result.combinations_tested}, adaptive_score={ai_result.adaptive_score:.1f}")
+                    if ensemble_seeds > 0:
+                        print(f"[WF-SERVICE] Running ensemble optimization ({ensemble_seeds} seeds, {ai_strategy_type}) "
+                              f"for period {i+1}/{len(periods)}")
+                        ai_result = self._run_ensemble_optimization(
+                            period_start, ai_strategy_type, lookback_days, top_symbols,
+                            warm_start_params=previous_best_params,
+                            n_trials=n_trials,
+                            optimizer_version=optimizer_version,
+                            risk_preference=risk_preference,
+                            ensemble_seeds=ensemble_seeds,
+                        )
+                    else:
+                        print(f"[WF-SERVICE] Running AI optimization ({ai_strategy_type}) for period {i+1}/{len(periods)}")
+                        ai_result = self._run_ai_optimization_at_date(
+                            period_start, ai_strategy_type, lookback_days, top_symbols,
+                            warm_start_params=previous_best_params,
+                            n_trials=n_trials,
+                            optimizer_version=optimizer_version,
+                            risk_preference=risk_preference,
+                        )
                 except Exception as ai_err:
                     print(f"[WF-SERVICE] AI optimization failed for period {i+1}: {ai_err}")
-                    import traceback
-                    print(f"[WF-SERVICE] AI traceback: {traceback.format_exc()}")
-                    # Continue without AI for this period
+
+            if ai_result:
+                period_ai_opt = ai_result
+                # Add AI result to evaluations for comparison
+                # Use adaptive score for AI, calculated with regime-specific weights
+                evaluations.append({
+                    "strategy_id": None,
+                    "name": f"AI-{ai_result.market_regime.replace('_', '-').title()}",
+                    "strategy_type": ai_result.strategy_type,
+                    "sharpe_ratio": ai_result.expected_sharpe,
+                    "total_return_pct": ai_result.expected_return_pct,
+                    "max_drawdown_pct": ai_result.expected_max_dd,
+                    "sortino_ratio": ai_result.expected_sortino,
+                    "calmar_ratio": ai_result.expected_calmar,
+                    "profit_factor": ai_result.expected_profit_factor,
+                    "score": ai_result.adaptive_score,  # Use adaptive score
+                    "is_ai": True,
+                    "ai_params": ai_result.best_params,
+                    "market_regime": ai_result.market_regime,
+                    "regime_risk_level": ai_result.regime_risk_level,
+                    "regime_confidence": ai_result.regime_confidence,
+                    "combinations_tested": ai_result.combinations_tested
+                })
+                print(f"[WF-SERVICE] AI optimization complete: regime={ai_result.market_regime} "
+                      f"(risk={ai_result.regime_risk_level}, conf={ai_result.regime_confidence:.0%}), "
+                      f"tested={ai_result.combinations_tested}, adaptive_score={ai_result.adaptive_score:.1f}")
 
             if evaluations:
                 # Find best option (existing strategy or AI-optimized)
@@ -1663,6 +1839,8 @@ class WalkForwardService:
                 "lookback_days": config.get("lookback_days", 60),
                 "optimizer_version": config.get("optimizer_version", "v1"),
                 "risk_preference": config.get("risk_preference", 0.5),
+                "ensemble_seeds": config.get("ensemble_seeds", 0),
+                "regime_fixed_params": config.get("regime_fixed_params"),
             }
         }
 
@@ -1778,39 +1956,63 @@ class WalkForwardService:
             # -- AI optimization (skip during warmup) --
             _warmup_periods = config.get("warmup_periods", 0)
             _in_warmup = _warmup_periods > 0 and period_index < _warmup_periods
-            if enable_ai and not _in_warmup:
+            _regime_fixed_params = config.get("regime_fixed_params")
+            _ensemble_seeds = config.get("ensemble_seeds", 0)
+            _ai_result = None
+
+            # Feature 2: Regime-adaptive fixed params (bypasses optimizer entirely)
+            if _regime_fixed_params and not _in_warmup:
+                try:
+                    _ai_result = self._get_regime_fixed_params(period_start, _regime_fixed_params)
+                except Exception as rfp_err:
+                    print(f"[WF-PERIOD] Regime fixed params failed: {rfp_err}")
+
+            # Feature 1 & standard: Run optimizer (ensemble or single seed)
+            elif enable_ai and not _in_warmup:
                 try:
                     ai_strategy_type = active_strategy_type if active_strategy_type else "ensemble"
-                    print(f"[WF-PERIOD] Running AI optimization ({ai_strategy_type})")
-                    ai_result = self._run_ai_optimization_at_date(
-                        period_start, ai_strategy_type, lookback_days, top_symbols,
-                        warm_start_params=warm_start_params,
-                        n_trials=n_trials,
-                        optimizer_version=config.get("optimizer_version", "v1"),
-                        risk_preference=config.get("risk_preference", 0.5),
-                    )
-                    if ai_result:
-                        period_ai_opt = ai_result
-                        evaluations.append({
-                            "strategy_id": None,
-                            "name": f"AI-{ai_result.market_regime.replace('_', '-').title()}",
-                            "strategy_type": ai_result.strategy_type,
-                            "sharpe_ratio": ai_result.expected_sharpe,
-                            "total_return_pct": ai_result.expected_return_pct,
-                            "max_drawdown_pct": ai_result.expected_max_dd,
-                            "sortino_ratio": ai_result.expected_sortino,
-                            "calmar_ratio": ai_result.expected_calmar,
-                            "profit_factor": ai_result.expected_profit_factor,
-                            "score": ai_result.adaptive_score,
-                            "is_ai": True,
-                            "ai_params": ai_result.best_params,
-                            "market_regime": ai_result.market_regime,
-                            "regime_risk_level": ai_result.regime_risk_level,
-                            "regime_confidence": ai_result.regime_confidence,
-                            "combinations_tested": ai_result.combinations_tested
-                        })
+                    if _ensemble_seeds > 0:
+                        print(f"[WF-PERIOD] Running ensemble optimization ({_ensemble_seeds} seeds, {ai_strategy_type})")
+                        _ai_result = self._run_ensemble_optimization(
+                            period_start, ai_strategy_type, lookback_days, top_symbols,
+                            warm_start_params=warm_start_params,
+                            n_trials=n_trials,
+                            optimizer_version=config.get("optimizer_version", "v1"),
+                            risk_preference=config.get("risk_preference", 0.5),
+                            ensemble_seeds=_ensemble_seeds,
+                        )
+                    else:
+                        print(f"[WF-PERIOD] Running AI optimization ({ai_strategy_type})")
+                        _ai_result = self._run_ai_optimization_at_date(
+                            period_start, ai_strategy_type, lookback_days, top_symbols,
+                            warm_start_params=warm_start_params,
+                            n_trials=n_trials,
+                            optimizer_version=config.get("optimizer_version", "v1"),
+                            risk_preference=config.get("risk_preference", 0.5),
+                        )
                 except Exception as ai_err:
                     print(f"[WF-PERIOD] AI optimization failed: {ai_err}")
+
+            if _ai_result:
+                period_ai_opt = _ai_result
+                evaluations.append({
+                    "strategy_id": None,
+                    "name": f"AI-{_ai_result.market_regime.replace('_', '-').title()}",
+                    "strategy_type": _ai_result.strategy_type,
+                    "sharpe_ratio": _ai_result.expected_sharpe,
+                    "total_return_pct": _ai_result.expected_return_pct,
+                    "max_drawdown_pct": _ai_result.expected_max_dd,
+                    "sortino_ratio": _ai_result.expected_sortino,
+                    "calmar_ratio": _ai_result.expected_calmar,
+                    "profit_factor": _ai_result.expected_profit_factor,
+                    "score": _ai_result.adaptive_score,
+                    "is_ai": True,
+                    "ai_params": _ai_result.best_params,
+                    "market_regime": _ai_result.market_regime,
+                    "regime_risk_level": _ai_result.regime_risk_level,
+                    "regime_confidence": _ai_result.regime_confidence,
+                    "combinations_tested": _ai_result.combinations_tested
+                })
 
             # -- Switching logic --
             if evaluations:

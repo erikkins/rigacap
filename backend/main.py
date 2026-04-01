@@ -475,6 +475,8 @@ async def _run_walk_forward_job(job_config: dict, wf_state_key: str = None):
                 graduated_reentry=job_config.get("graduated_reentry", False),
                 param_smoothing=job_config.get("param_smoothing", 0.0),
                 warmup_periods=job_config.get("warmup_periods", 0),
+                ensemble_seeds=job_config.get("ensemble_seeds", 0),
+                regime_fixed_params=job_config.get("regime_fixed_params"),
             )
 
             # Check if more chunks are needed
