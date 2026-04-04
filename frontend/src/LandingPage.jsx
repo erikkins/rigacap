@@ -280,8 +280,8 @@ const YearByYearSection = () => {
         </div>
 
         <p className="text-gray-400 text-xs mt-8 text-center max-w-2xl mx-auto">
-          Average annual returns across 7 tested start dates. Walk-forward simulation using the Ensemble strategy
-          with biweekly rebalancing. Past performance does not guarantee future results.
+          Walk-forward simulation using the Ensemble strategy with biweekly rebalancing.
+          Averaged across multiple start dates. Past performance does not guarantee future results.
         </p>
       </div>
     </section>
