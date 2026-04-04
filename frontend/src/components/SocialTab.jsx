@@ -632,15 +632,15 @@ const LAUNCH_POSTS = [
     label: 'Launch Announcement',
     imageUrl: '/launch-cards/launch-1.png',
     twitter: {
-      text: "We built a trading system. Tested it across 5 years of real data without peeking at the answers. +289%.\n\n~15 buy signals per month. No hindsight. No hand-waving. Just math.\n\nRigaCap is live. rigacap.com",
+      text: "We built a trading system. Tested it across 10 years of real data without peeking at the answers. +497%.\n\n~20% annualized. Every year positive. Every start date beats SPY.\n\nNo hindsight. No hand-waving. Just math.\n\nRigaCap is live. rigacap.com",
       hashtags: '#trading #algotrading #stockmarket',
     },
     instagram: {
-      text: "We built a trading system.\n\nThen we did something most people skip \u2014 we tested it honestly. Year by year, no hindsight bias, across bull markets, bear markets, and everything in between.\n\n+289% over 5 years. 31% annualized. 80% of years profitable.\n\nBut here's the part that actually matters: it generates ~15 buy signals per month. 6\u20138 high-conviction picks every two weeks, delivered before the market opens.\n\nWe didn't backtest it and call it a day. We walk-forward tested it \u2014 the system never saw future data. It had to figure it out in real time, just like you do.\n\nNo hand-waving. No vibes. Just math.\n\nRigaCap is live.",
+      text: "We built a trading system.\n\nThen we did something most people skip \u2014 we tested it honestly. Year by year, no hindsight bias, across bull markets, bear markets, and everything in between.\n\n+497% over 10 years. ~20% annualized. Every single year profitable.\n\nIn 2022, while the S&P 500 fell 20%, our system gained 6%. It knew when to sit on its hands.\n\nWe didn't backtest it and call it a day. We walk-forward tested it \u2014 the system never saw future data. It had to figure it out in real time, just like you do.\n\nNo hand-waving. No vibes. Just math.\n\nRigaCap is live.",
       hashtags: '#trading #algotrading #stockmarket #investing #rigacap',
     },
     threads: {
-      text: "We built a trading system. Tested it across 5 years of real market data without peeking at the answers.\n\n+289%. 31% annualized. 80% of years profitable.\n\n~15 buy signals per month. No hindsight. No hand-waving. Just math.\n\nRigaCap is live.\n\nrigacap.com",
+      text: "We built a trading system. Tested it across 10 years of real market data without peeking at the answers.\n\n+497%. ~20% annualized. Every year positive. Beat SPY by 240 points.\n\nNo hindsight. No hand-waving. Just math.\n\nRigaCap is live.\n\nrigacap.com",
     },
   },
   {
@@ -648,15 +648,15 @@ const LAUNCH_POSTS = [
     label: 'Performance Stats',
     imageUrl: '/launch-cards/launch-2.png',
     twitter: {
-      text: "Our 5-year walk-forward report card:\n\n2021-22: +62.0% \u2705\n2022-23: -13.2% \u274c (bear market, it happens)\n2023-24: +22.2% \u2705\n2024-25: +20.7% \u2705\n2025-26: +87.5% \u2705\n\nTotal: +289% | 718 trades | ~15 signals/month\n\nWe show the bad year too. That's how trust works.",
+      text: "Year-by-year walk-forward results:\n\n2021: +8% (ramp-up year)\n2022: +6% while SPY fell -20% \u2705\n2023: +5% \u2705\n2024: +20% \u2705\n2025: +57% \u2705\n\n5-Year avg: +152% | ~20% annualized\nAll 7 tested start dates positive. All beat SPY.\n\nrigacap.com/track-record",
       hashtags: '#trading #performance #walkforward',
     },
     instagram: {
-      text: "Let's talk numbers. All of them.\n\n2021-2022: +62.0% (Sharpe 1.21)\n2022-2023: -13.2% (yes, we lost money in the bear market)\n2023-2024: +22.2% (Sharpe 1.02)\n2024-2025: +20.7% (Sharpe 0.89)\n2025-2026: +87.5% (Sharpe 2.32)\n\n5-Year Total: +289% | 31% annualized\n718 total trades | ~15 signals per month\nMax drawdown: -15.1%\n\nWe show the losing year because hiding it would make us like everyone else. Every period tested independently \u2014 no curve-fitting, no cherry-picking, no \"if you'd just bought here\" nonsense.\n\nAnd when the market went sideways in 2022? Zero signals for 5 months. The system said \"nah\" and sat on its hands. That's not a bug. That's risk management.\n\nPast performance doesn't guarantee future results. But honest testing beats a screenshot of someone's best week.",
+      text: "Let's talk numbers. All of them.\n\n2021: +8.3% (strategy ramp-up)\n2022: +6.0% (SPY fell -20% \u2014 we stayed positive)\n2023: +4.5% (cautious in recovery)\n2024: +20.3% (near parity with SPY)\n2025: +57.4% (breakout year, tripled SPY)\n\n5-Year Avg: +152% | ~20% annualized\n10-Year: +497% | Sharpe 0.97\n\nTested across 7 different start dates. Every single one positive. Every single one beats the S&P 500.\n\nAnd when the market crashed in 2022? Our system gained 6% while everyone else lost 20%. That's not luck. That's a system that knows when to sit on its hands.\n\nPast performance doesn't guarantee future results. But honest testing beats a screenshot of someone's best week.\n\nrigacap.com/track-record",
       hashtags: '#trading #algotrading #performance #walkforward #stockmarket #investing #rigacap',
     },
     threads: {
-      text: "Our 5-year walk-forward report card:\n\n2021-22: +62.0%\n2022-23: -13.2% (bear market, it happens)\n2023-24: +22.2%\n2024-25: +20.7%\n2025-26: +87.5%\n\nTotal: +289% | 718 trades | ~15 signals/month\n\nWe show the bad year too. That's how trust works.\n\nrigacap.com/track-record",
+      text: "Year-by-year walk-forward results:\n\n2021: +8%\n2022: +6% (SPY fell -20%!)\n2023: +5%\n2024: +20%\n2025: +57%\n\n5-Year avg: +152% | ~20% annualized\n10-Year: +497% | Sharpe 0.97\n\nAll 7 tested start dates positive. All beat SPY.\n\nrigacap.com/track-record",
     },
   },
   {

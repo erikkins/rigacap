@@ -215,11 +215,11 @@ const StatsSection = () => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 text-center text-white">
         {[
-          { value: '87.5%', label: 'Latest Year Return' },
-          { value: '289%', label: '5-Year Return' },
-          { value: '2.32', label: 'Sharpe Ratio' },
-          { value: '80%', label: 'Win Rate' },
-          { value: '-8.3%', label: 'Max Drawdown' },
+          { value: '~20%', label: 'Annualized Return' },
+          { value: '+497%', label: '10-Year Return' },
+          { value: '0.97', label: 'Sharpe Ratio' },
+          { value: '100%', label: 'Years Positive' },
+          { value: '7/7', label: 'Start Dates Beat SPY' },
         ].map(({ value, label }) => (
           <div key={label}>
             <div className="text-4xl lg:text-5xl font-bold mb-2">{value}</div>

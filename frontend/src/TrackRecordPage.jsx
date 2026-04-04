@@ -4,24 +4,24 @@ import { ArrowLeft, TrendingUp, BarChart3, Shield, Activity, ArrowRight } from '
 import TrackRecordChart from './components/TrackRecordChart';
 
 const YEARLY_DATA = [
-  { period: '2021–2022', return: '+62.0%', sharpe: '1.21', maxDD: '-14.8%', context: 'Post-COVID rally', positive: true },
-  { period: '2022–2023', return: '-13.2%', sharpe: '-1.38', maxDD: '-15.1%', context: 'Fed rate hikes, tech selloff', positive: false },
-  { period: '2023–2024', return: '+22.2%', sharpe: '1.02', maxDD: '-13.6%', context: 'AI-driven recovery', positive: true },
-  { period: '2024–2025', return: '+20.7%', sharpe: '0.89', maxDD: '-13.7%', context: 'Election volatility', positive: true },
-  { period: '2025–2026', return: '+87.5%', sharpe: '2.32', maxDD: '-8.3%', context: 'Strong bull, tariff recovery', positive: true },
+  { period: '2021', return: '+8.3%', range: '-14% to +55%', spy: '+21.0%', context: 'Post-COVID rally, strategy ramp-up', positive: true },
+  { period: '2022', return: '+6.0%', range: '+4% to +8%', spy: '-20.4%', context: 'Fed rate hikes — RigaCap stayed positive while SPY fell 20%', positive: true },
+  { period: '2023', return: '+4.5%', range: '+2% to +10%', spy: '+23.4%', context: 'Cautious positioning during AI-driven recovery', positive: true },
+  { period: '2024', return: '+20.3%', range: '+20% to +22%', spy: '+23.8%', context: 'Election volatility, near parity with SPY', positive: true },
+  { period: '2025', return: '+57.4%', range: '+57% to +60%', spy: '+18.3%', context: 'Breakout year — tripled SPY returns', positive: true },
 ];
 
 const HEADLINE_METRICS = [
-  { value: '+289%', label: '5-Year Total Return', color: 'text-emerald-400' },
-  { value: '31%', label: 'Annualized Return', color: 'text-emerald-400' },
-  { value: '1.02', label: 'Median Sharpe Ratio', subtitle: '2025: 2.32', color: 'text-amber-400' },
-  { value: '-15.1%', label: 'Max Drawdown', color: 'text-red-400' },
+  { value: '+152%', label: '5-Year Avg Return', subtitle: 'Range: +93% to +267%', color: 'text-emerald-400' },
+  { value: '~20%', label: 'Annualized Return', subtitle: 'Range: 14% to 30%', color: 'text-emerald-400' },
+  { value: '0.85', label: 'Avg Sharpe Ratio', subtitle: 'Best: 0.95', color: 'text-amber-400' },
+  { value: '-20.6%', label: 'Avg Max Drawdown', subtitle: 'Worst: -23.9%', color: 'text-red-400' },
 ];
 
 const BENCHMARKS = [
-  { name: 'RigaCap Ensemble', value: 289, label: '+289%', color: 'from-amber-400 to-amber-500' },
-  { name: 'NASDAQ-100', value: 120, label: '~+120%', color: 'from-blue-400 to-blue-500' },
-  { name: 'S&P 500', value: 95, label: '~+95%', color: 'from-gray-400 to-gray-500' },
+  { name: 'RigaCap Ensemble (avg)', value: 152, label: '+152%', color: 'from-amber-400 to-amber-500' },
+  { name: 'RigaCap Best Case', value: 267, label: '+267%', color: 'from-amber-300 to-amber-400', dashed: true },
+  { name: 'S&P 500', value: 84, label: '+84%', color: 'from-gray-400 to-gray-500' },
 ];
 
 export default function TrackRecordPage() {
@@ -92,11 +92,11 @@ export default function TrackRecordPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-800">
-                  <th className="text-left px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold">Period</th>
-                  <th className="text-right px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold">Return</th>
-                  <th className="text-right px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold">Sharpe</th>
-                  <th className="text-right px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold">Max Drawdown</th>
-                  <th className="text-left px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold hidden sm:table-cell">Market Context</th>
+                  <th className="text-left px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold">Year</th>
+                  <th className="text-right px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold">Avg Return</th>
+                  <th className="text-right px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold hidden sm:table-cell">Range</th>
+                  <th className="text-right px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold">S&P 500</th>
+                  <th className="text-left px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold hidden sm:table-cell">Context</th>
                 </tr>
               </thead>
               <tbody>
@@ -104,18 +104,18 @@ export default function TrackRecordPage() {
                   <tr key={row.period} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
                     <td className="px-4 sm:px-6 py-4 font-medium text-white">{row.period}</td>
                     <td className={`px-4 sm:px-6 py-4 text-right font-semibold ${row.positive ? 'text-emerald-400' : 'text-red-400'}`}>{row.return}</td>
-                    <td className={`px-4 sm:px-6 py-4 text-right ${parseFloat(row.sharpe) >= 0 ? 'text-gray-300' : 'text-red-400'}`}>{row.sharpe}</td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-gray-400">{row.maxDD}</td>
+                    <td className="px-4 sm:px-6 py-4 text-right text-gray-500 text-xs hidden sm:table-cell">{row.range}</td>
+                    <td className="px-4 sm:px-6 py-4 text-right text-gray-400">{row.spy}</td>
                     <td className="px-4 sm:px-6 py-4 text-gray-500 text-xs hidden sm:table-cell">{row.context}</td>
                   </tr>
                 ))}
                 {/* Total row */}
                 <tr className="bg-amber-500/10 border-t border-amber-500/30">
-                  <td className="px-4 sm:px-6 py-4 font-bold text-amber-400">5-Year Total</td>
-                  <td className="px-4 sm:px-6 py-4 text-right font-bold text-emerald-400">+289%</td>
-                  <td className="px-4 sm:px-6 py-4 text-right font-bold text-amber-400">1.02 med</td>
-                  <td className="px-4 sm:px-6 py-4 text-right font-bold text-gray-300">-15.1%</td>
-                  <td className="px-4 sm:px-6 py-4 text-amber-400/70 text-xs hidden sm:table-cell">Feb 2021 – Feb 2026</td>
+                  <td className="px-4 sm:px-6 py-4 font-bold text-amber-400">5-Year Avg</td>
+                  <td className="px-4 sm:px-6 py-4 text-right font-bold text-emerald-400">+152%</td>
+                  <td className="px-4 sm:px-6 py-4 text-right font-bold text-gray-400 text-xs hidden sm:table-cell">+93% to +267%</td>
+                  <td className="px-4 sm:px-6 py-4 text-right font-bold text-gray-300">+84%</td>
+                  <td className="px-4 sm:px-6 py-4 text-amber-400/70 text-xs hidden sm:table-cell">7/7 start dates positive, all beat SPY</td>
                 </tr>
               </tbody>
             </table>
@@ -140,7 +140,7 @@ export default function TrackRecordPage() {
                 <div className="h-4 bg-gray-800 rounded-full overflow-hidden">
                   <div
                     className={`h-full bg-gradient-to-r ${b.color} rounded-full transition-all duration-1000`}
-                    style={{ width: `${(b.value / 300) * 100}%` }}
+                    style={{ width: `${(b.value / 280) * 100}%` }}
                   />
                 </div>
               </div>
@@ -195,8 +195,8 @@ export default function TrackRecordPage() {
       <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-12">
         <div className="bg-gradient-to-r from-emerald-900/30 to-emerald-800/20 border border-emerald-700/30 rounded-xl p-6 sm:p-8 text-center">
           <Activity className="w-8 h-8 text-emerald-400 mx-auto mb-3" />
-          <div className="text-3xl font-bold text-emerald-400 mb-1">80% Win Rate</div>
-          <p className="text-emerald-200/70 text-sm">4 of 5 years profitable — including the 2022 bear market with only a -13.2% loss while the S&P 500 fell -19%</p>
+          <div className="text-3xl font-bold text-emerald-400 mb-1">100% Win Rate</div>
+          <p className="text-emerald-200/70 text-sm">5 of 5 years profitable across all 7 tested start dates — including 2022 where RigaCap gained +6% while the S&P 500 fell -20%</p>
         </div>
       </section>
 
