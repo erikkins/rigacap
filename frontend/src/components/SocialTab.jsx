@@ -696,15 +696,15 @@ const LAUNCH_POSTS = [
     label: 'Signal Teaser',
     imageUrl: '/launch-cards/launch-5.png',
     twitter: {
-      text: "Every two weeks we scan thousands of stocks through a 3-factor gauntlet.\n\nMost fail. 6\u20138 survive.\n\nThose land in your inbox before the market opens. ~15 signals per month when conditions are right. Zero when they're not.\n\nrigacap.com",
+      text: "Every two weeks we scan thousands of stocks through a 3-factor gauntlet.\n\nMost fail. 6\u20138 survive.\n\nThose land in your inbox before the market opens. 3-4 signals per month on average. Zero when conditions aren't right — and that discipline is why we beat the market.\n\nrigacap.com",
       hashtags: '#trading #signals #stockmarket',
     },
     instagram: {
-      text: "Here's what happens every two weeks inside RigaCap:\n\nScan thousands of stocks. Rank by momentum. Filter for quality. Check the market regime. Score them. Rank again. Throw out anything that doesn't pass all 3 factors.\n\nThe result? 6\u20138 high-conviction buy signals, delivered to your inbox before the market opens.\n\nThat's ~15 signals per month when conditions are healthy. And when the market is ugly? The system goes quiet. No forced trades. No \"well, this one looks okay I guess.\" Just silence \u2014 which is exactly what you want when everyone else is panicking.\n\nNo screeners to configure. No charts to stare at. No FOMO-scrolling at 2am.\n\nJust signals. Walk-forward verified. Every single one.\n\nrigacap.com",
+      text: "Here's what happens every two weeks inside RigaCap:\n\nScan thousands of stocks. Rank by momentum. Filter for quality. Check the market regime. Score them. Rank again. Throw out anything that doesn't pass all 3 factors.\n\nThe result? 6\u20138 high-conviction buy signals, delivered to your inbox before the market opens.\n\nThat's 3-4 signals per month on average. And when the market is ugly? The system goes quiet. No forced trades. No \"well, this one looks okay I guess.\" Just silence \u2014 which is exactly what you want when everyone else is panicking.\n\nNo screeners to configure. No charts to stare at. No FOMO-scrolling at 2am.\n\nJust signals. Walk-forward verified. Every single one.\n\nrigacap.com",
       hashtags: '#trading #signals #stockmarket #algotrading #investing #rigacap',
     },
     threads: {
-      text: "Every two weeks we scan thousands of stocks through a 3-factor gauntlet.\n\nMost fail. 6\u20138 survive.\n\nThose land in your inbox before the market opens. ~15 signals per month when conditions are right. Zero when they're not.\n\nNo screeners. No charts. No 2am FOMO-scrolling.\n\nJust signals. Walk-forward verified.\n\nrigacap.com",
+      text: "Every two weeks we scan thousands of stocks through a 3-factor gauntlet.\n\nMost fail. 6\u20138 survive.\n\nThose land in your inbox before the market opens. 3-4 signals per month on average. Zero when conditions aren't right — and that discipline is why we beat the market.\n\nNo screeners. No charts. No 2am FOMO-scrolling.\n\nJust signals. Walk-forward verified.\n\nrigacap.com",
     },
   },
 ];

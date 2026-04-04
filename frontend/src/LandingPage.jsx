@@ -54,7 +54,7 @@ const HeroSection = ({ onGetStarted }) => (
           <span className="text-blue-300/40">·</span>
           <span className="text-yellow-300 font-semibold text-base sm:text-lg">Adaptive Risk</span>
         </div>
-        <p className="text-sm text-blue-200/70 mb-8">~15 high-conviction signals per month — quality over quantity</p>
+        <p className="text-sm text-blue-200/70 mb-8">High-conviction signals only — we'd rather say nothing than say something wrong</p>
 
         {/* CTA Buttons */}
         <div className="flex flex-col items-center gap-4 mb-12">
@@ -247,11 +247,11 @@ const StatsSection = () => (
 
 const YearByYearSection = () => {
   const years = [
-    { period: '2021-2022', returnPct: '+62.0%', sharpe: '1.21', maxDD: '-14.8%', color: 'text-emerald-600' },
-    { period: '2022-2023', returnPct: '-13.2%', sharpe: '-1.38', maxDD: '-15.1%', color: 'text-red-600' },
-    { period: '2023-2024', returnPct: '+22.2%', sharpe: '1.02', maxDD: '-13.6%', color: 'text-emerald-600' },
-    { period: '2024-2025', returnPct: '+20.7%', sharpe: '0.89', maxDD: '-13.7%', color: 'text-emerald-600' },
-    { period: '2025-2026', returnPct: '+87.5%', sharpe: '2.32', maxDD: '-8.3%', color: 'text-emerald-600' },
+    { period: '2021', returnPct: '+8.3%', sharpe: '—', maxDD: '—', color: 'text-emerald-600', note: 'Ramp-up year' },
+    { period: '2022', returnPct: '+6.0%', sharpe: '—', maxDD: '—', color: 'text-emerald-600', note: 'SPY fell -20%' },
+    { period: '2023', returnPct: '+4.5%', sharpe: '—', maxDD: '—', color: 'text-emerald-600', note: 'Cautious recovery' },
+    { period: '2024', returnPct: '+20.3%', sharpe: '—', maxDD: '—', color: 'text-emerald-600', note: 'Near parity with SPY' },
+    { period: '2025', returnPct: '+57.4%', sharpe: '—', maxDD: '—', color: 'text-emerald-600', note: 'Tripled SPY' },
   ];
 
   return (
