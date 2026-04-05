@@ -1737,6 +1737,8 @@ function Dashboard() {
   const [timeTravelPresets, setTimeTravelPresets] = useState([]); // Computed once from live dashboard data
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [showEmailPrefsModal, setShowEmailPrefsModal] = useState(false);
+  const [showCancelSurvey, setShowCancelSurvey] = useState(false);
+  const [cancelSurveySubmitted, setCancelSurveySubmitted] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [show2FASettings, setShow2FASettings] = useState(false);
   const [referralCopied, setReferralCopied] = useState(false);
@@ -1818,6 +1820,26 @@ function Dashboard() {
       const url = new URL(window.location);
       url.searchParams.delete('unsubscribe');
       url.searchParams.delete('token');
+      window.history.replaceState({}, '', url.pathname);
+    }
+
+    // Handle Stripe portal return — check if subscription was cancelled
+    if (params.get('portal_return') === '1') {
+      // Refresh subscription status, then check if they cancelled
+      refreshUser().then(() => {
+        // Small delay to let webhook process
+        setTimeout(async () => {
+          try {
+            const res = await api.get('/api/billing/subscription');
+            const data = res.data;
+            if (data.cancel_at_period_end || data.status === 'canceled') {
+              setShowCancelSurvey(true);
+            }
+          } catch {}
+        }, 2000);
+      });
+      const url = new URL(window.location);
+      url.searchParams.delete('portal_return');
       window.history.replaceState({}, '', url.pathname);
     }
   }, [refreshUser]);
@@ -4009,7 +4031,7 @@ function Dashboard() {
                     </h3>
                     <p className="text-sm text-gray-500">
                       {backtest.is_walk_forward
-                        ? `Adaptive strategy with ${backtest.num_strategy_switches || 0} switches`
+                        ? `Ensemble strategy${backtest.num_strategy_switches > 0 ? ` with ${backtest.num_strategy_switches} switches` : ''}`
                         : `Based on ${backtest.strategy === 'momentum' ? 'Momentum' : 'Breakout'} strategy`
                       }
                       {' '}| {formatDate(backtest.start_date, { includeYear: true })} to {formatDate(backtest.end_date, { includeYear: true })}
@@ -4173,6 +4195,61 @@ function Dashboard() {
                 {emailPrefsSaving ? 'Saving...' : 'Save Preferences'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Survey Modal */}
+      {showCancelSurvey && !cancelSurveySubmitted && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">We're sorry to see you go</h3>
+              <p className="text-sm text-gray-500 mb-5">Your feedback helps us improve. 30 seconds, 3 questions.</p>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const reason = form.reason.value;
+                const detail = form.detail.value;
+                const wouldReturn = form.would_return.value === 'yes';
+                try {
+                  await api.post('/api/billing/cancel-survey', { reason, detail, would_return: wouldReturn });
+                } catch {}
+                setCancelSurveySubmitted(true);
+                setTimeout(() => setShowCancelSurvey(false), 3000);
+              }}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">What's the main reason you're leaving?</label>
+                <select name="reason" required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <option value="">Select a reason...</option>
+                  <option value="not_enough_signals">Not enough signals / too quiet</option>
+                  <option value="too_expensive">Too expensive for the value</option>
+                  <option value="confusing">Hard to understand or use</option>
+                  <option value="not_useful">Signals weren't useful to me</option>
+                  <option value="using_another">Switched to another service</option>
+                  <option value="not_trading">Stopped trading / investing</option>
+                  <option value="other">Other</option>
+                </select>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Anything else you'd like us to know?</label>
+                <textarea name="detail" rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-4 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Optional — but we read every response" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Would you come back if we improved?</label>
+                <div className="flex gap-4 mb-5">
+                  <label className="flex items-center gap-2 text-sm"><input type="radio" name="would_return" value="yes" defaultChecked className="text-blue-600" /> Yes, definitely</label>
+                  <label className="flex items-center gap-2 text-sm"><input type="radio" name="would_return" value="no" className="text-blue-600" /> Probably not</label>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button type="button" onClick={() => setShowCancelSurvey(false)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">Skip</button>
+                  <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-900 rounded-lg hover:bg-blue-800">Submit Feedback</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {showCancelSurvey && cancelSurveySubmitted && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 text-center">
+            <p className="text-lg font-semibold text-gray-900 mb-2">Thank you for your feedback</p>
+            <p className="text-sm text-gray-500">We'll use it to make RigaCap better. You're welcome back anytime.</p>
           </div>
         </div>
       )}
