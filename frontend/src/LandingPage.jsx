@@ -217,8 +217,8 @@ const StatsSection = () => (
         {[
           { value: '~20%', label: 'Annualized Return' },
           { value: '+497%', label: '10-Year Return' },
-          { value: '$59,730', label: 'From $10k (10yr)' },
           { value: '100%', label: 'Years Positive' },
+          { value: '$59,730', label: 'From $10k (10yr)' },
           { value: '+6%', label: 'During 2022 Crash' },
           { value: '0.97', label: 'Sharpe Ratio' },
         ].map(({ value, label }) => (
