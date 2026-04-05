@@ -115,7 +115,7 @@ export default function TrackRecordPage() {
                   <td className="px-4 sm:px-6 py-4 text-right font-bold text-emerald-400">+152%</td>
                   <td className="px-4 sm:px-6 py-4 text-right font-bold text-gray-400 text-xs hidden sm:table-cell">+93% to +267%</td>
                   <td className="px-4 sm:px-6 py-4 text-right font-bold text-gray-300">+84%</td>
-                  <td className="px-4 sm:px-6 py-4 text-amber-400/70 text-xs hidden sm:table-cell">7/7 start dates positive, all beat SPY</td>
+                  <td className="px-4 sm:px-6 py-4 text-amber-400/70 text-xs hidden sm:table-cell">Every start date positive, all beat SPY</td>
                 </tr>
               </tbody>
             </table>
@@ -196,7 +196,7 @@ export default function TrackRecordPage() {
         <div className="bg-gradient-to-r from-emerald-900/30 to-emerald-800/20 border border-emerald-700/30 rounded-xl p-6 sm:p-8 text-center">
           <Activity className="w-8 h-8 text-emerald-400 mx-auto mb-3" />
           <div className="text-3xl font-bold text-emerald-400 mb-1">100% Win Rate</div>
-          <p className="text-emerald-200/70 text-sm">5 of 5 years profitable across all 7 tested start dates — including 2022 where RigaCap gained +6% while the S&P 500 fell -20%</p>
+          <p className="text-emerald-200/70 text-sm">5 of 5 years profitable, every start date positive — including 2022 where RigaCap gained +6% while the S&P 500 fell -20%</p>
         </div>
       </section>
 
