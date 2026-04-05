@@ -64,7 +64,27 @@ regime exit filter: ACTIVE (SPY < 200MA → cash)
 All other params: baseline
 ```
 
+### Things That DON'T Help (all tested, all hurt returns)
+- AI optimizer (Optuna, any version) — adds noise, never consistently beats fixed
+- More optimizer trials (100 vs 30) — marginal improvement, not the bottleneck
+- ATR-based stops — wrong for momentum (widens stops on volatile stocks = bigger losses)
+- Min hold days — blocks good exits
+- Profit-lock stop tightening — optimizer wastes trials on it
+- Regime param adjustments (either direction) — 19.9% → 1.7% or 2.8%
+- Pyramiding / doubling down on winners — 19.9% → 14.1% (15/10/2) or 17.8% (8/10/1)
+
+### The Final Strategy (simplest wins)
+```
+near_50d_high_pct: 3.0
+trailing_stop_pct: 12.0
+dwap_threshold_pct: 5.0
+max_positions: 6
+position_size_pct: 15.0
+No optimizer. No regime adjustments. No pyramiding.
+Regime EXIT filter (SPY < 200MA → cash) still active.
+```
+
 ### What Goes Live Monday Apr 7
 - First scan with 3% breakout filter at 4:30 PM EDT
-- Fixed params, no regime adjustments, no optimizer
+- Fixed params, no regime adjustments, no optimizer, no pyramiding
 - Monitor for signal quality and frequency
