@@ -262,7 +262,7 @@ const YearByYearSection = () => {
             Consistent Performance, Year After Year
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Tested across every market condition since 2016. Beat the S&P 500 every time.
+            Tested across every market condition since 2016. Never a losing year.
           </p>
         </div>
 
