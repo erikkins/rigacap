@@ -422,7 +422,7 @@
     Comprehensive technical documentation covering infrastructure, database schema,
     API surface, security architecture, deployment pipeline, and operational characteristics.
   </p>
-  <div class="date">Confidential &mdash; February 2026</div>
+  <div class="date">Confidential &mdash; March 2026</div>
   <div class="version">v2.5.0 &middot; 95 endpoints &middot; 18 tables &middot; 15K+ LOC</div>
 </div>
 
@@ -476,7 +476,7 @@
   <h2>1. System Overview</h2>
   <p>
     RigaCap is a serverless, event-driven trading platform built on AWS. The system ingests market data from
-    6,500+ US equities via a dual-source pipeline (Alpaca SIP primary + yfinance fallback), generates AI-powered trading signals, and delivers them to subscribers via a
+    4,000+ US equities via a dual-source pipeline (Alpaca SIP primary + yfinance fallback), generates AI-powered trading signals, and delivers them to subscribers via a
     React dashboard and automated email pipeline. The backend runs on two specialized AWS Lambda functions
     (API + Worker) from a single container image, using FastAPI + Mangum for ASGI compatibility.
   </p>
@@ -576,22 +576,26 @@
     </tbody>
   </table>
 
-  <h3>Scheduled Events (EventBridge)</h3>
+  <h3>Scheduled Events (EventBridge) &mdash; 14 Rules</h3>
   <table>
     <thead>
-      <tr><th>Rule</th><th>Schedule</th><th>Target</th></tr>
+      <tr><th>Rule</th><th>Schedule (UTC / ET)</th><th>Description</th></tr>
     </thead>
     <tbody>
-      <tr>
-        <td><strong>Market Scanner</strong></td>
-        <td><code>cron(0 21 ? * MON-FRI *)</code> (4 PM ET)</td>
-        <td>Lambda &rarr; <code>/api/signals/scan</code></td>
-      </tr>
-      <tr>
-        <td><strong>Lambda Warmer</strong></td>
-        <td><code>rate(5 minutes)</code></td>
-        <td>Lambda &rarr; <code>/health</code></td>
-      </tr>
+      <tr><td><strong>Market Scanner</strong></td><td><code>cron(20 21 ? * MON-FRI *)</code> &mdash; 4:20 PM ET</td><td>Full scan + dashboard + signals (20 min post-close for Alpaca settlement)</td></tr>
+      <tr><td><strong>Double Signal Alerts</strong></td><td><code>cron(0 22 ? * MON-FRI *)</code> &mdash; 5:00 PM ET</td><td>Multi-confirmation signal email alerts</td></tr>
+      <tr><td><strong>Daily Email Digest</strong></td><td><code>cron(0 23 ? * MON-FRI *)</code> &mdash; 6:00 PM ET</td><td>Subscriber daily digest email</td></tr>
+      <tr><td><strong>Strategy Analysis</strong></td><td><code>cron(30 23 ? * FRI *)</code> &mdash; Fri 6:30 PM ET</td><td>Weekly strategy auto-analysis</td></tr>
+      <tr><td><strong>Nightly Walk-Forward</strong></td><td><code>cron(0 1 ? * TUE-SAT *)</code> &mdash; 8:00 PM ET</td><td>Walk-forward simulation + social post generation</td></tr>
+      <tr><td><strong>AI Social Content</strong></td><td><code>cron(0 2 ? * TUE-SAT *)</code> &mdash; 9:00 PM ET</td><td>Generate AI social posts from live portfolio trades</td></tr>
+      <tr><td><strong>Intraday Monitor</strong></td><td><code>cron(0/5 14-20 ? * MON-FRI *)</code> &mdash; every 5 min, market hours</td><td>Position monitoring + trailing stop checks</td></tr>
+      <tr><td><strong>Ticker Health</strong></td><td><code>cron(0 12 ? * MON-FRI *)</code> &mdash; 7:00 AM ET</td><td>Pre-market ticker health check</td></tr>
+      <tr><td><strong>Pipeline Health</strong></td><td><code>cron(30 12 * * ? *)</code> &mdash; 7:30 AM ET daily</td><td>17-check pipeline health report</td></tr>
+      <tr><td><strong>Onboarding Drip</strong></td><td><code>cron(0 15 * * ? *)</code> &mdash; 10:00 AM ET daily</td><td>5-step new subscriber drip sequence</td></tr>
+      <tr><td><strong>Publish Posts</strong></td><td><code>cron(0/15 * * * ? *)</code> &mdash; every 15 min</td><td>Auto-publish approved scheduled social posts</td></tr>
+      <tr><td><strong>Post Notifications</strong></td><td><code>cron(0 * * * ? *)</code> &mdash; hourly</td><td>T-24h/T-1h admin notifications for upcoming posts</td></tr>
+      <tr><td><strong>Pickle Rebuild</strong></td><td><code>cron(0 1 ? * SUN *)</code> &mdash; Sat 8:00 PM ET</td><td>Weekly full pickle rebuild (catches new universe symbols)</td></tr>
+      <tr><td><strong>Lambda Warmer</strong></td><td><code>rate(5 minutes)</code></td><td>Keep Worker Lambda warm</td></tr>
     </tbody>
   </table>
 </div>
@@ -839,6 +843,29 @@
       <div><span class="col-name">spy_close, vix_close</span> <span class="col-type">FLOAT</span></div>
     </div>
   </div>
+
+  <div class="schema-section no-break">
+    <h4>push_tokens</h4>
+    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Mobile app push notification tokens for Expo push service.</p>
+    <div class="schema-cols">
+      <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
+      <div><span class="col-name">user_id</span> <span class="col-type">INTEGER FK &rarr; users</span></div>
+      <div><span class="col-name">token</span> <span class="col-type">VARCHAR UNIQUE</span></div>
+      <div><span class="col-name">platform</span> <span class="col-type">VARCHAR (ios/android)</span></div>
+      <div><span class="col-name">created_at</span> <span class="col-type">DATETIME</span></div>
+    </div>
+  </div>
+
+  <div class="schema-section no-break">
+    <h4>regime_history</h4>
+    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Weekly regime classifications for chart band overlays on equity curves.</p>
+    <div class="schema-cols">
+      <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
+      <div><span class="col-name">week_start</span> <span class="col-type">DATE UNIQUE IDX</span></div>
+      <div><span class="col-name">regime</span> <span class="col-type">VARCHAR(30)</span></div>
+      <div><span class="col-name">spy_close, vix_close</span> <span class="col-type">FLOAT</span></div>
+    </div>
+  </div>
 </div>
 
 <!-- PAGE: BACKEND SERVICES -->
@@ -848,11 +875,11 @@
   <div class="feature-grid no-break">
     <div class="feature-card" style="border-left-color: var(--gold);">
       <h4>Dual-Source Ingestion</h4>
-      <p>Alpaca SIP (primary) + yfinance (fallback). Daily download of 252-day rolling OHLCV for 6,500+ symbols. Auto-failover with health tracking. Index symbols (^VIX, ^GSPC) always route to yfinance.</p>
+      <p>Alpaca SIP (primary) + yfinance (fallback). Daily download of 252-day rolling OHLCV for 4,000+ symbols. Auto-failover with health tracking. Index symbols (^VIX, ^GSPC) always route to yfinance.</p>
     </div>
     <div class="feature-card" style="border-left-color: var(--green);">
-      <h4>S3 Parquet Cache</h4>
-      <p>Price data persisted to S3 as parquet files. Lambda loads on startup via <code>/api/warmup</code> endpoint. 7-day TTL.</p>
+      <h4>S3 Pickle Cache</h4>
+      <p>Price data persisted to S3 as gzipped pickle (~179 MB compressed, ~2+ GB uncompressed, 7,381 symbols). Worker Lambda loads on cold start. Weekly rebuild via EventBridge.</p>
     </div>
     <div class="feature-card" style="border-left-color: var(--navy);">
       <h4>In-Memory Cache</h4>
@@ -866,7 +893,7 @@
 
   <h2>6. Backend Services</h2>
   <p>
-    28+ singleton service classes comprising 18,000+ lines of Python. All services are instantiated at module level
+    29 singleton service classes comprising 20,000+ lines of Python. All services are instantiated at module level
     and imported globally. The Lambda function uses Mangum for ASGI-to-Lambda translation.
   </p>
 
@@ -879,7 +906,7 @@
       <tr><td><strong>BacktesterService</strong></td><td>1,255</td><td>Historical backtesting, portfolio simulation, performance metrics</td></tr>
       <tr><td><strong>WalkForwardService</strong></td><td>1,907</td><td>Step Functions orchestration, period-by-period evaluation, AI optimization</td></tr>
       <tr><td><strong>EmailService</strong></td><td>2,358</td><td>Subscriber emails: welcome, daily digest, sell alerts, password reset</td></tr>
-      <tr><td><strong>SchedulerService</strong></td><td>1,454</td><td>APScheduler background jobs, nightly digest, social post scheduling</td></tr>
+      <tr><td><strong>SchedulerService</strong></td><td>1,454</td><td>EventBridge-triggered background jobs, nightly digest, social post scheduling</td></tr>
       <tr><td><strong>ModelPortfolioService</strong></td><td>1,200</td><td>Dual live/WF portfolio tracking, ghost portfolios, what-if calculator</td></tr>
       <tr><td><strong>MarketRegimeService</strong></td><td>882</td><td>7-regime market classification using SPY indicators</td></tr>
       <tr><td><strong>DataExportService</strong></td><td>827</td><td>S3 data export/import, CDN pre-computation, parquet persistence</td></tr>
@@ -896,6 +923,10 @@
       <tr><td><strong>InstagramCommentService</strong></td><td>200</td><td>Instagram comment monitoring + Claude-powered reply generation</td></tr>
       <tr><td><strong>TradeAutopsyService</strong></td><td>175</td><td>Claude-powered forensic post-mortem analysis for closed trades</td></tr>
       <tr><td><strong>RegimeForecastService</strong></td><td>185</td><td>Daily regime forecast storage, accuracy tracking, heatmap data</td></tr>
+      <tr><td><strong>HealthMonitorService</strong></td><td>920</td><td>Pipeline health checks (S3 freshness, CW metrics, DB counts), daily report emails</td></tr>
+      <tr><td><strong>PushNotificationService</strong></td><td>150</td><td>Expo push notifications for mobile app (sell alerts, signals)</td></tr>
+      <tr><td><strong>EnsembleSignalService</strong></td><td>200</td><td>Persist ensemble signals to DB for audit trail + email consistency</td></tr>
+      <tr><td><strong>DualSourceProvider</strong></td><td>500</td><td>Alpaca SIP (primary) + yfinance (fallback) with auto-failover and health tracking</td></tr>
     </tbody>
   </table>
 
@@ -908,9 +939,9 @@
 
 <!-- PAGE: API ENDPOINTS -->
 <div class="content page-break">
-  <h2>7. API Surface (97 Endpoints)</h2>
+  <h2>7. API Surface (120+ Endpoints)</h2>
 
-  <h3>Authentication (<code>/auth</code>) &mdash; 9 endpoints</h3>
+  <h3>Authentication (<code>/auth</code> + <code>/auth/2fa</code>) &mdash; 19 endpoints</h3>
   <table>
     <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
     <tbody>
@@ -923,6 +954,16 @@
       <tr><td><code>POST</code></td><td>/auth/forgot-password</td><td>Send password reset email</td></tr>
       <tr><td><code>POST</code></td><td>/auth/reset-password</td><td>Reset password with secure token</td></tr>
       <tr><td><code>POST</code></td><td>/auth/logout</td><td>Invalidate current tokens</td></tr>
+      <tr><td><code>PATCH</code></td><td>/auth/me/email-preferences</td><td>Update email notification preferences</td></tr>
+      <tr><td><code>GET</code></td><td>/auth/email-preferences</td><td>Get current email preferences</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/unsubscribe</td><td>One-click email unsubscribe (RFC 8058)</td></tr>
+      <tr><td><code>GET</code></td><td>/auth/referral</td><td>Get/create referral code and stats</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/2fa/setup</td><td>Generate TOTP secret + QR code</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/2fa/confirm-setup</td><td>Confirm TOTP setup with verification code</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/2fa/verify</td><td>Verify 2FA code during login</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/2fa/disable</td><td>Disable 2FA for account</td></tr>
+      <tr><td><code>GET</code></td><td>/auth/2fa/status</td><td>Check if 2FA is enabled</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/2fa/regenerate-backup-codes</td><td>Generate new backup codes</td></tr>
     </tbody>
   </table>
 
@@ -959,25 +1000,27 @@
     </tbody>
   </table>
 
-  <h3>Social (<code>/social</code>) &mdash; 18 endpoints</h3>
+  <h3>Social (<code>/social</code>) &mdash; 17 endpoints</h3>
   <table>
     <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
     <tbody>
       <tr><td><code>GET</code></td><td>/social/posts</td><td>List posts (filter by status, type, platform)</td></tr>
+      <tr><td><code>GET</code></td><td>/social/posts/{id}</td><td>Get single post details</td></tr>
       <tr><td><code>POST</code></td><td>/social/posts/compose</td><td>Create new draft post</td></tr>
       <tr><td><code>POST</code></td><td>/social/posts/{id}/approve</td><td>Approve for publishing</td></tr>
       <tr><td><code>POST</code></td><td>/social/posts/{id}/reject</td><td>Reject with reason</td></tr>
+      <tr><td><code>GET</code></td><td>/social/posts/{id}/preview</td><td>Preview rendered post</td></tr>
       <tr><td><code>POST</code></td><td>/social/posts/{id}/publish</td><td>Publish immediately</td></tr>
       <tr><td><code>POST</code></td><td>/social/posts/{id}/schedule</td><td>Schedule for future date</td></tr>
       <tr><td><code>POST</code></td><td>/social/posts/{id}/cancel</td><td>Cancel scheduled post</td></tr>
+      <tr><td><code>POST</code></td><td>/social/posts/{id}/regenerate</td><td>Re-generate post content</td></tr>
       <tr><td><code>POST</code></td><td>/social/posts/{id}/regenerate-ai</td><td>Re-generate via Claude API</td></tr>
       <tr><td><code>POST</code></td><td>/social/posts/{id}/edit</td><td>Edit draft content</td></tr>
       <tr><td><code>DELETE</code></td><td>/social/posts/{id}</td><td>Delete draft</td></tr>
       <tr><td><code>GET</code></td><td>/social/posts/{id}/cancel-email</td><td>One-click cancel via JWT link</td></tr>
+      <tr><td><code>GET</code></td><td>/social/posts/{id}/approve-email</td><td>One-click approve via JWT link</td></tr>
       <tr><td><code>POST</code></td><td>/social/generate-chart/{id}</td><td>Generate chart card image</td></tr>
       <tr><td><code>GET</code></td><td>/social/stats</td><td>Publishing statistics</td></tr>
-      <tr><td><code>GET</code></td><td>/social/posts/{id}/approve-email</td><td>One-click approve via JWT link</td></tr>
-      <tr><td><code>POST</code></td><td>/social/posts/{id}/requeue</td><td>Requeue rejected post as new draft</td></tr>
     </tbody>
   </table>
 
@@ -1023,6 +1066,9 @@
       <tr><td><strong>LegalPages.jsx</strong></td><td>11 KB</td><td>Terms, Privacy Policy, Financial Disclaimer</td></tr>
       <tr><td><strong>PasswordReset.jsx</strong></td><td>9 KB</td><td>Forgot/reset password flow</td></tr>
       <tr><td><strong>SubscriptionBanner.jsx</strong></td><td>9 KB</td><td>Trial countdown, upgrade CTA</td></tr>
+      <tr><td><strong>TrackRecordChart.jsx</strong></td><td>8 KB</td><td>Walk-forward equity curve with regime overlays</td></tr>
+      <tr><td><strong>TwoFactorSettings.jsx</strong></td><td>7 KB</td><td>TOTP 2FA setup, backup codes, enable/disable</td></tr>
+      <tr><td><strong>CookieConsent.jsx</strong></td><td>3 KB</td><td>GDPR cookie consent banner for GA4</td></tr>
     </tbody>
   </table>
 
@@ -1097,8 +1143,8 @@
     &nbsp;&nbsp;1. npm run build <span class="arrow">&rarr;</span> S3 sync <span class="arrow">&rarr;</span> CloudFront invalidation<br>
     &nbsp;&nbsp;2. Pre-deploy: export price data to S3<br>
     &nbsp;&nbsp;3. Docker build (linux/amd64, --provenance=false) <span class="arrow">&rarr;</span> ECR push<br>
-    &nbsp;&nbsp;4. Lambda update-function-code <span class="arrow">&rarr;</span> new image<br>
-    &nbsp;&nbsp;5. Post-deploy: /api/warmup (load S3 data into memory)<br>
+    &nbsp;&nbsp;4. Lambda update-function-code <span class="arrow">&rarr;</span> API + Worker (same image)<br>
+    &nbsp;&nbsp;5. Post-deploy: /api/warmup (verify cold start healthy)<br>
   </div>
 
   <div class="callout">
@@ -1110,12 +1156,14 @@
 
   <h3>Current Monitoring</h3>
   <table>
-    <thead><tr><th>Component</th><th>Method</th><th>Retention</th></tr></thead>
+    <thead><tr><th>Component</th><th>Method</th><th>Details</th></tr></thead>
     <tbody>
-      <tr><td>Lambda Logs</td><td>CloudWatch (Python logging)</td><td>30 days</td></tr>
-      <tr><td>API Gateway</td><td>CloudWatch metrics (4xx, 5xx)</td><td>14 days</td></tr>
-      <tr><td>Step Functions</td><td>CloudWatch log group (ERROR level)</td><td>30 days</td></tr>
-      <tr><td>Database</td><td>RDS console metrics</td><td>14 days</td></tr>
+      <tr><td>Lambda Logs</td><td>CloudWatch Logs</td><td>Python logging, 30-day retention</td></tr>
+      <tr><td>API Gateway</td><td>CloudWatch Metrics</td><td>4xx, 5xx error rates</td></tr>
+      <tr><td>CloudWatch Alarms (10)</td><td>SNS &rarr; Email</td><td>Lambda errors/throttles/duration, API 5xx/4xx, RDS CPU/storage/connections, Worker errors/duration</td></tr>
+      <tr><td>Pipeline Health Monitor</td><td>HealthMonitorService</td><td>17 checks across 5 categories: Data Freshness, Worker Performance, Database, Signals, Infrastructure</td></tr>
+      <tr><td>Data Fetch Tracking</td><td>S3 metadata (JSON)</td><td>Source used (Alpaca/yfinance), settlement result, fetch duration, fallback status</td></tr>
+      <tr><td>Database</td><td>RDS console metrics</td><td>CPU, storage, connections</td></tr>
     </tbody>
   </table>
 
@@ -1124,7 +1172,7 @@
     <thead><tr><th>Operation</th><th>Latency</th><th>Resource</th></tr></thead>
     <tbody>
       <tr><td>Dashboard load</td><td>&lt;2 seconds</td><td>Pre-computed JSON from CDN</td></tr>
-      <tr><td>Signal scan (6,500+ symbols)</td><td>30&ndash;45 seconds</td><td>Alpaca SIP download + calculation</td></tr>
+      <tr><td>Signal scan (7,381 symbols)</td><td>30&ndash;45 seconds</td><td>Alpaca SIP download + calculation</td></tr>
       <tr><td>Single backtest (90d, 100 symbols)</td><td>20&ndash;40 seconds</td><td>Worker Lambda 3GB memory</td></tr>
       <tr><td>Walk-forward (5yr, 26 periods)</td><td>10&ndash;30 minutes</td><td>Step Functions &rarr; Lambda</td></tr>
       <tr><td>AI content generation</td><td>2&ndash;5 seconds</td><td>Claude API (Sonnet 4.5)</td></tr>
@@ -1147,8 +1195,8 @@
       <div class="label">RDS Storage</div>
     </div>
     <div class="stat-box">
-      <div class="value gold">~100 MB</div>
-      <div class="label">S3 Price Data</div>
+      <div class="value gold">~179 MB</div>
+      <div class="label">S3 Pickle (gzip)</div>
     </div>
   </div>
 
@@ -1161,14 +1209,14 @@
         <li><strong>SQLAlchemy</strong> 2.0.25 + asyncpg 0.29.0</li>
         <li><strong>Pydantic</strong> 2.5.0</li>
         <li><strong>pandas</strong> 2.1.4 + numpy 1.26.3</li>
-        <li><strong>alpaca-py</strong> &ge;0.13.0 (SIP market data)</li>
+        <li><strong>alpaca-py</strong> &ge;0.30.0 (SIP market data)</li>
         <li><strong>yfinance</strong> &ge;1.1.0 (fallback + index data)</li>
         <li><strong>Optuna</strong> &ge;3.5.0</li>
         <li><strong>matplotlib</strong> &ge;3.8.0</li>
         <li><strong>boto3</strong> 1.34.0 + Mangum 0.17.0</li>
         <li><strong>Stripe</strong> 7.10.0</li>
         <li><strong>python-jose</strong> 3.3.0 + passlib 1.7.4</li>
-        <li><strong>APScheduler</strong> 3.10.4</li>
+        <li><strong>APScheduler</strong> 3.10.4 (local dev; EventBridge in prod)</li>
         <li><strong>httpx</strong> 0.26.0 (Claude API client)</li>
       </ul>
     </div>
@@ -1204,7 +1252,7 @@
         <text x="68" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="30" font-weight="700" letter-spacing="-0.5" fill="#0f172a">RigaCap</text>
       </svg>
     </div>
-    <p>Technical Architecture Document &mdash; v2.4.0 &mdash; February 2026</p>
+    <p>Technical Architecture Document &mdash; v2.5.0 &mdash; March 2026</p>
     <p style="margin-top: 0.5rem;">This document is confidential and intended solely for authorized technical reviewers.
     Infrastructure details should not be shared outside the organization.</p>
   </div>

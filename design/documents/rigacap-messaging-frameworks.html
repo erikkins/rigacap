@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap — Messaging Framework</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --navy: #172554;
+    --navy-mid: #1e3a5f;
+    --navy-light: #1e40af;
+    --gold: #f59e0b;
+    --gold-light: #fbbf24;
+    --gold-pale: #fef3c7;
+    --green: #22c55e;
+    --green-light: #dcfce7;
+    --red: #ef4444;
+    --red-light: #fee2e2;
+    --dark: #111827;
+    --gray: #64748b;
+    --light-gray: #f8fafc;
+    --border: #e2e8f0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--dark);
+    line-height: 1.6;
+    background: #fff;
+  }
+
+  @page {
+    size: letter;
+    margin: 0.5in 0.6in;
+  }
+
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page-break { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+  }
+
+  /* Cover */
+  .cover {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(145deg, #0c1a3a 0%, var(--navy) 40%, #0f2847 100%);
+    color: #fff;
+    padding: 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(245,158,11,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,158,11,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    top: -30%; right: -20%;
+    width: 60%; height: 80%;
+    background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .cover * { position: relative; z-index: 1; }
+
+  .cover-corners { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; }
+  .cover-corners::before, .cover-corners::after {
+    content: ''; position: absolute;
+    width: 60px; height: 60px;
+    border-color: var(--gold); border-style: solid;
+  }
+  .cover-corners::before { top: 40px; left: 40px; border-width: 2px 0 0 2px; }
+  .cover-corners::after { top: 40px; right: 40px; border-width: 2px 2px 0 0; }
+  .cover-corners-bottom { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; }
+  .cover-corners-bottom::before, .cover-corners-bottom::after {
+    content: ''; position: absolute;
+    width: 60px; height: 60px;
+    border-color: var(--gold); border-style: solid;
+  }
+  .cover-corners-bottom::before { bottom: 40px; left: 40px; border-width: 0 0 2px 2px; }
+  .cover-corners-bottom::after { bottom: 40px; right: 40px; border-width: 0 2px 2px 0; }
+
+  .cover .doc-type {
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding: 4px 16px;
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 4px;
+  }
+  .cover h1 {
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff 0%, var(--gold-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .cover .subtitle {
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.65);
+    max-width: 560px;
+    margin-bottom: 2.5rem;
+  }
+  .cover .date { font-size: 0.85rem; color: rgba(255,255,255,0.35); }
+  .cover .version {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--gold);
+    margin-top: 0.5rem;
+    opacity: 0.7;
+  }
+
+  /* Content */
+  .content { max-width: 820px; margin: 0 auto; padding: 2.5rem 2rem; }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-top: 2.5rem;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--gold-pale);
+  }
+  h2:first-child { margin-top: 0; }
+
+  h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--navy);
+    margin-top: 1rem;
+    margin-bottom: 0.3rem;
+  }
+
+  p { margin-bottom: 0.6rem; color: #374151; font-size: 0.88rem; }
+  strong { font-weight: 600; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.75rem 0;
+    font-size: 0.8rem;
+  }
+  thead th {
+    background: var(--light-gray);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.5rem 0.6rem;
+    border-bottom: 2px solid var(--border);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--gray);
+  }
+  tbody td {
+    padding: 0.45rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* Callouts */
+  .callout {
+    background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+    border-left: 4px solid var(--navy);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0;
+  }
+  .callout p { margin: 0; font-size: 0.85rem; }
+  .callout strong { color: var(--navy); }
+
+  .callout-gold {
+    background: linear-gradient(135deg, #fef3c7, #fffbeb);
+    border-left-color: var(--gold);
+  }
+  .callout-gold strong { color: #92400e; }
+
+  .callout-green {
+    background: linear-gradient(135deg, #dcfce7, #f0fdf4);
+    border-left-color: var(--green);
+  }
+  .callout-green strong { color: #166534; }
+
+  .callout-red {
+    background: linear-gradient(135deg, #fee2e2, #fef2f2);
+    border-left-color: var(--red);
+  }
+  .callout-red strong { color: #991b1b; }
+
+  /* Two columns */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 0.75rem 0;
+  }
+
+  /* Feature cards */
+  .feature-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    border-left: 3px solid var(--navy);
+  }
+  .feature-card h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+    margin-top: 0;
+    color: var(--dark);
+  }
+  .feature-card p {
+    font-size: 0.78rem;
+    margin-bottom: 0;
+    color: var(--gray);
+  }
+
+  /* Framework section */
+  .framework {
+    margin-top: 1rem;
+  }
+
+  .framework-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.25rem;
+  }
+
+  .framework-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 0.3rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--gold-pale);
+  }
+
+  .framework-tagline {
+    font-size: 0.95rem;
+    font-style: italic;
+    color: var(--gray);
+    margin-bottom: 1rem;
+  }
+
+  /* Hero mock */
+  .hero-mock {
+    background: linear-gradient(145deg, #0c1a3a 0%, var(--navy) 40%, #0f2847 100%);
+    border-radius: 10px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    margin: 1rem 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-mock::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(245,158,11,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,158,11,0.04) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+  .hero-mock * { position: relative; z-index: 1; }
+  .hero-mock .headline {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+  .hero-mock .headline .gold { color: var(--gold-light); }
+  .hero-mock .sub {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.6);
+    max-width: 400px;
+    margin: 0 auto 1rem;
+    line-height: 1.5;
+  }
+  .hero-mock .cta-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--navy);
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+    letter-spacing: 0.02em;
+  }
+
+  /* Messaging guardrails */
+  .guardrails {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 0.75rem 0;
+  }
+  .guardrail-col {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+  }
+  .guardrail-say {
+    background: linear-gradient(135deg, #dcfce7, #f0fdf4);
+    border: 1px solid #bbf7d0;
+  }
+  .guardrail-say .guardrail-header {
+    font-weight: 700;
+    color: #166534;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+  }
+  .guardrail-dont {
+    background: linear-gradient(135deg, #fee2e2, #fef2f2);
+    border: 1px solid #fecaca;
+  }
+  .guardrail-dont .guardrail-header {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+  }
+  .guardrail-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .guardrail-col li {
+    font-size: 0.78rem;
+    color: #374151;
+    padding: 0.15rem 0;
+    padding-left: 1rem;
+    position: relative;
+  }
+  .guardrail-say li::before {
+    content: "\2713";
+    position: absolute;
+    left: 0;
+    color: #22c55e;
+    font-weight: 700;
+  }
+  .guardrail-dont li::before {
+    content: "\2717";
+    position: absolute;
+    left: 0;
+    color: #ef4444;
+    font-weight: 700;
+  }
+
+  /* Best-for badge */
+  .best-for {
+    display: inline-block;
+    background: var(--gold-pale);
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #92400e;
+    margin-top: 0.5rem;
+  }
+
+  /* Positioning statement */
+  .positioning {
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--navy);
+    border-left: 3px solid var(--gold);
+    padding-left: 1rem;
+    margin: 0.75rem 0;
+    line-height: 1.6;
+  }
+
+  /* One-liner */
+  .one-liner {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    background: var(--light-gray);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    color: var(--navy);
+    margin: 0.5rem 0;
+  }
+
+  /* Feedback section */
+  .feedback-question {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+  }
+  .feedback-question h4 {
+    margin-top: 0;
+    font-size: 0.9rem;
+    color: var(--navy);
+    margin-bottom: 0.5rem;
+  }
+  .feedback-lines {
+    border-bottom: 1px solid var(--border);
+    height: 2.5rem;
+    margin-bottom: 0.3rem;
+  }
+
+  /* Lists */
+  ul, ol {
+    margin: 0.4rem 0 0.6rem 1.5rem;
+    font-size: 0.85rem;
+    color: #374151;
+  }
+  li { margin-bottom: 0.2rem; }
+
+  /* Critique box */
+  .critique {
+    background: linear-gradient(135deg, #fef3c7, #fffbeb);
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+  }
+  .critique-header {
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #92400e;
+    margin-bottom: 0.5rem;
+  }
+  .critique p {
+    font-size: 0.82rem;
+    margin-bottom: 0.3rem;
+  }
+
+  /* Comparison table styling */
+  .is-isnot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .is-col, .isnot-col {
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+  .is-col {
+    background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+    border: 1px solid #bfdbfe;
+  }
+  .is-col h4 {
+    color: var(--navy);
+    margin-top: 0;
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+  }
+  .isnot-col {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border: 1px solid var(--border);
+  }
+  .isnot-col h4 {
+    color: var(--gray);
+    margin-top: 0;
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+  }
+  .is-col ul, .isnot-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .is-col li, .isnot-col li {
+    font-size: 0.82rem;
+    padding: 0.25rem 0;
+    padding-left: 1.25rem;
+    position: relative;
+  }
+  .is-col li::before {
+    content: "\2713";
+    position: absolute;
+    left: 0;
+    color: var(--navy-light);
+    font-weight: 700;
+  }
+  .isnot-col li::before {
+    content: "\2014";
+    position: absolute;
+    left: 0;
+    color: var(--gray);
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <div class="cover-corners"></div>
+  <div class="cover-corners-bottom"></div>
+  <div class="doc-type">Internal &middot; Strategy</div>
+  <h1>Messaging Framework:<br>Finding Our Voice</h1>
+  <p class="subtitle">Six ways to position RigaCap — from the current approach to five alternatives. Built for feedback from beta testers and advisors.</p>
+  <p class="date">February 2026</p>
+  <p class="version">v1.0 &middot; Confidential</p>
+</div>
+
+<!-- ============ PAGE 1: THE CORE INSIGHT ============ -->
+<div class="content page-break">
+
+  <h2>The Core Insight</h2>
+
+  <p>Every competitor in our space says some version of the same thing: <em>"AI-powered stock analysis tools for smarter trading."</em> They compete on features — more screeners, more indicators, more customization.</p>
+
+  <p><strong>RigaCap doesn't work that way.</strong></p>
+
+  <p>Users don't build strategies. They don't pick tickers. They don't configure parameters. They subscribe, open their dashboard, and see exactly which stocks to buy and when to sell. The system does the work. The user makes the call.</p>
+
+  <p>This is the gap between what we <em>are</em> and how we currently <em>talk</em> about ourselves. The word "signals" is accurate but generic. "AI-powered" is table stakes. We need language that communicates the real difference: <strong>you don't use RigaCap — you follow it.</strong></p>
+
+  <div class="is-isnot no-break">
+    <div class="is-col">
+      <h4>What RigaCap IS</h4>
+      <ul>
+        <li>A curated signal service with a proven track record</li>
+        <li>A membership — subscribe and receive</li>
+        <li>A system that does the analysis for you</li>
+        <li>Opinionated: we tell you what we'd buy</li>
+        <li>Simple: open, read, decide, act via your broker</li>
+      </ul>
+    </div>
+    <div class="isnot-col">
+      <h4>What RigaCap is NOT</h4>
+      <ul>
+        <li>A stock screener or research tool</li>
+        <li>A platform you "use" or configure</li>
+        <li>A DIY toolkit for building strategies</li>
+        <li>Neutral: we don't show you both sides</li>
+        <li>A brokerage — we never touch your money</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout-gold callout">
+    <p><strong>The question this document tries to answer:</strong> If someone asks "What is RigaCap?" — what do we want the answer to be?</p>
+  </div>
+
+</div>
+
+<!-- ============ PAGE 2: FRAMEWORK A — CURRENT ============ -->
+<div class="content page-break">
+
+  <div class="framework">
+    <div class="framework-label">Framework A &middot; Status Quo</div>
+    <div class="framework-title">"AI-Powered Trading Signals"</div>
+    <div class="framework-tagline">The current messaging, as it appears on rigacap.com today</div>
+  </div>
+
+  <h3>Current Hero Copy</h3>
+
+  <div class="hero-mock no-break">
+    <div class="headline">Beat the Market with<br><span class="gold">AI-Powered Trading Signals</span></div>
+    <div class="sub">Our Ensemble approach combines three proven factors — timing, momentum quality, and adaptive risk management — into one system that evolves through every market cycle.</div>
+    <div class="cta-btn">Start Free Trial</div>
+  </div>
+
+  <h3>Current One-Liner</h3>
+  <div class="one-liner">3-4 high-conviction signals per month — quality over quantity</div>
+
+  <h3>Current Key Phrases</h3>
+  <ul>
+    <li>"AI-Powered Ensemble Strategy"</li>
+    <li>"The 3-Factor Ensemble Advantage"</li>
+    <li>"From signal to profit in 4 simple steps"</li>
+    <li>"Join thousands of traders using AI-powered signals"</li>
+  </ul>
+
+  <div class="critique no-break">
+    <div class="critique-header">Honest Critique</div>
+    <p><strong>What works:</strong> "Beat the Market" is bold and clear. The 3-factor structure gives specificity. Performance stats are strong proof points.</p>
+    <p><strong>What doesn't:</strong> "AI-Powered Trading Signals" is generic — it describes 200+ competitors. "Ensemble approach" is jargon most people won't understand. The copy emphasizes <em>how</em> the system works (timing, momentum, risk) rather than <em>what the user gets</em> (curated buy/sell decisions). "Join thousands of traders" implies we're a tool for traders, not a signal service for busy people.</p>
+    <p><strong>Risk:</strong> This positioning invites feature-by-feature comparison with cheaper tools. It attracts power users who want to tinker, not subscribers who want answers.</p>
+  </div>
+
+</div>
+
+<!-- ============ PAGE 3: FRAMEWORK B — THE SIGNAL CLUB ============ -->
+<div class="content page-break">
+
+  <div class="framework">
+    <div class="framework-label">Framework B</div>
+    <div class="framework-title">"The Signal Club"</div>
+    <div class="framework-tagline">A membership you belong to, not a tool you use</div>
+  </div>
+
+  <div class="positioning">
+    RigaCap is a members-only signal service that tells you exactly which stocks to buy and when to sell — backed by a 10-year walk-forward track record.
+  </div>
+
+  <div class="hero-mock no-break">
+    <div class="headline">Your Signals Are Ready.<br><span class="gold">Start Receiving.</span></div>
+    <div class="sub">RigaCap members get curated buy and sell signals delivered to their dashboard — no screening, no charting, no guesswork. Just open, read, and decide.</div>
+    <div class="cta-btn">Join the Signal Club</div>
+  </div>
+
+  <h4>One-Liner</h4>
+  <div class="one-liner">"We do the analysis. You make the trade."</div>
+
+  <h4>Alternate Headline</h4>
+  <div class="hero-mock no-break" style="padding: 1.25rem 1.5rem;">
+    <div class="headline" style="font-size: 1.2rem;">Curated Signals.<br><span class="gold">Clear Decisions.</span></div>
+    <div class="sub" style="font-size: 0.75rem;">No screeners to configure. No charts to read. RigaCap delivers a short list of high-conviction buy signals — and tells you exactly when to sell.</div>
+  </div>
+
+  <div class="guardrails no-break">
+    <div class="guardrail-col guardrail-say">
+      <div class="guardrail-header">What We Say</div>
+      <ul>
+        <li>"Members receive..." (passive, curated)</li>
+        <li>"Your signals are ready"</li>
+        <li>"Join" / "Membership"</li>
+        <li>"We watch the market so you don't have to"</li>
+      </ul>
+    </div>
+    <div class="guardrail-col guardrail-dont">
+      <div class="guardrail-header">What We Don't Say</div>
+      <ul>
+        <li>"Use our platform" / "our tools"</li>
+        <li>"Build your strategy"</li>
+        <li>"Analyze stocks with AI"</li>
+        <li>"Screener" / "Scanner"</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="best-for">Best for: Landing page, email marketing, social media bios, referral copy</div>
+
+</div>
+
+<!-- ============ PAGE 4: FRAMEWORK C — THE RESEARCH DESK ============ -->
+<div class="content page-break">
+
+  <div class="framework">
+    <div class="framework-label">Framework C</div>
+    <div class="framework-title">"The Research Desk"</div>
+    <div class="framework-tagline">Institutional-grade research, delivered to individuals</div>
+  </div>
+
+  <div class="positioning">
+    RigaCap is your personal research desk — the kind of quantitative analysis that hedge funds pay millions for, distilled into clear buy and sell signals for individual investors.
+  </div>
+
+  <div class="hero-mock no-break">
+    <div class="headline">Hedge Fund Research.<br><span class="gold">Individual Access.</span></div>
+    <div class="sub">Our quantitative models analyze 4,000+ stocks across timing, momentum, and risk — and deliver a short list of high-conviction opportunities directly to you.</div>
+    <div class="cta-btn">Get Research Access</div>
+  </div>
+
+  <h4>One-Liner</h4>
+  <div class="one-liner">"Wall Street research. Main Street price."</div>
+
+  <div class="guardrails no-break">
+    <div class="guardrail-col guardrail-say">
+      <div class="guardrail-header">What We Say</div>
+      <ul>
+        <li>"Quantitative research" / "analysis"</li>
+        <li>"Our models identified..."</li>
+        <li>"Research-backed signals"</li>
+        <li>"Institutional-grade"</li>
+      </ul>
+    </div>
+    <div class="guardrail-col guardrail-dont">
+      <div class="guardrail-header">What We Don't Say</div>
+      <ul>
+        <li>"Trading tool" / "stock picker"</li>
+        <li>"AI bot" / "robo-advisor"</li>
+        <li>"Guaranteed returns"</li>
+        <li>"Get rich" / "easy money"</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="best-for">Best for: LinkedIn, professional audiences, financial advisors, SEO content</div>
+
+</div>
+
+<!-- ============ PAGE 5: FRAMEWORK D — THE RADAR ============ -->
+<div class="content page-break">
+
+  <div class="framework">
+    <div class="framework-label">Framework D</div>
+    <div class="framework-title">"The Radar"</div>
+    <div class="framework-tagline">Detection and intelligence — you see what others miss</div>
+  </div>
+
+  <div class="positioning">
+    RigaCap is a market radar that detects breakout opportunities before the crowd — using pattern recognition across timing, momentum, and market regime shifts.
+  </div>
+
+  <div class="hero-mock no-break">
+    <div class="headline">See Breakouts<br><span class="gold">Before They Happen.</span></div>
+    <div class="sub">RigaCap's 7-regime detection system scans the entire market daily, surfaces emerging opportunities, and alerts you the moment conditions align.</div>
+    <div class="cta-btn">Activate Your Radar</div>
+  </div>
+
+  <h4>One-Liner</h4>
+  <div class="one-liner">"Market intelligence, not market noise."</div>
+
+  <div class="guardrails no-break">
+    <div class="guardrail-col guardrail-say">
+      <div class="guardrail-header">What We Say</div>
+      <ul>
+        <li>"Detected" / "Surfaced" / "Identified"</li>
+        <li>"Before the crowd"</li>
+        <li>"Market intelligence"</li>
+        <li>"Signal, not noise"</li>
+      </ul>
+    </div>
+    <div class="guardrail-col guardrail-dont">
+      <div class="guardrail-header">What We Don't Say</div>
+      <ul>
+        <li>"Predict the market"</li>
+        <li>"Never miss a trade"</li>
+        <li>"Secret algorithm"</li>
+        <li>"Insider" anything</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="best-for">Best for: Twitter/X, YouTube thumbnails, retargeting ads, teaser content</div>
+
+</div>
+
+<!-- ============ PAGE 6: FRAMEWORK E — THE EDGE ============ -->
+<div class="content page-break">
+
+  <div class="framework">
+    <div class="framework-label">Framework E</div>
+    <div class="framework-title">"The Edge"</div>
+    <div class="framework-tagline">Performance-led — let the numbers talk first</div>
+  </div>
+
+  <div class="positioning">
+    RigaCap is the quantitative edge that turned $10,000 into $59,730 over ten years of walk-forward testing — with every signal, every exit, and every drawdown on the record.
+  </div>
+
+  <div class="hero-mock no-break">
+    <div class="headline">+497% Over 10 Years.<br><span class="gold">Every Trade on the Record.</span></div>
+    <div class="sub">Not backtested. Walk-forward validated. RigaCap's Ensemble system delivered ~20% annualized returns with full transparency — never a losing year.
+    <div class="cta-btn">See the Track Record</div>
+  </div>
+
+  <h4>One-Liner</h4>
+  <div class="one-liner">"Transparent performance. Verifiable results. Your edge."</div>
+
+  <div class="guardrails no-break">
+    <div class="guardrail-col guardrail-say">
+      <div class="guardrail-header">What We Say</div>
+      <ul>
+        <li>"Walk-forward validated" (not backtested)</li>
+        <li>"On the record" / "Fully transparent"</li>
+        <li>"Verifiable track record"</li>
+        <li>Specific numbers with time periods</li>
+      </ul>
+    </div>
+    <div class="guardrail-col guardrail-dont">
+      <div class="guardrail-header">What We Don't Say</div>
+      <ul>
+        <li>"Guaranteed" / "risk-free"</li>
+        <li>"You'll make X%"</li>
+        <li>Future performance promises</li>
+        <li>"Beating the market is easy"</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="best-for">Best for: Track record page, comparison content, skeptic audiences, paid ads</div>
+
+</div>
+
+<!-- ============ PAGE 7: FRAMEWORK F — THE ANTI-TOOL ============ -->
+<div class="content page-break">
+
+  <div class="framework">
+    <div class="framework-label">Framework F</div>
+    <div class="framework-title">"The Anti-Tool"</div>
+    <div class="framework-tagline">Contrarian simplicity — fewer features is the feature</div>
+  </div>
+
+  <div class="positioning">
+    RigaCap isn't a trading platform and it isn't a stock screener. It's the opposite: we removed every feature except the one that matters — telling you what to buy and when to sell.
+  </div>
+
+  <div class="hero-mock no-break">
+    <div class="headline">No Screeners. No Charts.<br><span class="gold">Just Answers.</span></div>
+    <div class="sub">Most platforms give you 50 tools and hope you figure it out. RigaCap gives you one thing: a short list of stocks to buy and clear rules for when to sell.</div>
+    <div class="cta-btn">Get the Answers</div>
+  </div>
+
+  <h4>One-Liner</h4>
+  <div class="one-liner">"The trading app with no trading tools."</div>
+
+  <div class="guardrails no-break">
+    <div class="guardrail-col guardrail-say">
+      <div class="guardrail-header">What We Say</div>
+      <ul>
+        <li>"No configuration required"</li>
+        <li>"Open. Read. Decide."</li>
+        <li>"We removed everything except answers"</li>
+        <li>"Simple by design"</li>
+      </ul>
+    </div>
+    <div class="guardrail-col guardrail-dont">
+      <div class="guardrail-header">What We Don't Say</div>
+      <ul>
+        <li>"Powerful platform" / "feature-rich"</li>
+        <li>"Customizable"</li>
+        <li>"Advanced tools"</li>
+        <li>"Take control" (implies work)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="best-for">Best for: Product Hunt, tech audiences, people burned out on complexity, social ads</div>
+
+</div>
+
+<!-- ============ PAGE 8: FEEDBACK QUESTIONS ============ -->
+<div class="content page-break">
+
+  <h2>We Want Your Feedback</h2>
+
+  <p>These frameworks aren't mutually exclusive — the final messaging might blend elements from several. Your honest reactions help us find the right voice.</p>
+
+  <div class="feedback-question no-break">
+    <h4>1. Which headline grabbed you first?</h4>
+    <p style="font-size: 0.78rem; color: var(--gray);">Think about your gut reaction, not what sounds "correct." Which one made you want to keep reading?</p>
+    <table>
+      <tbody>
+        <tr><td style="width: 25px; font-weight: 600; color: var(--navy);">A</td><td>"Beat the Market with AI-Powered Trading Signals"</td><td style="width: 50px;"></td></tr>
+        <tr><td style="font-weight: 600; color: var(--navy);">B</td><td>"Your Signals Are Ready. Start Receiving."</td><td></td></tr>
+        <tr><td style="font-weight: 600; color: var(--navy);">C</td><td>"Hedge Fund Research. Individual Access."</td><td></td></tr>
+        <tr><td style="font-weight: 600; color: var(--navy);">D</td><td>"See Breakouts Before They Happen."</td><td></td></tr>
+        <tr><td style="font-weight: 600; color: var(--navy);">E</td><td>"+497% Over 10 Years. Every Trade on the Record."</td><td></td></tr>
+        <tr><td style="font-weight: 600; color: var(--navy);">F</td><td>"No Screeners. No Charts. Just Answers."</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="feedback-question no-break">
+    <h4>2. Which description best explains what RigaCap actually does?</h4>
+    <p style="font-size: 0.78rem; color: var(--gray);">If you were telling a friend about RigaCap, which one-liner would you steal?</p>
+    <table>
+      <tbody>
+        <tr><td style="width: 25px; font-weight: 600; color: var(--navy);">A</td><td>"3-4 high-conviction signals per month — quality over quantity"</td><td style="width: 50px;"></td></tr>
+        <tr><td style="font-weight: 600; color: var(--navy);">B</td><td>"We do the analysis. You make the trade."</td><td></td></tr>
+        <tr><td style="font-weight: 600; color: var(--navy);">C</td><td>"Wall Street research. Main Street price."</td><td></td></tr>
+        <tr><td style="font-weight: 600; color: var(--navy);">D</td><td>"Market intelligence, not market noise."</td><td></td></tr>
+        <tr><td style="font-weight: 600; color: var(--navy);">E</td><td>"Transparent performance. Verifiable results. Your edge."</td><td></td></tr>
+        <tr><td style="font-weight: 600; color: var(--navy);">F</td><td>"The trading app with no trading tools."</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="feedback-question no-break">
+    <h4>3. What's still unclear after reading this?</h4>
+    <p style="font-size: 0.78rem; color: var(--gray);">What questions would you still have? What would make you hesitate to sign up?</p>
+    <div class="feedback-lines"></div>
+    <div class="feedback-lines"></div>
+    <div class="feedback-lines"></div>
+  </div>
+
+  <div class="feedback-question no-break">
+    <h4>4. If you could mix and match, which elements would you combine?</h4>
+    <p style="font-size: 0.78rem; color: var(--gray);">e.g., "Headline from D + description from B + CTA from F"</p>
+    <div class="feedback-lines"></div>
+    <div class="feedback-lines"></div>
+    <div class="feedback-lines"></div>
+  </div>
+
+  <div class="callout" style="margin-top: 2rem;">
+    <p><strong>Thank you for your time.</strong> Your feedback directly shapes how we present RigaCap to the world. Responses are confidential and will only be used to refine our messaging.</p>
+  </div>
+
+</div>
+
+</body>
+</html>

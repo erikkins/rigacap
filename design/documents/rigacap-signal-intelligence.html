@@ -515,7 +515,7 @@
   </p>
   <div class="hero-stats">
     <div class="hero-stat">
-      <div class="value">6,500+</div>
+      <div class="value">4,000+</div>
       <div class="label">Stocks Scanned</div>
     </div>
     <div class="hero-stat">
@@ -563,7 +563,7 @@
   <div class="no-break">
   <h2>Executive Summary</h2>
   <p>
-    RigaCap's signal intelligence pipeline transforms raw market data from 6,500+ US equities into
+    RigaCap's signal intelligence pipeline transforms raw market data from 4,000+ US equities into
     high-conviction trading signals through a three-pillar approach:
   </p>
   <div class="feature-grid" style="grid-template-columns: 1fr 1fr 1fr;">
@@ -583,8 +583,8 @@
   <p>
     Every signal must pass all three filters before entry. Once invested, positions are monitored
     every 5 minutes during market hours with adaptive trailing stops. The entire pipeline has been
-    validated through 5-year walk-forward testing with zero hindsight bias, producing
-    <strong>+289% cumulative return</strong> (31% annualized).
+    validated through 10-year walk-forward testing with zero hindsight bias, producing
+    <strong>+497% cumulative return</strong> (~20% annualized). Never a losing year.
   </p>
   </div>
 </div>
@@ -605,10 +605,10 @@
       <tr><th>Parameter</th><th>Value</th><th>Source</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>Total Universe</strong></td><td>~6,500 symbols</td><td>NASDAQ + NYSE exchanges</td></tr>
+      <tr><td><strong>Total Universe</strong></td><td>~4,000 symbols</td><td>NASDAQ + NYSE exchanges</td></tr>
       <tr><td><strong>Minimum Price</strong></td><td>$20</td><td><code>config.MIN_PRICE</code></td></tr>
       <tr><td><strong>Minimum Volume</strong></td><td>500,000 shares/day</td><td><code>config.MIN_VOLUME</code></td></tr>
-      <tr><td><strong>Lookback Period</strong></td><td>5 years OHLCV</td><td><code>fetch_data(period="5y")</code></td></tr>
+      <tr><td><strong>Lookback Period</strong></td><td>7 years OHLCV</td><td><code>fetch_data(period="7y")</code></td></tr>
       <tr><td><strong>Data Source</strong></td><td>Alpaca SIP (primary) + yfinance (fallback)</td><td>Split/dividend adjusted, consolidated feed</td></tr>
     </tbody>
   </table>
@@ -654,7 +654,7 @@
       <!-- Box 1: Universe -->
       <rect x="270" y="44" width="160" height="44" rx="8" fill="#172554"/>
       <text x="350" y="63" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" font-weight="600" fill="#ffffff">Stock Universe</text>
-      <text x="350" y="78" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" fill="rgba(255,255,255,0.6)">~6,500 NASDAQ + NYSE</text>
+      <text x="350" y="78" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" fill="rgba(255,255,255,0.6)">~4,000 NASDAQ + NYSE</text>
 
       <!-- Arrow 1 -->
       <path d="M 350 88 L 350 108" stroke="#f59e0b" stroke-width="2" fill="none" marker-end="url(#arrowGold)"/>
@@ -768,59 +768,58 @@
 
   <!-- SVG 2: Stylized Price Chart with Indicator Overlays -->
   <div class="svg-diagram no-break">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 280" width="700" height="280">
-      <rect width="700" height="280" rx="12" fill="#0f172a"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 220" width="700" height="220">
+      <rect width="700" height="220" rx="12" fill="#0f172a"/>
 
       <!-- Title -->
-      <text x="350" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#e2e8f0">Indicator Overlay &mdash; Stylized Price Chart</text>
+      <text x="350" y="20" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#e2e8f0">Indicator Overlay &mdash; Stylized Price Chart</text>
 
       <!-- Y-axis labels -->
-      <text x="38" y="60" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#64748b">$180</text>
-      <text x="38" y="110" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#64748b">$150</text>
-      <text x="38" y="160" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#64748b">$120</text>
-      <text x="38" y="210" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#64748b">$90</text>
-      <text x="38" y="248" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#64748b">$70</text>
+      <text x="38" y="48" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="8" fill="#64748b">$180</text>
+      <text x="38" y="88" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="8" fill="#64748b">$150</text>
+      <text x="38" y="128" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="8" fill="#64748b">$120</text>
+      <text x="38" y="168" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="8" fill="#64748b">$90</text>
 
       <!-- Grid lines -->
-      <line x1="45" y1="56" x2="680" y2="56" stroke="#1e293b" stroke-width="0.5"/>
-      <line x1="45" y1="106" x2="680" y2="106" stroke="#1e293b" stroke-width="0.5"/>
-      <line x1="45" y1="156" x2="680" y2="156" stroke="#1e293b" stroke-width="0.5"/>
-      <line x1="45" y1="206" x2="680" y2="206" stroke="#1e293b" stroke-width="0.5"/>
+      <line x1="45" y1="44" x2="680" y2="44" stroke="#1e293b" stroke-width="0.5"/>
+      <line x1="45" y1="84" x2="680" y2="84" stroke="#1e293b" stroke-width="0.5"/>
+      <line x1="45" y1="124" x2="680" y2="124" stroke="#1e293b" stroke-width="0.5"/>
+      <line x1="45" y1="164" x2="680" y2="164" stroke="#1e293b" stroke-width="0.5"/>
 
-      <!-- Price line (stylized uptrend with pullbacks) -->
-      <polyline points="50,230 80,225 110,218 140,210 170,195 200,200 230,185 260,175 290,180 320,160 350,155 380,140 410,135 440,125 470,120 500,100 530,90 560,85 590,70 620,65 650,60 670,55"
+      <!-- Price line (stylized uptrend with pullbacks) - compressed Y -->
+      <polyline points="50,180 80,176 110,170 140,164 170,152 200,156 230,144 260,136 290,140 320,124 350,120 380,108 410,104 440,96 470,92 500,76 530,68 560,64 590,52 620,48 650,44 670,40"
         fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/>
 
       <!-- MA200 (DWAP proxy - smoother, below price) -->
-      <polyline points="50,238 80,235 110,230 140,225 170,218 200,215 230,210 260,205 290,200 320,195 350,188 380,180 410,175 440,168 470,160 500,152 530,145 560,138 590,130 620,122 650,115 670,110"
+      <polyline points="50,186 80,184 110,180 140,176 170,170 200,168 230,164 260,160 290,156 320,152 350,146 380,140 410,136 440,130 470,124 500,118 530,112 560,106 590,100 620,94 650,88 670,84"
         fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 3" opacity="0.7"/>
 
       <!-- MA50 (smoother) -->
-      <polyline points="50,233 80,228 110,222 140,216 170,205 200,206 230,195 260,188 290,186 320,175 350,168 380,155 410,150 440,142 470,135 500,120 530,110 560,105 590,92 620,85 650,78 670,72"
+      <polyline points="50,182 80,178 110,174 140,168 170,160 200,160 230,152 260,146 290,144 320,136 350,130 380,120 410,116 440,110 470,104 500,92 530,84 560,80 590,70 620,64 650,58 670,54"
         fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 2" opacity="0.6"/>
 
       <!-- DWAP crossover annotation -->
-      <circle cx="320" cy="160" r="6" fill="none" stroke="#22c55e" stroke-width="2"/>
-      <line x1="320" y1="150" x2="320" y2="130" stroke="#22c55e" stroke-width="1"/>
-      <rect x="275" y="117" width="90" height="16" rx="4" fill="#22c55e" opacity="0.9"/>
-      <text x="320" y="128" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" font-weight="600" fill="#ffffff">DWAP +5% Cross</text>
+      <circle cx="320" cy="124" r="5" fill="none" stroke="#22c55e" stroke-width="2"/>
+      <line x1="320" y1="116" x2="320" y2="100" stroke="#22c55e" stroke-width="1"/>
+      <rect x="278" y="88" width="84" height="14" rx="4" fill="#22c55e" opacity="0.9"/>
+      <text x="320" y="98" text-anchor="middle" font-family="Inter, sans-serif" font-size="7.5" font-weight="600" fill="#ffffff">DWAP +5% Cross</text>
 
       <!-- 50-day high zone shading -->
-      <rect x="530" y="50" width="140" height="20" rx="4" fill="#f59e0b" opacity="0.08"/>
-      <text x="600" y="44" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" fill="#f59e0b" opacity="0.8">50-Day High Zone</text>
+      <rect x="530" y="36" width="140" height="16" rx="4" fill="#f59e0b" opacity="0.08"/>
+      <text x="600" y="32" text-anchor="middle" font-family="Inter, sans-serif" font-size="7.5" fill="#f59e0b" opacity="0.8">50-Day High Zone</text>
 
       <!-- Legend -->
-      <line x1="60" y1="268" x2="80" y2="268" stroke="#ffffff" stroke-width="2"/>
-      <text x="85" y="271" font-family="Inter, sans-serif" font-size="9" fill="#94a3b8">Price</text>
+      <line x1="60" y1="208" x2="80" y2="208" stroke="#ffffff" stroke-width="2"/>
+      <text x="85" y="211" font-family="Inter, sans-serif" font-size="8.5" fill="#94a3b8">Price</text>
 
-      <line x1="140" y1="268" x2="160" y2="268" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 3"/>
-      <text x="165" y="271" font-family="Inter, sans-serif" font-size="9" fill="#94a3b8">DWAP (200d)</text>
+      <line x1="140" y1="208" x2="160" y2="208" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 3"/>
+      <text x="165" y="211" font-family="Inter, sans-serif" font-size="8.5" fill="#94a3b8">DWAP (200d)</text>
 
-      <line x1="255" y1="268" x2="275" y2="268" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 2"/>
-      <text x="280" y="271" font-family="Inter, sans-serif" font-size="9" fill="#94a3b8">MA50</text>
+      <line x1="255" y1="208" x2="275" y2="208" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 2"/>
+      <text x="280" y="211" font-family="Inter, sans-serif" font-size="8.5" fill="#94a3b8">MA50</text>
 
-      <circle cx="340" cy="268" r="4" fill="none" stroke="#22c55e" stroke-width="1.5"/>
-      <text x="350" y="271" font-family="Inter, sans-serif" font-size="9" fill="#94a3b8">Crossover</text>
+      <circle cx="340" cy="208" r="3.5" fill="none" stroke="#22c55e" stroke-width="1.5"/>
+      <text x="350" y="211" font-family="Inter, sans-serif" font-size="8.5" fill="#94a3b8">Crossover</text>
     </svg>
   </div>
 </div>
@@ -874,7 +873,7 @@
     </thead>
     <tbody>
       <tr><td><strong>Uptrend</strong></td><td>Price &gt; MA20 AND Price &gt; MA50</td><td>Confirms healthy trend structure</td></tr>
-      <tr><td><strong>Breakout</strong></td><td>Within 5% of 50-day high</td><td>Near breakout zone, not exhausted</td></tr>
+      <tr><td><strong>Breakout</strong></td><td>Within 3% of 50-day high</td><td>Near breakout zone, high conviction only</td></tr>
       <tr><td><strong>Volume</strong></td><td>&ge; 500,000 shares/day</td><td>Sufficient liquidity</td></tr>
       <tr><td><strong>Price</strong></td><td>&ge; $20</td><td>Filters penny stocks</td></tr>
       <tr><td><strong>Sector Cap</strong></td><td>Max 5 per sector</td><td>Prevents sector concentration</td></tr>
@@ -984,7 +983,9 @@
       <tr><td>VIX Percentile, Trend Strength, SPY vs 50MA</td><td>1.0&times;</td><td>Standard conditions</td></tr>
     </tbody>
   </table>
+</div>
 
+<div class="content page-break">
   <h3>Regime Parameter Adjustments</h3>
   <table>
     <thead>
@@ -1330,7 +1331,7 @@
   <h2>7. Alert &amp; Communication Pipeline</h2>
   <p>
     A coordinated set of scheduled jobs runs throughout each trading day, from pre-market
-    data refresh through nightly content generation. Every job is managed by APScheduler
+    data refresh through nightly content generation. Every job is managed by EventBridge
     with US Eastern timezone awareness.
   </p>
 
@@ -1367,9 +1368,9 @@
       <text x="360" y="100" text-anchor="middle" font-family="Inter, sans-serif" font-size="7" fill="#64748b">Market</text>
       <text x="360" y="110" text-anchor="middle" font-family="Inter, sans-serif" font-size="7" fill="#64748b">Close</text>
 
-      <!-- 4:30 PM - Full Scan -->
+      <!-- 4:20 PM - Full Scan (20 min after close for Alpaca bar settlement) -->
       <circle cx="410" cy="73" r="8" fill="#f59e0b"/>
-      <text x="410" y="55" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600" fill="#f59e0b">16:30</text>
+      <text x="410" y="55" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600" fill="#f59e0b">16:20</text>
       <text x="410" y="100" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" font-weight="600" fill="#92400e">Full Scan</text>
       <text x="410" y="110" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" fill="#92400e">+ Dashboard</text>
 
@@ -1391,11 +1392,11 @@
       <text x="590" y="100" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" font-weight="500" fill="#374151">Nightly WF</text>
       <text x="590" y="110" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" font-weight="500" fill="#374151">+ Social</text>
 
-      <!-- 9:00 PM - Email Failure Report -->
-      <circle cx="640" cy="73" r="6" fill="#64748b"/>
-      <text x="640" y="55" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600" fill="#64748b">21:00</text>
-      <text x="640" y="100" text-anchor="middle" font-family="Inter, sans-serif" font-size="7" fill="#64748b">Failure</text>
-      <text x="640" y="110" text-anchor="middle" font-family="Inter, sans-serif" font-size="7" fill="#64748b">Report</text>
+      <!-- 9:00 PM - AI Social Content Generation -->
+      <circle cx="640" cy="73" r="6" fill="#8B5CF6"/>
+      <text x="640" y="55" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8" font-weight="600" fill="#8B5CF6">21:00</text>
+      <text x="640" y="100" text-anchor="middle" font-family="Inter, sans-serif" font-size="7" fill="#374151">AI Content</text>
+      <text x="640" y="110" text-anchor="middle" font-family="Inter, sans-serif" font-size="7" fill="#374151">Gen</text>
 
       <!-- Always-on jobs section -->
       <rect x="40" y="130" width="620" height="32" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
@@ -1491,7 +1492,7 @@
     <li><strong>Period Length:</strong> Biweekly (14-day intervals, anchored Feb 1)</li>
     <li><strong>Optimization:</strong> Uses only historical data up to each period boundary</li>
     <li><strong>Trading:</strong> Enters fresh ensemble signals, force-closes at period end (<code>rebalance_exit</code>)</li>
-    <li><strong>Position Carry:</strong> Force-close outperforms carry-over (A/B tested)</li>
+    <li><strong>Position Carry:</strong> Carry-over outperforms force-close (A/B tested: +206% vs +121%)</li>
     <li><strong>Max Symbols:</strong> 100 per period for computational efficiency</li>
     <li><strong>Strategy:</strong> Ensemble (strategy_id: 5) &mdash; DWAP + Momentum + Regime</li>
   </ul>
@@ -1499,56 +1500,56 @@
   <div class="callout-green callout no-break">
     <p><strong>Zero Hindsight Bias:</strong> At each biweekly boundary, the system knows nothing about
     what happens next. Parameters are optimized on past data, then the system trades forward
-    into unseen market conditions. The 289% return is entirely out-of-sample.</p>
+    into unseen market conditions. The +497% return (10yr) is entirely out-of-sample.</p>
   </div>
 
-  <h3>5-Year Results (2021&ndash;2026)</h3>
+  <h3>Year-by-Year Results (avg across all tested start dates)</h3>
   <table>
     <thead>
-      <tr><th>Period</th><th>Return</th><th>Sharpe</th><th>Max Drawdown</th><th>Market Context</th></tr>
+      <tr><th>Year</th><th>RigaCap</th><th>S&amp;P 500</th><th>Market Context</th></tr>
     </thead>
     <tbody>
       <tr>
-        <td>2021&ndash;2022</td>
-        <td class="positive">+62.0%</td>
-        <td>1.21</td>
-        <td>-14.8%</td>
-        <td>Post-COVID rally, meme mania</td>
+        <td>2021</td>
+        <td class="positive">+8.3%</td>
+        <td>+21.0%</td>
+        <td>Strategy ramp-up year</td>
       </tr>
       <tr>
-        <td>2022&ndash;2023</td>
-        <td class="negative">-13.2%</td>
-        <td>-1.38</td>
-        <td>-15.1%</td>
-        <td>Fed rate hikes, tech selloff</td>
+        <td>2022</td>
+        <td class="positive">+6.0%</td>
+        <td class="negative">-20.4%</td>
+        <td>Fed rate hikes &mdash; RigaCap stayed positive</td>
       </tr>
       <tr>
-        <td>2023&ndash;2024</td>
-        <td class="positive">+22.2%</td>
-        <td>1.02</td>
-        <td>-13.6%</td>
-        <td>AI-driven recovery</td>
+        <td>2023</td>
+        <td class="positive">+4.5%</td>
+        <td>+23.4%</td>
+        <td>Cautious positioning during recovery</td>
       </tr>
       <tr>
-        <td>2024&ndash;2025</td>
-        <td class="positive">+20.7%</td>
-        <td>0.89</td>
-        <td>-13.7%</td>
-        <td>Election volatility, rate cuts</td>
+        <td>2024</td>
+        <td class="positive">+20.3%</td>
+        <td>+23.8%</td>
+        <td>Election volatility, near parity</td>
       </tr>
       <tr>
-        <td>2025&ndash;2026</td>
-        <td class="positive">+87.5%</td>
-        <td>2.32</td>
-        <td>-8.3%</td>
-        <td>Strong bull, tariff recovery</td>
+        <td>2025</td>
+        <td class="positive">+57.4%</td>
+        <td>+18.3%</td>
+        <td>Breakout year &mdash; tripled SPY</td>
       </tr>
       <tr class="highlight-row">
-        <td><strong>5-Year Total</strong></td>
-        <td class="positive"><strong>+289%</strong></td>
-        <td><strong>1.02 median</strong></td>
-        <td><strong>-15.1%</strong></td>
-        <td><strong>31% annualized</strong></td>
+        <td><strong>5-Year Avg</strong></td>
+        <td class="positive"><strong>+152%</strong></td>
+        <td><strong>+84%</strong></td>
+        <td><strong>~20% annualized, 100% years positive</strong></td>
+      </tr>
+      <tr class="highlight-row">
+        <td><strong>10-Year Total</strong></td>
+        <td class="positive"><strong>+497%</strong></td>
+        <td><strong>+257%</strong></td>
+        <td><strong>19.6% ann, Sharpe 0.97, never a losing year</strong></td>
       </tr>
     </tbody>
   </table>
@@ -1565,19 +1566,13 @@
     <div class="compare-row">
       <div class="compare-label">RigaCap</div>
       <div class="compare-bar-wrap">
-        <div class="compare-bar navy" style="width:90%">+289%</div>
+        <div class="compare-bar navy" style="width:90%">+497% (10yr)</div>
       </div>
     </div>
     <div class="compare-row">
       <div class="compare-label">S&amp;P 500</div>
       <div class="compare-bar-wrap">
-        <div class="compare-bar gray" style="width:32%">~+95%</div>
-      </div>
-    </div>
-    <div class="compare-row">
-      <div class="compare-label">NASDAQ-100</div>
-      <div class="compare-bar-wrap">
-        <div class="compare-bar gray" style="width:40%">~+120%</div>
+        <div class="compare-bar gray" style="width:47%">+257% (10yr)</div>
       </div>
     </div>
   </div>
@@ -1585,12 +1580,12 @@
   <h3>Key Insights</h3>
   <div class="feature-grid no-break">
     <div class="feature-card" style="border-left-color: var(--green);">
-      <h4>80% Win Rate</h4>
-      <p>4 of 5 years profitable. The single losing year (2022-2023, -13.2%) was limited by regime detection while the S&P 500 fell ~20%.</p>
+      <h4>100% Win Rate</h4>
+      <p>5 of 5 years profitable. In 2022, RigaCap gained +6% while the S&P 500 fell -20% &mdash; the regime exit system moved to cash and protected capital.</p>
     </div>
     <div class="feature-card" style="border-left-color: var(--gold);">
       <h4>Controlled Drawdowns</h4>
-      <p>Maximum drawdown of -15.1% across all market conditions &mdash; the trailing stop and regime system prevented catastrophic losses.</p>
+      <p>Average max drawdown of -20.6% across all market conditions &mdash; the 12% trailing stop and SPY 200MA regime exit prevented catastrophic losses.</p>
     </div>
   </div>
 
@@ -1612,7 +1607,7 @@
         <text x="68" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="30" font-weight="700" letter-spacing="-0.5" fill="#0f172a">RigaCap</text>
       </svg>
     </div>
-    <p>Signal Intelligence &mdash; How RigaCap Reads the Market &mdash; v1.0.0 &mdash; February 2026</p>
+    <p>Signal Intelligence &mdash; How RigaCap Reads the Market &mdash; v1.1.0 &mdash; March 2026</p>
     <p style="margin-top: 0.5rem;">This document is confidential and intended solely for the recipient. Past performance does not guarantee future results.
     Trading involves risk of loss. Walk-forward results are out-of-sample but simulated &mdash; not live trading results.
     RigaCap provides trading signals only &mdash; users execute trades via their own brokerage accounts.</p>
