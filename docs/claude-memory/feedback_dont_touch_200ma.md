@@ -8,4 +8,4 @@ Do NOT add a buffer zone to the SPY < 200MA regime exit. Even a 0.04% cross (Mar
 
 **Why:** What looks like a whipsaw is actually an early warning. The 200MA cross is a leading indicator of short-term weakness. Adding a 1-2% buffer would delay exits and lose profits.
 
-**How to apply:** Be very cautious about changing this. The SNDK case argues against a buffer. But worth testing in a WF run to see the data — just don't deploy without validation. On the to-do list for investigation.
+**How to apply:** DO NOT add a buffer. Tested Apr 6 2026: a 1% buffer would have filtered 12/32 crosses including the Apr 8 2022 cross at -0.13% that triggered the 236-day cash period saving us during the entire 2022 bear market. Razor-thin crosses are early warnings, not noise. Case closed.
