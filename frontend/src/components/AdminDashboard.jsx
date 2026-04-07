@@ -1482,7 +1482,6 @@ function ModelPortfolioTab({ fetchWithAuth }) {
 
   const portfolios = [
     { key: 'live', label: 'Live Portfolio', desc: 'Intraday monitoring, trailing stop & regime exits' },
-    { key: 'walkforward', label: 'Walk-Forward Portfolio', desc: 'Biweekly rebalancing, daily close checks' },
   ];
 
   const exitReasonBadge = (reason) => {
@@ -2263,7 +2262,6 @@ function EquityCurveChart({ data }) {
         />
         <Legend />
         <Line type="monotone" dataKey="live_value" name="Live" stroke="#22c55e" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="walkforward_value" name="Walk-Forward" stroke="#3b82f6" strokeWidth={2} dot={false} />
         <Line type="monotone" dataKey="spy_value" name="SPY (benchmark)" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" dot={false} />
         {hasGhosts && (
           <>
