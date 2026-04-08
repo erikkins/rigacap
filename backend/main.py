@@ -1287,6 +1287,27 @@ def handler(event, context):
                 snap_result = data_export_service.export_snapshot(today_str, data)
             _log_step("Dashboard Export", "ok")
 
+            # 5b. Persist market context to history table
+            try:
+                if data.get('market_context'):
+                    from sqlalchemy import text as _sql_text
+                    async with async_session() as ctx_db:
+                        await ctx_db.execute(_sql_text(
+                            "INSERT INTO market_context_history (date, context, regime, spy_price, vix_level, signal_count) "
+                            "VALUES (:date, :context, :regime, :spy, :vix, :signals) "
+                            "ON CONFLICT (date) DO UPDATE SET context = :context, regime = :regime, spy_price = :spy, vix_level = :vix, signal_count = :signals"
+                        ), {
+                            "date": today_str,
+                            "context": data['market_context'],
+                            "regime": data.get('regime_forecast', {}).get('current_regime', ''),
+                            "spy": data.get('market_stats', {}).get('spy_price'),
+                            "vix": data.get('market_stats', {}).get('vix_level'),
+                            "signals": len(data.get('buy_signals', [])),
+                        })
+                        await ctx_db.commit()
+            except Exception as ctx_err:
+                print(f"⚠️ Market context history save failed (non-fatal): {ctx_err}")
+
             # 6. Persist ensemble signals to DB for audit trail + email consistency
             persisted = 0
             try:
