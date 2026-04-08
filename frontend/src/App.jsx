@@ -3680,6 +3680,13 @@ function Dashboard() {
                         </div>
                       )}
 
+                      {/* AI Market Briefing */}
+                      {dashboardData?.market_context && (
+                        <div className="px-4 py-3 bg-blue-50/50 border border-blue-100 rounded-lg mb-3">
+                          <p className="text-sm text-gray-600 italic leading-relaxed">{dashboardData.market_context}</p>
+                        </div>
+                      )}
+
                       {/* B. Promoted watchlist */}
                       {(dashboardData?.watchlist || []).length > 0 && (
                         <div>
