@@ -3586,18 +3586,26 @@ function Dashboard() {
                               )}
                             </div>
                           ) : (
-                            <div className="px-4 py-4 text-center text-sm text-gray-500 bg-gray-50 border-b border-gray-100">
-                              <p>{heldFreshCount > 0
-                                ? `Today's ${heldFreshCount} fresh signal${heldFreshCount > 1 ? 's are' : ' is'} already in your positions`
-                                : 'No fresh buy signals today'}</p>
-                              {heldFreshCount === 0 && daysSinceLastSignal > 7 && (
-                                <p className="text-xs text-gray-400 mt-1.5 max-w-xs mx-auto">
-                                  {daysSinceLastSignal <= 14
-                                    ? "Quiet week. The ensemble is being selective — it waits for all three factors to line up."
-                                    : daysSinceLastSignal <= 21
-                                    ? "Two weeks of patience. Sitting out when setups aren't clean is how the ensemble protects you."
-                                    : "Extended quiet stretch. The ensemble won't chase trades — when conditions are right, you'll be the first to know."}
-                                </p>
+                            <div className="px-4 py-4 text-sm bg-gray-50 border-b border-gray-100">
+                              {heldFreshCount > 0 ? (
+                                <p className="text-center text-gray-500">{`Today's ${heldFreshCount} fresh signal${heldFreshCount > 1 ? 's are' : ' is'} already in your positions`}</p>
+                              ) : (
+                                <>
+                                  {dashboardData?.market_context ? (
+                                    <div>
+                                      <p className="text-gray-600 italic leading-relaxed">{dashboardData.market_context}</p>
+                                    </div>
+                                  ) : (
+                                    <p className="text-center text-gray-500">No fresh buy signals today</p>
+                                  )}
+                                  {heldFreshCount === 0 && daysSinceLastSignal > 14 && !dashboardData?.market_context && (
+                                    <p className="text-xs text-gray-400 mt-1.5 max-w-xs mx-auto text-center">
+                                      {daysSinceLastSignal <= 21
+                                        ? "Two weeks of patience. Sitting out when setups aren't clean is how the ensemble protects you."
+                                        : "Extended quiet stretch. The ensemble won't chase trades — when conditions are right, you'll be the first to know."}
+                                    </p>
+                                  )}
+                                </>
                               )}
                             </div>
                           )}
