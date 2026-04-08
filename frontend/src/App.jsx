@@ -3591,13 +3591,21 @@ function Dashboard() {
                                 <p className="text-center text-gray-500">{`Today's ${heldFreshCount} fresh signal${heldFreshCount > 1 ? 's are' : ' is'} already in your positions`}</p>
                               ) : (
                                 <>
-                                  {dashboardData?.market_context ? (
-                                    <div>
-                                      <p className="text-gray-600 italic leading-relaxed">{dashboardData.market_context}</p>
-                                    </div>
-                                  ) : (
-                                    <p className="text-center text-gray-500">No fresh buy signals today</p>
-                                  )}
+                                  {(() => {
+                                    const day = new Date().getDay();
+                                    const isWeekend = day === 0 || day === 6;
+                                    const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][day];
+                                    if (isWeekend) {
+                                      return <p className="text-center text-gray-500">Have a nice {dayName}! Markets reopen {day === 6 ? 'Monday' : 'tomorrow'}.</p>;
+                                    }
+                                    return dashboardData?.market_context ? (
+                                      <div>
+                                        <p className="text-gray-600 italic leading-relaxed">{dashboardData.market_context}</p>
+                                      </div>
+                                    ) : (
+                                      <p className="text-center text-gray-500">No fresh buy signals today</p>
+                                    );
+                                  })()}
                                   {heldFreshCount === 0 && daysSinceLastSignal > 14 && !dashboardData?.market_context && (
                                     <p className="text-xs text-gray-400 mt-1.5 max-w-xs mx-auto text-center">
                                       {daysSinceLastSignal <= 21
