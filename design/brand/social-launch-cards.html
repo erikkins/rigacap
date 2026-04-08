@@ -176,11 +176,11 @@ function drawGoldLine(ctx, y, w) {
 
   ctx.fillStyle = WHITE;
   ctx.font = 'bold 34px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('~15 buy signals per month.', w/2, 800);
+  ctx.fillText('+497% over 10 years. ~20% annualized.', w/2, 800);
 
   ctx.fillStyle = GRAY_LIGHT;
   ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('Walk-forward verified across 5 years.', w/2, 855);
+  ctx.fillText('Walk-forward verified. Never a losing year.', w/2, 855);
   ctx.fillText('No hindsight. No hand-waving. Just math.', w/2, 900);
 
   ctx.fillStyle = GOLD;
@@ -222,15 +222,15 @@ function drawGoldLine(ctx, y, w) {
 
   // Table
   const rows = [
-    { period: '2021-2022', ret: '+62.0%', sharpe: '1.21', dd: '-14.8%', color: '#22c55e' },
-    { period: '2022-2023', ret: '-13.2%', sharpe: '-1.38', dd: '-15.1%', color: '#ef4444' },
-    { period: '2023-2024', ret: '+22.2%', sharpe: '1.02', dd: '-13.6%', color: '#22c55e' },
-    { period: '2024-2025', ret: '+20.7%', sharpe: '0.89', dd: '-13.7%', color: '#22c55e' },
-    { period: '2025-2026', ret: '+87.5%', sharpe: '2.32', dd: '-8.3%', color: '#22c55e' },
+    { period: '2021', ret: '+8.3%', spy: '+21.0%', note: '', color: '#22c55e' },
+    { period: '2022', ret: '+6.0%', spy: '-20.4%', note: 'SPY fell 20%', color: '#22c55e' },
+    { period: '2023', ret: '+4.5%', spy: '+23.4%', note: '', color: '#22c55e' },
+    { period: '2024', ret: '+20.3%', spy: '+23.8%', note: '', color: '#22c55e' },
+    { period: '2025', ret: '+57.4%', spy: '+18.3%', note: '3x SPY', color: '#22c55e' },
   ];
 
-  const colX = [100, 380, 580, 750, 920];
-  const headers = ['Period', 'Return', 'Sharpe', 'Max DD'];
+  const colX = [100, 350, 560, 800];
+  const headers = ['Year', 'RigaCap', 'S&P 500', ''];
   let y = 280;
 
   // Table header
@@ -258,12 +258,15 @@ function drawGoldLine(ctx, y, w) {
     ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText(row.ret, colX[1], y);
 
-    ctx.fillStyle = WHITE;
+    ctx.fillStyle = row.spy.startsWith('-') ? '#ef4444' : GRAY_LIGHT;
     ctx.font = '32px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(row.sharpe, colX[2], y);
+    ctx.fillText(row.spy, colX[2], y);
 
-    ctx.fillStyle = GRAY_LIGHT;
-    ctx.fillText(row.dd, colX[3], y);
+    if (row.note) {
+      ctx.fillStyle = GOLD;
+      ctx.font = 'italic 24px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText(row.note, colX[3], y);
+    }
 
     y += 75;
   });
@@ -277,30 +280,23 @@ function drawGoldLine(ctx, y, w) {
   ctx.textAlign = 'left';
   ctx.fillStyle = GOLD;
   ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('5-Year Total', colX[0], y);
+  ctx.fillText('5-Year Avg', colX[0], y);
 
   ctx.textAlign = 'center';
   ctx.fillStyle = GOLD;
   ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('+289%', colX[1], y);
-
-  ctx.fillStyle = WHITE;
-  ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('1.02', colX[2], y);
-  ctx.font = '18px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillStyle = GRAY_LIGHT;
-  ctx.fillText('(med)', colX[2], y + 30);
+  ctx.fillText('+152%', colX[1], y);
 
   ctx.fillStyle = GRAY_LIGHT;
   ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('-15.1%', colX[3], y);
+  ctx.fillText('+84%', colX[2], y);
 
   // Bottom stats
   y += 100;
   const bottomStats = [
-    { label: 'Annualized', value: '31%', color: '#22c55e' },
-    { label: 'Win Rate', value: '80%', color: GOLD },
-    { label: 'Max Drawdown', value: '-15.1%', color: GRAY_LIGHT },
+    { label: 'Annualized', value: '~20%', color: '#22c55e' },
+    { label: 'Years Positive', value: '100%', color: GOLD },
+    { label: '10-Year Return', value: '+497%', color: '#22c55e' },
   ];
 
   const boxW = 260;
