@@ -113,6 +113,7 @@
 - [Full text in approval emails](feedback_social_emails_full_text.md) — never truncate post previews in admin emails
 
 ## Other
+- [SLOW DOWN before Lambda jobs](feedback_slow_down_lambda.md) — think first, compute locally if possible, ONE job at a time
 - [Concurrency rules](feedback_concurrency_guardrail.md) — NEVER launch >3 WF jobs during market hours
 - [Signal consistency](feedback_signal_consistency.md) — all emails/alerts read from dashboard.json only
 - [Deployment rules](feedback_never_saturate_production.md) — deployment safety
