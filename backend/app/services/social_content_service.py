@@ -91,8 +91,23 @@ class SocialContentService:
             db.add(post)
             posts.append(post)
 
+        # Auto-schedule all posts 12 hours from now and send cancel notification
+        publish_at = datetime.utcnow() + timedelta(hours=12)
+        for post in posts:
+            post.status = "scheduled"
+            post.scheduled_for = publish_at
+
         await db.commit()
-        logger.info(f"Generated {len(posts)} social posts from simulation {simulation_id}")
+        logger.info(f"Generated {len(posts)} social posts from simulation {simulation_id}, auto-scheduled for {publish_at.isoformat()}")
+
+        # Send batch cancel notification email so admin can kill bad ones
+        try:
+            from app.services.post_scheduler_service import post_scheduler_service
+            await post_scheduler_service._send_batch_notification(posts, hours_before=12)
+            logger.info(f"Sent auto-schedule cancel notification for {len(posts)} posts")
+        except Exception as e:
+            logger.error(f"Failed to send auto-schedule notification: {e}")
+
         return posts
 
     async def generate_weekly_recap(self, db: AsyncSession) -> List[SocialPost]:
