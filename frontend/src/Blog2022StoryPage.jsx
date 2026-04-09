@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Shield, TrendingDown, TrendingUp, Clock, BarChart3, ArrowRight } from 'lucide-react';
 
 export default function Blog2022StoryPage() {
+  useEffect(() => { document.title = 'The 2022 Story | RigaCap'; }, []);
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
       {/* Nav */}

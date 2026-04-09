@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, BookOpen, BarChart3, Shield, Brain } from 'lucide-react';
 
@@ -38,6 +38,7 @@ const POSTS = [
 ];
 
 export default function BlogIndexPage() {
+  useEffect(() => { document.title = 'Blog | RigaCap'; }, []);
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
       {/* Nav */}

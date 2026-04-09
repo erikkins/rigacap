@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle, CheckCircle, XCircle, BarChart3, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 export default function BlogBacktestsPage() {
+  useEffect(() => { document.title = 'Why Most Backtests Are Lies | RigaCap'; }, []);
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
       {/* Nav */}

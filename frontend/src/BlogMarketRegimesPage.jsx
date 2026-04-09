@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, TrendingUp, TrendingDown, Activity, BarChart3, ArrowRight, Zap, Shield, Sun, Cloud, CloudRain, CloudLightning, Sunrise } from 'lucide-react';
 
@@ -83,6 +83,7 @@ const regimes = [
 ];
 
 export default function BlogMarketRegimesPage() {
+  useEffect(() => { document.title = 'The 7 Market Regimes | RigaCap'; }, []);
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
       {/* Nav */}

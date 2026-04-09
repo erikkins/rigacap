@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, TrendingUp, BarChart3, Shield, Activity, ArrowRight } from 'lucide-react';
 import TrackRecordChart from './components/TrackRecordChart';
@@ -25,6 +25,7 @@ const BENCHMARKS = [
 ];
 
 export default function TrackRecordPage() {
+  useEffect(() => { document.title = 'Track Record | RigaCap'; }, []);
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
       {/* Nav */}

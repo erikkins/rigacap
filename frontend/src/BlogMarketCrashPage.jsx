@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle, Shield, TrendingDown, TrendingUp, Clock, ArrowRight, Brain } from 'lucide-react';
 
 export default function BlogMarketCrashPage() {
+  useEffect(() => { document.title = 'What to Do When the Market Crashes | RigaCap'; }, []);
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
       {/* Nav */}

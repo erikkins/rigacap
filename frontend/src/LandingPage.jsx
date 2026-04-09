@@ -624,7 +624,6 @@ export default function LandingPage() {
   // Redirect if already authenticated (after loading is complete)
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      console.log('LandingPage: User authenticated, navigating to /app');
       navigate('/app', { replace: true });
     }
   }, [isAuthenticated, loading, navigate]);
@@ -639,7 +638,6 @@ export default function LandingPage() {
   };
 
   const handleLoginSuccess = () => {
-    console.log('LandingPage: handleLoginSuccess called');
     // Close modal first
     setShowLoginModal(false);
     // Navigate immediately - auth state is already updated in context
