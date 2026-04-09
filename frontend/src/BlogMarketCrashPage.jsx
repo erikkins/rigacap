@@ -27,7 +27,7 @@ export default function BlogMarketCrashPage() {
             <span className="text-white/90">Evergreen Investor Playbook</span>
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight mb-4">
-            What to Do When the Market Crashes
+            What to Do When<br /> the Market Crashes
           </h1>
           <p className="text-lg text-amber-200/70 max-w-2xl mx-auto">
             The playbook most investors wish they had before 2022.
