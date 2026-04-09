@@ -222,7 +222,7 @@ export default function BlogBacktestsPage() {
               <div>
                 <h3 className="text-white font-semibold mb-1">Multiple Start Dates</h3>
                 <p className="text-gray-400 text-sm m-0">
-                  We run the full simulation from 7 different start dates spaced across
+                  We run the full simulation from many different start dates spaced across
                   different market conditions. This eliminates timing luck — you can't
                   accidentally pick a favorable starting point when you test all of them.
                 </p>
@@ -356,7 +356,7 @@ export default function BlogBacktestsPage() {
             comes from a simulation where the system had no knowledge of the future.
           </p>
           <p className="text-gray-300 leading-relaxed text-base">
-            We test from 7 different start dates spanning different market conditions.
+            We test from many different start dates spanning different market conditions.
             We include the full 2022 bear market — no skipping the hard parts.
             Our parameters are fixed before each test begins, not optimized after
             seeing the results.
@@ -400,7 +400,7 @@ export default function BlogBacktestsPage() {
           </h2>
           <p className="text-blue-200/80 mb-6 max-w-lg mx-auto">
             No cherry-picked charts. No hypothetical returns. Just five years of
-            walk-forward validated performance — tested from 7 different start dates.
+            walk-forward validated performance — tested across multiple start dates.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link

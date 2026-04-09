@@ -229,7 +229,7 @@ export default function Blog2022StoryPage() {
           </h2>
           <p className="text-gray-300 leading-relaxed text-base">
             2022 wasn't a fluke. Across 5 years of walk-forward testing — starting from
-            7 different dates to eliminate timing luck — the system has never had a losing year.
+            multiple start dates to eliminate timing luck — the system has never had a losing year.
           </p>
         </div>
 
@@ -285,7 +285,7 @@ export default function Blog2022StoryPage() {
             There's no hindsight bias, no curve-fitting, no cherry-picking.
           </p>
           <p className="text-gray-300 leading-relaxed text-base">
-            We run each simulation from 7 different start dates to prove the results
+            We run each simulation from multiple start dates to prove the results
             aren't dependent on when you begin. Every single start date produced a positive
             5-year return. Every single one beat the S&P 500.
           </p>
