@@ -109,6 +109,9 @@
 - **Admin centralized:** Manage everything from RigaCap admin tab
 - **NOT investing until strategy is locked at 20%+ annualized and live track record established**
 
+## Social Posts
+- [Full text in approval emails](feedback_social_emails_full_text.md) — never truncate post previews in admin emails
+
 ## Other
 - [Concurrency rules](feedback_concurrency_guardrail.md) — NEVER launch >3 WF jobs during market hours
 - [Signal consistency](feedback_signal_consistency.md) — all emails/alerts read from dashboard.json only
