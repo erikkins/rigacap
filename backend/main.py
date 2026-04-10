@@ -3098,6 +3098,54 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"status": "error", "error": str(e)}
 
+    # HeyGen video generation
+    if event.get("heygen_video"):
+        config = event["heygen_video"]
+        print(f"🎬 HeyGen video request: {config.get('script', '')[:80]}...")
+
+        async def _heygen_video():
+            from app.services.heygen_service import heygen_service
+            action = config.get("action", "create")
+
+            if action == "create":
+                video_id = await heygen_service.create_video(
+                    script=config["script"],
+                    avatar_id=config.get("avatar_id"),
+                    voice_id=config.get("voice_id"),
+                    format=config.get("format", "portrait"),
+                    test=config.get("test", True),
+                    caption=config.get("caption", True),
+                    background_color=config.get("background_color", "#172554"),
+                )
+                return {"status": "queued" if video_id else "failed", "video_id": video_id}
+
+            elif action == "status":
+                result = await heygen_service.get_video_status(config["video_id"])
+                return result or {"status": "error", "error": "Failed to get status"}
+
+            elif action == "list_voices":
+                voices = await heygen_service.list_voices()
+                return {"voices": voices[:20] if voices else [], "total": len(voices) if voices else 0}
+
+            elif action == "list_avatars":
+                avatars = await heygen_service.list_avatars()
+                return {"avatars": avatars[:20] if avatars else [], "total": len(avatars) if avatars else 0}
+
+            return {"error": f"Unknown action: {action}"}
+
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(_heygen_video())
+            return result
+        except Exception as e:
+            import traceback
+            print(f"❌ HeyGen video failed: {e}")
+            print(traceback.format_exc())
+            return {"status": "error", "error": str(e)}
+
     # Generate AI posts from real WF trades and save to DB (direct Lambda invocation)
     if event.get("generate_social_posts"):
         print("🤖 Generate social posts from signal track record trades")
