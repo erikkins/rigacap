@@ -113,6 +113,9 @@
 - [Full text in approval emails](feedback_social_emails_full_text.md) — never truncate post previews in admin emails
 - [No "7 dates" in public content](feedback_no_7_dates.md) — say "multiple start dates", never cite the specific count
 
+## References
+- [HeyGen avatar ID](reference_heygen.md) — Erik's current avatar for AI video generation
+
 ## Other
 - [SLOW DOWN before Lambda jobs](feedback_slow_down_lambda.md) — think first, compute locally if possible, ONE job at a time
 - [Concurrency rules](feedback_concurrency_guardrail.md) — NEVER launch >3 WF jobs during market hours
