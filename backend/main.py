@@ -443,6 +443,12 @@ async def _run_walk_forward_job(job_config: dict, wf_state_key: str = None):
             chunk_label = f"period {continuation_state['period_index']}" if continuation_state else "start"
             print(f"[ASYNC-WF] Walk-forward job {job_id} ({chunk_label}), periods_limit={periods_limit}")
 
+            # Allow WF payload to override market filter mode for A/B testing
+            if "panic_only" in job_config:
+                from app.core.config import settings
+                settings.MARKET_FILTER_PANIC_ONLY = job_config["panic_only"]
+                print(f"[ASYNC-WF] Market filter override: panic_only={job_config['panic_only']}")
+
             # Run the simulation
             start = datetime.strptime(job_config["start_date"], "%Y-%m-%d")
             end = datetime.strptime(job_config["end_date"], "%Y-%m-%d")

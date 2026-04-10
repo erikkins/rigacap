@@ -215,6 +215,14 @@ class BacktesterService:
         self.regime_reentry_mode = False  # False = classic (SPY>MA200 only), True = smart re-entry
         self.bear_keep_pct = 0.0         # 0.0 = close all on regime exit, 0.5 = keep top 50% of positions
         self.graduated_reentry = False   # Graduated re-entry: deploy partial capital on recovery signals
+        # Profit-based stop tightening (V2 lever 8)
+        self.breakeven_pct = 0            # Move stop to entry once up X%; 0=disabled
+        self.profit_lock_pct = 0          # Tighten trailing stop once up X%; 0=disabled
+        self.profit_lock_stop_pct = 5.0   # Tightened trailing stop % from peak
+        # Pyramiding / doubling down on winners
+        self.pyramid_threshold_pct = 0    # Add to position once up X%; 0=disabled
+        self.pyramid_size_pct = 0.0       # Size of the add-on position (% of initial capital)
+        self.pyramid_max_adds = 0         # Max times to pyramid into one position; 0=disabled
         # Liquidity tier bonus (injected by walk-forward service per period)
         self.tier1_set: set = set()
         self.tier1_bonus: float = 0.0
@@ -431,15 +439,20 @@ class BacktesterService:
 
         return round((spy_price / spy_ma200 - 1) * 100, 2)
 
-    def _check_market_regime(self, date: pd.Timestamp) -> bool:
+    def _check_market_regime(self, date: pd.Timestamp, panic_only: bool = False) -> bool:
         """
-        Check if SPY is above 200-day MA (favorable market)
+        Check if market conditions are favorable for holding positions.
+
+        Two modes controlled by panic_only flag:
+        - False (default): Exit when SPY < 200MA (original rule)
+        - True: Only exit on panic crash (SPY >10% below 200MA + VIX >30),
+          matching the live system's 7-regime model
 
         Returns:
-            True if market is favorable (SPY > 200MA)
+            True if market is favorable (keep positions)
         """
         if 'SPY' not in scanner_service.data_cache:
-            return True  # Default to favorable if no SPY data
+            return True
 
         spy_df = scanner_service.data_cache['SPY']
         row = self._get_row_for_date(spy_df, date)
@@ -451,7 +464,24 @@ class BacktesterService:
         if pd.isna(spy_ma200):
             return True
 
-        return spy_price > spy_ma200
+        if not panic_only:
+            # Original rule: exit when SPY < 200MA
+            return spy_price > spy_ma200
+
+        # Panic-only mode: need SPY >10% below 200MA AND VIX > 30
+        spy_distance_pct = (spy_price - spy_ma200) / spy_ma200 * 100
+        if spy_distance_pct > -10:
+            return True  # Not in panic territory
+
+        vix_df = scanner_service.data_cache.get('^VIX')
+        if vix_df is not None:
+            vix_row = self._get_row_for_date(vix_df, date)
+            if vix_row is not None:
+                vix_level = vix_row.get('close', 0)
+                if vix_level < 30:
+                    return True  # VIX not elevated enough
+
+        return False  # Panic confirmed
 
     def _check_regime_reentry(self, date: pd.Timestamp, cash_mode_days: int) -> bool:
         """
@@ -635,9 +665,22 @@ class BacktesterService:
             if current_price > high_water:
                 pos['high_water_mark'] = current_price
                 high_water = current_price
-            # Check trailing stop from high
+
+            # Determine effective trailing stop % based on profit state
+            effective_stop_pct = exit_strategy.trailing_stop_pct
+
+            # Breakeven stop: once up X%, floor the stop at entry price
+            if self.breakeven_pct > 0 and pnl_pct >= self.breakeven_pct:
+                if current_price <= entry_price:
+                    return 'breakeven_stop'
+
+            # Profit lock: once up X%, tighten the trailing stop
+            if self.profit_lock_pct > 0 and pnl_pct >= self.profit_lock_pct:
+                effective_stop_pct = self.profit_lock_stop_pct
+
+            # Check trailing stop from high (using effective %)
             drop_from_high = (high_water - current_price) / high_water * 100
-            if drop_from_high >= exit_strategy.trailing_stop_pct:
+            if drop_from_high >= effective_stop_pct:
                 return 'trailing_stop'
 
         elif strategy_type == ExitStrategyType.FIXED_TARGET:
@@ -979,7 +1022,7 @@ class BacktesterService:
 
             # Check market regime (momentum, hybrid, and ensemble strategies respect market filter)
             if strategy_type in ("momentum", "dwap_hybrid", "ensemble") and settings.MARKET_FILTER_ENABLED:
-                market_favorable = self._check_market_regime(date)
+                market_favorable = self._check_market_regime(date, panic_only=settings.MARKET_FILTER_PANIC_ONLY)
 
                 # If market turns unfavorable, close all positions
                 if not market_favorable and not in_cash_mode:
@@ -1076,6 +1119,44 @@ class BacktesterService:
             # Remove closed positions
             for symbol in symbols_to_close:
                 del positions[symbol]
+
+            # Pyramiding: add to winning positions that are still strong
+            if self.pyramid_threshold_pct > 0 and self.pyramid_max_adds > 0 and not in_cash_mode:
+                for symbol, pos in list(positions.items()):
+                    if symbol not in scanner_service.data_cache:
+                        continue
+                    df = scanner_service.data_cache[symbol]
+                    row = self._get_row_for_date(df, date)
+                    if row is None:
+                        continue
+
+                    current_price = row['close']
+                    pnl_pct = (current_price - pos['entry_price']) / pos['entry_price'] * 100
+                    adds = pos.get('pyramid_adds', 0)
+
+                    # Check: up enough AND haven't maxed out adds AND still near 50d high
+                    if (pnl_pct >= self.pyramid_threshold_pct
+                            and adds < self.pyramid_max_adds):
+                        # Check if stock is still near its 50-day high (quality filter)
+                        if 'high_52w' in row.index:
+                            ma_50_high = df['close'].rolling(50).max().loc[date] if len(df) >= 50 else current_price
+                            dist_from_high = (ma_50_high - current_price) / ma_50_high * 100 if ma_50_high > 0 else 999
+                            if dist_from_high > self.near_50d_high_pct:
+                                continue  # No longer near high, skip pyramid
+
+                        add_value = self.initial_capital * (self.pyramid_size_pct / 100)
+                        if add_value > capital:
+                            continue  # Not enough cash
+
+                        add_shares = add_value / current_price
+                        # Blend the entry price (weighted average)
+                        total_cost = (pos['entry_price'] * pos['shares']) + (current_price * add_shares)
+                        total_shares = pos['shares'] + add_shares
+                        pos['entry_price'] = total_cost / total_shares
+                        pos['shares'] = round(total_shares, 2)
+                        pos['pyramid_adds'] = adds + 1
+                        pos['high_water_mark'] = max(pos.get('high_water_mark', current_price), current_price)
+                        capital -= add_shares * current_price
 
             # Skip new entries if in cash mode (unfavorable market)
             if in_cash_mode:

@@ -71,6 +71,7 @@ class Settings(BaseSettings):
     LONG_MOMENTUM_DAYS: int = 60
     TRAILING_STOP_PCT: float = 12.0
     MARKET_FILTER_ENABLED: bool = True
+    MARKET_FILTER_PANIC_ONLY: bool = False  # True = only exit on panic (SPY >10% below 200MA + VIX >30), False = exit on any SPY < 200MA
     REBALANCE_FREQUENCY: str = "weekly"
 
     # Scoring weights
