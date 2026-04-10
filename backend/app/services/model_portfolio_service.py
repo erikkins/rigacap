@@ -1425,39 +1425,62 @@ class ModelPortfolioService:
         return {"entries": entries, "open_total": len(held_symbols)}
 
     async def process_signal_track_exits(
-        self, db: AsyncSession, trailing_stop_pct: Optional[float] = None
+        self,
+        db: AsyncSession,
+        trailing_stop_pct: Optional[float] = None,
+        live_prices: Optional[Dict[str, float]] = None,
+        day_highs: Optional[Dict[str, float]] = None,
+        regime_forecast: Optional[dict] = None,
     ) -> List[dict]:
         """
-        Daily close exit check for signal track record positions.
-        Regime-adjusted trailing stop from HWM. No rebalance force-close.
+        Exit check for signal track record positions.
+        Called daily (with scanner cache prices) and intraday (with live quotes).
+        Checks trailing stops and regime exits (go_to_cash only — Panic Crash).
         """
-        from app.services.scanner import scanner_service
-
         positions = await self._get_open_positions(db, SIGNAL_TRACK_RECORD)
         if not positions:
             return []
 
+        # Use live prices if provided (intraday), else fall back to scanner cache (daily)
+        use_cache = live_prices is None
+        if use_cache:
+            from app.services.scanner import scanner_service
+
         closed = []
         for pos in positions:
-            df = scanner_service.data_cache.get(pos.symbol)
-            if df is None or df.empty:
-                continue
+            if use_cache:
+                df = scanner_service.data_cache.get(pos.symbol)
+                if df is None or df.empty:
+                    continue
+                price = float(df["close"].iloc[-1])
+            else:
+                price = live_prices.get(pos.symbol)
+                if price is None:
+                    continue
 
-            close_price = float(df["close"].iloc[-1])
+            # Update HWM (use day_high if available for intraday peak tracking)
+            hwm_price = max(price, (day_highs or {}).get(pos.symbol, price))
+            if hwm_price > (pos.highest_price or pos.entry_price):
+                pos.highest_price = hwm_price
 
-            # Update HWM
-            if close_price > (pos.highest_price or pos.entry_price):
-                pos.highest_price = close_price
-
-            # Check trailing stop
             hwm = pos.highest_price or pos.entry_price
             stop_pct = trailing_stop_pct if trailing_stop_pct is not None else TRAILING_STOP_PCT
             trailing_stop_level = hwm * (1 - stop_pct / 100)
 
-            if close_price <= trailing_stop_level:
-                result = await self._close_position(
-                    db, pos, close_price, "trailing_stop"
-                )
+            exit_reason = None
+
+            # Check regime exit (go_to_cash = Panic Crash only)
+            if regime_forecast:
+                rec = regime_forecast.get("recommended_action", "stay_invested")
+                if rec == "go_to_cash":
+                    exit_reason = "regime_exit"
+
+            # Check trailing stop (overrides regime)
+            if price <= trailing_stop_level:
+                exit_reason = "trailing_stop"
+
+            if exit_reason:
+                result = await self._close_position(db, pos, price, exit_reason)
                 closed.append(result)
 
         if closed:

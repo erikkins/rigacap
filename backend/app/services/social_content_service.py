@@ -36,9 +36,13 @@ class SocialContentService:
         """
         Generate social posts from a completed nightly walk-forward simulation.
 
-        Returns list of created SocialPost records (status=draft).
+        DISABLED: Social posts now come from signal_track_record closures via
+        the generate_social_posts handler, not from WF simulations.
         """
-        # Load simulation
+        logger.info(f"Nightly WF social post generation disabled — using signal track record instead")
+        return []
+
+        # Load simulation (dead code — kept for reference)
         result = await db.execute(
             select(WalkForwardSimulation).where(
                 WalkForwardSimulation.id == simulation_id

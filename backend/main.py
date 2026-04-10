@@ -2353,6 +2353,19 @@ def handler(event, context):
                 except Exception as e:
                     print(f"⚠️ [MODEL-LIVE] Exit check failed: {e}")
 
+                # --- Signal track record: check intraday exits ---
+                try:
+                    from app.services.model_portfolio_service import model_portfolio_service
+                    st_closed = await model_portfolio_service.process_signal_track_exits(
+                        db,
+                        live_prices=live_prices, day_highs=day_highs,
+                        regime_forecast=regime_forecast,
+                    )
+                    if st_closed:
+                        print(f"📊 [SIGNAL-TRACK] Intraday closed {len(st_closed)} position(s): {[c.get('symbol') for c in st_closed]}")
+                except Exception as e:
+                    print(f"⚠️ [SIGNAL-TRACK] Intraday exit check failed: {e}")
+
                 # --- Update S3 dashboard cache with live SPY/VIX prices ---
                 try:
                     spy_qd = quote_data.get('SPY')
@@ -3081,7 +3094,7 @@ def handler(event, context):
 
     # Generate AI posts from real WF trades and save to DB (direct Lambda invocation)
     if event.get("generate_social_posts"):
-        print("🤖 Generate social posts from LIVE portfolio trades")
+        print("🤖 Generate social posts from signal track record trades")
         config = event["generate_social_posts"]
 
         async def _generate_social_posts():
@@ -3110,11 +3123,11 @@ def handler(event, context):
             max_trades = config.get("max_trades", 5)
 
             async with async_session() as db:
-                # Query LIVE closed trades that haven't had posts generated yet
+                # Query signal track record closed trades that haven't had posts generated yet
                 result = await db.execute(
                     select(ModelPosition)
                     .where(
-                        ModelPosition.portfolio_type == "live",
+                        ModelPosition.portfolio_type == "signal_track_record",
                         ModelPosition.status == "closed",
                         ModelPosition.pnl_pct >= min_pnl,
                         ModelPosition.social_post_generated == False,
@@ -3125,9 +3138,9 @@ def handler(event, context):
                 positions = list(result.scalars().all())
 
                 if not positions:
-                    return {"status": "ok", "message": "No new live trades qualifying for social posts", "posts_created": 0}
+                    return {"status": "ok", "message": "No new signal track trades qualifying for social posts", "posts_created": 0}
 
-                print(f"Found {len(positions)} qualifying live trades")
+                print(f"Found {len(positions)} qualifying signal track trades")
 
                 # Generate posts for each trade x platform x post_type
                 created = []
