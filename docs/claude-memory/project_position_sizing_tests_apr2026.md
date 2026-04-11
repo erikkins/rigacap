@@ -1,109 +1,65 @@
 ---
-name: Position sizing & filter tests — Apr 9-10, 2026
-description: Comprehensive A/B testing of position counts, sizing, breakout filters, and regime exit rules. 6@15%/5% confirmed as optimal.
+name: Position sizing, filter, and risk management tests — Apr 9-11, 2026
+description: Comprehensive A/B testing of position counts, sizing, breakout filters, regime exit rules, pyramiding, profit lock, and bear_keep. TPE optimizer running.
 type: project
 originSessionId: 7dc69abd-ade1-4ef8-b901-42d3cee7df53
 ---
 ## Position Sizing & Filter Tests (Apr 9-10, 2026)
 
-### Motivation
-Explored whether more positions (8, 10, 12, 15) at smaller sizes would reduce variability and improve returns. Also tested panic-only regime exit (vs SPY < 200MA) and 3% vs 5% breakout filter.
+### Final Config: 6@15% / 5% filter
+- **Avg 5-year: +208%** (~25% annualized) across 8 start dates
+- **Avg Sharpe: 0.88**
+- **All years positive, worst case +126%**
+- **10-year: +680%** ($10k → $78k), 22% annualized
+- MaxDD avg: 30.6% (target: <20%)
 
-### 2021-Only Position Sizing (1-year, Jan 1 start)
+### Key Findings
+
+**Breakout Filter:**
+- 3% filter (Apr 3 "breakthrough"): REVERTED — caused losing 2023 across all configs
+- 5% filter: validated as better, all years positive
+
+**Position Sizing (5-year, Jan 1):**
 | Config | Return | Sharpe | MaxDD |
 |--------|--------|--------|-------|
-| 6 @ 15% | +22.5% | — | — |
-| 8 @ 12% | +39.7% | 1.19 | 15.6% |
-| 10 @ 10% | +22.4% | 0.78 | 16.9% |
-| 12 @ 8% | +45.4% | 1.34 | 14.4% |
-| 15 @ 6% | +39.3% | 1.37 | 13.5% |
+| 6 @ 15% | +276% | 0.96 | 28% |
+| 8 @ 12% | +194% | 0.93 | 25% |
+| 12 @ 8% | +131% | 0.82 | 24% |
 
-**Conclusion:** More positions helped in 2021 (Rotating Bull), but this didn't hold over 5 years.
+Concentration (6@15%) wins over 5 years despite worse 2021.
 
-### Panic-Only vs 200MA Exit (5-year, Jan 1 start)
-| Config | Return | Sharpe | MaxDD |
-|--------|--------|--------|-------|
-| 6@15% / 200MA | +151.3% | 0.73 | ~20% |
-| 6@15% / panic-only | +151.3% | 0.73 | 39.6% |
-| 12@8% / 200MA | +131.4% | 0.82 | 24.4% |
-| 12@8% / panic-only | +79.6% | 0.56 | 35.0% |
+**Regime Exit:**
+- 200MA exit > panic-only (panic had 35-40% drawdowns)
+- `bear_keep_pct` (gradual exit) was dead code — fixed Apr 11
 
-**Conclusion:** Panic-only consistently worse — higher drawdowns, similar or lower returns. 200MA exit protects capital better. Keep 200MA.
+**BEAR 30% (keep top 70% during regime exit, 8 dates):**
+- Avg: +228%, Sharpe 0.93, MaxDD 30.7%
+- 5/8 dates under 30% MaxDD, but Feb 12 (35.9%), Mar 19/Oct 1 (32.2%) still over
 
-### 3% vs 5% Breakout Filter (5-year, Jan 1 start)
-| Config | Return | Sharpe | MaxDD | 2023 |
-|--------|--------|--------|-------|------|
-| 6@15% / 3% | +242% | 0.95 | 27% | -11.3% |
-| 6@15% / 5% | +277% | 0.96 | 28% | +1.3% |
-| 8@12% / 3% | +194% | 0.93 | 25% | -19.8% |
-| 8@12% / 5% | +152% | 0.76 | 32% | -8.1% |
+**Pyramiding (PYR 25/5/1 = add 5% when up 25%, max 1 add):**
+- 5-year avg: +278% (8 dates), best single: +476%
+- But Feb 12 MaxDD 37.2%, 10-year MaxDD 34%
+- 10-year return: +560% (WORSE than baseline +680%)
 
-**Conclusion:** 3% filter creates a losing 2023 across all configs. 5% filter keeps all years positive. The Apr 3 "breakthrough" (3% filter) was overfitting to 7 closely-spaced Jan/Feb start dates.
+**Profit Lock (tighten trailing stop after gains):**
+- Lock 15→6%: +210%, worse across the board
+- Lock 30→10%: +250%, same MaxDD, less return
+- Cuts big winners that drive returns
 
-### 7-Date Validation — Final Comparison
-**8@12% / 3% (7 random dates, 2021-2026):**
-- Avg: +160.6% | Sharpe: 0.92 | MaxDD: 23.8%
-- Range: +84% to +267% (183pp spread)
-- Better Sharpe and lower drawdown
+**RS Leaders Secondary Strategy: ABANDONED**
+- RS=2 hit +533% on Jan 1 but failed 7-date validation (-1% on Oct 1)
+- Individual stock RS too noisy/sensitive to start date
 
-**6@15% / 5% (same 7 dates, 2021-2026):**
-- Avg: +198.7% | Sharpe: 0.87 | MaxDD: 30.6%
-- Range: +126% to +331% (205pp spread)
-- Higher returns, better worst case (+126% vs +84%)
+### TPE Optimizer (Running Apr 11)
+50 trials × 4 start dates, optimizing:
+1. Maximize avg return
+2. Maximize avg Sharpe
+3. Minimize worst MaxDD
+4. Minimize return spread across dates
 
-### Final Decision: 6@15% / 5% filter
-- Higher absolute returns (+199% avg vs +161%)
-- Better worst case (+126% vs +84%)
-- All years positive with 5% filter
-- Slightly higher drawdown (31% vs 24%) — acceptable tradeoff
+Search space: trailing_stop (8-15%), near_50d_high (3-8%), dwap_threshold (3-8%), max_positions (4-8), position_size (10-20%), bear_keep (0-0.5), pyramid (0-40/0-15/0-2), profit_lock (0-40/4-10%)
 
-### Key Lessons
-1. **2021 short-term tests are misleading** — 12@8% won handily in 2021 alone but lost over 5 years
-2. **The tournament "breakthrough" (3% filter) was overfitting** — looked great on 7 Jan/Feb start dates but created a losing 2023
-3. **Single start date tests are dangerous** — always validate across multiple dates
-4. **200MA exit > panic-only** — even though it sometimes exits too early (like LYB), the drawdown protection is worth it
-5. **Concentration wins over diversification** in trending markets (2024-2025), which outweighs the choppiness penalty in 2021/2023
-
-### RS Leaders Secondary Strategy (ABANDONED Apr 10 2026)
-
-**Concept:** Fill 2 reserved slots with top stocks by 6-month relative strength vs SPY. No breakout filter — just the strongest names above 50-day MA. Intended to capture narrow-leadership rallies (like 2023's Mag 7) that the ensemble misses.
-
-**Implementation:** Added `rs_leaders_slots` param to backtester + WF service. RS positions entered after primary ensemble fills its reserved slots. Tested with separate trailing stop widths (12%, 15%, 18%, 20%).
-
-**Results — Single Start Date (Jan 1, 2021):**
-| RS Slots | Positions | Return | Sharpe | MaxDD |
-|----------|-----------|--------|--------|-------|
-| 0 | 6 @ 15% | +276% | 0.96 | 28% |
-| 1 | 7 @ 14.3% | +217% | 0.87 | 27% |
-| 2 | 8 @ 12.5% | +533% | 0.99 | 28% |
-| 3 | 9 @ 11.1% | +485% | 0.83 | 35% |
-| 4 | 10 @ 10% | +348% | 0.76 | 48% |
-
-RS=2 looked spectacular on Jan 1 (+533%, all years positive).
-
-**Results — 7-Date Validation (FAILED):**
-| Start | Return |
-|-------|--------|
-| Jan 15 | +193.6% |
-| Feb 12 | +19.7% |
-| Mar 19 | +31.0% |
-| Apr 23 | +188.1% |
-| Jun 4 | +158.5% |
-| Aug 13 | (errored) |
-| Oct 1 | **-1.0%** |
-
-The +533% was an outlier — Jan 1 happened to get RS leaders in early during a thin volume period. Other start dates saw marginal or negative impact. Oct 1 was negative.
-
-**RS Trailing Stop Width Test:** 12%, 15%, 18%, 20% — all produced identical results (+533%). RS positions exit via regime (200MA) or sharp drops, not trailing stops. Stop width is irrelevant.
-
-**Why RS Failed Across Dates:**
-- Primary ensemble always finds 100+ candidates — RS only helps when primary can't fill its slots
-- Jan 1 was special (holiday thin volume = fewer ensemble candidates = RS got slots)
-- RS introduces high-beta names that amplify drawdowns without consistent upside
-
-**Conclusion:** RS Leaders is not production-ready. The concept of augmenting ensemble during narrow-leadership markets is sound, but individual stock RS is too noisy. Future exploration: sector momentum ETFs or conditional activation based on breadth metrics.
-
-### Other Strategy Ideas (Not Yet Tested)
-- **Sector momentum rotation** — buy top 2-3 sector ETFs by momentum instead of individual stocks
-- **Mean-reversion in bull regimes** — buy oversold names bouncing off support
-- **Conditional activation** — only switch strategies when breadth is below a threshold
+### Next: MDD Reduction Features (if TPE doesn't find <20% MDD)
+1. VIX-adjusted position sizing
+2. Drawdown circuit breaker (halve positions when down 15%)
+3. Tighter trailing stop in bear regimes (8% vs 12%)
