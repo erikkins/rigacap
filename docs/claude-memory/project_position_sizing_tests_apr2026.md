@@ -63,3 +63,47 @@ Explored whether more positions (8, 10, 12, 15) at smaller sizes would reduce va
 3. **Single start date tests are dangerous** — always validate across multiple dates
 4. **200MA exit > panic-only** — even though it sometimes exits too early (like LYB), the drawdown protection is worth it
 5. **Concentration wins over diversification** in trending markets (2024-2025), which outweighs the choppiness penalty in 2021/2023
+
+### RS Leaders Secondary Strategy (ABANDONED Apr 10 2026)
+
+**Concept:** Fill 2 reserved slots with top stocks by 6-month relative strength vs SPY. No breakout filter — just the strongest names above 50-day MA. Intended to capture narrow-leadership rallies (like 2023's Mag 7) that the ensemble misses.
+
+**Implementation:** Added `rs_leaders_slots` param to backtester + WF service. RS positions entered after primary ensemble fills its reserved slots. Tested with separate trailing stop widths (12%, 15%, 18%, 20%).
+
+**Results — Single Start Date (Jan 1, 2021):**
+| RS Slots | Positions | Return | Sharpe | MaxDD |
+|----------|-----------|--------|--------|-------|
+| 0 | 6 @ 15% | +276% | 0.96 | 28% |
+| 1 | 7 @ 14.3% | +217% | 0.87 | 27% |
+| 2 | 8 @ 12.5% | +533% | 0.99 | 28% |
+| 3 | 9 @ 11.1% | +485% | 0.83 | 35% |
+| 4 | 10 @ 10% | +348% | 0.76 | 48% |
+
+RS=2 looked spectacular on Jan 1 (+533%, all years positive).
+
+**Results — 7-Date Validation (FAILED):**
+| Start | Return |
+|-------|--------|
+| Jan 15 | +193.6% |
+| Feb 12 | +19.7% |
+| Mar 19 | +31.0% |
+| Apr 23 | +188.1% |
+| Jun 4 | +158.5% |
+| Aug 13 | (errored) |
+| Oct 1 | **-1.0%** |
+
+The +533% was an outlier — Jan 1 happened to get RS leaders in early during a thin volume period. Other start dates saw marginal or negative impact. Oct 1 was negative.
+
+**RS Trailing Stop Width Test:** 12%, 15%, 18%, 20% — all produced identical results (+533%). RS positions exit via regime (200MA) or sharp drops, not trailing stops. Stop width is irrelevant.
+
+**Why RS Failed Across Dates:**
+- Primary ensemble always finds 100+ candidates — RS only helps when primary can't fill its slots
+- Jan 1 was special (holiday thin volume = fewer ensemble candidates = RS got slots)
+- RS introduces high-beta names that amplify drawdowns without consistent upside
+
+**Conclusion:** RS Leaders is not production-ready. The concept of augmenting ensemble during narrow-leadership markets is sound, but individual stock RS is too noisy. Future exploration: sector momentum ETFs or conditional activation based on breadth metrics.
+
+### Other Strategy Ideas (Not Yet Tested)
+- **Sector momentum rotation** — buy top 2-3 sector ETFs by momentum instead of individual stocks
+- **Mean-reversion in bull regimes** — buy oversold names bouncing off support
+- **Conditional activation** — only switch strategies when breadth is below a threshold
