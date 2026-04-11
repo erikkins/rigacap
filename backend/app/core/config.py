@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     VOLATILITY_PENALTY: float = 0.2
 
     # Quality filters
-    NEAR_50D_HIGH_PCT: float = 3.0  # Within 3% of 50-day high (tightened Apr 3 2026 — 19.9% avg ann across 7 start dates)
+    NEAR_50D_HIGH_PCT: float = 5.0  # Within 5% of 50-day high (reverted Apr 10 — 3% caused losing 2023, 5% validated +199% avg across 7 dates)
     MOMENTUM_SECTOR_CAP: int = 5  # Max stocks per sector in momentum top-N
     
     # Data
