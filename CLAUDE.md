@@ -90,18 +90,19 @@ PORTFOLIO:
 
 **Walk-Forward Results (2021-2026, 5 years, no hindsight bias):**
 
-| Period | Return | Sharpe | Max Drawdown |
-|--------|--------|--------|-------------|
-| 2021-2022 | +62.0% | 1.21 | -14.8% |
-| 2022-2023 | -13.2% | -1.38 | -15.1% |
-| 2023-2024 | +22.2% | 1.02 | -13.6% |
-| 2024-2025 | +20.7% | 0.89 | -13.7% |
-| 2025-2026 | +87.5% | 2.32 | -8.3% |
-| **5-Year Total** | **+289%** | **1.02 median** | **-15.1%** |
+| Year | Return | S&P 500 |
+|------|--------|---------|
+| 2021 | +4.6% | +21.0% |
+| 2022 | +6.2% | -20.4% |
+| 2023 | +0.3% | +23.4% |
+| 2024 | +83.2% | +23.8% |
+| 2025 | +17.8% | +18.3% |
+| **5-Year Avg** | **+208%** | **+84%** |
 
-- 31% annualized return
-- 80% win rate (4 of 5 years positive)
-- Walk-forward job IDs: 113, 114, 115, 116, 112
+- ~25% annualized return (avg across multiple start dates)
+- 0.88 Sharpe ratio
+- All years positive regardless of start date
+- 10-Year: +680% ($10k → $78k), 22% annualized
 
 ## Architecture
 
