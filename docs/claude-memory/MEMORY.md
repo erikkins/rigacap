@@ -96,6 +96,7 @@
 
 ## Active Tasks
 - **[Position sizing & filter tests](project_position_sizing_tests_apr2026.md)** — comprehensive A/B: 6@15%/5% confirmed as optimal, 3% filter was overfitting
+- **[MDD reduction ideas](project_mdd_reduction_ideas.md)** — VIX-adjusted sizing, drawdown circuit breaker, bear regime stops — for TPE Run 2
 - **[BREAKTHROUGH: 19.9% avg annualized](project_tournament_breakthrough.md)** — near_50d_high_pct 5%→3%, validated 7/7 start dates
 - [WF job dedup](project_wf_dedup.md) — add dedup check before creating WF jobs
 - [WF launch protocol](feedback_wf_launch.md) — ALWAYS use periods_limit=1, test ONE job first
