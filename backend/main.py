@@ -4591,6 +4591,26 @@ def handler(event, context):
 
     # Social post admin (direct Lambda invocation)
     # Actions: list, approve, publish, approve_and_publish, delete, attach_image
+    # Send a simple admin email (for notifications, alerts, etc.)
+    if event.get("send_email"):
+        config = event["send_email"]
+        async def _send_email():
+            from app.services.email_service import admin_email_service
+            return await admin_email_service.send_admin_alert(
+                to_email=config.get("to", "erik@rigacap.com"),
+                subject=config.get("subject", "RigaCap Notification"),
+                body_html=config.get("body", ""),
+            )
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            ok = loop.run_until_complete(_send_email())
+            return {"status": "sent" if ok else "failed"}
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+
     # Read-only DB query for admin use (no mutations)
     if event.get("db_read"):
         query_sql = event["db_read"]
