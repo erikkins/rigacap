@@ -4599,7 +4599,7 @@ def handler(event, context):
             return await admin_email_service.send_admin_alert(
                 to_email=config.get("to", "erik@rigacap.com"),
                 subject=config.get("subject", "RigaCap Notification"),
-                body_html=config.get("body", ""),
+                message=config.get("body", ""),
             )
         try:
             loop = asyncio.get_event_loop()
