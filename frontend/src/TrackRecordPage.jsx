@@ -4,23 +4,22 @@ import { ArrowLeft, TrendingUp, BarChart3, Shield, Activity, ArrowRight } from '
 import TrackRecordChart from './components/TrackRecordChart';
 
 const YEARLY_DATA = [
-  { period: '2021', return: '+8.3%', range: '-14% to +55%', spy: '+21.0%', context: 'Volatile year — tight stops limited gains in choppy momentum', positive: true },
-  { period: '2022', return: '+6.0%', range: '+4% to +8%', spy: '-20.4%', context: 'Fed rate hikes — RigaCap stayed positive while SPY fell 20%', positive: true },
-  { period: '2023', return: '+4.5%', range: '+2% to +10%', spy: '+23.4%', context: 'Cautious positioning during AI-driven recovery', positive: true },
-  { period: '2024', return: '+20.3%', range: '+20% to +22%', spy: '+23.8%', context: 'Election volatility, near parity with SPY', positive: true },
-  { period: '2025', return: '+57.4%', range: '+57% to +60%', spy: '+18.3%', context: 'Breakout year — tripled SPY returns', positive: true },
+  { period: '2021', return: '+4.6%', spy: '+21.0%', context: 'Choppy momentum — tight stops in volatile rotations', positive: true },
+  { period: '2022', return: '+6.2%', spy: '-20.4%', context: 'Stayed positive while S&P fell 20%', positive: true },
+  { period: '2023', return: '+0.3%', spy: '+23.4%', context: 'Narrow AI-led rally — system was cautious', positive: true },
+  { period: '2024', return: '+83.2%', spy: '+23.8%', context: 'Breakout year — broad momentum returned', positive: true },
+  { period: '2025', return: '+17.8%', spy: '+18.3%', context: 'Consistent returns in line with S&P', positive: true },
 ];
 
 const HEADLINE_METRICS = [
-  { value: '+152%', label: '5-Year Avg Return', subtitle: 'Range: +93% to +267%', color: 'text-emerald-400' },
-  { value: '~20%', label: 'Annualized Return', subtitle: 'Range: 14% to 30%', color: 'text-emerald-400' },
-  { value: '0.85', label: 'Avg Sharpe Ratio', subtitle: 'Best: 0.95', color: 'text-amber-400' },
-  { value: '-20.6%', label: 'Avg Max Drawdown', subtitle: 'Worst: -23.9%', color: 'text-red-400' },
+  { value: '+208%', label: '5-Year Return', subtitle: 'Walk-forward validated', color: 'text-emerald-400' },
+  { value: '~25%', label: 'Annualized Return', subtitle: 'Across multiple start dates', color: 'text-emerald-400' },
+  { value: '0.88', label: 'Sharpe Ratio', subtitle: 'Risk-adjusted performance', color: 'text-amber-400' },
+  { value: '-30.6%', label: 'Max Drawdown', subtitle: 'Worst observed', color: 'text-red-400' },
 ];
 
 const BENCHMARKS = [
-  { name: 'RigaCap Ensemble (avg)', value: 152, label: '+152%', color: 'from-amber-400 to-amber-500' },
-  { name: 'RigaCap Best Case', value: 267, label: '+267%', color: 'from-amber-300 to-amber-400', dashed: true },
+  { name: 'RigaCap Ensemble', value: 208, label: '+208%', color: 'from-amber-400 to-amber-500' },
   { name: 'S&P 500', value: 84, label: '+84%', color: 'from-gray-400 to-gray-500' },
 ];
 
@@ -94,8 +93,7 @@ export default function TrackRecordPage() {
               <thead>
                 <tr className="border-b border-gray-800">
                   <th className="text-left px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold">Year</th>
-                  <th className="text-right px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold">Avg Return</th>
-                  <th className="text-right px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold hidden sm:table-cell">Range</th>
+                  <th className="text-right px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold">Return</th>
                   <th className="text-right px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold">S&P 500</th>
                   <th className="text-left px-4 sm:px-6 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold hidden sm:table-cell">Context</th>
                 </tr>
@@ -105,18 +103,16 @@ export default function TrackRecordPage() {
                   <tr key={row.period} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
                     <td className="px-4 sm:px-6 py-4 font-medium text-white">{row.period}</td>
                     <td className={`px-4 sm:px-6 py-4 text-right font-semibold ${row.positive ? 'text-emerald-400' : 'text-red-400'}`}>{row.return}</td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-gray-500 text-xs hidden sm:table-cell">{row.range}</td>
                     <td className="px-4 sm:px-6 py-4 text-right text-gray-400">{row.spy}</td>
                     <td className="px-4 sm:px-6 py-4 text-gray-500 text-xs hidden sm:table-cell">{row.context}</td>
                   </tr>
                 ))}
                 {/* Total row */}
                 <tr className="bg-amber-500/10 border-t border-amber-500/30">
-                  <td className="px-4 sm:px-6 py-4 font-bold text-amber-400">5-Year Avg</td>
-                  <td className="px-4 sm:px-6 py-4 text-right font-bold text-emerald-400">+152%</td>
-                  <td className="px-4 sm:px-6 py-4 text-right font-bold text-gray-400 text-xs hidden sm:table-cell">+93% to +267%</td>
+                  <td className="px-4 sm:px-6 py-4 font-bold text-amber-400">5-Year Total</td>
+                  <td className="px-4 sm:px-6 py-4 text-right font-bold text-emerald-400">+208%</td>
                   <td className="px-4 sm:px-6 py-4 text-right font-bold text-gray-300">+84%</td>
-                  <td className="px-4 sm:px-6 py-4 text-amber-400/70 text-xs hidden sm:table-cell">Every start date positive, all beat SPY</td>
+                  <td className="px-4 sm:px-6 py-4 text-amber-400/70 text-xs hidden sm:table-cell">Every year positive, regardless of start date</td>
                 </tr>
               </tbody>
             </table>

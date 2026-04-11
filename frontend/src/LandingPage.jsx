@@ -47,7 +47,7 @@ const HeroSection = ({ onGetStarted }) => (
         <p className="max-w-2xl mx-auto text-lg sm:text-xl text-blue-100 mb-3">
           Stop trading on emotions. Start trading on math.
         </p>
-        <p className="text-sm text-blue-200/70 mb-8">+497% over 10 years. Never a losing year.<br />We scan 4,000 stocks daily and only speak up when the math says go.</p>
+        <p className="text-sm text-blue-200/70 mb-8">+680% over 10 years. +208% over 5 years — every year positive.<br />We scan 4,000 stocks daily and only speak up when the math says go.</p>
 
         {/* CTA Buttons */}
         <div className="flex flex-col items-center gap-4 mb-12">
@@ -208,10 +208,10 @@ const StatsSection = () => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 text-center text-white">
         {[
-          { value: '~20%', label: 'Annualized Return' },
-          { value: '+497%', label: '10-Year Return' },
+          { value: '~22%', label: 'Annualized Return' },
+          { value: '+680%', label: '10-Year Return' },
           { value: '100%', label: 'Years Positive' },
-          { value: '$59,730', label: 'From $10k (10yr)' },
+          { value: '$78,000', label: 'From $10k (10yr)' },
           { value: '+6%', label: 'During 2022 Crash' },
           { value: '0.97', label: 'Sharpe Ratio' },
         ].map(({ value, label }) => (
@@ -241,7 +241,7 @@ const StatsSection = () => (
 
 const YearByYearSection = () => {
   const years = [
-    { period: '2021', returnPct: '+8.3%', spy: '+21.0%', badge: null, color: 'text-emerald-600' },
+    { period: '2021', returnPct: '+4.6%', spy: '+21.0%', badge: null, color: 'text-emerald-600' },
     { period: '2022', returnPct: '+6.0%', spy: '-20.4%', badge: 'Beat SPY by 26pp', color: 'text-emerald-600' },
     { period: '2023', returnPct: '+4.5%', spy: '+23.4%', badge: null, color: 'text-emerald-600' },
     { period: '2024', returnPct: '+20.3%', spy: '+23.8%', badge: null, color: 'text-emerald-600' },

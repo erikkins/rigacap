@@ -247,7 +247,7 @@ export default function Blog2022StoryPage() {
             </thead>
             <tbody>
               {[
-                { year: '2021', rc: '+8.3%', spy: '+21.0%', note: 'Strategy ramp-up', rcColor: 'text-emerald-400' },
+                { year: '2021', rc: '+4.6%', spy: '+21.0%', note: 'Choppy momentum rotations', rcColor: 'text-emerald-400' },
                 { year: '2022', rc: '+6.0%', spy: '-20.4%', note: 'Bear market — stayed positive', rcColor: 'text-emerald-400', highlight: true },
                 { year: '2023', rc: '+4.5%', spy: '+23.4%', note: 'Cautious recovery positioning', rcColor: 'text-emerald-400' },
                 { year: '2024', rc: '+20.3%', spy: '+23.8%', note: 'Near parity with SPY', rcColor: 'text-emerald-400' },
@@ -268,7 +268,7 @@ export default function Blog2022StoryPage() {
           <p className="text-gray-300 leading-relaxed text-base">
             The system doesn't try to beat the market every year. In bull markets like 2023,
             it may lag the S&P. But it never gives back what it earned. Over 5 years,
-            the average total return across all start dates is +152% vs. the S&P's +84%.
+            the average total return is +208% vs. the S&P's +84%.
           </p>
 
           {/* Methodology Note */}

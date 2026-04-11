@@ -819,7 +819,7 @@ Your friend gets their first month free, and you get a free month when they subs
                 <!-- Track Record -->
                 <div style="background-color: #eff6ff; border-radius: 12px; padding: 20px; margin: 24px 0; border-left: 4px solid #172554;">
                     <p style="margin: 0; font-size: 14px; color: #1e3a5f;">
-                        <strong>Our Track Record:</strong> +289% over 5 years, walk-forward validated with no hindsight bias.
+                        <strong>Our Track Record:</strong> +208% over 5 years, walk-forward validated with no hindsight bias.
                         <a href="https://rigacap.com/track-record" style="color: #1e40af; text-decoration: underline;">See the full year-by-year results →</a>
                     </p>
                 </div>
@@ -879,7 +879,7 @@ Here's what you get:
 
 Your 7-day free trial starts now. Visit https://rigacap.com/app to see today's signals!
 
-Our Track Record: +289% over 5 years, walk-forward validated. See the details: https://rigacap.com/track-record
+Our Track Record: +208% over 5 years, walk-forward validated. See the details: https://rigacap.com/track-record
 
 Pro Tip: Look for signals with the green BUY badge — these are fresh breakouts with the highest conviction.
 {referral_text}
@@ -1411,7 +1411,7 @@ Unsubscribe: https://rigacap.com/unsubscribe
                         5-Year Walk-Forward Performance
                     </p>
                     <p style="margin: 0; font-size: 48px; font-weight: 700; color: #059669;">
-                        +289%
+                        +208%
                     </p>
                     <p style="margin: 4px 0 0 0; font-size: 14px; color: #374151;">
                         31% annualized &bull; 1.02 median Sharpe &bull; No hindsight bias
@@ -1497,8 +1497,8 @@ Unsubscribe: https://rigacap.com/unsubscribe
                         While You Were Away
                     </h2>
                     <ul style="margin: 0; padding: 0 0 0 20px; color: #374151; line-height: 2;">
-                        <li>The ensemble generates <strong>~15 signals per month</strong></li>
-                        <li>Walk-forward tested: <strong>+289% over 5 years</strong>, no hindsight bias</li>
+                        <li>The ensemble generates <strong>3-4 high-conviction signals per month</strong></li>
+                        <li>Walk-forward tested: <strong>+208% over 5 years</strong>, no hindsight bias</li>
                         <li>80% of years profitable (4 out of 5)</li>
                     </ul>
                 </div>

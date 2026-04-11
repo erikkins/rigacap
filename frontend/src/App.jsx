@@ -1568,7 +1568,7 @@ const TOUR_STEPS = [
   },
   {
     title: 'Nightly Emails',
-    description: 'Every evening, you\'ll get an email with today\'s signals, your portfolio status, and the current market regime. Expect ~15 signals per month when conditions are healthy — and zero when they\'re not.',
+    description: 'Every evening, you\'ll get an email with today\'s signals, your portfolio status, and the current market regime. Expect 3-4 high-conviction signals per month when conditions are healthy — and zero when they\'re not.',
     renderIllustration: () => (
       <div className="flex items-center justify-center">
         <div className="relative w-64 h-32">
