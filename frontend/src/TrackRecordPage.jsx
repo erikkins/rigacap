@@ -15,7 +15,7 @@ const HEADLINE_METRICS = [
   { value: '+208%', label: '5-Year Return', subtitle: 'Walk-forward validated', color: 'text-emerald-400' },
   { value: '~25%', label: 'Annualized Return', subtitle: 'Across multiple start dates', color: 'text-emerald-400' },
   { value: '0.88', label: 'Sharpe Ratio', subtitle: 'Risk-adjusted performance', color: 'text-amber-400' },
-  { value: '-30.6%', label: 'Max Drawdown', subtitle: 'Worst observed', color: 'text-red-400' },
+  { value: '-30.6%', label: 'Max Drawdown', subtitle: 'Peak to trough', color: 'text-red-400' },
 ];
 
 const BENCHMARKS = [
