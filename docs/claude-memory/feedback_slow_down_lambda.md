@@ -13,3 +13,4 @@ Never launch a duplicate WF job with the same params as one already running.
 2. Parallel jobs with DIFFERENT params (e.g., 12 different start dates) are fine
 3. Check if params are actually supported BEFORE invoking
 4. If you can compute the answer from data you already have, do that instead of launching a job
+5. When running multiple LOCAL backtests with different params, run them in PARALLEL (separate processes) — they're independent and the M4 Max has plenty of cores
