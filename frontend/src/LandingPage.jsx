@@ -210,10 +210,10 @@ const StatsSection = () => (
         {[
           { value: '~28%', label: 'Annualized Return' },
           { value: '+240%', label: '5-Year Return' },
-          { value: '100%', label: 'Years Positive' },
+          { value: '24%', label: 'Max Drawdown' },
           { value: '$34,000', label: 'From $10k (5yr)' },
           { value: '+6%', label: 'During 2022 Crash' },
-          { value: '0.97', label: 'Sharpe Ratio' },
+          { value: '0.89', label: 'Sharpe Ratio' },
         ].map(({ value, label }) => (
           <div key={label}>
             <div className="text-4xl lg:text-5xl font-bold mb-2">{value}</div>
