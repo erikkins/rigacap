@@ -161,7 +161,7 @@ export default function TrackRecordPage() {
             <div>
               <h3 className="text-white font-semibold mb-2">Rebalancing</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
-                The portfolio reoptimizes biweekly with a maximum of 6 positions at 15% each. Parameters adapt
+                The portfolio reoptimizes biweekly with a maximum of 8 positions at 17% each. Parameters adapt
                 through 7 distinct market regimes — from strong bull to panic/crash — without manual intervention.
               </p>
             </div>
@@ -169,12 +169,12 @@ export default function TrackRecordPage() {
         </div>
       </section>
 
-      {/* Win Rate Callout */}
+      {/* Capital Protection Callout */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-12">
         <div className="bg-gradient-to-r from-emerald-900/30 to-emerald-800/20 border border-emerald-700/30 rounded-xl p-6 sm:p-8 text-center">
-          <Activity className="w-8 h-8 text-emerald-400 mx-auto mb-3" />
-          <div className="text-3xl font-bold text-emerald-400 mb-1">100% Win Rate</div>
-          <p className="text-emerald-200/70 text-sm">5 of 5 years profitable, every start date positive — including 2022 where RigaCap gained +6% while the S&P 500 fell -20%</p>
+          <Shield className="w-8 h-8 text-emerald-400 mx-auto mb-3" />
+          <div className="text-3xl font-bold text-emerald-400 mb-1">+6% in 2022</div>
+          <p className="text-emerald-200/70 text-sm">While the S&P 500 fell 20%, our system stayed positive. 7-regime detection moved to cash before the crash — and max drawdown has never exceeded 25%.</p>
         </div>
       </section>
 
