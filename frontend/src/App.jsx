@@ -4078,7 +4078,7 @@ function Dashboard() {
                     </div>
                     <div className="text-center">
                       <p className="text-gray-500">Max DD</p>
-                      <p className="font-bold text-red-500">-{backtest.max_drawdown_pct}%</p>
+                      <p className="font-bold text-amber-500">{backtest.max_drawdown_pct}%</p>
                     </div>
                   </div>
                 </div>
