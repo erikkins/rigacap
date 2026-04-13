@@ -23,12 +23,13 @@ engine = create_async_engine(
     DATABASE_URL,
     echo=settings.DEBUG,
     pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
-    pool_timeout=3,  # 3 second timeout for getting connection from pool
+    pool_size=1,
+    max_overflow=2,
+    pool_timeout=3,
+    pool_recycle=300,  # recycle idle connections every 5 min to free RDS slots
     connect_args={
-        "command_timeout": 5,  # 5 second query timeout
-        "timeout": 3,  # 3 second connection timeout (asyncpg)
+        "command_timeout": 5,
+        "timeout": 3,
     }
 )
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
