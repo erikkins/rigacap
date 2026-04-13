@@ -119,6 +119,7 @@
 - [HeyGen avatar ID](reference_heygen.md) — Erik's current avatar for AI video generation
 
 ## Other
+- [SVG attachments cause 400 loops](feedback_svg_attachments.md) — always pre-convert SVG→PNG before downstream use
 - [SLOW DOWN before Lambda jobs](feedback_slow_down_lambda.md) — think first, compute locally if possible, ONE job at a time
 - [Concurrency rules](feedback_concurrency_guardrail.md) — NEVER launch >3 WF jobs during market hours
 - [Signal consistency](feedback_signal_consistency.md) — all emails/alerts read from dashboard.json only
