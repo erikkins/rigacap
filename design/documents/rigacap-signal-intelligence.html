@@ -584,7 +584,7 @@
     Every signal must pass all three filters before entry. Once invested, positions are monitored
     every 5 minutes during market hours with adaptive trailing stops. The entire pipeline has been
     validated through 10-year walk-forward testing with zero hindsight bias, producing
-    <strong>+497% cumulative return</strong> (~20% annualized). Never a losing year.
+    <strong>+603% cumulative return over 10 years</strong> (~28% annualized, 0.89 Sharpe, 24% max drawdown).
   </p>
   </div>
 </div>
@@ -1505,7 +1505,7 @@
   <div class="callout-green callout no-break">
     <p><strong>Zero Hindsight Bias:</strong> At each biweekly boundary, the system knows nothing about
     what happens next. Parameters are optimized on past data, then the system trades forward
-    into unseen market conditions. The +497% return (10yr) is entirely out-of-sample.</p>
+    into unseen market conditions. The +603% return (10yr) is entirely out-of-sample.</p>
   </div>
 
   <h3>Year-by-Year Results (avg across all tested start dates)</h3>
@@ -1546,15 +1546,15 @@
       </tr>
       <tr class="highlight-row">
         <td><strong>5-Year Avg</strong></td>
-        <td class="positive"><strong>+152%</strong></td>
+        <td class="positive"><strong>+240%</strong></td>
         <td><strong>+84%</strong></td>
-        <td><strong>~20% annualized, 100% years positive</strong></td>
+        <td><strong>~28% annualized, Sharpe 0.89, 24% max drawdown</strong></td>
       </tr>
       <tr class="highlight-row">
         <td><strong>10-Year Total</strong></td>
-        <td class="positive"><strong>+497%</strong></td>
+        <td class="positive"><strong>+603%</strong></td>
         <td><strong>+257%</strong></td>
-        <td><strong>19.6% ann, Sharpe 0.97, never a losing year</strong></td>
+        <td><strong>~28% annualized, 24% max drawdown</strong></td>
       </tr>
     </tbody>
   </table>
@@ -1571,7 +1571,7 @@
     <div class="compare-row">
       <div class="compare-label">RigaCap</div>
       <div class="compare-bar-wrap">
-        <div class="compare-bar navy" style="width:90%">+497% (10yr)</div>
+        <div class="compare-bar navy" style="width:90%">+603% (10yr)</div>
       </div>
     </div>
     <div class="compare-row">
@@ -1585,14 +1585,29 @@
   <h3>Key Insights</h3>
   <div class="feature-grid no-break">
     <div class="feature-card" style="border-left-color: var(--green);">
-      <h4>100% Win Rate</h4>
-      <p>5 of 5 years profitable. In 2022, RigaCap gained +6% while the S&P 500 fell -20% &mdash; the regime exit system moved to cash and protected capital.</p>
+      <h4>2022 Resilience</h4>
+      <p>When the S&amp;P 500 fell -20% in 2022, RigaCap returned +6%. The 7-regime detection moved to cash before the worst of the drawdown.</p>
     </div>
     <div class="feature-card" style="border-left-color: var(--gold);">
       <h4>Controlled Drawdowns</h4>
-      <p>Average max drawdown of -20.6% across all market conditions &mdash; the 12% trailing stop and SPY 200MA regime exit prevented catastrophic losses.</p>
+      <p>Max drawdown of 24% across the 5-year walk-forward &mdash; the 12% trailing stop and SPY 200MA regime exit prevented catastrophic losses.</p>
     </div>
   </div>
+
+  <h3 style="margin-top: 32px;">How We Trade</h3>
+  <div class="feature-grid no-break">
+    <div class="feature-card" style="border-left-color: var(--green);">
+      <h4>Winners run ~3 weeks at +20%</h4>
+      <p>Median winning hold: 21 days. Average winner: +19.6%. The trailing stop lets profits compound rather than capping them.</p>
+    </div>
+    <div class="feature-card" style="border-left-color: #b91c1c;">
+      <h4>Losers cut in 12 days at &minus;9%</h4>
+      <p>Median losing hold: 12 days. Average loser: -9.2%. No bag-holding for months &mdash; the system admits when a trade isn't working.</p>
+    </div>
+  </div>
+  <p style="font-size: 0.82rem; color: #64748b; font-style: italic; margin-top: 8px;">
+    Hold-period stats from Trial 37 walk-forward (job 793, 258 trades over 5+ years).
+  </p>
 
   <div class="gold-divider"></div>
 
