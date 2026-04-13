@@ -120,6 +120,7 @@
 - [Twitter media upload field naming](reference_twitter_media_api.md) — use 'media' for raw bytes, 'media_data' for base64; wrong field silently drops images
 
 ## Other
+- [Signal frequency = "3-4 per month"](feedback_signal_frequency_claim.md) — never "6-8 every 2 weeks" or "~15/month"; both are stale drift
 - [SVG attachments cause 400 loops](feedback_svg_attachments.md) — always pre-convert SVG→PNG before downstream use
 - [SLOW DOWN before Lambda jobs](feedback_slow_down_lambda.md) — think first, compute locally if possible, ONE job at a time
 - [Concurrency rules](feedback_concurrency_guardrail.md) — NEVER launch >3 WF jobs during market hours
