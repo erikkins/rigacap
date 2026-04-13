@@ -117,6 +117,7 @@
 
 ## References
 - [HeyGen avatar ID](reference_heygen.md) — Erik's current avatar for AI video generation
+- [Twitter media upload field naming](reference_twitter_media_api.md) — use 'media' for raw bytes, 'media_data' for base64; wrong field silently drops images
 
 ## Other
 - [SVG attachments cause 400 loops](feedback_svg_attachments.md) — always pre-convert SVG→PNG before downstream use
