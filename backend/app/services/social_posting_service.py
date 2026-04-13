@@ -102,7 +102,7 @@ class SocialPostingService:
             resp = await client.post(
                 self.TWITTER_MEDIA_UPLOAD_URL,
                 headers={"Authorization": auth_header},
-                files={"media_data": ("image.png", image_bytes, "image/png")},
+                files={"media": ("image.png", image_bytes, "image/png")},
             )
 
         if resp.status_code not in (200, 201):
