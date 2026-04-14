@@ -420,8 +420,20 @@ class ScannerService:
     # =========================================================================
     
     def _ensure_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Compute indicators if missing from DataFrame (lazy computation)"""
-        if 'dwap' not in df.columns:
+        """Compute indicators if missing or stale (lazy computation).
+
+        Recomputes when:
+        - The dwap column is missing entirely, OR
+        - The dwap column exists but the last row's value is NaN (stale tail
+          from fetch_incremental appending OHLCV-only rows without indicators).
+        The second case is critical — without it, the scanner silently skips
+        every symbol whose latest bar was appended incrementally.
+        """
+        needs_recompute = (
+            'dwap' not in df.columns
+            or (len(df) > 0 and pd.isna(df['dwap'].iloc[-1]))
+        )
+        if needs_recompute:
             df = df.copy()
             df['dwap'] = self.dwap(df['close'], df['volume'])
             df['ma_50'] = self.sma(df['close'], 50)

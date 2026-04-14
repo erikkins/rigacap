@@ -179,6 +179,12 @@ variable "alpaca_secret_key" {
   default     = ""
 }
 
+variable "heygen_api_key" {
+  description = "HeyGen API key for AI video generation"
+  sensitive   = true
+  default     = ""
+}
+
 variable "lambda_image_tag" {
   description = "Docker image tag for Lambda container"
   default     = "latest"
@@ -624,6 +630,7 @@ locals {
     THREADS_USER_ID               = var.threads_user_id
     ALPACA_API_KEY                = var.alpaca_api_key
     ALPACA_SECRET_KEY             = var.alpaca_secret_key
+    HEYGEN_API_KEY                = var.heygen_api_key
     WORKER_FUNCTION_NAME          = "${local.prefix}-worker"
   }
 }
@@ -1092,6 +1099,31 @@ resource "aws_lambda_permission" "onboarding_drip" {
   function_name = aws_lambda_function.worker.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.onboarding_drip.arn
+}
+
+# ============================================================================
+# EventBridge - Admin Morning Health Check (7 AM ET = 11:00 UTC during EDT, weekdays)
+# ============================================================================
+
+resource "aws_cloudwatch_event_rule" "admin_health_check" {
+  name                = "${local.prefix}-admin-health-check"
+  description         = "Morning admin health digest — indicator validity, signal counts, pipeline status"
+  schedule_expression = "cron(0 11 ? * MON-FRI *)"
+}
+
+resource "aws_cloudwatch_event_target" "admin_health_check" {
+  rule      = aws_cloudwatch_event_rule.admin_health_check.name
+  target_id = "lambda-admin-health-check"
+  arn       = aws_lambda_function.worker.arn
+  input     = jsonencode({ admin_health_check = true })
+}
+
+resource "aws_lambda_permission" "admin_health_check" {
+  statement_id  = "AllowAdminHealthCheckEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.worker.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.admin_health_check.arn
 }
 
 # Weekly pickle rebuild — Saturday 8 PM ET (Sunday 00:00 UTC during EDT)

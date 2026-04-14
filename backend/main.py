@@ -1199,6 +1199,50 @@ def handler(event, context):
             print(f"📡 Scan complete: {len(signals)} signals")
             _log_step("Signal Scan", "ok", f"{len(signals)} signals from {len(scanner_service.data_cache)} symbols")
 
+            # 2b. CANARY: indicator validity check. Catches cases where the
+            # scan "succeeded" but most symbols silently have NaN indicators
+            # on their latest bar (as happened in the Apr 2026 3.5-week
+            # drought). Alert admin if <90% of the qualified universe has
+            # valid dwap on today's bar.
+            try:
+                import pandas as _pd
+                total_checked = 0
+                valid_dwap = 0
+                for _sym, _df in scanner_service.data_cache.items():
+                    if _df is None or len(_df) < 200:
+                        continue
+                    total_checked += 1
+                    _last = _df.iloc[-1]
+                    _dwap = _last.get('dwap')
+                    if _dwap is not None and not _pd.isna(_dwap) and _dwap > 0:
+                        valid_dwap += 1
+                validity_pct = (valid_dwap / total_checked * 100) if total_checked else 0
+                canary_msg = f"{valid_dwap}/{total_checked} ({validity_pct:.1f}%) valid dwap on latest bar"
+                if validity_pct < 90 and total_checked > 0:
+                    print(f"🚨 INDICATOR CANARY FAIL: {canary_msg}")
+                    _log_step("Indicator Canary", "critical", canary_msg)
+                    # Fire admin alert asynchronously (don't block scan)
+                    try:
+                        from app.services.email_service import admin_email_service
+                        await admin_email_service.send_admin_alert(
+                            to_email="erik@rigacap.com",
+                            subject=f"🚨 RigaCap Indicator Canary: {validity_pct:.0f}% valid",
+                            message=(
+                                f"Only {valid_dwap} of {total_checked} qualified symbols have "
+                                f"valid DWAP on the latest bar ({validity_pct:.1f}%). "
+                                f"Signals and watchlist may be silently empty. "
+                                f"This is the same class of bug as the Apr 2026 drought. "
+                                f"Run {{\"rebuild_indicators\": {{\"_\": 1}}}} on rigacap-prod-worker to fix."
+                            ),
+                        )
+                    except Exception as _ae:
+                        print(f"⚠️ Failed to send canary alert: {_ae}")
+                else:
+                    _log_step("Indicator Canary", "ok", canary_msg)
+            except Exception as _ce:
+                print(f"⚠️ Canary check errored: {_ce}")
+                _log_step("Indicator Canary", "warning", f"canary errored: {_ce}")
+
             # 3. Store signals in DB + export to S3 (fast, do before time check)
             await store_signals_callback(signals)
 
@@ -4085,6 +4129,136 @@ def handler(event, context):
 
     # Handle daily email digest (EventBridge: 6 PM ET Mon-Fri)
     # Optional: {"daily_emails": {"target_emails": ["user@example.com"]}}
+    # Morning admin health check — scheduled 7 AM ET Mon-Fri.
+    # Reads yesterday's pipeline log + dashboard + indicator validity and
+    # emails Erik a concise status digest. Flags anything unusual.
+    # {"admin_health_check": {"_": 1}}
+    if event.get("admin_health_check"):
+        print("🩺 Admin health check")
+
+        async def _health_check():
+            import pandas as _pd
+            import json as _json
+            from app.services.data_export import data_export_service
+            from app.services.email_service import admin_email_service
+
+            # 1. Indicator validity across cached symbols
+            cache = scanner_service.data_cache
+            total = 0
+            valid_dwap = 0
+            valid_ma50 = 0
+            valid_ma200 = 0
+            for _sym, _df in cache.items():
+                if _df is None or len(_df) < 200:
+                    continue
+                total += 1
+                _last = _df.iloc[-1]
+                if not _pd.isna(_last.get('dwap')) and _last.get('dwap', 0) > 0:
+                    valid_dwap += 1
+                if not _pd.isna(_last.get('ma_50')) and _last.get('ma_50', 0) > 0:
+                    valid_ma50 += 1
+                if not _pd.isna(_last.get('ma_200')) and _last.get('ma_200', 0) > 0:
+                    valid_ma200 += 1
+
+            def _pct(n, d): return f"{(n/d*100):.1f}%" if d else "n/a"
+
+            dwap_pct = (valid_dwap / total * 100) if total else 0
+            indicator_healthy = dwap_pct >= 90
+
+            # 2. Latest dashboard + pipeline log from S3
+            bucket = "rigacap-prod-price-data-149218244179"
+            dash = {}
+            plog = {}
+            try:
+                import boto3
+                s3 = boto3.client('s3', region_name='us-east-1')
+                dash_obj = s3.get_object(Bucket=bucket, Key='signals/dashboard.json')
+                dash = _json.loads(dash_obj['Body'].read())
+            except Exception as _e:
+                print(f"dash fetch err: {_e}")
+            try:
+                import boto3
+                s3 = boto3.client('s3', region_name='us-east-1')
+                plog_obj = s3.get_object(Bucket=bucket, Key='signals/pipeline_log.json')
+                plog = _json.loads(plog_obj['Body'].read())
+            except Exception as _e:
+                print(f"plog fetch err: {_e}")
+
+            buy_count = len(dash.get('buy_signals', []))
+            fresh_count = sum(1 for s in dash.get('buy_signals', []) if s.get('is_fresh'))
+            wl_count = len(dash.get('watchlist', []))
+            regime = (dash.get('market_stats') or {}).get('regime_name', 'unknown')
+            last_entry = dash.get('last_ensemble_entry_date') or 'n/a'
+
+            pipeline_steps = plog.get('steps', [])
+            bad_steps = [s for s in pipeline_steps if s.get('status') not in ('ok', 'success')]
+
+            # 3. Determine overall health color
+            flags = []
+            if not indicator_healthy:
+                flags.append(f"❌ Indicator validity {_pct(valid_dwap, total)} (below 90%)")
+            if bad_steps:
+                flags.append(f"⚠️ {len(bad_steps)} pipeline step(s) not ok: {', '.join(s.get('name','?') for s in bad_steps)}")
+            if not dash.get('generated_at'):
+                flags.append("❌ No dashboard.json generated_at timestamp")
+
+            status_emoji = "✅" if not flags else "🚨"
+            status_word = "Healthy" if not flags else "Attention Needed"
+
+            msg_lines = [
+                f"<h2>{status_emoji} RigaCap Health: {status_word}</h2>",
+                "<h3>Yesterday's Scan</h3>",
+                f"<ul>",
+                f"<li>Universe: {total} symbols with 200+ days of data</li>",
+                f"<li>Indicator validity (DWAP): <b>{valid_dwap}/{total} ({_pct(valid_dwap, total)})</b></li>",
+                f"<li>Indicator validity (MA50): {_pct(valid_ma50, total)}</li>",
+                f"<li>Indicator validity (MA200): {_pct(valid_ma200, total)}</li>",
+                f"</ul>",
+                "<h3>Signals</h3>",
+                f"<ul>",
+                f"<li>Buy signals: {buy_count} ({fresh_count} fresh)</li>",
+                f"<li>Watchlist: {wl_count}</li>",
+                f"<li>Last ensemble entry: {last_entry}</li>",
+                f"<li>Market regime: {regime}</li>",
+                f"</ul>",
+            ]
+            if flags:
+                msg_lines.append("<h3>Flags</h3><ul>")
+                for f in flags:
+                    msg_lines.append(f"<li>{f}</li>")
+                msg_lines.append("</ul>")
+                msg_lines.append(
+                    '<p><b>If indicator validity is low, run:</b> '
+                    '<code>{"rebuild_indicators": {"_": 1}}</code> on rigacap-prod-worker.</p>'
+                )
+
+            html = "\n".join(msg_lines)
+            ok = await admin_email_service.send_admin_alert(
+                to_email="erik@rigacap.com",
+                subject=f"{status_emoji} RigaCap Morning Health ({status_word})",
+                message=html,
+            )
+            return {
+                "status": "ok" if ok else "email_failed",
+                "indicator_validity_pct": dwap_pct,
+                "buy_signals": buy_count,
+                "fresh_signals": fresh_count,
+                "watchlist": wl_count,
+                "regime": regime,
+                "flags": flags,
+            }
+
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            return loop.run_until_complete(_health_check())
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            return {"error": str(e)}
+
     if event.get("daily_emails"):
         daily_config = event.get("daily_emails") if isinstance(event.get("daily_emails"), dict) else {}
         target_emails = daily_config.get("target_emails")
