@@ -844,11 +844,13 @@ class EmailService:
 </body>
 </html>"""
 
+        spy_txt = f"${spy_price:,.2f}" if spy_price is not None else "$?"
+        vix_txt = f"{vix_level:.2f}" if vix_level is not None else "?"
         text = f"""MARKET, MEASURED.
 {date_str}
 
 THE READING
-{regime_name}. SPY ${spy_price:,.2f if spy_price else '?'}, VIX {vix_level:.2f if vix_level else '?'}.
+{regime_name}. SPY {spy_txt}, VIX {vix_txt}.
 
 {('WHAT THE SYSTEM SEES' + chr(10) + market_context + chr(10) + chr(10)) if market_context else ''}
 WHAT THE SYSTEM IS DOING
