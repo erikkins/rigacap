@@ -548,7 +548,7 @@ class WalkForwardService:
         if strategy_type in ("momentum", "ensemble"):
             base_params = {
                 "min_volume": 500_000,
-                "min_price": 20.0,
+                "min_price": 15.0,
                 "market_filter_enabled": True,
             }
             # V1 hardcodes long_momentum_days; V2 tunes it
@@ -557,7 +557,7 @@ class WalkForwardService:
         else:
             base_params = {
                 "min_volume": 500_000,
-                "min_price": 20.0,
+                "min_price": 15.0,
             }
 
         combinations_tested = 0

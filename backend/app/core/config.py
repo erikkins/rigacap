@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     STOP_LOSS_PCT: float = 8.0
     PROFIT_TARGET_PCT: float = 20.0
     MIN_VOLUME: int = 500_000
-    MIN_PRICE: float = 20.0
+    MIN_PRICE: float = 15.0  # Aligned with Trial 37 backtest (was 20.0)
     VOLUME_SPIKE_MULT: float = 1.5
 
     # ENSEMBLE STRATEGY — TPE Trial 37 optimized (Apr 11, 2026)

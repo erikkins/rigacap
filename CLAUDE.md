@@ -18,7 +18,7 @@ BUY SIGNAL (Momentum Ranking):
 - Quality filter: Price > MA20 and MA50 (uptrend)
 - Breakout filter: Within 5% of 50-day high
 - Volume > 500,000
-- Price > $20
+- Price > $15
 
 SELL RULES:
 - Trailing Stop: 15% from high water mark
@@ -50,7 +50,7 @@ The original DWAP strategy is still available for backward compatibility:
 BUY SIGNAL:
 - Price > DWAP × 1.05 (5% above 200-day Daily Weighted Average Price)
 - Volume > 500,000
-- Price > $20
+- Price > $15
 
 SELL RULES:
 - Stop Loss: -8%

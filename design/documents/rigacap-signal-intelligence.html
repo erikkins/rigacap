@@ -606,7 +606,7 @@
     </thead>
     <tbody>
       <tr><td><strong>Total Universe</strong></td><td>~4,000 symbols</td><td>NASDAQ + NYSE exchanges</td></tr>
-      <tr><td><strong>Minimum Price</strong></td><td>$20</td><td><code>config.MIN_PRICE</code></td></tr>
+      <tr><td><strong>Minimum Price</strong></td><td>$15</td><td><code>config.MIN_PRICE</code></td></tr>
       <tr><td><strong>Minimum Volume</strong></td><td>500,000 shares/day</td><td><code>config.MIN_VOLUME</code></td></tr>
       <tr><td><strong>Lookback Period</strong></td><td>7 years OHLCV</td><td><code>fetch_data(period="7y")</code></td></tr>
       <tr><td><strong>Data Source</strong></td><td>Alpaca SIP (primary) + yfinance (fallback)</td><td>Split/dividend adjusted, consolidated feed</td></tr>
@@ -875,7 +875,7 @@
       <tr><td><strong>Uptrend</strong></td><td>Price &gt; MA20 AND Price &gt; MA50</td><td>Confirms healthy trend structure</td></tr>
       <tr><td><strong>Breakout</strong></td><td>Within 3% of 50-day high</td><td>Near breakout zone, high conviction only</td></tr>
       <tr><td><strong>Volume</strong></td><td>&ge; 500,000 shares/day</td><td>Sufficient liquidity</td></tr>
-      <tr><td><strong>Price</strong></td><td>&ge; $20</td><td>Filters penny stocks</td></tr>
+      <tr><td><strong>Price</strong></td><td>&ge; $15</td><td>Filters penny stocks</td></tr>
       <tr><td><strong>Sector Cap</strong></td><td>Max 5 per sector</td><td>Prevents sector concentration</td></tr>
     </tbody>
   </table>
