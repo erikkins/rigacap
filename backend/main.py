@@ -3358,6 +3358,107 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"status": "error", "error": str(e)}
 
+    # Diagnostic: signal pipeline distribution across the universe (admin/debug)
+    # {"signal_diagnostic": {"min_volume": 500000, "min_price": 15.0}}
+    if event.get("signal_diagnostic"):
+        cfg = event.get("signal_diagnostic") or {}
+        min_volume = cfg.get("min_volume", 500_000)
+        min_price = cfg.get("min_price", 15.0)
+        print(f"🔬 Signal diagnostic: min_vol={min_volume} min_price={min_price}")
+
+        try:
+            import pandas as _pd
+            cache = scanner_service.data_cache
+            buckets = {
+                "below_dwap": 0,           # pct_above_dwap < 0
+                "0_to_3_above": 0,
+                "3_to_6_5_above": 0,       # current watchlist band
+                "6_5_to_10_above": 0,      # past DWAP threshold but maybe failing other gates
+                "over_10_above": 0,
+                "no_dwap": 0,
+            }
+            high_buckets = {
+                "within_3_pct_of_50dhi": 0,
+                "3_to_5_pct_below_50dhi": 0,    # current confirmation band 5%
+                "5_to_10_pct_below_50dhi": 0,
+                "over_10_pct_below_50dhi": 0,
+                "no_50d_data": 0,
+            }
+            both_pass = 0   # passes BOTH dwap AND near 50d high gates
+            qualified_universe = 0   # passes price+volume universe filter
+            top10_close_to_signal = []   # closest stocks not yet firing
+
+            for symbol, df in cache.items():
+                if len(df) < 200:
+                    continue
+                row = df.iloc[-1]
+                price = float(row.get('close', 0))
+                volume = float(row.get('volume', 0))
+                if price < min_price or volume < min_volume:
+                    continue
+                qualified_universe += 1
+
+                dwap = row.get('dwap')
+                if _pd.isna(dwap) or dwap is None or dwap <= 0:
+                    buckets["no_dwap"] += 1
+                    pct_above_dwap = None
+                else:
+                    pct_above_dwap = (price / float(dwap) - 1) * 100
+                    if pct_above_dwap < 0: buckets["below_dwap"] += 1
+                    elif pct_above_dwap < 3: buckets["0_to_3_above"] += 1
+                    elif pct_above_dwap < 6.5: buckets["3_to_6_5_above"] += 1
+                    elif pct_above_dwap < 10: buckets["6_5_to_10_above"] += 1
+                    else: buckets["over_10_above"] += 1
+
+                hi52 = row.get('high_52w')
+                # Compute 50-day high
+                if len(df) >= 50:
+                    hi50 = float(df['high'].iloc[-50:].max())
+                    pct_below_hi50 = (1 - price / hi50) * 100 if hi50 > 0 else None
+                else:
+                    pct_below_hi50 = None
+
+                if pct_below_hi50 is None:
+                    high_buckets["no_50d_data"] += 1
+                else:
+                    if pct_below_hi50 < 3: high_buckets["within_3_pct_of_50dhi"] += 1
+                    elif pct_below_hi50 < 5: high_buckets["3_to_5_pct_below_50dhi"] += 1
+                    elif pct_below_hi50 < 10: high_buckets["5_to_10_pct_below_50dhi"] += 1
+                    else: high_buckets["over_10_pct_below_50dhi"] += 1
+
+                # Both gates pass? (DWAP > 6.5% AND within 5% of 50d high)
+                if (pct_above_dwap is not None and pct_above_dwap > 6.5 and
+                    pct_below_hi50 is not None and pct_below_hi50 < 5):
+                    both_pass += 1
+
+                # Score: how close to firing? lower is closer
+                if pct_above_dwap is not None and pct_below_hi50 is not None:
+                    dwap_gap = max(0, 6.5 - pct_above_dwap)
+                    hi50_gap = max(0, pct_below_hi50 - 5)
+                    total_gap = dwap_gap + hi50_gap
+                    if total_gap < 5:  # within 5pts of firing on combined gates
+                        top10_close_to_signal.append({
+                            "symbol": symbol,
+                            "price": round(price, 2),
+                            "pct_above_dwap": round(pct_above_dwap, 1),
+                            "pct_below_50d_high": round(pct_below_hi50, 1),
+                            "gap_to_signal": round(total_gap, 1),
+                        })
+
+            top10_close_to_signal.sort(key=lambda x: x["gap_to_signal"])
+            return {
+                "qualified_universe_count": qualified_universe,
+                "dwap_distribution": buckets,
+                "high_50d_distribution": high_buckets,
+                "passes_both_gates": both_pass,
+                "top_20_closest_to_signal": top10_close_to_signal[:20],
+            }
+        except Exception as e:
+            import traceback
+            print(f"❌ Signal diagnostic failed: {e}")
+            print(traceback.format_exc())
+            return {"error": str(e)}
+
     # Create social post drafts directly (direct Lambda invocation)
     if event.get("create_drafts"):
         print("📝 Creating social post drafts")
