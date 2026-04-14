@@ -3402,6 +3402,64 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"status": "error", "error": str(e)}
 
+    # Data-quality diagnostic — count universe rejections by reason
+    # {"data_quality_diagnostic": {"_": 1}}
+    if event.get("data_quality_diagnostic"):
+        print("🔍 Data quality diagnostic")
+        try:
+            import pandas as _pd
+            cache = scanner_service.data_cache
+            stats = {
+                "total_symbols": 0,
+                "passed": 0,
+                "rejected_short_history": 0,
+                "rejected_zero_price_or_dwap": 0,
+                "rejected_dwap_ratio_high": 0,
+                "rejected_dwap_ratio_low": 0,
+                "rejected_stale_volume": 0,
+                "rejected_examples": [],
+            }
+            for sym, df in cache.items():
+                stats["total_symbols"] += 1
+                if df is None or len(df) < 252:
+                    stats["rejected_short_history"] += 1
+                    continue
+                row = df.iloc[-1]
+                price = float(row.get('close', 0) or 0)
+                dwap = float(row.get('dwap', 0) or 0)
+                vol_avg = float(row.get('vol_avg', 0) or 0)
+                volume = float(row.get('volume', 0) or 0)
+                if price <= 0 or dwap <= 0:
+                    stats["rejected_zero_price_or_dwap"] += 1
+                    continue
+                ratio = price / dwap
+                if ratio > 2.0:
+                    stats["rejected_dwap_ratio_high"] += 1
+                    if len(stats["rejected_examples"]) < 10:
+                        stats["rejected_examples"].append(
+                            {"symbol": sym, "reason": "dwap_too_low",
+                             "price": round(price, 2), "dwap": round(dwap, 2),
+                             "ratio": round(ratio, 2)}
+                        )
+                    continue
+                if ratio < 0.5:
+                    stats["rejected_dwap_ratio_low"] += 1
+                    if len(stats["rejected_examples"]) < 10:
+                        stats["rejected_examples"].append(
+                            {"symbol": sym, "reason": "dwap_too_high",
+                             "price": round(price, 2), "dwap": round(dwap, 2),
+                             "ratio": round(ratio, 2)}
+                        )
+                    continue
+                if vol_avg > 0 and volume > 0 and (volume / vol_avg) < 0.01:
+                    stats["rejected_stale_volume"] += 1
+                    continue
+                stats["passed"] += 1
+            return stats
+        except Exception as e:
+            import traceback
+            return {"error": str(e), "trace": traceback.format_exc()[:1000]}
+
     # Replay historical scans over a date range to find fresh signals we missed
     # during the indicator-strip bug window. Returns fresh buy signals per date.
     # {"historical_fresh_signals": {"start_date": "2026-04-07", "end_date": "2026-04-13"}}

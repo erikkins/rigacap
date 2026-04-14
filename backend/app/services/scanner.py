@@ -419,6 +419,50 @@ class ScannerService:
     # SIGNAL GENERATION
     # =========================================================================
     
+    def _is_data_quality_ok(self, df: pd.DataFrame, as_of_idx: int = -1) -> bool:
+        """
+        Universe sanity filter — returns False if the symbol's data series
+        shows signs of corruption (ticker reuse, missed split adjustment,
+        insufficient history, stale-volume corruption).
+
+        Both live scanner and backtester should call this before treating a
+        symbol as a tradable candidate. Filters out AGL-class artifacts.
+
+        Args:
+            df: symbol DataFrame
+            as_of_idx: row index to evaluate (default -1 = latest); WF callers
+                pass the historical row index when iterating dates
+        """
+        if df is None or len(df) < 252:
+            return False  # need at least 1 year of data
+
+        try:
+            row = df.iloc[as_of_idx]
+        except IndexError:
+            return False
+
+        price = float(row.get('close', 0) or 0)
+        dwap = float(row.get('dwap', 0) or 0)
+        vol_avg = float(row.get('vol_avg', 0) or 0)
+        volume = float(row.get('volume', 0) or 0)
+
+        if price <= 0 or dwap <= 0:
+            return False
+
+        # DWAP plausibility — corrupted series produce wildly off-band ratios.
+        # AGL had ratio ~24x. Range [0.5, 2.0] catches both directions.
+        ratio = price / dwap
+        if ratio > 2.0 or ratio < 0.5:
+            return False
+
+        # Stale-volume corruption — vol_avg dragged up by huge pre-split bars.
+        # If recent volume is >100x smaller than the 200-day average, the
+        # historical series is suspect.
+        if vol_avg > 0 and volume > 0 and (volume / vol_avg) < 0.01:
+            return False
+
+        return True
+
     def _ensure_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
         """Compute indicators if missing or stale (lazy computation).
 
@@ -635,6 +679,11 @@ class ScannerService:
         # Ensure indicators are computed (lazy computation)
         df = self._ensure_indicators(df)
         self.data_cache[symbol] = df  # Cache the computed indicators
+
+        # Universe sanity — reject symbols with corrupted historical series
+        # (ticker reuse, missed split adjustment, etc.). AGL-class artifacts.
+        if not self._is_data_quality_ok(df):
+            return None
 
         # Time-travel: truncate to as_of_date after indicators computed on full df
         if as_of_date:

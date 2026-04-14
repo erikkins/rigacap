@@ -1274,7 +1274,8 @@ class BacktesterService:
 
                         if (pct_above_dwap >= self.dwap_threshold_pct and
                             volume >= self.min_volume and
-                            price >= self.min_price):
+                            price >= self.min_price and
+                            scanner_service._is_data_quality_ok(df)):
 
                             vol_ratio = volume / vol_avg if vol_avg > 0 else 0
                             is_strong = (
@@ -1369,6 +1370,11 @@ class BacktesterService:
                         if not (pct_above_dwap >= self.dwap_threshold_pct and
                                 volume >= self.min_volume and
                                 price >= self.min_price):
+                            skipped_filters += 1
+                            continue
+
+                        # Universe sanity — reject corrupted-data symbols (AGL-class)
+                        if not scanner_service._is_data_quality_ok(df):
                             skipped_filters += 1
                             continue
 
@@ -1474,7 +1480,8 @@ class BacktesterService:
 
                         if (pct_above_dwap >= self.dwap_threshold_pct and
                             volume >= self.min_volume and
-                            price >= self.min_price):
+                            price >= self.min_price and
+                            scanner_service._is_data_quality_ok(df)):
 
                             vol_ratio = volume / vol_avg if vol_avg > 0 else 0
                             is_strong = (
