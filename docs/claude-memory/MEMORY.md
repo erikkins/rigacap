@@ -94,7 +94,14 @@
 - Exit reason for period-end: `rebalance_exit`. Ensemble DB params: 6×15%.
 - **DWAP stale crosses perform BETTER** — stale (90+d) = 56.8% win vs fresh (0-10d) = 49.6%
 
+## Storage Roadmap
+- [Pickle → Parquet/DuckDB/TimescaleDB migration](project_storage_migration_roadmap.md) — triggers, options, sequencing. Stay on pickle through ~500 paid subs, then start with Parquet on S3.
+
 ## Active Tasks
+- **[Parquet migration — triphasic plan](project_storage_migration_roadmap.md)** — agreed Apr 14 2026 to do NOW while user base <10. Session 1: dual-write + reader path (backward compat). Session 2: migrate consumers (scanner/backtester/WF). Session 3: cutover + cleanup. 2-3 focused sessions.
+
+## Trial 37 Validation Tasks
+
 - **[Strategy optimization FINAL](project_position_sizing_tests_apr2026.md)** — TPE Trial 37 deployed: +240% avg, 24% MaxDD, ~28% ann. 2023 weakness accepted.
 - **[MDD reduction ideas](project_mdd_reduction_ideas.md)** — VIX-adjusted sizing, drawdown circuit breaker, bear regime stops — for TPE Run 2
 - **[BREAKTHROUGH: 19.9% avg annualized](project_tournament_breakthrough.md)** — near_50d_high_pct 5%→3%, validated 7/7 start dates
