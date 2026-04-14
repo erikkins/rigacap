@@ -3414,10 +3414,11 @@ def handler(event, context):
             from datetime import datetime, timedelta, date as _date
             from alpaca.data.historical.corporate_actions import CorporateActionsClient
             from alpaca.data.requests import CorporateActionsRequest
+            from app.core.config import settings as _settings
 
             client = CorporateActionsClient(
-                api_key=settings.ALPACA_API_KEY,
-                secret_key=settings.ALPACA_SECRET_KEY,
+                api_key=_settings.ALPACA_API_KEY,
+                secret_key=_settings.ALPACA_SECRET_KEY,
             )
             req = CorporateActionsRequest(
                 symbols=symbols,
