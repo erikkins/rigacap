@@ -3358,6 +3358,39 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"status": "error", "error": str(e)}
 
+    # Diagnostic: deep inspect a few specific symbols
+    # {"symbol_inspect": {"symbols": ["AAPL", "MSFT", "NVDA"]}}
+    if event.get("symbol_inspect"):
+        cfg = event.get("symbol_inspect") or {}
+        syms = cfg.get("symbols", ["AAPL", "MSFT", "NVDA", "EXAS", "AVGO"])
+        out = {}
+        try:
+            cache = scanner_service.data_cache
+            for s in syms:
+                if s not in cache:
+                    out[s] = "NOT_IN_CACHE"
+                    continue
+                df = cache[s]
+                last5 = df.tail(5)
+                cols_present = list(df.columns)
+                # last row dwap details
+                row = df.iloc[-1]
+                out[s] = {
+                    "rows": len(df),
+                    "columns": cols_present,
+                    "last_date": str(df.index[-1]),
+                    "last_close": float(row.get('close', 0)) if row.get('close') is not None else None,
+                    "last_dwap": (float(row.get('dwap')) if row.get('dwap') is not None and not __import__('pandas').isna(row.get('dwap')) else None),
+                    "last_5_dwap": [
+                        (None if __import__('pandas').isna(v) else float(v))
+                        for v in last5.get('dwap', [None]*5).tolist()
+                    ] if 'dwap' in df.columns else "NO_DWAP_COLUMN",
+                }
+            return out
+        except Exception as e:
+            import traceback
+            return {"error": str(e), "trace": traceback.format_exc()[:1000]}
+
     # Diagnostic: signal pipeline distribution across the universe (admin/debug)
     # {"signal_diagnostic": {"min_volume": 500000, "min_price": 15.0}}
     if event.get("signal_diagnostic"):
