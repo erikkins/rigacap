@@ -3358,6 +3358,47 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"status": "error", "error": str(e)}
 
+    # One-time backfill: force-recompute indicators for all cached symbols
+    # and re-export the pickle to S3. Use after fixing fetch_incremental
+    # indicator-strip bug to repair the in-S3 pickle's NaN-tail rows.
+    # {"rebuild_indicators": {"_": 1}}
+    if event.get("rebuild_indicators"):
+        print("🔧 Rebuild indicators across full cache")
+        try:
+            from app.services.data_export import data_export_service
+            INDICATOR_COLS = [
+                'dwap', 'ma_50', 'ma_200', 'vol_avg', 'high_52w',
+                'short_mom', 'long_mom', 'volatility', 'ma_20', 'dist_from_50d_high',
+            ]
+            cache = scanner_service.data_cache
+            recomputed = 0
+            skipped = 0
+            for symbol in list(cache.keys()):
+                df = cache[symbol]
+                if df is None or len(df) < 200:
+                    skipped += 1
+                    continue
+                cols_to_drop = [c for c in INDICATOR_COLS if c in df.columns]
+                if cols_to_drop:
+                    df = df.drop(columns=cols_to_drop)
+                df = scanner_service._ensure_indicators(df)
+                cache[symbol] = df
+                recomputed += 1
+            print(f"✅ Recomputed indicators for {recomputed} symbols ({skipped} skipped)")
+            # Re-export pickle so the fix persists
+            export_result = data_export_service.export_all(cache)
+            return {
+                "status": "success",
+                "recomputed": recomputed,
+                "skipped": skipped,
+                "pickle_export": export_result,
+            }
+        except Exception as e:
+            import traceback
+            print(f"❌ Rebuild indicators failed: {e}")
+            print(traceback.format_exc())
+            return {"error": str(e)}
+
     # Diagnostic: deep inspect a few specific symbols
     # {"symbol_inspect": {"symbols": ["AAPL", "MSFT", "NVDA"]}}
     if event.get("symbol_inspect"):

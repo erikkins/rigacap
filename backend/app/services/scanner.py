@@ -228,6 +228,8 @@ class ScannerService:
             df['ma_200'] = self.sma(df['close'], 200)
             df['vol_avg'] = self.sma(df['volume'], 200)
             df['high_52w'] = self.high_52w(df['close'])
+            from app.services.strategy_params_v2 import compute_atr
+            df['atr'] = compute_atr(df['high'], df['low'], df['close'], period=14)
 
             self.data_cache[symbol] = df
             successful += 1
@@ -352,6 +354,15 @@ class ScannerService:
 
                 combined = combined[~combined.index.duplicated(keep='last')]
                 combined = combined.sort_index()
+
+                # Force-recompute indicators after appending new OHLCV rows.
+                # Without this, the appended rows would have NaN for dwap/ma_50/etc.
+                # because _ensure_indicators only triggers when a column is missing
+                # entirely — it doesn't notice when only the tail rows are NaN.
+                indicator_cols_to_drop = [c for c in INDICATOR_COLS if c in combined.columns]
+                if indicator_cols_to_drop:
+                    combined = combined.drop(columns=indicator_cols_to_drop)
+                combined = self._ensure_indicators(combined)
 
                 self.data_cache[symbol] = combined
                 updated += 1
