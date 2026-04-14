@@ -4129,6 +4129,57 @@ def handler(event, context):
 
     # Handle daily email digest (EventBridge: 6 PM ET Mon-Fri)
     # Optional: {"daily_emails": {"target_emails": ["user@example.com"]}}
+    # Weekly "Market, Measured." free-list email — Sunday evening.
+    # {"market_measured": {"target_emails": ["erik@rigacap.com"]}} for testing,
+    # or {"market_measured": {"_": 1}} for full free-list blast (future).
+    if event.get("market_measured"):
+        cfg = event.get("market_measured") or {}
+        target_emails = cfg.get("target_emails") if isinstance(cfg, dict) else None
+        print(f"📨 Market, Measured triggered" + (f" for {target_emails}" if target_emails else " (full list)"))
+
+        async def _send_market_measured():
+            import json as _json
+            import boto3
+            from app.services.email_service import email_service
+
+            # Pull latest dashboard.json from S3
+            bucket = "rigacap-prod-price-data-149218244179"
+            try:
+                s3 = boto3.client('s3', region_name='us-east-1')
+                obj = s3.get_object(Bucket=bucket, Key='signals/dashboard.json')
+                dashboard_data = _json.loads(obj['Body'].read())
+            except Exception as e:
+                return {"error": f"Failed to load dashboard.json: {e}"}
+
+            # For now only send to target_emails (future: pull free-list from DB)
+            recipients = target_emails or ["erik@rigacap.com"]
+            sent = 0
+            failed = []
+            for email in recipients:
+                try:
+                    ok = await email_service.send_market_measured(
+                        to_email=email,
+                        dashboard_data=dashboard_data,
+                    )
+                    if ok:
+                        sent += 1
+                    else:
+                        failed.append(email)
+                except Exception as e:
+                    failed.append(f"{email}: {e}")
+            return {"status": "ok", "sent": sent, "failed": failed, "recipients": len(recipients)}
+
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            return loop.run_until_complete(_send_market_measured())
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            return {"error": str(e)}
+
     # Morning admin health check — scheduled 7 AM ET Mon-Fri.
     # Reads yesterday's pipeline log + dashboard + indicator validity and
     # emails Erik a concise status digest. Flags anything unusual.

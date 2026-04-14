@@ -677,6 +677,200 @@ class EmailService:
 
         return await self.send_email(to_email, subject, html, text, user_id=user_id)
 
+    async def send_market_measured(
+        self,
+        to_email: str,
+        dashboard_data: Dict,
+        date: Optional[datetime] = None,
+        user_id: str = None,
+    ) -> bool:
+        """
+        Send the weekly 'Market, Measured.' top-of-funnel email.
+
+        Reads directly from dashboard_data (same structure as dashboard.json).
+        Calm, observational, non-urgent — positions RigaCap as the adult voice.
+        No strategy mechanics revealed (no DWAP, MA thresholds, stop pcts).
+        """
+        if date is None:
+            date = _now_et()
+        date_str = date.strftime("%B %d, %Y")
+        subject_date = date.strftime("%B %-d")
+
+        market_stats = dashboard_data.get('market_stats') or {}
+        regime_name = market_stats.get('regime_name', 'Unknown')
+        spy_price = market_stats.get('spy_price')
+        spy_change = market_stats.get('spy_change_pct')
+        vix_level = market_stats.get('vix_level')
+
+        market_context = dashboard_data.get('market_context') or ''
+
+        buy_signals = dashboard_data.get('buy_signals') or []
+        fresh_signals = [s for s in buy_signals if s.get('is_fresh')]
+        fresh_count = len(fresh_signals)
+        watchlist = dashboard_data.get('watchlist') or []
+
+        # Build The Reading line
+        reading_bits = [f"<strong>Regime: {regime_name}.</strong>"]
+        if spy_price is not None:
+            chg = f"{'+' if (spy_change or 0) >= 0 else ''}{spy_change:.2f}%" if spy_change is not None else ""
+            reading_bits.append(f"SPY closed at ${spy_price:,.2f}" + (f" ({chg})" if chg else "") + ".")
+        if vix_level is not None:
+            reading_bits.append(f"VIX at {vix_level:.2f}.")
+        reading_line = " ".join(reading_bits)
+
+        # Build watchlist line
+        if watchlist:
+            wl_names = [w.get('symbol', '') for w in watchlist[:5]]
+            wl_sentence = (
+                f"{len(watchlist)} name{'s are' if len(watchlist) != 1 else ' is'} "
+                f"approaching entry territory ({', '.join(wl_names)}). "
+                f"Any of them could fire in the coming days if the move confirms."
+            )
+        else:
+            wl_sentence = (
+                "The watchlist is quiet this week — no names are within breakout range yet."
+            )
+
+        # Fresh-buy sentence
+        if fresh_count == 0:
+            buy_sentence = (
+                "<strong>Fresh buy signals this week: 0.</strong><br><br>"
+                "That's not a bug — it's the strategy working as designed. "
+                f"{regime_name}s mean fewer stocks are in a genuine breakout at "
+                "any given moment. Our algorithm requires multiple conditions "
+                "to align simultaneously before firing, and this week, they didn't."
+            )
+        elif fresh_count == 1:
+            sym = fresh_signals[0].get('symbol', '')
+            buy_sentence = (
+                f"<strong>Fresh buy signal this week: {sym}.</strong><br><br>"
+                "The conditions aligned for a single name — a genuine breakout "
+                "that cleared every gate our system requires before firing."
+            )
+        else:
+            syms = ", ".join(s.get('symbol', '') for s in fresh_signals[:4])
+            buy_sentence = (
+                f"<strong>Fresh buy signals this week: {fresh_count}.</strong><br><br>"
+                f"Multiple names aligned — {syms}. Each cleared every gate our "
+                "system requires before firing."
+            )
+
+        html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Georgia, serif; background-color: #f5f5f0; color: #1f2937;">
+    <table cellpadding="0" cellspacing="0" style="width: 100%; max-width: 640px; margin: 0 auto; background-color: #ffffff;">
+        <tr>
+            <td style="padding: 48px 40px 24px 40px; border-bottom: 1px solid #e5e7eb;">
+                <h1 style="margin: 0; font-size: 32px; font-weight: 700; color: #172554; letter-spacing: -0.5px;">
+                    Market, Measured.
+                </h1>
+                <p style="margin: 8px 0 0 0; font-size: 14px; color: #6b7280; font-style: italic;">
+                    {date_str}
+                </p>
+            </td>
+        </tr>
+
+        <tr><td style="padding: 32px 40px 0 40px;">
+            <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 1px;">
+                The Reading
+            </h2>
+            <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #1f2937;">
+                {reading_line}
+            </p>
+        </td></tr>
+
+        {f'''<tr><td style="padding: 28px 40px 0 40px;">
+            <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 1px;">
+                What the System Sees
+            </h2>
+            <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #1f2937;">
+                {market_context}
+            </p>
+        </td></tr>''' if market_context else ''}
+
+        <tr><td style="padding: 28px 40px 0 40px;">
+            <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 1px;">
+                What the System is Doing
+            </h2>
+            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.7; color: #1f2937;">
+                {buy_sentence}
+            </p>
+            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.7; color: #1f2937;">
+                <strong>On the watchlist:</strong> {wl_sentence}
+            </p>
+            <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #1f2937;">
+                <strong>Still holding:</strong> existing positions continue to be managed by our standard risk discipline.
+            </p>
+        </td></tr>
+
+        <tr><td style="padding: 28px 40px 0 40px;">
+            <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 1px;">
+                What Would Change Things
+            </h2>
+            <ul style="margin: 0; padding: 0 0 0 20px; font-size: 16px; line-height: 1.8; color: #1f2937;">
+                <li><strong>For more buys:</strong> we'd need broader rally conditions where many stocks break out simultaneously.</li>
+                <li><strong>For defensive posture:</strong> a meaningful broad-market breakdown would flip the regime and move us to cash.</li>
+                <li><strong>For now:</strong> stay patient. Quiet weeks are normal. The system is measuring, not reacting.</li>
+            </ul>
+        </td></tr>
+
+        <tr><td style="padding: 36px 40px 0 40px;">
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 28px;">
+                <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.7; color: #1f2937; font-style: italic;">
+                    Three-to-four signals a month, sometimes zero. We trade when the math is clear — not when the news is loud.
+                </p>
+                <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;">
+                    Want the signals when they fire?
+                </p>
+                <a href="https://rigacap.com" style="display: inline-block; background-color: #172554; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 15px; font-weight: 600;">
+                    Start a 7-day trial →
+                </a>
+            </div>
+        </td></tr>
+
+        <tr><td style="padding: 36px 40px 32px 40px;">
+            <p style="margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.6; font-style: italic; border-top: 1px solid #f3f4f6; padding-top: 16px;">
+                <em>Market, Measured.</em> is a weekly reading from RigaCap. Data-backed, noise-free. Reply anytime — we read every response.
+            </p>
+            <p style="margin: 12px 0 0 0; font-size: 11px; color: #9ca3af;">
+                &copy; {date.year} RigaCap, LLC. Not investment advice.
+            </p>
+        </td></tr>
+    </table>
+</body>
+</html>"""
+
+        text = f"""MARKET, MEASURED.
+{date_str}
+
+THE READING
+{regime_name}. SPY ${spy_price:,.2f if spy_price else '?'}, VIX {vix_level:.2f if vix_level else '?'}.
+
+{('WHAT THE SYSTEM SEES' + chr(10) + market_context + chr(10) + chr(10)) if market_context else ''}
+WHAT THE SYSTEM IS DOING
+Fresh buy signals this week: {fresh_count}.
+Watchlist: {len(watchlist)} names approaching entry territory.
+
+WHAT WOULD CHANGE THINGS
+— For more buys: broader rally conditions.
+— For defensive: a broad-market breakdown would flip the regime.
+— For now: stay patient.
+
+Three-to-four signals a month, sometimes zero. We trade when the math is clear — not when the news is loud.
+
+Start a 7-day trial: https://rigacap.com
+
+---
+Market, Measured. is a weekly reading from RigaCap.
+"""
+
+        subject = f"Market, Measured — {subject_date}"
+        return await self.send_email(to_email, subject, html, text, user_id=user_id)
+
     async def send_bulk_daily_summary(
         self,
         subscribers: List[str],
