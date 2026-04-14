@@ -4132,15 +4132,21 @@ def handler(event, context):
     # Weekly "Market, Measured." free-list email — Sunday evening.
     # {"market_measured": {"target_emails": ["erik@rigacap.com"]}} for testing,
     # or {"market_measured": {"_": 1}} for full free-list blast (future).
+    # Optional: {"show_symbols": true} to show live watchlist/signal tickers
+    # (for paid subscribers). Default False hides them and shows delayed-
+    # reveal track record instead.
     if event.get("market_measured"):
         cfg = event.get("market_measured") or {}
         target_emails = cfg.get("target_emails") if isinstance(cfg, dict) else None
-        print(f"📨 Market, Measured triggered" + (f" for {target_emails}" if target_emails else " (full list)"))
+        show_symbols = cfg.get("show_symbols", False) if isinstance(cfg, dict) else False
+        print(f"📨 Market, Measured triggered (show_symbols={show_symbols})" + (f" for {target_emails}" if target_emails else " (full list)"))
 
         async def _send_market_measured():
             import json as _json
             import boto3
+            from datetime import datetime, timedelta
             from app.services.email_service import email_service
+            from app.core.database import EnsembleSignal
 
             # Pull latest dashboard.json from S3
             bucket = "rigacap-prod-price-data-149218244179"
@@ -4151,6 +4157,45 @@ def handler(event, context):
             except Exception as e:
                 return {"error": f"Failed to load dashboard.json: {e}"}
 
+            # Query last 2 weeks of fresh signals for delayed-reveal track record
+            # Only needed when show_symbols=False (free-list audience)
+            last_weeks_fresh = []
+            if not show_symbols:
+                try:
+                    from sqlalchemy import select, and_, desc as sa_desc
+                    today = datetime.now().date()
+                    cutoff_old = today - timedelta(days=21)
+                    cutoff_new = today - timedelta(days=3)
+                    async with async_session() as db:
+                        result = await db.execute(
+                            select(EnsembleSignal)
+                            .where(and_(
+                                EnsembleSignal.signal_date >= cutoff_old,
+                                EnsembleSignal.signal_date <= cutoff_new,
+                                EnsembleSignal.is_fresh == True,
+                            ))
+                            .order_by(sa_desc(EnsembleSignal.signal_date))
+                        )
+                        sigs = result.scalars().all()
+                    for s in sigs:
+                        df = scanner_service.data_cache.get(s.symbol)
+                        if df is None or len(df) == 0:
+                            continue
+                        curr = float(df['close'].iloc[-1])
+                        entry = float(s.price) if s.price else None
+                        if not entry:
+                            continue
+                        pnl = (curr / entry - 1) * 100
+                        last_weeks_fresh.append({
+                            "symbol": s.symbol,
+                            "entry_date": s.signal_date.strftime("%b %-d") if s.signal_date else "",
+                            "entry_price": entry,
+                            "current_price": curr,
+                            "pnl_pct": pnl,
+                        })
+                except Exception as _qe:
+                    print(f"⚠️ last_weeks_fresh query failed: {_qe}")
+
             # For now only send to target_emails (future: pull free-list from DB)
             recipients = target_emails or ["erik@rigacap.com"]
             sent = 0
@@ -4160,6 +4205,8 @@ def handler(event, context):
                     ok = await email_service.send_market_measured(
                         to_email=email,
                         dashboard_data=dashboard_data,
+                        show_symbols=show_symbols,
+                        last_weeks_fresh=last_weeks_fresh,
                     )
                     if ok:
                         sent += 1
@@ -4167,7 +4214,14 @@ def handler(event, context):
                         failed.append(email)
                 except Exception as e:
                     failed.append(f"{email}: {e}")
-            return {"status": "ok", "sent": sent, "failed": failed, "recipients": len(recipients)}
+            return {
+                "status": "ok",
+                "sent": sent,
+                "failed": failed,
+                "recipients": len(recipients),
+                "show_symbols": show_symbols,
+                "track_record_entries": len(last_weeks_fresh),
+            }
 
         try:
             loop = asyncio.get_event_loop()

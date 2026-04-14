@@ -683,6 +683,8 @@ class EmailService:
         dashboard_data: Dict,
         date: Optional[datetime] = None,
         user_id: str = None,
+        show_symbols: bool = False,
+        last_weeks_fresh: Optional[List[Dict]] = None,
     ) -> bool:
         """
         Send the weekly 'Market, Measured.' top-of-funnel email.
@@ -690,6 +692,16 @@ class EmailService:
         Reads directly from dashboard_data (same structure as dashboard.json).
         Calm, observational, non-urgent — positions RigaCap as the adult voice.
         No strategy mechanics revealed (no DWAP, MA thresholds, stop pcts).
+
+        Args:
+            show_symbols: If False (default, for free list), watchlist and
+                this-week's fresh signals are anonymized (count-only) to
+                preserve paid value. If True (for paid subscribers), full
+                tickers are shown.
+            last_weeks_fresh: List of dicts with at least {symbol, entry_date,
+                entry_price, current_price, pnl_pct}. Used for the delayed-
+                reveal track-record section in free-list emails. Ignored if
+                show_symbols is True (paid users see live signals instead).
         """
         if date is None:
             date = _now_et()
@@ -752,18 +764,26 @@ class EmailService:
 
         # Build watchlist line
         if watchlist:
-            wl_names = [w.get('symbol', '') for w in watchlist[:5]]
-            wl_sentence = (
-                f"{len(watchlist)} name{'s are' if len(watchlist) != 1 else ' is'} "
-                f"approaching entry territory ({', '.join(wl_names)}). "
-                f"Any of them could fire in the coming days if the move confirms."
-            )
+            wl_count = len(watchlist)
+            if show_symbols:
+                wl_names = [w.get('symbol', '') for w in watchlist[:5]]
+                wl_sentence = (
+                    f"{wl_count} name{'s are' if wl_count != 1 else ' is'} "
+                    f"approaching entry territory ({', '.join(wl_names)}). "
+                    f"Any of them could fire in the coming days if the move confirms."
+                )
+            else:
+                wl_sentence = (
+                    f"{wl_count} name{'s are' if wl_count != 1 else ' is'} "
+                    f"approaching entry territory right now. Subscribers see which "
+                    f"ones — and get alerted the moment they fire."
+                )
         else:
             wl_sentence = (
                 "The watchlist is quiet this week — no names are within breakout range yet."
             )
 
-        # Fresh-buy sentence
+        # Fresh-buy sentence — paid subscribers see symbols, free list sees counts
         if fresh_count == 0:
             buy_sentence = (
                 "<strong>Fresh buy signals this week: 0.</strong><br><br>"
@@ -772,20 +792,73 @@ class EmailService:
                 "any given moment. Our algorithm requires multiple conditions "
                 "to align simultaneously before firing, and this week, they didn't."
             )
-        elif fresh_count == 1:
-            sym = fresh_signals[0].get('symbol', '')
-            buy_sentence = (
-                f"<strong>Fresh buy signal this week: {sym}.</strong><br><br>"
-                "The conditions aligned for a single name — a genuine breakout "
-                "that cleared every gate our system requires before firing."
-            )
+        elif show_symbols:
+            if fresh_count == 1:
+                sym = fresh_signals[0].get('symbol', '')
+                buy_sentence = (
+                    f"<strong>Fresh buy signal this week: {sym}.</strong><br><br>"
+                    "The conditions aligned for a single name — a genuine breakout "
+                    "that cleared every gate our system requires before firing."
+                )
+            else:
+                syms = ", ".join(s.get('symbol', '') for s in fresh_signals[:4])
+                buy_sentence = (
+                    f"<strong>Fresh buy signals this week: {fresh_count}.</strong><br><br>"
+                    f"Multiple names aligned — {syms}. Each cleared every gate our "
+                    "system requires before firing."
+                )
         else:
-            syms = ", ".join(s.get('symbol', '') for s in fresh_signals[:4])
+            # Free list: reveal count only, conversion line
+            word = "signal" if fresh_count == 1 else "signals"
             buy_sentence = (
-                f"<strong>Fresh buy signals this week: {fresh_count}.</strong><br><br>"
-                f"Multiple names aligned — {syms}. Each cleared every gate our "
-                "system requires before firing."
+                f"<strong>Fresh buy {word} this week: {fresh_count}.</strong><br><br>"
+                f"{'A stock' if fresh_count == 1 else 'Multiple names'} cleared "
+                "every gate our system requires before firing. Subscribers got "
+                "the alerts at market open."
             )
+
+        # Delayed-reveal track record block (free list only; paid already
+        # sees live signals on the dashboard and doesn't need this)
+        proof_block = ""
+        if not show_symbols and last_weeks_fresh:
+            rows = []
+            for s in last_weeks_fresh[:3]:
+                sym = s.get('symbol', '')
+                entry = s.get('entry_price')
+                curr = s.get('current_price')
+                pnl = s.get('pnl_pct')
+                entry_date = s.get('entry_date') or ''
+                if pnl is None or entry is None or curr is None:
+                    continue
+                pnl_str = f"+{pnl:.1f}%" if pnl >= 0 else f"{pnl:.1f}%"
+                pnl_color = "#059669" if pnl >= 0 else "#dc2626"
+                rows.append(
+                    f'<tr><td style="padding: 8px 12px; font-weight: 600;">{sym}</td>'
+                    f'<td style="padding: 8px 12px; color: #6b7280;">{entry_date}</td>'
+                    f'<td style="padding: 8px 12px; text-align: right;">${entry:.2f}</td>'
+                    f'<td style="padding: 8px 12px; text-align: right;">${curr:.2f}</td>'
+                    f'<td style="padding: 8px 12px; text-align: right; color: {pnl_color}; font-weight: 700;">{pnl_str}</td></tr>'
+                )
+            if rows:
+                proof_block = f"""
+        <tr><td style="padding: 28px 40px 0 40px;">
+            <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 1px;">
+                Recent Signals — How They're Doing
+            </h2>
+            <p style="margin: 0 0 12px 0; font-size: 14px; line-height: 1.6; color: #6b7280; font-style: italic;">
+                The signals we called over the last couple of weeks, with how they've performed since entry. Subscribers got these in real time.
+            </p>
+            <table cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 15px;">
+                <thead><tr style="border-bottom: 2px solid #e5e7eb; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <th style="padding: 8px 12px; text-align: left;">Ticker</th>
+                    <th style="padding: 8px 12px; text-align: left;">Entered</th>
+                    <th style="padding: 8px 12px; text-align: right;">Entry</th>
+                    <th style="padding: 8px 12px; text-align: right;">Now</th>
+                    <th style="padding: 8px 12px; text-align: right;">Since</th>
+                </tr></thead>
+                <tbody>{''.join(rows)}</tbody>
+            </table>
+        </td></tr>"""
 
         html = f"""<!DOCTYPE html>
 <html>
@@ -838,6 +911,8 @@ class EmailService:
                 <strong>Still holding:</strong> existing positions continue to be managed by our standard risk discipline.
             </p>
         </td></tr>
+
+        {proof_block}
 
         <tr><td style="padding: 28px 40px 0 40px;">
             <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 1px;">
