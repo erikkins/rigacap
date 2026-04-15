@@ -779,7 +779,22 @@ class DataExportService:
             """)
             results['universe_stats'] = stats.iloc[0].to_dict()
 
-            return results
+            # JSON-serialize: convert pandas/numpy types to python primitives
+            def _sanitize(obj):
+                if isinstance(obj, dict):
+                    return {k: _sanitize(v) for k, v in obj.items()}
+                if isinstance(obj, list):
+                    return [_sanitize(v) for v in obj]
+                if hasattr(obj, 'isoformat'):
+                    return obj.isoformat()
+                if hasattr(obj, 'item'):
+                    try:
+                        return obj.item()
+                    except Exception:
+                        pass
+                return obj
+
+            return _sanitize(results)
         except Exception as e:
             import traceback
             return {"error": str(e), "trace": traceback.format_exc()[:500]}
