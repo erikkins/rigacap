@@ -959,6 +959,15 @@ class EmailService:
             </div>
         </td></tr>
 
+        {'' if show_symbols else '''<tr><td style="padding: 24px 40px 0 40px;">
+            <div style="background: #f9fafb; border-left: 3px solid #172554; padding: 14px 18px; border-radius: 4px;">
+                <p style="margin: 0; font-size: 13px; color: #6b7280;">
+                    <em>Was this forwarded to you?</em>
+                    &nbsp;<a href="https://rigacap.com/?subscribe=market_measured#newsletter" style="color: #172554; font-weight: 600; text-decoration: none;">Subscribe — free, Sundays only&nbsp;→</a>
+                </p>
+            </div>
+        </td></tr>'''}
+
         <tr><td style="padding: 36px 40px 32px 40px;">
             <p style="margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.6; font-style: italic; border-top: 1px solid #f3f4f6; padding-top: 16px;">
                 <em>Market, Measured.</em> is a weekly reading from RigaCap. Data-backed, noise-free. Reply anytime — we read every response.
@@ -1002,6 +1011,7 @@ WHAT WOULD CHANGE THINGS
 Three-to-four signals a month, sometimes zero. We trade when the math is clear — not when the news is loud.
 
 Start a 7-day trial: https://rigacap.com
+{('' if show_symbols else chr(10) + 'Was this forwarded to you? Subscribe — free, Sundays only: https://rigacap.com/?subscribe=market_measured#newsletter' + chr(10))}
 
 ---
 Market, Measured. is a weekly reading from RigaCap.

@@ -11,6 +11,23 @@ export default function MarketMeasuredSignup({ source = 'landing', variant = 'li
   const [turnstileToken, setTurnstileToken] = useState('');
   const turnstileRef = useRef(null);
   const turnstileWidgetId = useRef(null);
+  const emailInputRef = useRef(null);
+
+  // If arrived from a forwarded email (?subscribe=market_measured), scroll
+  // the form into view and focus the email input. Override the source for
+  // GA4/DB attribution so we can measure forward-driven signups.
+  const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const arrivedFromForward = params.get('subscribe') === 'market_measured';
+  const effectiveSource = arrivedFromForward ? 'forward' : source;
+
+  useEffect(() => {
+    if (!arrivedFromForward) return;
+    const t = setTimeout(() => {
+      emailInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      emailInputRef.current?.focus({ preventScroll: true });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [arrivedFromForward]);
 
   useEffect(() => {
     if (!TURNSTILE_SITE_KEY) return;
@@ -62,7 +79,7 @@ export default function MarketMeasuredSignup({ source = 'landing', variant = 'li
           email: email.trim(),
           turnstile_token: turnstileToken || 'dev-bypass',
           report_type: 'market_measured',
-          source,
+          source: effectiveSource,
         }),
       });
       const data = await res.json();
@@ -107,6 +124,7 @@ export default function MarketMeasuredSignup({ source = 'landing', variant = 'li
       <form onSubmit={submit} className="mt-4 space-y-3">
         <div className="flex flex-col sm:flex-row gap-2">
           <input
+            ref={emailInputRef}
             type="email"
             required
             value={email}

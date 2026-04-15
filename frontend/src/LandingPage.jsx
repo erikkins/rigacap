@@ -661,8 +661,10 @@ export default function LandingPage() {
       <TestimonialsSection />
       <FAQSection />
 
-      {/* Weekly newsletter — lower-commitment alternative to the trial CTA */}
-      <section className="bg-slate-50 py-16">
+      {/* Weekly newsletter — lower-commitment alternative to the trial CTA.
+          Anchor id="newsletter" is the scroll target for forwarded-email
+          links (?subscribe=market_measured#newsletter). */}
+      <section id="newsletter" className="bg-slate-50 py-16">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <MarketMeasuredSignup source="landing_below_faq" />
         </div>
