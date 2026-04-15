@@ -49,24 +49,48 @@ The current architecture stores ~4500 symbols × 7yr OHLCV + indicators in a sin
 - Not worth the investment for our scale
 - **Skip unless we hit a scaling wall Option 1-3 can't solve**
 
-## Recommended sequencing (UPDATED Apr 14 2026)
+## Recommended sequencing (UPDATED Apr 15 2026)
 
 **Decision: migrate to Parquet NOW, before marketing blitz.** Erik's reasoning: only 2 active users (6 invited, 4 inactive) means disruption tolerance is highest it will ever be. Every major architectural change destabilizes before it strengthens. Better to absorb that pain pre-paid-subscribers than post-launch.
 
-1. **First target: Parquet on S3, partitioned by symbol** (Option 1). Biggest impact for smallest effort. Start: April-May 2026 window while user base is still <10 active. Budget: 8-16 hours of focused work.
-2. **Follow with DuckDB overlay** (Option 2) for admin analytics + diagnostics. +2-4 hours.
-3. **TimescaleDB** only if we consolidate infra (unlikely in the next 12 months).
-4. **QuestDB / ClickHouse** — not planned, revisit only if scaling wall hit.
+## Four-stage plan (committed Apr 15 2026)
 
-## Migration sequencing steps (for Parquet)
+**Stage 1: Shadow write (DONE Apr 14-15 2026)** ✅
+- `data_export_service.export_parquet()` writes `s3://<bucket>/prices/all_data.parquet` alongside pickle on every daily_scan + hygiene run
+- `data_export_service.import_parquet(symbols=None)` reads back with filtered/partial support
+- DuckDB SQL queries validated on Lambda (via /tmp download workaround due to AL2 glibc)
+- Both stores stay in lockstep — every update writes both
 
-1. **Build parallel write path** — export parquet alongside pickle in `data_export_service.export_all()`. Both co-exist during transition.
-2. **Build parallel read path** — `data_import_service` can load from parquet OR pickle based on env flag. Test on Worker Lambda.
-3. **Migrate scanner.py** — `data_cache` becomes a lazy dict that loads per-symbol from parquet on demand. Huge memory win (most scans only touch top 100 symbols).
-4. **Migrate backtester.py** — same pattern, per-symbol lazy loads.
-5. **Migrate walk_forward_service.py** — per-period loads instead of whole-universe load.
-6. **Cutover:** env flag flip, delete pickle code after 2 weeks of stable parquet operation.
-7. **Dashboard.json cache becomes unnecessary** for many queries — API Lambda can read parquet directly.
+**Stage 2: Lambda runtime upgrade to AL2023** (NEXT — queued)
+- Rebase Dockerfile from `python:3.9` (AL2) to `python:3.11+` (AL2023)
+- Enables native DuckDB httpfs extension (no /tmp workaround needed)
+- 10-25% faster Python execution = lower Lambda bill
+- ~2-4 hour focused session
+- Test: full regression on local + canary deploy
+
+**Stage 3: Consumer migration** — migrate scanner/backtester/WF from pickle-sourced `data_cache` to per-symbol parquet reads
+- `scanner.py` — lazy dict, loads per-symbol from parquet on demand
+- `backtester.py` — same pattern, per-symbol lazy loads
+- `walk_forward_service.py` — per-period loads instead of whole-universe
+- Huge memory win (most scans only touch top 100 symbols; Worker Lambda could drop from 3GB → 500MB)
+- ~6-10 hours
+
+**Stage 4: Decommission pickle**
+- Remove `export_pickle()` / `import_pickle()` path
+- Delete the gzipped pickle from S3 (keep backups)
+- Guardrail and size-check code becomes dead
+- Dashboard.json cache may become unnecessary for many queries (API Lambda can read parquet directly via DuckDB post-AL2023)
+- ~2-4 hours
+
+**Stage 5 (optional): DuckDB as primary query engine**
+- Admin diagnostics page with SQL console
+- Replace Python-loop diagnostics with SQL
+- Adds operational leverage once comfortable with parquet
+
+## Future options if we outgrow parquet
+
+- **TimescaleDB** only if we consolidate infra (unlikely in the next 12 months)
+- **QuestDB / ClickHouse** — not planned, revisit only if scaling wall hit
 
 ## Session-specific pickle issues that informed this
 

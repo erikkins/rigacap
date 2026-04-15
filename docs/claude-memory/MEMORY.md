@@ -98,7 +98,7 @@
 - [Pickle → Parquet/DuckDB/TimescaleDB migration](project_storage_migration_roadmap.md) — triggers, options, sequencing. Stay on pickle through ~500 paid subs, then start with Parquet on S3.
 
 ## Active Tasks
-- **[Parquet migration — triphasic plan](project_storage_migration_roadmap.md)** — agreed Apr 14 2026 to do NOW while user base <10. Session 1: dual-write + reader path (backward compat). Session 2: migrate consumers (scanner/backtester/WF). Session 3: cutover + cleanup. 2-3 focused sessions.
+- **[Parquet migration 4-stage plan](project_storage_migration_roadmap.md)** — Stage 1 shadow write ✅ (Apr 14-15). Stage 2 Lambda AL2023 upgrade → Stage 3 consumer migration → Stage 4 decommission pickle. Goal: parquet becomes primary, pickle retired.
 
 ## Deferred UX Improvements
 - **[Daily digest email watchlist UX](feedback_email_watchlist_ux.md)** — subject/body count mismatch (subject says "4 on Watchlist" but body renders 3); tickers in email should deep-link to platform chart popup
