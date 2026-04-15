@@ -3414,6 +3414,61 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"status": "error", "error": str(e)}
 
+    # Test parquet shadow write — exports current cache to S3 parquet + verifies
+    # round-trip read. {"test_parquet_roundtrip": {"_": 1}}
+    if event.get("test_parquet_roundtrip"):
+        print("🧪 Parquet round-trip test")
+        try:
+            from app.services.data_export import data_export_service
+            cache = scanner_service.data_cache
+            if not cache:
+                return {"error": "No data in cache"}
+            orig_symbols = set(cache.keys())
+            orig_sample_sym = 'AAPL' if 'AAPL' in cache else next(iter(cache))
+            orig_sample_rows = len(cache[orig_sample_sym])
+            orig_sample_last_close = float(cache[orig_sample_sym]['close'].iloc[-1])
+
+            # Export
+            exp = data_export_service.export_parquet(cache)
+            if not exp.get('success'):
+                return {"stage": "export_failed", "result": exp}
+
+            # Import back — full
+            reimport = data_export_service.import_parquet()
+            if not reimport:
+                return {"stage": "import_failed", "export_result": exp}
+
+            reimport_symbols = set(reimport.keys())
+            roundtrip_sample_rows = len(reimport.get(orig_sample_sym, []))
+            roundtrip_sample_last_close = float(reimport[orig_sample_sym]['close'].iloc[-1]) if orig_sample_sym in reimport else None
+
+            # Test partial read (single symbol)
+            partial = data_export_service.import_parquet(symbols=[orig_sample_sym])
+
+            return {
+                "export": exp,
+                "roundtrip": {
+                    "orig_symbol_count": len(orig_symbols),
+                    "reimport_symbol_count": len(reimport_symbols),
+                    "missing": list(orig_symbols - reimport_symbols)[:10],
+                    "extra": list(reimport_symbols - orig_symbols)[:10],
+                    "sample_symbol": orig_sample_sym,
+                    "orig_rows": orig_sample_rows,
+                    "roundtrip_rows": roundtrip_sample_rows,
+                    "orig_last_close": orig_sample_last_close,
+                    "roundtrip_last_close": roundtrip_sample_last_close,
+                    "close_match": orig_sample_last_close == roundtrip_sample_last_close,
+                },
+                "partial_read": {
+                    "requested": [orig_sample_sym],
+                    "returned": list(partial.keys()),
+                    "rows": len(partial.get(orig_sample_sym, [])),
+                },
+            }
+        except Exception as e:
+            import traceback
+            return {"error": str(e), "trace": traceback.format_exc()[:1000]}
+
     # Force-refetch specific symbols with SPLIT adjustment, overwrite in pickle.
     # Used to fix known-split symbols (NVDA, CMG, WMT) that were cached with
     # unadjusted prices. {"refetch_split_adjusted": {"symbols": ["NVDA"]}}
