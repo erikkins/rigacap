@@ -639,8 +639,21 @@
   <p>
     After the initial 5-year fetch, subsequent updates use <strong>incremental mode</strong> &mdash;
     only downloading prices since the last cached date. This reduces daily update time from minutes to seconds.
-    All price data is persisted to S3 as consolidated parquet files for Lambda cold-start recovery.
+    All price data is persisted to S3 as a consolidated gzipped pickle for Lambda cold-start recovery,
+    with a parallel Parquet shadow write (columnar, typed) enabling ad-hoc SQL queries via DuckDB.
   </p>
+
+  <h3>Data Integrity Guardrails (added Apr 2026)</h3>
+  <p>Split-adjustment and data-corruption handling are now built into every layer of the pipeline:</p>
+  <ul style="line-height: 1.8;">
+    <li><strong>Split-adjusted by default:</strong> the Alpaca <code>StockBarsRequest</code> always uses <code>Adjustment.SPLIT</code>, preventing the class of bug where an unadjusted stock split (NVDA 10:1, GOOG 20:1, etc.) creates an artifact -90% "crash" in the historical series.</li>
+    <li><strong>Abrupt-jump rejection:</strong> any single-day close-to-close change greater than 65% (log-return &gt; 0.5) on a symbol's recent history marks it as corrupted. Real market moves rarely exceed this; unadjusted corporate actions always do.</li>
+    <li><strong>DWAP-ratio sanity:</strong> symbols where the current close is &gt; 50&times; or &lt; 0.02&times; the 200-day DWAP are rejected as clearly corrupted (ticker reuse or missed adjustment).</li>
+    <li><strong>Long-gap rejection:</strong> any symbol with a &gt;10-day gap between consecutive trading days is flagged as ticker-reuse corruption (old entity delisted, ticker recycled to a new entity).</li>
+    <li><strong>Nightly Layer 2 hygiene:</strong> Alpaca's corporate-actions API is polled every weekday at 6:30 PM ET. Splits trigger automatic force-refetch with <code>Adjustment.SPLIT</code>. Ticker reuses trigger auto-quarantine. Admin digest email reports status.</li>
+    <li><strong>Asset-ID tracking:</strong> every symbol's Alpaca UUID is stored in <code>symbol_metadata</code>. When an exchange recycles a ticker to a new entity, the UUID changes, and the system detects the swap before the next signal fires.</li>
+  </ul>
+  <p>Before these guardrails, undetected splits inflated backtest returns and could trigger false sell alerts on live positions (entry price stored at pre-split basis, next scan evaluates against post-split price → fake -90% loss → trailing stop triggers). The pipeline now handles splits end-to-end without manual intervention.</p>
 
   <!-- SVG 1: Data Pipeline Flowchart -->
   <div class="svg-diagram no-break">
@@ -885,6 +898,27 @@
     AND price above both MA50 and MA200 (healthy trend) are marked as "strong" signals &mdash;
     indicating institutional participation.</p>
   </div>
+
+  <h4 style="margin-top: 24px;">Anti-Squeeze Filters (added Apr 2026)</h4>
+  <p style="font-size: 0.88rem;">
+    A fourth layer of rejection criteria was added after a Feb 2021 forensic review revealed the strategy
+    had entered meme-stock squeezes at their peaks (EH, TLRY, LCID) and taken catastrophic losses. These
+    filters reject candidates that have already run parabolically before our other factors fire:
+  </p>
+  <table>
+    <thead>
+      <tr><th>Filter</th><th>Default / Range</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Max Recent Return</strong></td><td><code>max_recent_return_pct</code>: 30&ndash;1000 (tuned by TPE)</td><td>Reject candidates up &gt; X% in the last 30 days &mdash; prevents chasing tops</td></tr>
+      <tr><td><strong>Price Velocity Cap</strong></td><td><code>price_velocity_cap_pct</code>: 15&ndash;1000 (tuned by TPE)</td><td>Reject candidates up &gt; X% in the last 5 days &mdash; catches parabolic moves</td></tr>
+      <tr><td><strong>RSI Overbought</strong></td><td><code>rsi_oversold_filter</code>: 60&ndash;100 (100 = disabled)</td><td>Reject candidates above RSI threshold &mdash; standard overbought guard</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 0.88rem;">
+    Each parameter is tuned by the TPE optimizer. Value 1000 effectively disables the filter, letting
+    Bayesian optimization learn whether the constraint helps or hurts for a given regime.
+  </p>
 
   <!-- SVG 3: Ensemble Venn Diagram -->
   <div class="svg-diagram no-break">

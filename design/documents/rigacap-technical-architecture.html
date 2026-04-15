@@ -576,7 +576,7 @@
     </tbody>
   </table>
 
-  <h3>Scheduled Events (EventBridge) &mdash; 14 Rules</h3>
+  <h3>Scheduled Events (EventBridge) &mdash; 16 Rules</h3>
   <table>
     <thead>
       <tr><th>Rule</th><th>Schedule (UTC / ET)</th><th>Description</th></tr>
@@ -596,6 +596,8 @@
       <tr><td><strong>Post Notifications</strong></td><td><code>cron(0 * * * ? *)</code> &mdash; hourly</td><td>T-24h/T-1h admin notifications for upcoming posts</td></tr>
       <tr><td><strong>Pickle Rebuild</strong></td><td><code>cron(0 1 ? * SUN *)</code> &mdash; Sat 8:00 PM ET</td><td>Weekly full pickle rebuild (catches new universe symbols)</td></tr>
       <tr><td><strong>Lambda Warmer</strong></td><td><code>rate(5 minutes)</code></td><td>Keep Worker Lambda warm</td></tr>
+      <tr><td><strong>Admin Morning Health</strong> <em>(Apr 2026)</em></td><td><code>cron(0 11 ? * MON-FRI *)</code> &mdash; 7:00 AM ET</td><td>Morning digest: indicator validity, signal counts, pipeline step status, regime. Alerts if any red flags.</td></tr>
+      <tr><td><strong>Nightly Data Hygiene</strong> <em>(Apr 2026)</em></td><td><code>cron(30 22 ? * MON-FRI *)</code> &mdash; 6:30 PM ET</td><td>Layer 2: asset-ID integrity check + Alpaca corp-actions poll → auto-refetch splits → diagnose + admin email</td></tr>
     </tbody>
   </table>
 </div>
@@ -875,21 +877,46 @@
   <div class="feature-grid no-break">
     <div class="feature-card" style="border-left-color: var(--gold);">
       <h4>Dual-Source Ingestion</h4>
-      <p>Alpaca SIP (primary) + yfinance (fallback). Daily download of 252-day rolling OHLCV for 4,000+ symbols. Auto-failover with health tracking. Index symbols (^VIX, ^GSPC) always route to yfinance.</p>
+      <p>Alpaca SIP (primary, <code>Adjustment.SPLIT</code>) + yfinance (fallback). Daily download of 252-day rolling OHLCV for 4,500+ symbols. Auto-failover. Split-adjustment made permanent Apr 2026 to prevent unadjusted-split artifacts (NVDA/GOOG/AMZN class of bugs).</p>
     </div>
     <div class="feature-card" style="border-left-color: var(--green);">
-      <h4>S3 Pickle Cache</h4>
-      <p>Price data persisted to S3 as gzipped pickle (~179 MB compressed, ~2+ GB uncompressed, 7,381 symbols). Worker Lambda loads on cold start. Weekly rebuild via EventBridge.</p>
+      <h4>S3 Pickle Cache (primary read)</h4>
+      <p><code>prices/all_data.pkl.gz</code> — gzipped pickle, ~275 MB compressed, 4,500+ symbols. Worker Lambda loads on cold start. Rebuilt on every daily scan and nightly hygiene run.</p>
+    </div>
+    <div class="feature-card" style="border-left-color: #c9a94e;">
+      <h4>S3 Parquet Shadow (added Apr 2026)</h4>
+      <p>Parallel write to <code>prices/all_data.parquet</code> on every scan and hygiene run. Columnar zstd compression, schema-enforced via pyarrow. Enables partial reads (one symbol without loading the full blob) and DuckDB SQL queries. Staged migration path: parquet will replace pickle post-AL2023 Lambda upgrade.</p>
     </div>
     <div class="feature-card" style="border-left-color: var(--navy);">
       <h4>In-Memory Cache</h4>
-      <p>ScannerService maintains <code>data_cache: Dict[str, DataFrame]</code> in Lambda memory. 600-800MB typical footprint.</p>
+      <p><code>ScannerService.data_cache: Dict[str, DataFrame]</code>. 1.5-2 GB footprint on Worker Lambda (4 GB configured).</p>
     </div>
     <div class="feature-card" style="border-left-color: #8b5cf6;">
       <h4>CDN Pre-computation</h4>
       <p>Dashboard JSON exported to S3 daily. CloudFront serves with 1-hour TTL for zero-latency dashboard loads.</p>
     </div>
+    <div class="feature-card" style="border-left-color: #ef4444;">
+      <h4>Data Integrity Filters (Apr 2026)</h4>
+      <p>Scanner + backtester enforce <code>_is_data_quality_ok()</code> before a symbol enters candidates: rejects price/DWAP ratios &gt; 50× or &lt; 0.02, abrupt single-day moves &gt; 65% (log-return &gt; 0.5), and &gt;10-day gaps between bars (ticker-reuse signature). Catches unadjusted splits, stitched histories, and delisting artifacts in real time.</p>
+    </div>
+    <div class="feature-card" style="border-left-color: #0ea5e9;">
+      <h4>DuckDB SQL Layer (Apr 2026)</h4>
+      <p>Ad-hoc SQL queries over the S3 parquet via <code>data_export_service.query_parquet()</code>. Lambda-compatible (downloads parquet to <code>/tmp</code> due to AL2 glibc; AL2023 upgrade will enable native httpfs). Powers the <code>parquet_diagnose</code> handler for universe-wide corruption scans in seconds.</p>
+    </div>
   </div>
+
+  <h3>Layer 2 Data Hygiene — Nightly Pipeline (added Apr 15 2026)</h3>
+  <p>Automated protection against silent data drift from corporate actions. Runs every weekday at 6:30 PM ET via <code>nightly_data_hygiene</code> EventBridge rule:</p>
+  <ol style="font-size: 0.88rem; line-height: 1.7;">
+    <li><strong>Asset-ID verification</strong> — compares each symbol's stored Alpaca asset UUID to the current value. Any change signals ticker reuse → auto-quarantine + admin alert.</li>
+    <li><strong>Corp-actions poll</strong> — queries Alpaca corporate-actions API for splits, dividends, spinoffs, mergers, delistings in the last 36h. 600+ events typical per day.</li>
+    <li><strong>Split auto-refetch</strong> — for each detected split, fetches clean split-adjusted history with <code>Adjustment.SPLIT</code>, overwrites in cache.</li>
+    <li><strong>Dual-store re-export</strong> — updated cache written to both S3 pickle AND parquet (keeps stores in lockstep).</li>
+    <li><strong>Post-actions diagnose</strong> — DuckDB corruption scan over the fresh parquet; flags anomalies above thresholds.</li>
+    <li><strong>Admin digest email</strong> — tiered status (Healthy vs Attention Needed). Auto-remediated items (splits fixed, new symbols seen) appear as INFO; only true anomalies (ticker reuse, threshold breaches) escalate to Attention Needed.</li>
+  </ol>
+  <p>Supporting schema: <code>symbol_metadata</code> (one row per symbol with <code>asset_id</code> + <code>status</code>: active/inactive/quarantined) and <code>symbol_metadata_events</code> (audit log of every corp action detected, with handler result).</p>
+  <p>Scanner consumes the quarantine list via <code>symbol_metadata_service.get_excluded_symbols()</code> at the start of each scan — quarantined symbols are silently excluded from signal generation with zero latency impact.</p>
 
   <h2>6. Backend Services</h2>
   <p>
