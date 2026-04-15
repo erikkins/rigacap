@@ -53,6 +53,22 @@ V2_PARAM_SPACES: Dict[str, Dict[str, Any]] = {
         # --- Lever 7: Sector rotation ---
         # 0=disabled. Previous min=1 was always-on, reducing opportunity set.
         "sector_cap": {"low": 0, "high": 4, "step": 1},
+
+        # --- Lever 8: Profit-based stop tightening ---
+        # As profit grows, tighten trailing stop to protect gains.
+        # breakeven_pct: once up X%, move stop to entry price (0=disabled)
+        # profit_lock_pct: once up X%, tighten trailing stop (0=disabled)
+        # profit_lock_stop_pct: what the tightened trailing stop becomes (% from peak)
+        "breakeven_pct": {"low": 0, "high": 10, "step": 2},
+        "profit_lock_pct": {"low": 0, "high": 20, "step": 2},
+        "profit_lock_stop_pct": {"low": 3.0, "high": 8.0, "step": 1.0},
+
+        # --- Lever 9: Anti-squeeze filters (added Apr 14 2026 after Feb 2021
+        # meme-stock squeeze damage analysis: EH -58%, TLRY -50%, LCID -39%).
+        # These filters reject candidates that are already parabolic.
+        # 1000 = disabled sentinel.
+        "max_recent_return_pct": {"low": 30, "high": 1000, "step": 10},   # reject if up > X% in last 30 days
+        "price_velocity_cap_pct": {"low": 15, "high": 1000, "step": 5},    # reject if up > X% in last 5 days
     },
 }
 
@@ -90,6 +106,11 @@ V2_CONSTRAINED_PARAM_SPACES: Dict[str, Dict[str, Any]] = {
 
         # Sector cap: disabled (proven best)
         "sector_cap": {"low": 0, "high": 2, "step": 1},
+
+        # Profit-based stop tightening (constrained: narrower)
+        "breakeven_pct": {"low": 4, "high": 8, "step": 2},
+        "profit_lock_pct": {"low": 8, "high": 16, "step": 2},
+        "profit_lock_stop_pct": {"low": 4.0, "high": 7.0, "step": 1.0},
     },
 }
 
@@ -115,6 +136,15 @@ V2_MEDIUM_PARAM_SPACES: Dict[str, Dict[str, Any]] = {
         "hybrid_trailing_pct": {"low": 8.0, "high": 8.0, "step": 1.0},
         "max_hold_days": {"low": 60, "high": 60, "step": 10},
         "sector_cap": {"low": 0, "high": 3, "step": 1},
+
+        # Profit-based stop tightening
+        "breakeven_pct": {"low": 0, "high": 10, "step": 2},
+        "profit_lock_pct": {"low": 0, "high": 20, "step": 2},
+        "profit_lock_stop_pct": {"low": 3.0, "high": 8.0, "step": 1.0},
+
+        # Anti-squeeze (same bounds as V2)
+        "max_recent_return_pct": {"low": 30, "high": 1000, "step": 10},
+        "price_velocity_cap_pct": {"low": 15, "high": 1000, "step": 5},
     },
 }
 

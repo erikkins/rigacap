@@ -57,6 +57,20 @@ class StrategyParams:
     max_hold_days: int = 60
     sector_cap: int = 0                     # Max positions per sector; 0 = disabled
 
+    # V2 lever 8: Profit-based stop tightening
+    breakeven_pct: float = 0               # Move stop to entry once up X%; 0=disabled
+    profit_lock_pct: float = 0             # Tighten trailing stop once up X%; 0=disabled
+    profit_lock_stop_pct: float = 5.0      # Tightened trailing stop % from peak
+
+    # V2 lever 10: Pyramiding (doubling down on winners)
+    pyramid_threshold_pct: float = 0       # Add to position once up X%; 0=disabled
+    pyramid_size_pct: float = 0.0          # Add-on size as % of initial capital
+    pyramid_max_adds: int = 0              # Max pyramid adds per position; 0=disabled
+
+    # V2 lever 9: Anti-squeeze filters (Apr 14 2026, after Feb 2021 damage)
+    max_recent_return_pct: float = 1000    # Reject candidate if up > X% in last 30 days; 1000=disabled
+    price_velocity_cap_pct: float = 1000   # Reject candidate if up > X% in last 5 days; 1000=disabled
+
     @classmethod
     def from_json(cls, json_str: str) -> "StrategyParams":
         """Create StrategyParams from JSON string"""
@@ -115,6 +129,20 @@ class CustomBacktester(BacktesterService):
         self.hybrid_trailing_pct = params.hybrid_trailing_pct
         self.max_hold_days = params.max_hold_days
         self.sector_cap = params.sector_cap
+
+        # V2 lever 8: Profit-based stop tightening
+        self.breakeven_pct = params.breakeven_pct
+        self.profit_lock_pct = params.profit_lock_pct
+        self.profit_lock_stop_pct = params.profit_lock_stop_pct
+
+        # V2 lever 10: Pyramiding
+        self.pyramid_threshold_pct = params.pyramid_threshold_pct
+        self.pyramid_size_pct = params.pyramid_size_pct
+        self.pyramid_max_adds = params.pyramid_max_adds
+
+        # V2 lever 9: Anti-squeeze filters
+        self.max_recent_return_pct = params.max_recent_return_pct
+        self.price_velocity_cap_pct = params.price_velocity_cap_pct
 
 
 class StrategyAnalyzerService:

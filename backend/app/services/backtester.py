@@ -773,6 +773,24 @@ class BacktesterService:
                 if not pd.isna(current_rsi) and current_rsi > self.rsi_oversold_filter:
                     return None
 
+        # V2 Lever 9: Anti-squeeze filters (Apr 14 2026)
+        # Reject if stock has already run parabolically — this is what hit us
+        # in Feb 2021 (EH -58%, TLRY -50%, LCID -39% were all top-ranked by
+        # momentum BUT already mid-squeeze when we entered).
+        if getattr(self, 'max_recent_return_pct', 1000) < 1000 and loc >= 30:
+            close_30d_ago = df['close'].iloc[loc - 30]
+            if close_30d_ago > 0:
+                pct_30d = (price / close_30d_ago - 1) * 100
+                if pct_30d > self.max_recent_return_pct:
+                    return None
+
+        if getattr(self, 'price_velocity_cap_pct', 1000) < 1000 and loc >= 5:
+            close_5d_ago = df['close'].iloc[loc - 5]
+            if close_5d_ago > 0:
+                pct_5d = (price / close_5d_ago - 1) * 100
+                if pct_5d > self.price_velocity_cap_pct:
+                    return None
+
         # Calculate momentum
         short_mom_price = df.iloc[loc - self.short_mom_days]['close']
         long_mom_price = df.iloc[loc - self.long_mom_days]['close']
