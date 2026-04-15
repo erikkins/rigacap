@@ -3760,6 +3760,43 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"error": str(e)[:500]}
 
+    # Debug: raw Alpaca asset API probe — surfaces the exact error
+    # {"alpaca_asset_probe": {"symbol": "AAPL"}}
+    if event.get("alpaca_asset_probe"):
+        cfg = event.get("alpaca_asset_probe") or {}
+        symbol = cfg.get("symbol", "AAPL")
+        paper = cfg.get("paper", False)
+        try:
+            from alpaca.trading.client import TradingClient
+            from app.core.config import settings as _settings
+            client = TradingClient(
+                api_key=_settings.ALPACA_API_KEY,
+                secret_key=_settings.ALPACA_SECRET_KEY,
+                paper=paper,
+            )
+            asset = client.get_asset(symbol)
+            return {
+                "status": "ok",
+                "symbol": symbol,
+                "paper": paper,
+                "asset_id": str(asset.id) if asset and asset.id else None,
+                "class": str(asset.asset_class) if asset else None,
+                "tradable": bool(getattr(asset, "tradable", False)),
+                "name": getattr(asset, "name", None),
+                "has_attributes": hasattr(asset, "attributes"),
+                "attributes_type": type(getattr(asset, "attributes", None)).__name__,
+            }
+        except Exception as e:
+            import traceback
+            return {
+                "status": "error",
+                "symbol": symbol,
+                "paper": paper,
+                "error_type": type(e).__name__,
+                "error": str(e)[:500],
+                "trace": traceback.format_exc()[:800],
+            }
+
     # Alpaca corporate actions API test — check if paid-tier access works
     # {"alpaca_corp_actions_test": {"symbols": ["NVDA", "AAPL"], "days_back": 365}}
     if event.get("alpaca_corp_actions_test"):
