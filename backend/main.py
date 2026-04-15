@@ -4728,10 +4728,13 @@ def handler(event, context):
             except Exception as e:
                 return {"error": f"Failed to load dashboard.json: {e}"}
 
-            # Query last 2 weeks of fresh signals for delayed-reveal track record
-            # Only needed when show_symbols=False (free-list audience)
+            # Query last 2 weeks of fresh signals for delayed-reveal track record.
+            # Free-list recipients see this in place of live tickers. Paid
+            # recipients get live tickers instead (last_weeks_fresh ignored
+            # inside the template when show_symbols=True). Build it unconditionally
+            # since a single run can mix paid and free recipients.
             last_weeks_fresh = []
-            if not show_symbols:
+            if True:
                 try:
                     from sqlalchemy import select, and_, desc as sa_desc
                     today = datetime.now().date()
@@ -4767,33 +4770,62 @@ def handler(event, context):
                 except Exception as _qe:
                     print(f"⚠️ last_weeks_fresh query failed: {_qe}")
 
-            # Recipients: explicit target_emails (test mode) OR the full
-            # market_measured free list from newsletter_preferences.
+            # Build per-recipient list with correct show_symbols decision.
+            # Paid/trial subscribers (users table + active/trial Subscription)
+            # get show_symbols=True. Free-list subscribers (newsletter_preferences)
+            # get show_symbols=False. If someone's in both, paid wins (and they
+            # get one email, not two).
+            from sqlalchemy import select as _sel
+            from app.core.database import (
+                NewsletterPreference as _NP, User as _User,
+                Subscription as _Sub,
+            )
+            paid_emails: set = set()
+            free_emails: set = set()
+
             if target_emails:
-                recipients = target_emails
+                # Test mode: honor explicit show_symbols flag for test recipients
+                if show_symbols:
+                    paid_emails = {e.strip().lower() for e in target_emails}
+                else:
+                    free_emails = {e.strip().lower() for e in target_emails}
             else:
-                from sqlalchemy import select as _sel
-                from app.core.database import NewsletterPreference as _NP
-                async with async_session() as _np_db:
-                    _rows = (await _np_db.execute(
+                async with async_session() as _q_db:
+                    paid_rows = (await _q_db.execute(
+                        _sel(_User.email).join(
+                            _Sub, _Sub.user_id == _User.id
+                        ).where(_Sub.status.in_(["active", "trial"]))
+                    )).all()
+                    paid_emails = {r[0].strip().lower() for r in paid_rows if r[0]}
+
+                    free_rows = (await _q_db.execute(
                         _sel(_NP.email).where(
                             _NP.report_type == "market_measured",
                             _NP.unsubscribed_at.is_(None),
                         )
                     )).all()
-                recipients = [r[0] for r in _rows]
-                if not recipients:
-                    print("📭 Market, Measured: no active subscribers, skipping send")
-                    return {"status": "ok", "sent": 0, "failed": [], "recipients": 0,
-                            "show_symbols": show_symbols, "track_record_entries": len(last_weeks_fresh)}
+                    free_emails = {r[0].strip().lower() for r in free_rows}
+
+            # Paid wins on overlap — non-subscribers NEVER see tickers
+            free_emails -= paid_emails
+            per_recipient = (
+                [(e, True) for e in sorted(paid_emails)]
+                + [(e, False) for e in sorted(free_emails)]
+            )
+            if not per_recipient:
+                print("📭 Market, Measured: no recipients, skipping send")
+                return {"status": "ok", "sent": 0, "failed": [], "recipients": 0,
+                        "paid_count": 0, "free_count": 0,
+                        "track_record_entries": len(last_weeks_fresh)}
+            print(f"📨 Market, Measured: {len(paid_emails)} paid + {len(free_emails)} free = {len(per_recipient)} total")
             sent = 0
             failed = []
-            for email in recipients:
+            for email, recipient_show_symbols in per_recipient:
                 try:
                     ok = await email_service.send_market_measured(
                         to_email=email,
                         dashboard_data=dashboard_data,
-                        show_symbols=show_symbols,
+                        show_symbols=recipient_show_symbols,
                         last_weeks_fresh=last_weeks_fresh,
                     )
                     if ok:
@@ -4806,8 +4838,9 @@ def handler(event, context):
                 "status": "ok",
                 "sent": sent,
                 "failed": failed,
-                "recipients": len(recipients),
-                "show_symbols": show_symbols,
+                "recipients": len(per_recipient),
+                "paid_count": len(paid_emails),
+                "free_count": len(free_emails),
                 "track_record_entries": len(last_weeks_fresh),
             }
 
