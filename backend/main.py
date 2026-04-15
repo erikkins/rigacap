@@ -3522,19 +3522,28 @@ def handler(event, context):
             # 6. Admin digest email
             try:
                 from app.services.email_service import admin_email_service
-                flags = []
+                # Tier flags: critical ones escalate status; info items stay
+                # in a separate section so "auto-fixed a split" doesn't read
+                # like an emergency.
+                critical_flags = []
+                info_flags = []
                 if tally["reused"] > 0:
-                    flags.append(f"🚨 {tally['reused']} ticker-reuse detected: {reused_symbols[:10]}")
-                if tally["missing_in_alpaca"] > 10:
-                    flags.append(f"⚠️ {tally['missing_in_alpaca']} symbols missing in Alpaca")
-                if refetch_result and refetch_result.get("refetched", 0) > 0:
-                    flags.append(f"🔧 Force-refetched {refetch_result['refetched']} symbols after split detection")
+                    critical_flags.append(f"🚨 {tally['reused']} ticker-reuse detected: {reused_symbols[:10]}")
+                if tally["missing_in_alpaca"] > 20:
+                    critical_flags.append(f"⚠️ {tally['missing_in_alpaca']} symbols missing in Alpaca (>20 threshold)")
                 dirty_total = diag.get("total_dirty_symbols") if isinstance(diag, dict) else None
                 if dirty_total and dirty_total > 1500:
-                    flags.append(f"⚠️ Universe dirty count {dirty_total} above 1500 threshold")
+                    critical_flags.append(f"⚠️ Universe dirty count {dirty_total} above 1500 threshold")
 
-                status_word = "Healthy" if not flags else "Attention Needed"
-                emoji = "✅" if not flags else "🚨"
+                if refetch_result and refetch_result.get("refetched", 0) > 0:
+                    info_flags.append(f"🔧 Auto-fixed {refetch_result['refetched']} split(s) via SPLIT-adjusted refetch")
+                if tally["new"] > 0:
+                    info_flags.append(f"🆕 {tally['new']} new symbols added to metadata")
+                if 0 < tally["missing_in_alpaca"] <= 20:
+                    info_flags.append(f"ℹ️ {tally['missing_in_alpaca']} symbols missing in Alpaca (below alarm threshold)")
+
+                status_word = "Healthy" if not critical_flags else "Attention Needed"
+                emoji = "✅" if not critical_flags else "🚨"
 
                 html_lines = [
                     f"<h2>{emoji} Data Hygiene: {status_word}</h2>",
@@ -3552,9 +3561,14 @@ def handler(event, context):
                     f"<li>Split symbols: {len(split_symbols)}</li>",
                     f"</ul>",
                 ]
-                if flags:
-                    html_lines.append("<h3>Flags</h3><ul>")
-                    for f in flags:
+                if critical_flags:
+                    html_lines.append("<h3>⚠️ Needs Attention</h3><ul>")
+                    for f in critical_flags:
+                        html_lines.append(f"<li>{f}</li>")
+                    html_lines.append("</ul>")
+                if info_flags:
+                    html_lines.append("<h3>ℹ️ Auto-Remediated / Informational</h3><ul>")
+                    for f in info_flags:
                         html_lines.append(f"<li>{f}</li>")
                     html_lines.append("</ul>")
                 html = "\n".join(html_lines)
