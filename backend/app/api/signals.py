@@ -1361,7 +1361,9 @@ async def _get_positions_with_guidance(db: AsyncSession, user, regime_forecast_d
                 trailing_stop_pct=settings.TRAILING_STOP_PCT,
             )
     except Exception as e:
-        print(f"Positions guidance error: {e}")
+        import traceback
+        print(f"⚠️ Positions guidance error: {e}")
+        print(traceback.format_exc()[:2000])
 
     return positions_with_guidance
 

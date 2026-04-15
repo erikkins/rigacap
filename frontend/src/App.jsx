@@ -231,7 +231,11 @@ const ErrorDisplay = ({ message, onRetry }) => (
 
 // Buy Modal Component
 const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanced', timeTravelDate = null }) => {
-  const [shares, setShares] = useState(Math.floor(10000 / price)); // Default ~$10k position
+  // Default to ~$10k position. Clamp to avoid 9999-share nonsense when `price`
+  // falls through its fallback chain to 0 or arrives as a near-$1 artifact.
+  const [shares, setShares] = useState(
+    price > 1 ? Math.max(1, Math.floor(10000 / price)) : 100
+  );
   const [entryPrice, setEntryPrice] = useState(price);
   const [submitting, setSubmitting] = useState(false);
 
@@ -4145,7 +4149,7 @@ function Dashboard() {
             pnl_pct: 0,
             days_held: 0,
             high_water_mark: positionData.entry_price,
-            trailing_stop_price: positionData.stop_loss,
+            trailing_stop_level: positionData.stop_loss ?? positionData.entry_price * 0.88,
             trailing_stop_pct: 12,
             distance_to_stop_pct: 12,
             sell_signal: 'hold',
