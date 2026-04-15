@@ -601,6 +601,12 @@ class ScannerService:
         candidates = []
         signal_universe = self._get_signal_universe()
 
+        # Layer 2 dynamic exclusions (ticker-reuse, delisted, quarantined
+        # symbols from symbol_metadata). Populated by the async caller via
+        # scanner_service.set_dynamic_excluded_symbols() before calling this.
+        # Empty set fallback so legacy sync call paths still work.
+        dynamic_excluded: set = getattr(self, '_dynamic_excluded', set())
+
         # Liquidity tier bonus: top N symbols get a composite score boost
         tier1_bonus = settings.SIGNAL_TIER1_BONUS
         tier1_set: set = set()
@@ -612,6 +618,8 @@ class ScannerService:
             if signal_universe is not None and symbol not in signal_universe:
                 continue
             if symbol in _EXCLUDED_SET:
+                continue
+            if symbol in dynamic_excluded:
                 continue
 
             df = self.data_cache[symbol]
@@ -836,6 +844,20 @@ class ScannerService:
         if as_of_date:
             refresh_data = False
 
+        # Refresh the Layer 2 dynamic exclusion set (quarantined/inactive
+        # symbols from symbol_metadata table). Populated on self so the
+        # sync helpers (rank_stocks_momentum, _check_signal iteration)
+        # can read it without hitting the DB themselves.
+        try:
+            from app.services.symbol_metadata_service import symbol_metadata_service
+            excluded = await symbol_metadata_service.get_excluded_symbols()
+            self._dynamic_excluded = set(excluded)
+            if excluded:
+                logger.info(f"Layer 2: excluding {len(excluded)} quarantined/inactive symbols")
+        except Exception as _e:
+            logger.warning(f"Layer 2 exclusion lookup skipped: {_e}")
+            self._dynamic_excluded = set()
+
         # In Lambda mode, always try to load from S3 cache first (faster than yfinance)
         import os
         is_lambda = os.environ.get("ENVIRONMENT") == "prod"
@@ -886,11 +908,14 @@ class ScannerService:
 
         self.signals = []
         signal_universe = self._get_signal_universe()
+        dynamic_excluded: set = getattr(self, '_dynamic_excluded', set())
 
         for symbol in self.data_cache:
             if signal_universe is not None and symbol not in signal_universe:
                 continue
             if symbol in _EXCLUDED_SET:
+                continue
+            if symbol in dynamic_excluded:
                 continue
             signal = self.analyze_stock(symbol, as_of_date=as_of_date)
             if not signal:
