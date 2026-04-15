@@ -682,22 +682,30 @@ class DataExportService:
 
     def diagnose_corruption(self) -> Dict:
         """
-        DuckDB-powered corruption scan across the universe. Runs several SQL
-        queries against the parquet file to surface data quality issues
-        without loading the full cache into memory.
+        DuckDB-powered corruption scan across the universe. Runs SEPARATE
+        count + examples queries per category so the reported totals are
+        accurate (prior version reported the LIMIT, not the actual count).
 
-        Returns counts + example rows per corruption category:
-        - abrupt_jumps: single-day |log return| > 0.5 (likely unadjusted splits)
-        - dwap_ratio_extreme: close/dwap > 2.0 or < 0.5 (corrupted series)
-        - stale_volume: today's volume < 1% of 200-day avg (halt/delist)
-        - date_gaps: >10 calendar days between consecutive rows (ticker reuse)
-        - short_history: < 252 trading days (insufficient for indicators)
+        Categories:
+        - abrupt_jumps: distinct symbols with any single-day |log return| > 0.5
+        - dwap_ratio_extreme: symbols where latest close/dwap > 2.0 or < 0.5
+        - date_gaps: symbols with any >10-day gap between rows (ticker reuse)
+        - short_history: symbols with < 252 rows
+        - low_recent_volume: latest volume < 1% of 200-day avg (halt/delist)
         """
         try:
             results = {}
 
-            # Abrupt jumps
-            df = self.query_parquet("""
+            # --- Abrupt jumps (unique symbols affected) ---
+            count = self.query_parquet("""
+                WITH jumps AS (
+                    SELECT symbol, close, LAG(close) OVER (PARTITION BY symbol ORDER BY date) AS prev_close
+                    FROM prices
+                )
+                SELECT COUNT(DISTINCT symbol) AS n FROM jumps
+                WHERE prev_close > 0 AND close > 0 AND ABS(LN(close/prev_close)) > 0.5
+            """).iloc[0]['n']
+            examples = self.query_parquet("""
                 WITH jumps AS (
                     SELECT symbol, date, close,
                            LAG(close) OVER (PARTITION BY symbol ORDER BY date) AS prev_close
@@ -706,18 +714,26 @@ class DataExportService:
                 SELECT symbol, date, prev_close, close,
                        ROUND(((close/prev_close - 1) * 100)::DECIMAL(10,2), 2) AS pct_change
                 FROM jumps
-                WHERE prev_close > 0 AND close > 0
-                  AND ABS(LN(close/prev_close)) > 0.5
+                WHERE prev_close > 0 AND close > 0 AND ABS(LN(close/prev_close)) > 0.5
                 ORDER BY ABS(LN(close/prev_close)) DESC
                 LIMIT 10
             """)
             results['abrupt_jumps'] = {
-                'count': len(df),
-                'examples': df.head(10).to_dict(orient='records'),
+                'total_symbols': int(count),
+                'examples': examples.to_dict(orient='records'),
             }
 
-            # DWAP ratio extremes (latest bar only)
-            df = self.query_parquet("""
+            # --- DWAP ratio extremes (latest bar only) ---
+            count = self.query_parquet("""
+                WITH latest AS (
+                    SELECT symbol, close, dwap,
+                           ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY date DESC) AS rn
+                    FROM prices
+                )
+                SELECT COUNT(*) AS n FROM latest
+                WHERE rn = 1 AND dwap > 0 AND (close/dwap > 2.0 OR close/dwap < 0.5)
+            """).iloc[0]['n']
+            examples = self.query_parquet("""
                 WITH latest AS (
                     SELECT symbol, close, dwap,
                            ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY date DESC) AS rn
@@ -727,44 +743,78 @@ class DataExportService:
                 FROM latest
                 WHERE rn = 1 AND dwap > 0 AND (close/dwap > 2.0 OR close/dwap < 0.5)
                 ORDER BY ABS(close/dwap - 1) DESC
-                LIMIT 20
+                LIMIT 10
             """)
             results['dwap_ratio_extreme'] = {
-                'count': len(df),
-                'examples': df.head(10).to_dict(orient='records'),
+                'total_symbols': int(count),
+                'examples': examples.to_dict(orient='records'),
             }
 
-            # Date gaps
-            df = self.query_parquet("""
+            # --- Date gaps (ticker reuse signature) ---
+            count = self.query_parquet("""
                 WITH gaps AS (
-                    SELECT symbol, date,
-                           date_diff('day', LAG(date) OVER (PARTITION BY symbol ORDER BY date), date) AS gap
+                    SELECT symbol, date_diff('day', LAG(date) OVER (PARTITION BY symbol ORDER BY date), date) AS gap
+                    FROM prices
+                )
+                SELECT COUNT(DISTINCT symbol) AS n FROM gaps WHERE gap > 10
+            """).iloc[0]['n']
+            examples = self.query_parquet("""
+                WITH gaps AS (
+                    SELECT symbol, date_diff('day', LAG(date) OVER (PARTITION BY symbol ORDER BY date), date) AS gap
                     FROM prices
                 )
                 SELECT symbol, MAX(gap) AS max_gap_days
-                FROM gaps
-                WHERE gap > 10
+                FROM gaps WHERE gap > 10
                 GROUP BY symbol
                 ORDER BY max_gap_days DESC
-                LIMIT 20
+                LIMIT 10
             """)
             results['date_gaps'] = {
-                'count': len(df),
-                'examples': df.head(10).to_dict(orient='records'),
+                'total_symbols': int(count),
+                'examples': examples.to_dict(orient='records'),
             }
 
-            # Short history
-            df = self.query_parquet("""
-                SELECT symbol, COUNT(*) AS rows
-                FROM prices
-                GROUP BY symbol
-                HAVING COUNT(*) < 252
-                ORDER BY rows ASC
-                LIMIT 20
+            # --- Short history ---
+            count = self.query_parquet("""
+                SELECT COUNT(*) AS n FROM (
+                    SELECT symbol FROM prices GROUP BY symbol HAVING COUNT(*) < 252
+                )
+            """).iloc[0]['n']
+            examples = self.query_parquet("""
+                SELECT symbol, COUNT(*) AS rows FROM prices
+                GROUP BY symbol HAVING COUNT(*) < 252
+                ORDER BY rows ASC LIMIT 10
             """)
             results['short_history'] = {
-                'count': len(df),
-                'examples': df.head(10).to_dict(orient='records'),
+                'total_symbols': int(count),
+                'examples': examples.to_dict(orient='records'),
+            }
+
+            # --- Low recent volume (halt/delist signature) ---
+            count = self.query_parquet("""
+                WITH latest AS (
+                    SELECT symbol, volume, vol_avg,
+                           ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY date DESC) AS rn
+                    FROM prices
+                )
+                SELECT COUNT(*) AS n FROM latest
+                WHERE rn = 1 AND vol_avg > 0 AND volume > 0 AND volume/vol_avg < 0.01
+            """).iloc[0]['n']
+            examples = self.query_parquet("""
+                WITH latest AS (
+                    SELECT symbol, volume, vol_avg,
+                           ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY date DESC) AS rn
+                    FROM prices
+                )
+                SELECT symbol, volume::BIGINT AS vol, vol_avg::BIGINT AS vol_avg,
+                       ROUND((volume/vol_avg)::DECIMAL(10,4), 4) AS ratio
+                FROM latest
+                WHERE rn = 1 AND vol_avg > 0 AND volume > 0 AND volume/vol_avg < 0.01
+                ORDER BY volume/vol_avg ASC LIMIT 10
+            """)
+            results['low_recent_volume'] = {
+                'total_symbols': int(count),
+                'examples': examples.to_dict(orient='records'),
             }
 
             # Overall stats
@@ -773,11 +823,51 @@ class DataExportService:
                     COUNT(DISTINCT symbol) AS symbols,
                     MIN(date) AS first_date,
                     MAX(date) AS last_date,
-                    COUNT(*) AS total_rows,
-                    ROUND(AVG(close)::DECIMAL(10,2), 2) AS avg_close
+                    COUNT(*) AS total_rows
                 FROM prices
             """)
             results['universe_stats'] = stats.iloc[0].to_dict()
+
+            # Union: all symbols flagged by ANY category — our "dirty" set
+            dirty = self.query_parquet("""
+                WITH jumps AS (
+                    SELECT symbol FROM (
+                        SELECT symbol, close, LAG(close) OVER (PARTITION BY symbol ORDER BY date) AS prev_close
+                        FROM prices
+                    ) WHERE prev_close > 0 AND close > 0 AND ABS(LN(close/prev_close)) > 0.5
+                ),
+                dwap_bad AS (
+                    SELECT symbol FROM (
+                        SELECT symbol, close, dwap,
+                               ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY date DESC) AS rn
+                        FROM prices
+                    ) WHERE rn = 1 AND dwap > 0 AND (close/dwap > 2.0 OR close/dwap < 0.5)
+                ),
+                gaps_bad AS (
+                    SELECT symbol FROM (
+                        SELECT symbol, date_diff('day', LAG(date) OVER (PARTITION BY symbol ORDER BY date), date) AS gap
+                        FROM prices
+                    ) WHERE gap > 10
+                ),
+                short_bad AS (
+                    SELECT symbol FROM prices GROUP BY symbol HAVING COUNT(*) < 252
+                ),
+                vol_bad AS (
+                    SELECT symbol FROM (
+                        SELECT symbol, volume, vol_avg,
+                               ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY date DESC) AS rn
+                        FROM prices
+                    ) WHERE rn = 1 AND vol_avg > 0 AND volume > 0 AND volume/vol_avg < 0.01
+                )
+                SELECT COUNT(DISTINCT symbol) AS n FROM (
+                    SELECT symbol FROM jumps
+                    UNION SELECT symbol FROM dwap_bad
+                    UNION SELECT symbol FROM gaps_bad
+                    UNION SELECT symbol FROM short_bad
+                    UNION SELECT symbol FROM vol_bad
+                )
+            """).iloc[0]['n']
+            results['total_dirty_symbols'] = int(dirty)
 
             # JSON-serialize: convert pandas/numpy types to python primitives
             def _sanitize(obj):
