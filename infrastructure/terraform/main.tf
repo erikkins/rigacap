@@ -902,6 +902,33 @@ resource "aws_lambda_permission" "weekly_regime_report" {
 }
 
 # ============================================================================
+# EventBridge - "Market, Measured" Weekly Newsletter (Sunday 7 PM ET)
+# 23:00 UTC during EDT. Free-list top-of-funnel — reads Sunday-evening
+# dashboard cache, queries newsletter_preferences for report_type='market_measured'.
+# ============================================================================
+
+resource "aws_cloudwatch_event_rule" "market_measured_weekly" {
+  name                = "${local.prefix}-market-measured-weekly"
+  description         = "Send weekly 'Market, Measured' newsletter every Sunday 7 PM ET"
+  schedule_expression = "cron(0 23 ? * SUN *)"
+}
+
+resource "aws_cloudwatch_event_target" "market_measured_weekly" {
+  rule      = aws_cloudwatch_event_rule.market_measured_weekly.name
+  target_id = "lambda-market-measured-weekly"
+  arn       = aws_lambda_function.worker.arn
+  input     = jsonencode({ market_measured = { _ = 1 } })
+}
+
+resource "aws_lambda_permission" "market_measured_weekly" {
+  statement_id  = "AllowMarketMeasuredWeeklyEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.worker.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.market_measured_weekly.arn
+}
+
+# ============================================================================
 # EventBridge - Double Signal Alerts (5 PM ET = 21:00 UTC during EDT)
 # ============================================================================
 

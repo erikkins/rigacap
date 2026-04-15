@@ -4767,8 +4767,25 @@ def handler(event, context):
                 except Exception as _qe:
                     print(f"⚠️ last_weeks_fresh query failed: {_qe}")
 
-            # For now only send to target_emails (future: pull free-list from DB)
-            recipients = target_emails or ["erik@rigacap.com"]
+            # Recipients: explicit target_emails (test mode) OR the full
+            # market_measured free list from newsletter_preferences.
+            if target_emails:
+                recipients = target_emails
+            else:
+                from sqlalchemy import select as _sel
+                from app.core.database import NewsletterPreference as _NP
+                async with async_session() as _np_db:
+                    _rows = (await _np_db.execute(
+                        _sel(_NP.email).where(
+                            _NP.report_type == "market_measured",
+                            _NP.unsubscribed_at.is_(None),
+                        )
+                    )).all()
+                recipients = [r[0] for r in _rows]
+                if not recipients:
+                    print("📭 Market, Measured: no active subscribers, skipping send")
+                    return {"status": "ok", "sent": 0, "failed": [], "recipients": 0,
+                            "show_symbols": show_symbols, "track_record_entries": len(last_weeks_fresh)}
             sent = 0
             failed = []
             for email in recipients:

@@ -130,7 +130,8 @@ class EmailService:
         subject: str,
         html_content: str,
         text_content: Optional[str] = None,
-        user_id: str = None
+        user_id: str = None,
+        list_unsubscribe_url: Optional[str] = None,
     ) -> bool:
         """
         Send an email to a single recipient with retry + exponential backoff.
@@ -162,7 +163,12 @@ class EmailService:
         msg['To'] = to_email
         msg['Reply-To'] = f"{FROM_NAME} <{FROM_EMAIL}>"
 
-        if user_id:
+        # An explicit unsubscribe URL (e.g. newsletter one-click link) wins
+        # over the user_id-derived paid-user unsubscribe.
+        if list_unsubscribe_url:
+            msg['List-Unsubscribe'] = f"<{list_unsubscribe_url}>"
+            msg['List-Unsubscribe-Post'] = "List-Unsubscribe=One-Click"
+        elif user_id:
             token = self._generate_email_token(str(user_id), purpose="email_unsubscribe")
             unsub_url = f"https://api.rigacap.com/auth/unsubscribe?token={token}"
             msg['List-Unsubscribe'] = f"<{unsub_url}>"
@@ -708,6 +714,19 @@ class EmailService:
         date_str = date.strftime("%B %d, %Y")
         subject_date = date.strftime("%B %-d")
 
+        # Segmented unsubscribe token — shared between List-Unsubscribe header
+        # (one-click) and the visible footer link so the footer matches the
+        # header exactly and both target only market_measured for this email.
+        from jose import jwt as _jose_jwt
+        from app.core.config import settings as _settings
+        _unsub_tok = _jose_jwt.encode(
+            {"email": to_email.strip().lower(), "report_type": "market_measured",
+             "purpose": "newsletter_unsubscribe"},
+            _settings.JWT_SECRET_KEY,
+            algorithm=_settings.JWT_ALGORITHM,
+        )
+        unsub_url = f"https://api.rigacap.com/api/public/newsletter/unsubscribe?token={_unsub_tok}"
+
         market_stats = dashboard_data.get('market_stats') or {}
         regime_name = market_stats.get('regime_name', 'Unknown')
         spy_price = market_stats.get('spy_price')
@@ -946,6 +965,8 @@ class EmailService:
             </p>
             <p style="margin: 12px 0 0 0; font-size: 11px; color: #9ca3af;">
                 &copy; {date.year} RigaCap, LLC. Not investment advice.
+                &nbsp;·&nbsp;
+                <a href="{unsub_url}" style="color:#9ca3af;text-decoration:underline;">Unsubscribe</a>
             </p>
         </td></tr>
     </table>
@@ -987,7 +1008,11 @@ Market, Measured. is a weekly reading from RigaCap.
 """
 
         subject = f"Market, Measured — {subject_date}"
-        return await self.send_email(to_email, subject, html, text, user_id=user_id)
+        return await self.send_email(
+            to_email, subject, html, text,
+            user_id=user_id,
+            list_unsubscribe_url=unsub_url,
+        )
 
     async def send_bulk_daily_summary(
         self,

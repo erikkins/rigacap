@@ -1214,6 +1214,8 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                 "- If it's a quiet day, keep it brief and confident.\n"
                 "- NEVER use the term 'VIX' — our audience is everyday investors. Say 'market fear' instead. "
                 "Example: 'market fear elevated at 28' not 'VIX at 28'.\n"
+                "- NEVER use the word 'tape' to mean the market. It's archaic trader jargon. "
+                "Say 'market', 'action', or 'the session' instead.\n"
                 "- You may receive today's top news headlines. If there is an extraordinary world event "
                 "(war, pandemic, historic crisis, major geopolitical escalation) that would rattle global markets, "
                 "open with ONE brief factual sentence connecting it to what the data shows. "
@@ -2892,6 +2894,117 @@ async def public_subscribe(
     db.add(subscriber)
     await db.commit()
     return {"success": True, "message": "You're in! Watch for your first report on Monday."}
+
+
+class NewsletterSubscribeRequest(BaseModel):
+    email: str
+    turnstile_token: str
+    report_type: str  # 'market_measured' | 'regime_report'
+    source: Optional[str] = None
+
+
+@public_router.post("/subscribe-newsletter")
+async def public_subscribe_newsletter(
+    req: NewsletterSubscribeRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Segmented newsletter signup. One row per (email, report_type) in
+    newsletter_preferences. Idempotent — re-submitting an unsubscribed
+    email resubscribes it."""
+    from app.services.turnstile import verify_turnstile
+    from app.core.database import NewsletterPreference
+    import re
+
+    if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', req.email):
+        raise HTTPException(status_code=400, detail="Invalid email address")
+    if req.report_type not in ("market_measured", "regime_report"):
+        raise HTTPException(status_code=400, detail="Unknown report_type")
+
+    if not await verify_turnstile(req.turnstile_token):
+        raise HTTPException(status_code=400, detail="Verification failed. Please try again.")
+
+    email_lower = req.email.strip().lower()
+
+    existing = (await db.execute(
+        select(NewsletterPreference).where(
+            NewsletterPreference.email == email_lower,
+            NewsletterPreference.report_type == req.report_type,
+        )
+    )).scalar_one_or_none()
+
+    if existing:
+        if existing.unsubscribed_at is None:
+            return {"success": True, "message": "You're already on the list."}
+        existing.unsubscribed_at = None
+        existing.subscribed_at = datetime.utcnow()
+        await db.commit()
+        return {"success": True, "message": "Welcome back — you're resubscribed."}
+
+    db.add(NewsletterPreference(
+        email=email_lower,
+        report_type=req.report_type,
+        source=req.source or "landing",
+    ))
+    await db.commit()
+
+    msg = (
+        "You're in. The market, measured — delivered Sundays."
+        if req.report_type == "market_measured"
+        else "You're in! Watch for your first report on Monday."
+    )
+    return {"success": True, "message": msg}
+
+
+@public_router.get("/newsletter/unsubscribe")
+async def public_newsletter_unsubscribe(
+    token: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Segmented unsubscribe: JWT carries (email, report_type). Only that
+    one row is flipped; other report subscriptions for the same email
+    remain active."""
+    from jose import jwt as jose_jwt, JWTError
+    from app.core.config import settings
+    from app.core.database import NewsletterPreference
+    from fastapi.responses import HTMLResponse
+
+    err_html = (
+        '<html><body style="font-family:sans-serif;text-align:center;padding:60px;'
+        'background:#0f172a;color:#e2e8f0;"><h2>Invalid or expired link</h2>'
+        '<p>Please contact support@rigacap.com</p></body></html>'
+    )
+
+    try:
+        payload = jose_jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        if payload.get("purpose") != "newsletter_unsubscribe":
+            raise JWTError("bad purpose")
+        email = payload.get("email")
+        report_type = payload.get("report_type")
+        if not email or not report_type:
+            raise JWTError("missing fields")
+    except JWTError:
+        return HTMLResponse(content=err_html, status_code=400)
+
+    pref = (await db.execute(
+        select(NewsletterPreference).where(
+            NewsletterPreference.email == email,
+            NewsletterPreference.report_type == report_type,
+        )
+    )).scalar_one_or_none()
+
+    if pref and pref.unsubscribed_at is None:
+        pref.unsubscribed_at = datetime.utcnow()
+        await db.commit()
+
+    label = "Market, Measured" if report_type == "market_measured" else "weekly regime report"
+    return HTMLResponse(
+        content=f'<html><body style="font-family:sans-serif;text-align:center;padding:60px;'
+        f'background:#0f172a;color:#e2e8f0;">'
+        f'<h2 style="color:#f59e0b;">Unsubscribed</h2>'
+        f'<p>You\'ve been removed from the {label}.</p>'
+        f'<p style="margin-top:24px;"><a href="https://rigacap.com" style="color:#818cf8;">'
+        f'Back to RigaCap</a></p></body></html>'
+    )
 
 
 @public_router.get("/unsubscribe")

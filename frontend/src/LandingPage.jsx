@@ -7,6 +7,7 @@ import {
 import { useAuth } from './contexts/AuthContext';
 import LoginModal from './components/LoginModal';
 import TrackRecordChart from './components/TrackRecordChart';
+import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 // ============================================================================
 // Landing Page Components
@@ -659,6 +660,14 @@ export default function LandingPage() {
       <PricingSection onGetStarted={handleGetStarted} />
       <TestimonialsSection />
       <FAQSection />
+
+      {/* Weekly newsletter — lower-commitment alternative to the trial CTA */}
+      <section className="bg-slate-50 py-16">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <MarketMeasuredSignup source="landing_below_faq" />
+        </div>
+      </section>
+
       <CTASection onGetStarted={handleGetStarted} />
       <Footer />
 

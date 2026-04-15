@@ -477,6 +477,27 @@ class EmailSubscriber(Base):
     unsubscribed_at = Column(DateTime, nullable=True)
 
 
+class NewsletterPreference(Base):
+    """Per-report newsletter subscription (one row per email × report_type).
+
+    Segmented so someone opted into 'market_measured' is not automatically on
+    'regime_report' and vice versa. Unsubscribing from one leaves the other
+    intact. `email_subscribers` above is the legacy flat model; this table
+    supersedes it for multi-report segmentation.
+    """
+    __tablename__ = "newsletter_preferences"
+    __table_args__ = (
+        UniqueConstraint("email", "report_type", name="newsletter_preferences_email_report_unique"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    email = Column(String(255), nullable=False, index=True)
+    report_type = Column(String(50), nullable=False)  # 'regime_report' | 'market_measured' | ...
+    subscribed_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    unsubscribed_at = Column(DateTime, nullable=True)
+    source = Column(String(50), nullable=True)  # where the signup happened
+
+
 class User(Base):
     """User account for authentication and subscription management"""
     __tablename__ = "users"
