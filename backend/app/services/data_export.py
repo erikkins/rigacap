@@ -657,12 +657,16 @@ class DataExportService:
 
         conn = duckdb.connect(':memory:')
         try:
-            # Set up S3 credentials for DuckDB's httpfs
             if self._use_s3():
                 import os
+                # Lambda has no $HOME — point DuckDB's extension dir to /tmp
+                # which is writable. Must be set BEFORE httpfs install.
+                conn.execute("SET home_directory='/tmp';")
+                conn.execute("SET extension_directory='/tmp/duckdb_extensions';")
                 conn.execute("INSTALL httpfs; LOAD httpfs;")
-                # DuckDB picks up AWS creds from env/role; Lambda has IAM
                 conn.execute(f"SET s3_region = '{os.environ.get('AWS_REGION', 'us-east-1')}';")
+                # Use IAM role credentials (Lambda has them via metadata service)
+                conn.execute("CREATE SECRET aws_creds (TYPE S3, PROVIDER CREDENTIAL_CHAIN);")
                 url = f"s3://{S3_BUCKET}/prices/all_data.parquet"
             else:
                 url = str(LOCAL_DATA_DIR / "all_data.parquet")
