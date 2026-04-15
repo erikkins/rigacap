@@ -1102,6 +1102,33 @@ resource "aws_lambda_permission" "onboarding_drip" {
 }
 
 # ============================================================================
+# EventBridge - Nightly Data Hygiene (6:30 PM ET = 22:30 UTC during EDT, weekdays)
+# Runs AFTER daily scan (4:30 PM) and daily emails (6 PM) complete.
+# Verifies asset_id integrity + polls corp actions + force-refetches splits.
+# ============================================================================
+
+resource "aws_cloudwatch_event_rule" "nightly_data_hygiene" {
+  name                = "${local.prefix}-nightly-data-hygiene"
+  description         = "Layer 2 data hygiene: corp-actions poll + asset-ID integrity check"
+  schedule_expression = "cron(30 22 ? * MON-FRI *)"
+}
+
+resource "aws_cloudwatch_event_target" "nightly_data_hygiene" {
+  rule      = aws_cloudwatch_event_rule.nightly_data_hygiene.name
+  target_id = "lambda-nightly-data-hygiene"
+  arn       = aws_lambda_function.worker.arn
+  input     = jsonencode({ nightly_data_hygiene = true })
+}
+
+resource "aws_lambda_permission" "nightly_data_hygiene" {
+  statement_id  = "AllowNightlyDataHygieneEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.worker.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.nightly_data_hygiene.arn
+}
+
+# ============================================================================
 # EventBridge - Admin Morning Health Check (7 AM ET = 11:00 UTC during EDT, weekdays)
 # ============================================================================
 

@@ -3414,6 +3414,180 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"status": "error", "error": str(e)}
 
+    # Layer 2 data hygiene: nightly corp-actions + asset-ID integrity check.
+    # Scheduled via EventBridge at 6 PM ET (between daily scan at 4:30 and
+    # overnight emails). Chains: verify asset IDs → poll corp actions →
+    # force-refetch on splits → parquet diagnose → admin digest.
+    # {"nightly_data_hygiene": {"_": 1}} or {"symbols": [...]} for subset test
+    if event.get("nightly_data_hygiene"):
+        cfg = event.get("nightly_data_hygiene") or {}
+        limit_symbols = cfg.get("symbols")  # optional subset for testing
+        print("🧹 Nightly data hygiene pipeline")
+
+        async def _hygiene():
+            from app.services.symbol_metadata_service import symbol_metadata_service
+            from app.services.data_export import data_export_service
+
+            # 1. Determine which symbols to verify
+            if limit_symbols:
+                symbols = limit_symbols
+            else:
+                # Use the scanner cache as the canonical universe
+                symbols = sorted(scanner_service.data_cache.keys()) if scanner_service.data_cache else []
+            if not symbols:
+                return {"error": "No symbols to verify"}
+
+            # 2. Asset-ID verification
+            print(f"🔍 Verifying asset IDs for {len(symbols)} symbols...")
+            verify_summary = await symbol_metadata_service.verify_asset_ids(symbols)
+            # Tally outcomes
+            tally = {"ok": 0, "new": 0, "reused": 0, "missing_in_alpaca": 0}
+            reused_symbols = []
+            missing_symbols = []
+            for sym, info in verify_summary.items():
+                st = info.get("status", "?")
+                if st in tally:
+                    tally[st] += 1
+                if st == "reused":
+                    reused_symbols.append(sym)
+                elif st == "missing_in_alpaca":
+                    missing_symbols.append(sym)
+
+            # 3. Corp-actions poll
+            print("📰 Polling corp-actions...")
+            corp_events = await symbol_metadata_service.poll_corp_actions(since_hours=36)
+            # Find splits specifically — these need force refetch
+            split_symbols = set()
+            for ev in corp_events:
+                if "split" in str(ev.get("event_type", "")).lower() and ev.get("symbol"):
+                    split_symbols.add(ev["symbol"])
+
+            # 4. Force refetch on detected splits (use the existing handler logic)
+            refetch_result = None
+            if split_symbols:
+                print(f"🔧 Force-refetching {len(split_symbols)} split symbols")
+                try:
+                    from datetime import datetime as _dt, timedelta as _td
+                    from alpaca.data.historical import StockHistoricalDataClient
+                    from alpaca.data.requests import StockBarsRequest
+                    from alpaca.data.timeframe import TimeFrame
+                    from alpaca.data.enums import DataFeed, Adjustment
+                    from app.core.config import settings as _settings
+                    import pandas as _pd
+                    client = StockHistoricalDataClient(
+                        api_key=_settings.ALPACA_API_KEY,
+                        secret_key=_settings.ALPACA_SECRET_KEY,
+                    )
+                    end = _dt.now()
+                    start = end - _td(days=7 * 365 + 30)
+                    req = StockBarsRequest(
+                        symbol_or_symbols=list(split_symbols),
+                        timeframe=TimeFrame.Day, start=start, end=end,
+                        feed=DataFeed.SIP, adjustment=Adjustment.SPLIT,
+                    )
+                    bars = client.get_stock_bars(req)
+                    refetched = 0
+                    for sym in split_symbols:
+                        rows = bars.data.get(sym, [])
+                        if not rows:
+                            continue
+                        df = _pd.DataFrame([{
+                            'open': b.open, 'high': b.high, 'low': b.low,
+                            'close': b.close, 'volume': b.volume,
+                            'date': b.timestamp.date(),
+                        } for b in rows])
+                        df['date'] = _pd.to_datetime(df['date'])
+                        df = df.set_index('date').sort_index()
+                        scanner_service.data_cache[sym] = df
+                        refetched += 1
+                    # Re-export pickle + parquet
+                    if refetched > 0:
+                        data_export_service.export_pickle(scanner_service.data_cache)
+                        try:
+                            data_export_service.export_parquet(scanner_service.data_cache)
+                        except Exception as _pe:
+                            print(f"⚠️ Shadow parquet after refetch failed: {_pe}")
+                    refetch_result = {"split_symbols": len(split_symbols), "refetched": refetched}
+                except Exception as e:
+                    import traceback
+                    print(f"❌ Split refetch failed: {e}")
+                    refetch_result = {"error": str(e)[:300]}
+
+            # 5. Post-actions diagnose (see what shape the universe is in)
+            try:
+                diag = data_export_service.diagnose_corruption()
+            except Exception as e:
+                diag = {"error": str(e)[:300]}
+
+            # 6. Admin digest email
+            try:
+                from app.services.email_service import admin_email_service
+                flags = []
+                if tally["reused"] > 0:
+                    flags.append(f"🚨 {tally['reused']} ticker-reuse detected: {reused_symbols[:10]}")
+                if tally["missing_in_alpaca"] > 10:
+                    flags.append(f"⚠️ {tally['missing_in_alpaca']} symbols missing in Alpaca")
+                if refetch_result and refetch_result.get("refetched", 0) > 0:
+                    flags.append(f"🔧 Force-refetched {refetch_result['refetched']} symbols after split detection")
+                dirty_total = diag.get("total_dirty_symbols") if isinstance(diag, dict) else None
+                if dirty_total and dirty_total > 1500:
+                    flags.append(f"⚠️ Universe dirty count {dirty_total} above 1500 threshold")
+
+                status_word = "Healthy" if not flags else "Attention Needed"
+                emoji = "✅" if not flags else "🚨"
+
+                html_lines = [
+                    f"<h2>{emoji} Data Hygiene: {status_word}</h2>",
+                    "<h3>Asset-ID Verification</h3>",
+                    f"<ul>",
+                    f"<li>Verified: {len(symbols)}</li>",
+                    f"<li>OK: {tally['ok']}</li>",
+                    f"<li>New (first-seen): {tally['new']}</li>",
+                    f"<li>Ticker-reuse (quarantined): {tally['reused']}</li>",
+                    f"<li>Missing in Alpaca: {tally['missing_in_alpaca']}</li>",
+                    f"</ul>",
+                    "<h3>Corporate Actions</h3>",
+                    f"<ul>",
+                    f"<li>Events detected (last 36h): {len(corp_events)}</li>",
+                    f"<li>Split symbols: {len(split_symbols)}</li>",
+                    f"</ul>",
+                ]
+                if flags:
+                    html_lines.append("<h3>Flags</h3><ul>")
+                    for f in flags:
+                        html_lines.append(f"<li>{f}</li>")
+                    html_lines.append("</ul>")
+                html = "\n".join(html_lines)
+
+                await admin_email_service.send_admin_alert(
+                    to_email="erik@rigacap.com",
+                    subject=f"{emoji} RigaCap Data Hygiene ({status_word})",
+                    message=html,
+                )
+            except Exception as _ee:
+                print(f"⚠️ Admin digest failed: {_ee}")
+
+            return {
+                "status": "ok",
+                "verified": len(symbols),
+                "tally": tally,
+                "corp_events": len(corp_events),
+                "split_symbols": len(split_symbols),
+                "refetch": refetch_result,
+                "dirty_count": diag.get("total_dirty_symbols") if isinstance(diag, dict) else None,
+                "reused_symbols": reused_symbols,
+            }
+
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            return loop.run_until_complete(_hygiene())
+        except Exception as e:
+            import traceback
+            return {"error": str(e), "trace": traceback.format_exc()[:800]}
+
     # DuckDB-powered diagnostic scan over the S3 parquet file.
     # {"parquet_diagnose": {"_": 1}}
     if event.get("parquet_diagnose"):
