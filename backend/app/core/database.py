@@ -649,6 +649,55 @@ class Subscription(Base):
         }
 
 
+class SymbolMetadata(Base):
+    """
+    Per-symbol identity + lifecycle tracking for the universe.
+
+    The asset_id (Alpaca UUID) is the true primary key of the underlying
+    entity; symbol is just a human-readable label that can be recycled by
+    exchanges. We detect ticker-reuse by watching asset_id changes.
+
+    Statuses:
+      active       — trading universe, healthy
+      inactive     — delisted or merged out, stop scanning
+      quarantined  — ticker reuse detected or other corruption; admin review
+    """
+    __tablename__ = "symbol_metadata"
+
+    id = Column(Integer, primary_key=True)
+    symbol = Column(String(32), nullable=False, unique=True, index=True)
+    asset_id = Column(String(64), index=True)           # Alpaca UUID
+    first_listing_date = Column(Date)
+    status = Column(String(32), nullable=False, default="active", index=True)
+    quarantine_reason = Column(String(255))
+    quarantined_at = Column(DateTime)
+    last_verified_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class SymbolMetadataEvent(Base):
+    """
+    Audit log of corporate actions + data-quality events per symbol.
+
+    Populated by the nightly corp-actions poll (Alpaca) and the daily
+    quality-gate. Lets admins review what happened and what the system
+    did in response.
+    """
+    __tablename__ = "symbol_metadata_events"
+
+    id = Column(Integer, primary_key=True)
+    symbol = Column(String(32), nullable=False, index=True)
+    event_type = Column(String(64), nullable=False, index=True)
+    # Values: split, dividend, spinoff, merger, delisting, ticker_reuse,
+    #         first_listing_mismatch, asset_id_changed, manual_override
+    event_date = Column(Date)
+    details_json = Column(Text)
+    detected_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    handled_at = Column(DateTime)
+    handler_result = Column(String(255))
+
+
 # Track database availability (set during init_db)
 db_available = False
 db_init_attempted = False
