@@ -5035,26 +5035,12 @@ RigaCap Admin
                 asyncio.set_event_loop(loop)
             result = loop.run_until_complete(scheduler_service.send_daily_emails(target_emails=target_emails))
 
-            # Export dashboard cache + daily snapshot after daily emails
-            async def _export_dashboard_and_snapshot():
-                from app.api.signals import compute_shared_dashboard_data
-                from app.services.data_export import data_export_service
-                from zoneinfo import ZoneInfo
-                async with async_session() as db:
-                    data = await compute_shared_dashboard_data(db)
-                    dash_result = data_export_service.export_dashboard_json(data)
-                    # Also save today's snapshot for time-travel mode (use ET, not UTC)
-                    today_et = datetime.now(ZoneInfo('America/New_York')).date()
-                    today_str = data.get('data_date') or today_et.strftime("%Y-%m-%d")
-                    snap_result = data_export_service.export_snapshot(today_str, data)
-                    return {"dashboard": dash_result, "snapshot": snap_result}
-
-            try:
-                export_result = loop.run_until_complete(_export_dashboard_and_snapshot())
-                print(f"📦 Dashboard cache exported: {export_result.get('dashboard')}")
-                print(f"📸 Daily snapshot saved: {export_result.get('snapshot')}")
-            except Exception as dash_err:
-                print(f"⚠️ Dashboard/snapshot export failed (non-fatal): {dash_err}")
+            # NOTE: previously this handler re-computed dashboard.json from
+            # scratch after sending emails. That caused the dashboard to diverge
+            # from the email (different signal list, different AI briefing) because
+            # each compute_shared_dashboard_data call can produce slightly different
+            # results. The 4:30 PM daily scan is the single authoritative source
+            # for dashboard.json — no other handler should overwrite it.
 
             return {"status": "success", "result": str(result)}
         except Exception as e:
