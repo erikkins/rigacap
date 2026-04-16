@@ -1,5 +1,8 @@
 # Stocker App - Key Learnings
 
+## CRITICAL — NEVER COMMIT SECRETS
+- **[Never check in credentials](feedback_never_check_in_secrets.md)** — grep every file for password/postgres://*creds*/api.key/AKIA/sk-/whsec_ BEFORE `git add`. Never `git add .`. RDS master pw was leaked Apr 16 2026 via this exact failure mode; rotated same day. Scripts must read DATABASE_URL from env, never hardcode.
+
 ## CRITICAL DEPLOYMENT RULES
 - **NEVER deploy DB schema changes without running the migration FIRST.** Migration-first pattern: deploy SQL → run → verify, THEN deploy model changes.
 - **NEVER use `aws lambda update-function-configuration --environment`** — it REPLACES ALL env vars, causing full outage.
