@@ -3936,9 +3936,9 @@ The link expires in 72 hours."""
                 current_category = check.category
                 check_rows += f"""
                 <tr>
-                    <td colspan="4" style="padding: 12px 12px 6px; font-size: 11px; font-weight: 700;
+                    <td colspan="4" style="padding: 8px 12px 2px; font-size: 10px; font-weight: 700;
                         text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em;
-                        border-top: 2px solid #e5e7eb;">
+                        border-top: 1px solid #e5e7eb;">
                         {current_category}
                     </td>
                 </tr>"""
@@ -3952,16 +3952,16 @@ The link expires in 72 hours."""
             icon = status_icons.get(check.status, "")
             check_rows += f"""
                 <tr style="background-color: {row_bg};">
-                    <td style="padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px; width: 30px;">
+                    <td style="padding: 3px 10px; border-bottom: 1px solid #f3f4f6; font-size: 13px; width: 24px;">
                         {icon}
                     </td>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px; font-weight: 600; color: #111827;">
+                    <td style="padding: 3px 10px; border-bottom: 1px solid #f3f4f6; font-size: 13px; font-weight: 600; color: #111827;">
                         {check.name}
                     </td>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #374151;">
+                    <td style="padding: 3px 10px; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #374151;">
                         {check.value}
                     </td>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #6b7280;">
+                    <td style="padding: 3px 10px; border-bottom: 1px solid #f3f4f6; font-size: 12px; color: #6b7280;">
                         {check.message}
                     </td>
                 </tr>"""
@@ -3972,7 +3972,7 @@ The link expires in 72 hours."""
                 res_color = "#92400e" if check.status == HealthStatus.YELLOW else "#991b1b"
                 check_rows += f"""
                 <tr>
-                    <td colspan="4" style="padding: 4px 12px 10px 42px; font-size: 13px;
+                    <td colspan="4" style="padding: 2px 12px 4px 36px; font-size: 12px;
                         color: {res_color}; background-color: {res_bg};">
                         &#8594; {check.resolution}
                     </td>
@@ -3998,30 +3998,25 @@ The link expires in 72 hours."""
     <table cellpadding="0" cellspacing="0" style="width: 100%; max-width: 650px; margin: 0 auto; background-color: #ffffff;">
         <!-- Header -->
         <tr>
-            <td style="background: {header_bg}; padding: 28px 24px; text-align: center;">
-                <img src="https://rigacap.com/email-logo-v2.png" alt="RigaCap" width="36" height="36"
-                    style="display: block; margin: 0 auto 10px auto;" />
-                <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;">
-                    Pipeline Health Report
+            <td style="background: {header_bg}; padding: 14px 20px; text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 17px; font-weight: 700;">
+                    Pipeline Health &middot; <span style="font-weight: 500; opacity: 0.9;">{header_label}</span>
                 </h1>
-                <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">
-                    {header_label}
-                </p>
             </td>
         </tr>
 
         <!-- Summary Banner -->
         <tr>
-            <td style="padding: 16px 24px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
-                <p style="margin: 0; font-size: 15px; text-align: center;">
-                    {summary_text} &mdash; {total} checks total
+            <td style="padding: 8px 20px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                <p style="margin: 0; font-size: 13px; text-align: center;">
+                    {summary_text} &mdash; {total} checks
                 </p>
             </td>
         </tr>
 
         <!-- Check Table -->
         <tr>
-            <td style="padding: 8px 16px 16px;">
+            <td style="padding: 0 12px 8px;">
                 <table cellpadding="0" cellspacing="0" style="width: 100%;">
                     {check_rows}
                 </table>
@@ -4030,12 +4025,9 @@ The link expires in 72 hours."""
 
         <!-- Footer -->
         <tr>
-            <td style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
-                <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                    Daily Pipeline Health Report &mdash; RigaCap Admin
-                </p>
-                <p style="margin: 6px 0 0 0; font-size: 12px; color: #9ca3af;">
-                    {report.timestamp.strftime('%Y-%m-%d %H:%M')} ET
+            <td style="background-color: #f9fafb; padding: 10px 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0; font-size: 11px; color: #9ca3af;">
+                    RigaCap Admin &middot; {report.timestamp.strftime('%Y-%m-%d %H:%M')} ET
                 </p>
             </td>
         </tr>
