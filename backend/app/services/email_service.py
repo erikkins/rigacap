@@ -392,7 +392,7 @@ class EmailService:
                 <tr>
                     <td>
                         <div style="font-size: 16px; font-weight: 600; color: #111827;">
-                            {symbol} {badge}{fresh_chip}
+                            <a href="https://rigacap.com/dashboard?chart={symbol}" style="color: #111827; text-decoration: none;">{symbol}</a> {badge}{fresh_chip}
                         </div>
                         <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">
                             ${price:.2f} &nbsp;•&nbsp; Breakout +{pct_above:.1f}%
@@ -442,7 +442,7 @@ class EmailService:
             rows += f"""
             <tr>
                 <td style="padding: 8px 0; border-bottom: 1px solid #fef3c7;">
-                    <span style="font-weight: 600;">{symbol}</span>
+                    <a href="https://rigacap.com/dashboard?chart={symbol}" style="font-weight: 600; color: #111827; text-decoration: none;">{symbol}</a>
                     <span style="color: #6b7280; font-size: 12px;"> ${price:.2f}</span>
                 </td>
                 <td style="padding: 8px 0; text-align: right; border-bottom: 1px solid #fef3c7;">
@@ -528,7 +528,7 @@ class EmailService:
             rows += f"""
             <tr>
                 <td style="padding: 8px 0; border-bottom: 1px solid #fef3c7;">
-                    <span style="font-weight: 600;">{symbol}</span>
+                    <a href="https://rigacap.com/dashboard?chart={symbol}" style="font-weight: 600; color: #111827; text-decoration: none;">{symbol}</a>
                     <span style="color: #92400e; font-size: 12px;"> ({date})</span>
                 </td>
                 <td style="padding: 8px 0; text-align: right; border-bottom: 1px solid #fef3c7; color: #b45309;">

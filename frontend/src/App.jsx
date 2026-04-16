@@ -1804,6 +1804,16 @@ function Dashboard() {
       setTimeout(() => setCheckoutSuccess(false), 8000);
     }
 
+    // Handle deep link from daily digest email — open chart popup for a symbol
+    const chartSymbol = params.get('chart');
+    if (chartSymbol) {
+      const sym = chartSymbol.toUpperCase();
+      setTimeout(() => setChartModal({ type: 'signal', data: { symbol: sym }, symbol: sym }), 500);
+      const url = new URL(window.location);
+      url.searchParams.delete('chart');
+      window.history.replaceState({}, '', url.pathname);
+    }
+
     // Handle email preference links from email footer
     if (params.get('emailPrefs') === '1') {
       setShowEmailPrefsModal(true);
