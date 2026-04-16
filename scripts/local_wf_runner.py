@@ -100,10 +100,17 @@ def _install_signal_handlers():
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
 
 # Set environment BEFORE importing app modules
-os.environ.setdefault(
-    'DATABASE_URL',
-    'postgresql://rigacap:6NgvDXGyc2GkHgOBTRPLSMj@rigacap-prod-db-v2.csfsa4i06rux.us-east-1.rds.amazonaws.com:5432/rigacap'
-)
+# DATABASE_URL is required — load from .env if not already in environment.
+# Never hardcode a real credential here (see memory: feedback_never_check_in_secrets.md).
+if not os.environ.get('DATABASE_URL'):
+    _dotenv = os.path.join(os.path.dirname(__file__), '..', '.env')
+    if os.path.exists(_dotenv):
+        for _line in open(_dotenv):
+            if _line.startswith('DATABASE_URL='):
+                os.environ['DATABASE_URL'] = _line.strip().split('=', 1)[1]
+                break
+if not os.environ.get('DATABASE_URL'):
+    raise SystemExit('ERROR: DATABASE_URL not set. Create .env at repo root or export it.')
 os.environ.setdefault('LAMBDA_ROLE', 'worker')  # Ensure worker-mode imports
 
 
