@@ -4930,39 +4930,78 @@ def handler(event, context):
 
             status_emoji = "✅" if not flags else "🚨"
             status_word = "Healthy" if not flags else "Attention Needed"
+            header_bg = "#172554" if not flags else "#b45309"
 
-            msg_lines = [
-                f"<h2>{status_emoji} RigaCap Health: {status_word}</h2>",
-                "<h3>Yesterday's Scan</h3>",
-                f"<ul>",
-                f"<li>Universe: {total} symbols with 200+ days of data</li>",
-                f"<li>Indicator validity (DWAP): <b>{valid_dwap}/{total} ({_pct(valid_dwap, total)})</b></li>",
-                f"<li>Indicator validity (MA50): {_pct(valid_ma50, total)}</li>",
-                f"<li>Indicator validity (MA200): {_pct(valid_ma200, total)}</li>",
-                f"</ul>",
-                "<h3>Signals</h3>",
-                f"<ul>",
-                f"<li>Buy signals: {buy_count} ({fresh_count} fresh)</li>",
-                f"<li>Watchlist: {wl_count}</li>",
-                f"<li>Last ensemble entry: {last_entry}</li>",
-                f"<li>Market regime: {regime}</li>",
-                f"</ul>",
-            ]
-            if flags:
-                msg_lines.append("<h3>Flags</h3><ul>")
-                for f in flags:
-                    msg_lines.append(f"<li>{f}</li>")
-                msg_lines.append("</ul>")
-                msg_lines.append(
-                    '<p><b>If indicator validity is low, run:</b> '
-                    '<code>{"rebuild_indicators": {"_": 1}}</code> on rigacap-prod-worker.</p>'
+            # Tight inline-styled rows. Previous template used <ul>+<pre>
+            # which stacked >60px of browser-default margins per section.
+            def _row(label, value, bold=False):
+                v = f"<b>{value}</b>" if bold else value
+                return (
+                    '<tr>'
+                    '<td style="padding:2px 12px;font-size:13px;color:#6b7280;white-space:nowrap;">'
+                    f'{label}</td>'
+                    '<td style="padding:2px 12px;font-size:13px;color:#111827;text-align:right;">'
+                    f'{v}</td></tr>'
                 )
 
-            html = "\n".join(msg_lines)
-            ok = await admin_email_service.send_admin_alert(
+            def _section(title, rows_html):
+                return (
+                    '<tr><td colspan="2" style="padding:10px 12px 2px;font-size:10px;'
+                    'font-weight:700;text-transform:uppercase;color:#6b7280;'
+                    'letter-spacing:0.05em;border-top:1px solid #e5e7eb;">'
+                    f'{title}</td></tr>{rows_html}'
+                )
+
+            scan_rows = (
+                _row("Universe", f"{total} symbols (200+ days)")
+                + _row("DWAP valid", f"{valid_dwap}/{total} ({_pct(valid_dwap, total)})", bold=True)
+                + _row("MA50 valid", _pct(valid_ma50, total))
+                + _row("MA200 valid", _pct(valid_ma200, total))
+            )
+            signal_rows = (
+                _row("Buy signals", f"{buy_count} ({fresh_count} fresh)")
+                + _row("Watchlist", str(wl_count))
+                + _row("Last ensemble entry", str(last_entry))
+                + _row("Market regime", str(regime))
+            )
+            flags_html = ""
+            if flags:
+                flag_items = "".join(
+                    f'<tr><td colspan="2" style="padding:3px 12px;font-size:13px;'
+                    f'color:#991b1b;background:#fee2e2;">{f}</td></tr>' for f in flags
+                )
+                flags_html = _section("Flags", flag_items) + (
+                    '<tr><td colspan="2" style="padding:8px 12px;font-size:12px;'
+                    'color:#6b7280;background:#fffbeb;">'
+                    'If indicator validity is low, run '
+                    '<code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">'
+                    '{"rebuild_indicators": {"_": 1}}</code> on worker.</td></tr>'
+                )
+
+            html = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f3f4f6;">
+<table cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;margin:0 auto;background:#fff;">
+<tr><td style="background:{header_bg};padding:12px 16px;">
+<h1 style="margin:0;color:#fff;font-size:16px;font-weight:700;">
+{status_emoji} Morning Health &middot; <span style="font-weight:500;opacity:0.9;">{status_word}</span>
+</h1></td></tr>
+<tr><td style="padding:0;">
+<table cellpadding="0" cellspacing="0" style="width:100%;">
+{_section("Yesterday's Scan", scan_rows)}
+{_section("Signals", signal_rows)}
+{flags_html}
+</table>
+</td></tr>
+<tr><td style="padding:8px 16px;background:#f9fafb;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center;">
+RigaCap Admin
+</td></tr>
+</table></body></html>"""
+
+            ok = await admin_email_service.send_email(
                 to_email="erik@rigacap.com",
                 subject=f"{status_emoji} RigaCap Morning Health ({status_word})",
-                message=html,
+                html_content=html,
             )
             return {
                 "status": "ok" if ok else "email_failed",
