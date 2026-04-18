@@ -7,6 +7,30 @@ export default function BlogWalkForwardResultsPage() {
   useEffect(() => { document.title = 'Inside Our 5-Year Walk-Forward | RigaCap'; }, []);
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', 'Inside RigaCap 5-year walk-forward simulation: +297% total return, 1.10 Sharpe ratio, tested across 138 rebalancing periods.');
+
+    // OG tags for social sharing
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'Inside Our 5-Year Walk-Forward: +297% Validated | RigaCap');
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', 'Inside RigaCap 5-year walk-forward simulation: +297% total return, 1.10 Sharpe ratio, tested across 138 rebalancing periods with zero look-ahead bias.');
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', 'https://rigacap.com/blog/walk-forward-results');
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', 'Inside Our 5-Year Walk-Forward: +297% Validated | RigaCap');
+    document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', 'Inside RigaCap 5-year walk-forward simulation: +297% total return, 1.10 Sharpe ratio, tested across 138 rebalancing periods with zero look-ahead bias.');
+    // JSON-LD Article schema
+    const existingSchema = document.querySelector('script[type="application/ld+json"]');
+    if (existingSchema) existingSchema.remove();
+    const schema = document.createElement('script');
+    schema.type = 'application/ld+json';
+    schema.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Inside Our 5-Year Walk-Forward: +297% Validated",
+      "description": "Inside RigaCap 5-year walk-forward simulation: +297% total return, 1.10 Sharpe ratio, tested across 138 rebalancing periods with zero look-ahead bias.",
+      "author": {"@type": "Organization", "name": "RigaCap"},
+      "publisher": {"@type": "Organization", "name": "RigaCap", "url": "https://rigacap.com"},
+      "url": "https://rigacap.com/blog/walk-forward-results",
+      "articleSection": "Results",
+    });
+    document.head.appendChild(schema);
+    return () => { if (schema.parentNode) schema.remove(); };
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
       {/* Nav */}

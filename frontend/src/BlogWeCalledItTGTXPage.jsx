@@ -7,6 +7,30 @@ export default function BlogWeCalledItTGTXPage() {
   useEffect(() => { document.title = 'We Called It: TGTX +46% | RigaCap'; }, []);
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', 'How RigaCap spotted TG Therapeutics +46% breakout in just 14 days. A $22 biotech stock nobody was watching.');
+
+    // OG tags for social sharing
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'We Called It: TG Therapeutics +46% in 14 Days | RigaCap');
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', 'How RigaCap spotted TG Therapeutics +46% breakout in just 14 days. A $22 biotech stock nobody was watching.');
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', 'https://rigacap.com/blog/we-called-it-tgtx');
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', 'We Called It: TG Therapeutics +46% in 14 Days | RigaCap');
+    document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', 'How RigaCap spotted TG Therapeutics +46% breakout in just 14 days. A $22 biotech stock nobody was watching.');
+    // JSON-LD Article schema
+    const existingSchema = document.querySelector('script[type="application/ld+json"]');
+    if (existingSchema) existingSchema.remove();
+    const schema = document.createElement('script');
+    schema.type = 'application/ld+json';
+    schema.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "We Called It: TG Therapeutics +46% in 14 Days",
+      "description": "How RigaCap spotted TG Therapeutics +46% breakout in just 14 days. A $22 biotech stock nobody was watching.",
+      "author": {"@type": "Organization", "name": "RigaCap"},
+      "publisher": {"@type": "Organization", "name": "RigaCap", "url": "https://rigacap.com"},
+      "url": "https://rigacap.com/blog/we-called-it-tgtx",
+      "articleSection": "Case Study",
+    });
+    document.head.appendChild(schema);
+    return () => { if (schema.parentNode) schema.remove(); };
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
       {/* Nav */}
@@ -277,7 +301,7 @@ export default function BlogWeCalledItTGTXPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Link to="/blog/we-called-it-mrna" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
               <span className="text-white font-medium">We Called It: Moderna +51%</span>
-              <span className="block text-gray-500 text-sm mt-1">How our system caught Moderna's summer 2021 breakout and locked in gains.</span>
+              <span className="block text-gray-500 text-sm mt-1">How our system caught Moderna summer 2021 breakout and locked in gains.</span>
             </Link>
             <Link to="/blog/momentum-trading" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
               <span className="text-white font-medium">Momentum Trading Explained</span>

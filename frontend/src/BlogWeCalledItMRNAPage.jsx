@@ -7,6 +7,30 @@ export default function BlogWeCalledItMRNAPage() {
   useEffect(() => { document.title = 'We Called It: Moderna +51% | RigaCap'; }, []);
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', 'How RigaCap caught Moderna +51% run in summer 2021 and locked in gains with a trailing stop before the stock crashed 66%.');
+
+    // OG tags for social sharing
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'We Called It: How Our System Caught Moderna +51% Run | RigaCap');
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', 'How RigaCap caught Moderna +51% run in summer 2021 and locked in gains with a trailing stop before the stock crashed 66%.');
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', 'https://rigacap.com/blog/we-called-it-mrna');
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', 'We Called It: How Our System Caught Moderna +51% Run | RigaCap');
+    document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', 'How RigaCap caught Moderna +51% run in summer 2021 and locked in gains with a trailing stop before the stock crashed 66%.');
+    // JSON-LD Article schema
+    const existingSchema = document.querySelector('script[type="application/ld+json"]');
+    if (existingSchema) existingSchema.remove();
+    const schema = document.createElement('script');
+    schema.type = 'application/ld+json';
+    schema.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "We Called It: How Our System Caught Moderna +51% Run",
+      "description": "How RigaCap caught Moderna +51% run in summer 2021 and locked in gains with a trailing stop before the stock crashed 66%.",
+      "author": {"@type": "Organization", "name": "RigaCap"},
+      "publisher": {"@type": "Organization", "name": "RigaCap", "url": "https://rigacap.com"},
+      "url": "https://rigacap.com/blog/we-called-it-mrna",
+      "articleSection": "Case Study",
+    });
+    document.head.appendChild(schema);
+    return () => { if (schema.parentNode) schema.remove(); };
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
       {/* Nav */}
@@ -31,7 +55,7 @@ export default function BlogWeCalledItMRNAPage() {
             <span className="text-white/90">Walk-Forward Trade</span>
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight mb-4">
-            We Called It: Moderna's +51% Run
+            We Called It: Moderna +51% Run
           </h1>
           <p className="text-lg text-emerald-200/80 max-w-2xl mx-auto">
             How our ensemble system caught MRNA's breakout at $217,

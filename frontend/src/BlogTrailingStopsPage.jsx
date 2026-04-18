@@ -8,6 +8,30 @@ export default function BlogTrailingStopsPage() {
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', 'Learn how trailing stop losses let your winners run while automatically protecting gains. See how to find the right trailing stop percentage.');
 
+    // OG tags for social sharing
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'How Trailing Stops Protect Your Portfolio | RigaCap');
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', 'Learn how trailing stop losses let your winners run while automatically protecting gains. See how to find the right trailing stop percentage.');
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', 'https://rigacap.com/blog/trailing-stops');
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', 'How Trailing Stops Protect Your Portfolio | RigaCap');
+    document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', 'Learn how trailing stop losses let your winners run while automatically protecting gains. See how to find the right trailing stop percentage.');
+    // JSON-LD Article schema
+    const existingSchema = document.querySelector('script[type="application/ld+json"]');
+    if (existingSchema) existingSchema.remove();
+    const schema = document.createElement('script');
+    schema.type = 'application/ld+json';
+    schema.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "How Trailing Stops Protect Your Portfolio",
+      "description": "Learn how trailing stop losses let your winners run while automatically protecting gains. See how to find the right trailing stop percentage.",
+      "author": {"@type": "Organization", "name": "RigaCap"},
+      "publisher": {"@type": "Organization", "name": "RigaCap", "url": "https://rigacap.com"},
+      "url": "https://rigacap.com/blog/trailing-stops",
+      "articleSection": "Education",
+    });
+    document.head.appendChild(schema);
+    return () => { if (schema.parentNode) schema.remove(); };
+
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
       {/* Nav */}

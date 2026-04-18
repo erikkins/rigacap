@@ -51,6 +51,30 @@ export default function BlogMarketRegimeGuidePage() {
     document.title = "Market Regime Trading: A Beginner's Guide | RigaCap";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', 'Most investors think bull or bear. Reality has 7 distinct market regimes. Learn how to read the market mood and trade accordingly.');
+
+    // OG tags for social sharing
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'Market Regime Trading: A Beginner\'s Guide | RigaCap');
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', 'Most investors think bull or bear. Reality has 7 distinct market regimes. Learn how to read the market mood and trade accordingly.');
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', 'https://rigacap.com/blog/market-regime-guide');
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', 'Market Regime Trading: A Beginner\'s Guide | RigaCap');
+    document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', 'Most investors think bull or bear. Reality has 7 distinct market regimes. Learn how to read the market mood and trade accordingly.');
+    // JSON-LD Article schema
+    const existingSchema = document.querySelector('script[type="application/ld+json"]');
+    if (existingSchema) existingSchema.remove();
+    const schema = document.createElement('script');
+    schema.type = 'application/ld+json';
+    schema.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Market Regime Trading: A Beginner\'s Guide",
+      "description": "Most investors think bull or bear. Reality has 7 distinct market regimes. Learn how to read the market mood and trade accordingly.",
+      "author": {"@type": "Organization", "name": "RigaCap"},
+      "publisher": {"@type": "Organization", "name": "RigaCap", "url": "https://rigacap.com"},
+      "url": "https://rigacap.com/blog/market-regime-guide",
+      "articleSection": "Education",
+    });
+    document.head.appendChild(schema);
+    return () => { if (schema.parentNode) schema.remove(); };
   }, []);
 
   return (

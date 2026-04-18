@@ -7,6 +7,30 @@ export default function BlogMomentumTradingPage() {
   useEffect(() => { document.title = 'Momentum Trading Explained | RigaCap'; }, []);
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', 'Momentum trading is not day trading. Learn how RigaCap uses breakout timing, momentum ranking, and volume confirmation to catch breakouts.');
+
+    // OG tags for social sharing
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'Momentum Trading Explained: How Stock Signals Work | RigaCap');
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', 'Momentum trading is not day trading. Learn how a rules-based ensemble system catches stock breakouts using timing, ranking, and confirmation.');
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', 'https://rigacap.com/blog/momentum-trading');
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', 'Momentum Trading Explained: How Stock Signals Work | RigaCap');
+    document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', 'Momentum trading is not day trading. Learn how a rules-based ensemble system catches stock breakouts using timing, ranking, and confirmation.');
+    // JSON-LD Article schema
+    const existingSchema = document.querySelector('script[type="application/ld+json"]');
+    if (existingSchema) existingSchema.remove();
+    const schema = document.createElement('script');
+    schema.type = 'application/ld+json';
+    schema.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Momentum Trading Explained: How Stock Signals Work",
+      "description": "Momentum trading is not day trading. Learn how a rules-based ensemble system catches stock breakouts using timing, ranking, and confirmation.",
+      "author": {"@type": "Organization", "name": "RigaCap"},
+      "publisher": {"@type": "Organization", "name": "RigaCap", "url": "https://rigacap.com"},
+      "url": "https://rigacap.com/blog/momentum-trading",
+      "articleSection": "Education",
+    });
+    document.head.appendChild(schema);
+    return () => { if (schema.parentNode) schema.remove(); };
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
       {/* Nav */}
