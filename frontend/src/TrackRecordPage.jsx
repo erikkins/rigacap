@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, TrendingUp, BarChart3, Shield, Activity, ArrowRight } from 'lucide-react';
 import TrackRecordChart from './components/TrackRecordChart';
+import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 const HEADLINE_METRICS = [
   { value: '+240%', label: '5-Year Return', subtitle: 'Walk-forward validated', color: 'text-emerald-400' },
@@ -192,6 +193,11 @@ export default function TrackRecordPage() {
             full details.
           </p>
         </div>
+      </section>
+
+      {/* Weekly newsletter signup */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-12">
+        <MarketMeasuredSignup source="track_record_page" variant="dark" />
       </section>
 
       {/* CTA */}

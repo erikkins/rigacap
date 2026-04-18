@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Activity, Shield, TrendingUp, Mail, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { formatDate, formatChartDate } from './utils/formatDate';
+import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
@@ -320,6 +321,11 @@ export default function MarketRegimePage() {
             </form>
           )}
         </div>
+      </section>
+
+      {/* Weekly newsletter signup */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-12">
+        <MarketMeasuredSignup source="market_regime_page" variant="dark" />
       </section>
 
       {/* CTA */}

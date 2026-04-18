@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, BookOpen, Thermometer, Eye, AlertTriangle, CheckCircle, TrendingUp, Shield } from 'lucide-react';
+import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 const regimeSpectrum = [
   { name: 'Strong Bull', color: 'bg-emerald-500', textColor: 'text-emerald-100', brief: 'Everything rising together' },
@@ -348,7 +349,13 @@ export default function BlogMarketRegimeGuidePage() {
           </p>
         </div>
 
-        {/* Related Reading */}
+  
+      {/* Weekly newsletter signup */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 mb-8">
+        <MarketMeasuredSignup source="blog_post" variant="dark" />
+      </div>
+
+      {/* Related Reading */}
         <div className="mt-12 pt-8 border-t border-gray-800">
           <h3 className="text-lg font-semibold text-white mb-4">Related Reading</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
