@@ -8,6 +8,7 @@ Enhanced with AI optimization at each reoptimization period to detect
 emerging trends and adapt parameters dynamically.
 """
 
+import asyncio
 import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Any
@@ -1569,6 +1570,64 @@ class WalkForwardService:
                 ai_optimization=period_ai_opt
             ))
 
+            # Per-period DB commit — write each period's result immediately
+            # so a crash at period N loses at most 1 period, not all N.
+            # Uses the same WalkForwardPeriodResult table as the Step Functions
+            # path. Requires a simulation_id FK — create the parent row on
+            # first period if it doesn't exist yet.
+            try:
+                if not existing_job_id and i == 0:
+                    _init_sim = WalkForwardSimulation(
+                        simulation_date=datetime.utcnow(),
+                        start_date=start_date,
+                        end_date=end_date,
+                        reoptimization_frequency=reoptimization_frequency,
+                        status="running",
+                        total_return_pct=0, sharpe_ratio=0,
+                        max_drawdown_pct=0, num_strategy_switches=0,
+                        benchmark_return_pct=0,
+                    )
+                    db.add(_init_sim)
+                    await db.flush()
+                    existing_job_id = _init_sim.id
+                    print(f"[WF-SERVICE] Created sim record {existing_job_id} for per-period commits")
+
+                if existing_job_id:
+                    _pr_trades = json.dumps([{
+                        "symbol": t.symbol, "entry_date": t.entry_date,
+                        "exit_date": t.exit_date, "entry_price": t.entry_price,
+                        "exit_price": t.exit_price, "pnl_pct": t.pnl_pct,
+                        "exit_reason": t.exit_reason,
+                    } for t in period_trades]) if period_trades else "[]"
+                    _pr_ai = json.dumps({
+                        "best_params": period_ai_opt.best_params if period_ai_opt else None,
+                        "adaptive_score": period_ai_opt.adaptive_score if period_ai_opt else None,
+                        "market_regime": period_ai_opt.market_regime if period_ai_opt else None,
+                    }) if period_ai_opt else None
+                    _pr_params = json.dumps(active_params) if active_params else None
+                    db.add(WalkForwardPeriodResult(
+                        simulation_id=existing_job_id,
+                        period_index=i,
+                        period_start=period_start,
+                        period_end=period_end,
+                        starting_capital=capital - (new_capital - capital),
+                        ending_capital=new_capital,
+                        period_return_pct=period_return,
+                        strategy_name=strategy_name,
+                        strategy_type=active_strategy_type,
+                        is_ai_params=using_ai_params,
+                        trades_json=_pr_trades,
+                        ai_optimization_json=_pr_ai,
+                        parameter_snapshot_json=_pr_params,
+                    ))
+                    await db.commit()
+            except Exception as _pr_err:
+                print(f"[WF-SERVICE] ⚠️ Per-period commit {i+1} failed (non-fatal): {_pr_err!r}")
+                try:
+                    await db.rollback()
+                except Exception:
+                    pass
+
             # Determine if this is a switch point for the chart
             is_switch = len(switch_history) > 0 and switch_history[-1].date == period_start.strftime('%Y-%m-%d')
 
@@ -1692,83 +1751,12 @@ class WalkForwardService:
             for t in all_trades
         ])
 
-        # Save or update simulation in database
-        if existing_job_id:
-            # Update existing record (async job flow)
-            result = await db.execute(
-                select(WalkForwardSimulation).where(WalkForwardSimulation.id == existing_job_id)
-            )
-            sim_record = result.scalar_one_or_none()
-            if sim_record:
-                sim_record.total_return_pct = total_return_pct
-                sim_record.sharpe_ratio = sharpe_ratio
-                sim_record.max_drawdown_pct = max_dd
-                sim_record.num_strategy_switches = len(switch_history) - 1
-                sim_record.benchmark_return_pct = benchmark_return_pct
-                sim_record.switch_history_json = switch_history_data
-                sim_record.equity_curve_json = equity_curve_data
-                sim_record.errors_json = errors_data
-                sim_record.trades_json = trades_data
-                sim_record.status = "completed"
-        else:
-            # Create new record (sync flow)
-            sim_record = WalkForwardSimulation(
-                simulation_date=datetime.utcnow(),
-                start_date=start_date,
-                end_date=end_date,
-                reoptimization_frequency=reoptimization_frequency,
-                total_return_pct=total_return_pct,
-                sharpe_ratio=sharpe_ratio,
-                max_drawdown_pct=max_dd,
-                num_strategy_switches=len(switch_history) - 1,
-                benchmark_return_pct=benchmark_return_pct,
-                switch_history_json=switch_history_data,
-                equity_curve_json=equity_curve_data,
-                errors_json=errors_data,
-                trades_json=trades_data,
-                status="completed"
-            )
-            db.add(sim_record)
-
-        # Final DB commit with retry + reconnect. Long runs (29+ hours) can
-        # exhaust the async connection; without this retry, the entire run's
-        # output is lost when the final INSERT fails with
-        # asyncpg.ConnectionDoesNotExistError — which cost us 29 hours on
-        # run3 (Apr 16 2026). The retry reconnects and re-executes the same
-        # pending transaction.
-        _db_commit_err = None
-        for _attempt in range(1, 4):
-            try:
-                await db.commit()
-                _db_commit_err = None
-                break
-            except Exception as _ce:
-                _db_commit_err = _ce
-                print(f"[WF-SERVICE] DB commit attempt {_attempt}/3 failed: {_ce!r}")
-                # Rollback the failed txn, sleep briefly, then retry
-                try:
-                    await db.rollback()
-                except Exception:
-                    pass
-                await asyncio.sleep(2 ** _attempt)
-
-        if _db_commit_err is not None:
-            # All retries exhausted. Log the data SIZE so we know what was
-            # about to be written and surface the result anyway — the
-            # caller (local runner) will pickle it to disk.
-            print(f"[WF-SERVICE] ⚠️ FINAL DB COMMIT FAILED after 3 retries: {_db_commit_err!r}")
-            print(f"[WF-SERVICE] Result will be RETURNED to caller despite DB failure — pickle it!")
-            print(f"[WF-SERVICE] Payload sizes — switch_history: {len(switch_history_data)} bytes, "
-                  f"equity_curve: {len(equity_curve_data)} bytes, "
-                  f"trades: {len(trades_data)} bytes, errors: {len(errors_data)} bytes")
-
-        # Log error summary
-        if simulation_errors:
-            print(f"[WF-SERVICE] {len(simulation_errors)} errors during simulation")
-            for err in simulation_errors[:5]:  # Log first 5 errors
-                print(f"  - {err}")
-
-        return WalkForwardResult(
+        # Build the result object BEFORE attempting the DB commit. On run3
+        # AND run4 (Apr 16-17 2026), the DB connection died after 28+ hours
+        # and the result was never returned because it was constructed AFTER
+        # the commit. By building it here, the caller can pickle it even if
+        # the commit fails.
+        _final_result = WalkForwardResult(
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d'),
             reoptimization_frequency=reoptimization_frequency,
@@ -1782,9 +1770,81 @@ class WalkForwardService:
             period_details=period_details,
             ai_optimizations=ai_optimizations,
             parameter_evolution=parameter_evolution,
-            errors=simulation_errors[:10],  # Include up to 10 errors
-            trades=all_trades  # All trades across all periods
+            errors=simulation_errors[:10],
+            trades=all_trades,
         )
+
+        # Save or update simulation in database.
+        # The ENTIRE DB section is wrapped in try/except so that a DB failure
+        # (connection timeout, etc.) NEVER prevents the result from being
+        # returned. The caller (local_wf_runner) pickles the result to disk.
+        # We lost TWO 28-hour runs (run3 + run4, Apr 16-17 2026) because
+        # exceptions here killed the function before it could return.
+        try:
+            if existing_job_id:
+                result = await db.execute(
+                    select(WalkForwardSimulation).where(WalkForwardSimulation.id == existing_job_id)
+                )
+                sim_record = result.scalar_one_or_none()
+                if sim_record:
+                    sim_record.total_return_pct = total_return_pct
+                    sim_record.sharpe_ratio = sharpe_ratio
+                    sim_record.max_drawdown_pct = max_dd
+                    sim_record.num_strategy_switches = len(switch_history) - 1
+                    sim_record.benchmark_return_pct = benchmark_return_pct
+                    sim_record.switch_history_json = switch_history_data
+                    sim_record.equity_curve_json = equity_curve_data
+                    sim_record.errors_json = errors_data
+                    sim_record.trades_json = trades_data
+                    sim_record.status = "completed"
+            else:
+                sim_record = WalkForwardSimulation(
+                    simulation_date=datetime.utcnow(),
+                    start_date=start_date,
+                    end_date=end_date,
+                    reoptimization_frequency=reoptimization_frequency,
+                    total_return_pct=total_return_pct,
+                    sharpe_ratio=sharpe_ratio,
+                    max_drawdown_pct=max_dd,
+                    num_strategy_switches=len(switch_history) - 1,
+                    benchmark_return_pct=benchmark_return_pct,
+                    switch_history_json=switch_history_data,
+                    equity_curve_json=equity_curve_data,
+                    errors_json=errors_data,
+                    trades_json=trades_data,
+                    status="completed"
+                )
+                db.add(sim_record)
+
+            for _attempt in range(1, 4):
+                try:
+                    await db.commit()
+                    print(f"[WF-SERVICE] ✅ DB commit succeeded on attempt {_attempt}")
+                    break
+                except Exception as _ce:
+                    print(f"[WF-SERVICE] DB commit attempt {_attempt}/3 failed: {_ce!r}")
+                    try:
+                        await db.rollback()
+                    except Exception:
+                        pass
+                    if _attempt < 3:
+                        await asyncio.sleep(2 ** _attempt)
+            else:
+                print(f"[WF-SERVICE] ⚠️ FINAL DB COMMIT FAILED after 3 retries")
+                print(f"[WF-SERVICE] Payload sizes — switch_history: {len(switch_history_data)} bytes, "
+                      f"equity_curve: {len(equity_curve_data)} bytes, "
+                      f"trades: {len(trades_data)} bytes, errors: {len(errors_data)} bytes")
+        except Exception as _db_err:
+            print(f"[WF-SERVICE] ⚠️ DB SECTION FAILED: {_db_err!r}")
+            print(f"[WF-SERVICE] Result WILL still be returned — caller should pickle it")
+
+        # Log error summary
+        if simulation_errors:
+            print(f"[WF-SERVICE] {len(simulation_errors)} errors during simulation")
+            for err in simulation_errors[:5]:
+                print(f"  - {err}")
+
+        return _final_result
 
     # ========================================================================
     # Step Functions methods: init, run_single_period, finalize
