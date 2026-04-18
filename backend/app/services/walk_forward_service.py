@@ -1570,6 +1570,46 @@ class WalkForwardService:
                 ai_optimization=period_ai_opt
             ))
 
+            # Per-period LOCAL JSON dump — absolute last resort if DB AND
+            # pickle both fail. Writes /tmp/wf_periods/period_NNN.json with
+            # trades, params, AI opt, return. One file per period. Can
+            # reconstruct the full run from the directory.
+            try:
+                import os as _os
+                _pdir = "/tmp/wf_periods"
+                _os.makedirs(_pdir, exist_ok=True)
+                _pfile = f"{_pdir}/period_{i:03d}.json"
+                _pdata = {
+                    "period_index": i,
+                    "period_start": period_start.strftime('%Y-%m-%d'),
+                    "period_end": period_end.strftime('%Y-%m-%d'),
+                    "starting_capital": capital - (new_capital - capital),
+                    "ending_capital": new_capital,
+                    "period_return_pct": period_return,
+                    "strategy_name": strategy_name,
+                    "is_ai_params": using_ai_params,
+                    "active_params": active_params,
+                    "ai_optimization": {
+                        "best_params": period_ai_opt.best_params if period_ai_opt else None,
+                        "adaptive_score": period_ai_opt.adaptive_score if period_ai_opt else None,
+                        "market_regime": period_ai_opt.market_regime if period_ai_opt else None,
+                        "expected_sharpe": period_ai_opt.expected_sharpe if period_ai_opt else None,
+                        "expected_return_pct": period_ai_opt.expected_return_pct if period_ai_opt else None,
+                    } if period_ai_opt else None,
+                    "trades": [{
+                        "symbol": t.symbol, "entry_date": t.entry_date,
+                        "exit_date": t.exit_date, "entry_price": t.entry_price,
+                        "exit_price": t.exit_price, "pnl_pct": t.pnl_pct,
+                        "pnl_dollars": t.pnl_dollars, "exit_reason": t.exit_reason,
+                        "momentum_score": t.momentum_score,
+                    } for t in period_trades] if period_trades else [],
+                    "carried_positions": list(carried_positions.keys()) if carried_positions else [],
+                }
+                with open(_pfile, "w") as _f:
+                    json.dump(_pdata, _f, indent=2, default=str)
+            except Exception as _jf_err:
+                print(f"[WF-SERVICE] ⚠️ JSON file dump failed (non-fatal): {_jf_err}")
+
             # Per-period DB commit — write each period's result immediately
             # so a crash at period N loses at most 1 period, not all N.
             # Uses the same WalkForwardPeriodResult table as the Step Functions
