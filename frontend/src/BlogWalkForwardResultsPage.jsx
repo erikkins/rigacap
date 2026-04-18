@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, TrendingUp, TrendingDown, BarChart3, Target, Ale
 export default function BlogWalkForwardResultsPage() {
   useEffect(() => { document.title = 'Inside Our 5-Year Walk-Forward | RigaCap'; }, []);
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', 'Inside RigaCap 5-year walk-forward simulation: +297% total return, 1.10 Sharpe ratio, tested across 138 biweekly periods.');
+    if (meta) meta.setAttribute('content', 'Inside RigaCap 5-year walk-forward simulation: +297% total return, 1.10 Sharpe ratio, tested across 138 rebalancing periods.');
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
       {/* Nav */}
@@ -75,7 +75,7 @@ export default function BlogWalkForwardResultsPage() {
           <p className="text-gray-300 leading-relaxed text-base">
             We didn't want to build another one of those. So instead of asking "how good
             can we make this look?", we asked "how hard can we stress-test this before it
-            breaks?" The answer: 5.3 years, 138 biweekly periods, 500 stocks, and zero
+            breaks?" The answer: 5.3 years, 138 rebalancing periods, 500 stocks, and zero
             peeking at the future.
           </p>
 
@@ -117,7 +117,7 @@ export default function BlogWalkForwardResultsPage() {
         <div className="grid sm:grid-cols-2 gap-4 my-8">
           {[
             { label: 'Time Span', value: '5.3 Years', detail: 'Jan 2021 through early 2026' },
-            { label: 'Periods', value: '138', detail: 'Biweekly rebalancing' },
+            { label: 'Periods', value: '138', detail: 'Regular rebalancing' },
             { label: 'Stock Universe', value: '500', detail: 'Liquid US equities' },
             { label: 'Re-optimization', value: 'Every 2 Weeks', detail: 'Backward-looking data only' },
           ].map((item) => (
@@ -364,6 +364,25 @@ export default function BlogWalkForwardResultsPage() {
           <p className="text-xs text-gray-500 mt-4">
             7-day free trial. $39/month after. Cancel anytime.
           </p>
+        </div>
+
+        {/* Related Reading */}
+        <div className="mt-12 pt-8 border-t border-gray-800">
+          <h3 className="text-lg font-semibold text-white mb-4">Related Reading</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link to="/blog/backtests" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">Why Most Backtests Are Lies</span>
+              <span className="block text-gray-500 text-sm mt-1">The hidden biases that make most backtests worthless and how walk-forward fixes them.</span>
+            </Link>
+            <Link to="/blog/2022-story" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">The 2022 Story</span>
+              <span className="block text-gray-500 text-sm mt-1">How our system navigated the worst bear market in a decade.</span>
+            </Link>
+            <Link to="/blog/momentum-trading" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">Momentum Trading Explained</span>
+              <span className="block text-gray-500 text-sm mt-1">The momentum ranking and breakout timing behind our signals.</span>
+            </Link>
+          </div>
         </div>
 
         {/* Disclaimer */}

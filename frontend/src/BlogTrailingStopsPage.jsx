@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Shield, TrendingUp, Target, Brain, AlertTriangle
 export default function BlogTrailingStopsPage() {
   useEffect(() => { document.title = 'How Trailing Stops Protect Your Portfolio | RigaCap'; }, []);
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', 'Learn how trailing stop losses let your winners run while automatically protecting gains. See why 12% is the sweet spot.');
+    if (meta) meta.setAttribute('content', 'Learn how trailing stop losses let your winners run while automatically protecting gains. See how to find the right trailing stop percentage.');
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300">
@@ -53,13 +53,13 @@ export default function BlogTrailingStopsPage() {
           <p className="text-gray-300 leading-relaxed text-base">
             A trailing stop is an automatic sell rule that follows a stock upward but never
             follows it back down. Think of it as a safety net that rises with the stock price.
-            If you buy a stock at $100 and set a 12% trailing stop, you'll sell if the stock
-            drops to $88. Simple enough.
+            If you buy a stock at $100 and set a trailing stop, you'll sell if the stock
+            drops below your threshold. Simple enough.
           </p>
           <p className="text-gray-300 leading-relaxed text-base">
             But here's where it gets interesting. If that stock climbs to $150, your trailing
-            stop climbs with it — to $132 (12% below the new high). If the stock then falls
-            from $150 to $132, you sell automatically. You locked in a 32% gain instead of
+            stop climbs with it. If the stock then pulls back far enough to hit your stop,
+            you sell automatically. You locked in a significant gain instead of
             watching it evaporate.
           </p>
           <p className="text-gray-300 leading-relaxed text-base">
@@ -142,18 +142,18 @@ export default function BlogTrailingStopsPage() {
         <div className="prose prose-invert prose-lg max-w-none">
           <h2 className="text-2xl font-bold text-white mt-12 mb-4 flex items-center gap-2">
             <Shield className="w-6 h-6 text-emerald-400 flex-shrink-0" />
-            How RigaCap Uses a 12% Trailing Stop
+            How RigaCap Uses Trailing Stops
           </h2>
           <p className="text-gray-300 leading-relaxed text-base">
-            Every position in our portfolio is protected by a 12% trailing stop calculated
-            from the high water mark. This isn't a number we picked out of thin air — it's
-            the result of extensive backtesting across thousands of trades and multiple market
-            conditions.
+            Every position in our portfolio is protected by a carefully tested trailing stop
+            calculated from the high water mark. This isn't a number we picked out of thin
+            air — it's the result of extensive backtesting across thousands of trades and
+            multiple market conditions.
           </p>
           <p className="text-gray-300 leading-relaxed text-base">
             When our system enters a position, it immediately begins tracking the stock's
-            highest closing price. Each day, it recalculates the stop level: 12% below
-            that peak. If the stock closes below the stop level, the position is flagged
+            highest closing price. Each day, it recalculates the stop level as a fixed
+            percentage below that peak. If the stock closes below the stop level, the position is flagged
             for exit. No debates, no hoping it will bounce back, no checking the news to
             see if the drop is "justified." The rule is the rule.
           </p>
@@ -178,41 +178,41 @@ export default function BlogTrailingStopsPage() {
               <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-300 text-sm font-bold">1</div>
               <div>
                 <p className="text-white font-medium m-0">Entry at $100</p>
-                <p className="text-gray-400 text-sm m-0">Stop level: $88.00 (12% below $100). Risk: -$12 per share.</p>
+                <p className="text-gray-400 text-sm m-0">Stop level set at our trailing stop percentage below entry price.</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
               <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-300 text-sm font-bold">2</div>
               <div>
                 <p className="text-white font-medium m-0">Stock climbs to $120</p>
-                <p className="text-gray-400 text-sm m-0">New high water mark. Stop rises to $105.60. You're now guaranteed a profit if the stop triggers.</p>
+                <p className="text-gray-400 text-sm m-0">New high water mark. Stop rises with it. You're now guaranteed a profit if the stop triggers.</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
               <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 text-emerald-300 text-sm font-bold">3</div>
               <div>
                 <p className="text-white font-medium m-0">Stock reaches $150</p>
-                <p className="text-gray-400 text-sm m-0">New peak. Stop climbs to $132.00. You've locked in at least +32% of upside.</p>
+                <p className="text-gray-400 text-sm m-0">New peak. Stop climbs with it. You've locked in a significant portion of the upside.</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
               <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 text-amber-300 text-sm font-bold">4</div>
               <div>
                 <p className="text-white font-medium m-0">Stock pulls back to $140</p>
-                <p className="text-gray-400 text-sm m-0">Stop stays at $132 (high water mark is still $150). No action taken — normal volatility.</p>
+                <p className="text-gray-400 text-sm m-0">Stop stays where it is (high water mark is still $150). No action taken — normal volatility.</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
               <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 text-red-300 text-sm font-bold">5</div>
               <div>
-                <p className="text-white font-medium m-0">Stock drops to $132 — stop triggers</p>
-                <p className="text-gray-400 text-sm m-0">Exit signal fires. You captured +32% instead of riding it back down to $100 or lower.</p>
+                <p className="text-white font-medium m-0">Stock drops to the stop level — stop triggers</p>
+                <p className="text-gray-400 text-sm m-0">Exit signal fires. You captured a significant gain instead of riding it back down to $100 or lower.</p>
               </div>
             </div>
           </div>
           <div className="mt-6 pt-4 border-t border-gray-800">
             <p className="text-emerald-300 text-sm font-medium m-0">
-              Result: +$32 per share captured. Without the trailing stop, a round-trip back to $100 means +$0.
+              Result: a meaningful gain captured. Without the trailing stop, a round-trip back to $100 means +$0.
             </p>
           </div>
         </div>
@@ -230,7 +230,7 @@ export default function BlogTrailingStopsPage() {
             extremes cost you money.
           </p>
           <p className="text-gray-300 leading-relaxed text-base">
-            We tested trailing stop percentages from 8% to 15% across thousands of trades
+            We tested a wide range of trailing stop percentages across thousands of trades
             and multiple market environments. Here's what we found:
           </p>
         </div>
@@ -241,20 +241,20 @@ export default function BlogTrailingStopsPage() {
           <div className="space-y-4">
             <div className="flex items-start gap-4 p-4 bg-red-500/5 border border-red-500/20 rounded-lg">
               <div className="flex-shrink-0">
-                <span className="text-red-300 font-bold text-lg">8%</span>
+                <span className="text-red-300 font-bold text-lg">Too Tight</span>
               </div>
               <div>
-                <p className="text-white font-medium m-0">Too Tight</p>
+                <p className="text-white font-medium m-0">Under 10%</p>
                 <p className="text-gray-400 text-sm m-0">
                   Stopped out by normal volatility. Many winning trades get cut short — a stock
-                  drops 9% on a bad day, you sell, and it recovers the next week without you.
+                  drops on a bad day, you sell, and it recovers the next week without you.
                   High trade frequency, high friction, lower returns.
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-4 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-lg">
               <div className="flex-shrink-0">
-                <span className="text-emerald-300 font-bold text-lg">12%</span>
+                <span className="text-emerald-300 font-bold text-lg">Our Setting</span>
               </div>
               <div>
                 <p className="text-white font-medium m-0">The Sweet Spot</p>
@@ -267,13 +267,13 @@ export default function BlogTrailingStopsPage() {
             </div>
             <div className="flex items-start gap-4 p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg">
               <div className="flex-shrink-0">
-                <span className="text-amber-300 font-bold text-lg">15%</span>
+                <span className="text-amber-300 font-bold text-lg">Too Loose</span>
               </div>
               <div>
-                <p className="text-white font-medium m-0">Too Loose</p>
+                <p className="text-white font-medium m-0">Over 15%</p>
                 <p className="text-gray-400 text-sm m-0">
                   You keep positions through deeper pullbacks — which sounds good until a
-                  pullback turns into a real decline. You give back 15% from every peak before
+                  pullback turns into a real decline. You give back too much from every peak before
                   the stop kicks in, eating into hard-won profits.
                 </p>
               </div>
@@ -283,10 +283,10 @@ export default function BlogTrailingStopsPage() {
 
         <div className="prose prose-invert prose-lg max-w-none">
           <p className="text-gray-300 leading-relaxed text-base">
-            At 12%, the trailing stop is loose enough that a stock's normal daily fluctuations
-            won't trigger it. Most healthy stocks pull back 5-8% regularly during uptrends.
-            A 12% threshold lets those moves happen naturally while still catching genuine
-            reversals before they become devastating losses.
+            At our chosen percentage, the trailing stop is loose enough that a stock's normal
+            daily fluctuations won't trigger it. Most healthy stocks pull back several percent
+            regularly during uptrends. Our threshold lets those moves happen naturally while
+            still catching genuine reversals before they become devastating losses.
           </p>
         </div>
 
@@ -357,6 +357,25 @@ export default function BlogTrailingStopsPage() {
           <p className="text-xs text-gray-500 mt-4">
             7-day free trial. $39/month after. Cancel anytime.
           </p>
+        </div>
+
+        {/* Related Reading */}
+        <div className="mt-12 pt-8 border-t border-gray-800">
+          <h3 className="text-lg font-semibold text-white mb-4">Related Reading</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link to="/blog/momentum-trading" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">Momentum Trading Explained</span>
+              <span className="block text-gray-500 text-sm mt-1">How momentum ranking and breakout timing work together to find winning trades.</span>
+            </Link>
+            <Link to="/blog/market-crash" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">What to Do When the Market Crashes</span>
+              <span className="block text-gray-500 text-sm mt-1">How regime detection and automatic exits protect your portfolio during downturns.</span>
+            </Link>
+            <Link to="/blog/walk-forward-results" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">Inside Our 5-Year Walk-Forward</span>
+              <span className="block text-gray-500 text-sm mt-1">The full breakdown of our walk-forward simulation across 138 rebalancing periods.</span>
+            </Link>
+          </div>
         </div>
 
         {/* Disclaimer */}

@@ -102,8 +102,8 @@ export default function BlogMomentumTradingPage() {
                 </div>
               </div>
               <p className="text-gray-400 text-sm m-0">
-                The stock's price must break above its Daily Weighted Average Price by a meaningful
-                margin. This catches early breakouts — moments when a stock transitions from
+                The stock's price must show a confirmed breakout above a key support level.
+                This catches early breakouts — moments when a stock transitions from
                 consolidation into a genuine uptrend. Without this filter, you'd be buying stocks
                 that are merely drifting sideways.
               </p>
@@ -138,7 +138,7 @@ export default function BlogMomentumTradingPage() {
                 </div>
               </div>
               <p className="text-gray-400 text-sm m-0">
-                The stock must be trading near its 50-day high, with a volume spike confirming
+                The stock must be trading near its recent highs, with a volume spike confirming
                 institutional interest. A breakout without volume is often a fake-out. This filter
                 separates real institutional moves from noise.
               </p>
@@ -152,8 +152,8 @@ export default function BlogMomentumTradingPage() {
           </h2>
           <p className="text-gray-300 leading-relaxed text-base">
             Any single filter catches too many false positives. A stock can break above its
-            weighted average and immediately reverse. A stock can rank high on momentum from
-            a one-day spike that doesn't sustain. A stock can be near its 50-day high on
+            key level and immediately reverse. A stock can rank high on momentum from
+            a one-day spike that doesn't sustain. A stock can be near its recent highs on
             declining volume, suggesting the move is exhausted.
           </p>
           <p className="text-gray-300 leading-relaxed text-base">
@@ -225,14 +225,14 @@ export default function BlogMomentumTradingPage() {
           </p>
           <ul className="text-gray-300 text-base space-y-2">
             <li>
-              <strong className="text-white">Short-term momentum (10-day):</strong> Captures
-              recent acceleration. A stock surging over the last two weeks gets a higher
+              <strong className="text-white">Short-term momentum:</strong> Captures
+              recent acceleration. A stock surging over the last few weeks gets a higher
               short-term score than one that's been flat.
             </li>
             <li>
-              <strong className="text-white">Long-term momentum (60-day):</strong> Confirms the
-              trend has staying power. A 10-day spike means little if the stock has been
-              declining for three months.
+              <strong className="text-white">Long-term momentum:</strong> Confirms the
+              trend has staying power. A short-term spike means little if the stock has been
+              declining for months.
             </li>
             <li>
               <strong className="text-white">Volatility penalty:</strong> Subtracts points for
@@ -267,7 +267,7 @@ export default function BlogMomentumTradingPage() {
                   <p className="text-blue-400 font-semibold text-sm m-0">#3 of 100</p>
                 </div>
                 <div>
-                  <p className="text-gray-500 text-xs m-0">Near 50d High</p>
+                  <p className="text-gray-500 text-xs m-0">Near Recent High</p>
                   <p className="text-green-400 font-semibold text-sm m-0">Within 2.1%</p>
                 </div>
                 <div>
@@ -287,7 +287,7 @@ export default function BlogMomentumTradingPage() {
           {/* Section 5: Why 6 Positions */}
           <h2 className="text-2xl font-bold text-white mt-12 mb-4 flex items-center gap-2">
             <Activity className="w-6 h-6 text-indigo-400 flex-shrink-0" />
-            Why Only 6 Positions?
+            Why a Concentrated Portfolio?
           </h2>
           <p className="text-gray-300 leading-relaxed text-base">
             Most momentum strategies spread capital across 20 or 30 positions. More diversification
@@ -297,9 +297,10 @@ export default function BlogMomentumTradingPage() {
             the market average.
           </p>
           <p className="text-gray-300 leading-relaxed text-base">
-            Six positions at roughly 15% each strikes the balance: concentrated enough to
-            capture meaningful gains from top-ranked stocks, diversified enough that one bad
-            trade doesn't derail the portfolio. Trailing stops provide the real risk management.
+            A concentrated portfolio of our highest-conviction picks strikes the balance:
+            focused enough to capture meaningful gains from top-ranked stocks, diversified
+            enough that one bad trade doesn't derail the portfolio. Trailing stops provide
+            the real risk management.
           </p>
 
           {/* Highlight Box */}
@@ -353,7 +354,7 @@ export default function BlogMomentumTradingPage() {
           </p>
           <p className="text-gray-300 leading-relaxed text-base">
             RigaCap's regime filter monitors market health using multiple indicators, including
-            whether the S&P 500 is above or below its long-term moving average. When the regime
+            whether the broad market is trending up or down. When the regime
             shifts bearish, the system stops issuing buy signals and exits positions regardless
             of their individual strength.
           </p>
@@ -429,6 +430,25 @@ export default function BlogMomentumTradingPage() {
           <p className="text-xs text-gray-500 mt-4">
             7-day free trial. $39/month after. Cancel anytime.
           </p>
+        </div>
+
+        {/* Related Reading */}
+        <div className="mt-12 pt-8 border-t border-gray-800">
+          <h3 className="text-lg font-semibold text-white mb-4">Related Reading</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link to="/blog/trailing-stops" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">How Trailing Stops Protect Your Portfolio</span>
+              <span className="block text-gray-500 text-sm mt-1">Why trailing stops let winners run while automatically locking in gains.</span>
+            </Link>
+            <Link to="/blog/market-regime-guide" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">Market Regime Trading: A Beginner's Guide</span>
+              <span className="block text-gray-500 text-sm mt-1">Learn what market regimes are and how to adjust your strategy for each one.</span>
+            </Link>
+            <Link to="/blog/we-called-it-mrna" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">We Called It: Moderna +51%</span>
+              <span className="block text-gray-500 text-sm mt-1">How our system caught Moderna's breakout and locked in gains before the crash.</span>
+            </Link>
+          </div>
         </div>
 
         {/* Disclaimer */}

@@ -348,6 +348,25 @@ export default function BlogMarketRegimeGuidePage() {
           </p>
         </div>
 
+        {/* Related Reading */}
+        <div className="mt-12 pt-8 border-t border-gray-800">
+          <h3 className="text-lg font-semibold text-white mb-4">Related Reading</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link to="/blog/market-regimes" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">The 7 Market Regimes — Deep Dive</span>
+              <span className="block text-gray-500 text-sm mt-1">A detailed look at each of the seven market regimes and what drives them.</span>
+            </Link>
+            <Link to="/blog/market-crash" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">What to Do When the Market Crashes</span>
+              <span className="block text-gray-500 text-sm mt-1">Practical steps for protecting your portfolio during market downturns.</span>
+            </Link>
+            <Link to="/blog/trailing-stops" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">How Trailing Stops Protect Your Portfolio</span>
+              <span className="block text-gray-500 text-sm mt-1">Why trailing stops are essential for locking in gains during volatile regimes.</span>
+            </Link>
+          </div>
+        </div>
+
         {/* Disclaimer */}
         <p className="text-xs text-gray-600 leading-relaxed">
           This article is for educational purposes only and does not constitute financial

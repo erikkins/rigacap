@@ -321,6 +321,25 @@ export default function Blog2022StoryPage() {
           </p>
         </div>
 
+        {/* Related Reading */}
+        <div className="mt-12 pt-8 border-t border-gray-800">
+          <h3 className="text-lg font-semibold text-white mb-4">Related Reading</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link to="/blog/market-regime-guide" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">Market Regime Trading: A Beginner's Guide</span>
+              <span className="block text-gray-500 text-sm mt-1">How regime detection helped navigate the 2022 bear market.</span>
+            </Link>
+            <Link to="/blog/trailing-stops" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">How Trailing Stops Protect Your Portfolio</span>
+              <span className="block text-gray-500 text-sm mt-1">The trailing stop mechanism that limited drawdowns during 2022.</span>
+            </Link>
+            <Link to="/blog/walk-forward-results" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">Inside Our 5-Year Walk-Forward</span>
+              <span className="block text-gray-500 text-sm mt-1">Full performance breakdown including the 2022 period.</span>
+            </Link>
+          </div>
+        </div>
+
         {/* Disclaimer */}
         <p className="text-xs text-gray-600 leading-relaxed">
           All performance figures are from walk-forward simulations using historical market data.

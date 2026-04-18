@@ -423,6 +423,21 @@ export default function BlogBacktestsPage() {
           </p>
         </div>
 
+        {/* Related Reading */}
+        <div className="mt-12 pt-8 border-t border-gray-800">
+          <h3 className="text-lg font-semibold text-white mb-4">Related Reading</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link to="/blog/walk-forward-results" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">Inside Our 5-Year Walk-Forward</span>
+              <span className="block text-gray-500 text-sm mt-1">See the walk-forward results that prove our strategy works without hindsight bias.</span>
+            </Link>
+            <Link to="/blog/momentum-trading" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">Momentum Trading Explained</span>
+              <span className="block text-gray-500 text-sm mt-1">The momentum strategy behind our walk-forward tested signals.</span>
+            </Link>
+          </div>
+        </div>
+
         {/* Disclaimer */}
         <p className="text-xs text-gray-600 leading-relaxed">
           All performance figures are from walk-forward simulations using historical market data.

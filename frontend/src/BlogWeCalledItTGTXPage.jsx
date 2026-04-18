@@ -264,6 +264,25 @@ export default function BlogWeCalledItTGTXPage() {
           </p>
         </div>
 
+        {/* Related Reading */}
+        <div className="mt-12 pt-8 border-t border-gray-800">
+          <h3 className="text-lg font-semibold text-white mb-4">Related Reading</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link to="/blog/we-called-it-mrna" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">We Called It: Moderna +51%</span>
+              <span className="block text-gray-500 text-sm mt-1">How our system caught Moderna's summer 2021 breakout and locked in gains.</span>
+            </Link>
+            <Link to="/blog/momentum-trading" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">Momentum Trading Explained</span>
+              <span className="block text-gray-500 text-sm mt-1">The momentum ranking system behind trades like TGTX and MRNA.</span>
+            </Link>
+            <Link to="/blog/walk-forward-results" className="block p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
+              <span className="text-white font-medium">Inside Our 5-Year Walk-Forward</span>
+              <span className="block text-gray-500 text-sm mt-1">The full walk-forward simulation that produced these real trade signals.</span>
+            </Link>
+          </div>
+        </div>
+
         {/* Disclaimer */}
         <p className="text-xs text-gray-600 leading-relaxed">
           All performance figures are from walk-forward simulations using historical market data.
