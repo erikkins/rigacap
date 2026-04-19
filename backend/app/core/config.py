@@ -129,7 +129,7 @@ class Settings(BaseSettings):
     SIGNAL_TIER1_BONUS: float = float(os.getenv("SIGNAL_TIER1_BONUS", "0"))
 
     # Track Record — TPE Trial 37, Jan 1 2021 start, single continuous sim
-    TRACK_RECORD_SIM_IDS: List[int] = [793]
+    TRACK_RECORD_SIM_IDS: List[int] = [1032]  # Run5 + circuit breaker: +384.6%, 1.19 Sharpe
 
     # AWS
     AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")

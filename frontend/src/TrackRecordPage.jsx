@@ -8,11 +8,11 @@ const HEADLINE_METRICS = [
   { value: '+384%', label: '5-Year Return', subtitle: 'Walk-forward validated', color: 'text-emerald-400' },
   { value: '~33%', label: 'Annualized Return', subtitle: 'Across multiple start dates', color: 'text-emerald-400' },
   { value: '1.19', label: 'Sharpe Ratio', subtitle: 'Risk-adjusted performance', color: 'text-amber-400' },
-  { value: '24%', label: 'Max Drawdown', subtitle: 'Peak to trough', color: 'text-amber-400' },
+  { value: '30%', label: 'Max Drawdown', subtitle: 'Peak to trough', color: 'text-amber-400' },
 ];
 
 const BENCHMARKS = [
-  { name: 'RigaCap Ensemble', value: 240, label: '+384%', color: 'from-amber-400 to-amber-500' },
+  { name: 'RigaCap Ensemble', value: 384, label: '+384%', color: 'from-amber-400 to-amber-500' },
   { name: 'S&P 500', value: 84, label: '+84%', color: 'from-gray-400 to-gray-500' },
 ];
 
@@ -85,19 +85,19 @@ export default function TrackRecordPage() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <div className="text-emerald-400 text-3xl font-bold">+384%</div>
-            <div className="text-sm text-gray-400 mt-1">5-Year Total Return</div>
-            <div className="text-xs text-gray-600 mt-2">vs S&P 500: +84%</div>
-          </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
             <div className="text-emerald-400 text-3xl font-bold">+6%</div>
             <div className="text-sm text-gray-400 mt-1">In 2022 (S&P: -20%)</div>
             <div className="text-xs text-gray-600 mt-2">Capital preservation when it matters</div>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <div className="text-amber-400 text-3xl font-bold">24%</div>
-            <div className="text-sm text-gray-400 mt-1">Max Drawdown</div>
-            <div className="text-xs text-gray-600 mt-2">Avg hedge fund: 30% to 50%</div>
+            <div className="text-emerald-400 text-3xl font-bold">333</div>
+            <div className="text-sm text-gray-400 mt-1">Walk-Forward Trades</div>
+            <div className="text-xs text-gray-600 mt-2">48.6% win rate, 1.77x win/loss ratio</div>
+          </div>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+            <div className="text-blue-400 text-3xl font-bold">7</div>
+            <div className="text-sm text-gray-400 mt-1">Cascade Guard Events</div>
+            <div className="text-xs text-gray-600 mt-2">~1 per year, 95% of time fully active</div>
           </div>
         </div>
       </section>
