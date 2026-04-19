@@ -848,36 +848,21 @@
     and ensures only the highest-conviction setups enter the portfolio.
   </p>
 
-  <h3>Factor 1: DWAP Timing</h3>
+  <h3>Factor 1: Breakout Detection (Timing)</h3>
   <p>
-    The Daily Weighted Average Price (DWAP) captures the average cost basis of all traders over
-    200 trading days, weighted by volume. When price breaks above DWAP by 5%, it signals that
-    the stock has cleared its accumulation zone with conviction.
+    A proprietary breakout indicator detects when a stock clears its long-term accumulation zone
+    with conviction. The breakout sensitivity threshold is <strong>dynamically optimized</strong>
+    every two weeks by Bayesian optimization (TPE), adapting to current market conditions.
+    Typical range: 3&ndash;7% above the baseline.
   </p>
-  <div class="formula-block no-break">
-    <span class="var">DWAP</span> <span class="op">=</span>
-    <span class="var">&Sigma;(price &times; volume)</span><sub style="font-size:0.65em">200d</sub>
-    <span class="op"> / </span>
-    <span class="var">&Sigma;(volume)</span><sub style="font-size:0.65em">200d</sub>
-    <br>
-    <span class="keyword" style="color:#86efac;">BUY</span> when
-    <span class="var">price</span> <span class="op">&gt;</span>
-    <span class="var">DWAP</span> <span class="op">&times;</span> <span class="number">1.05</span>
-  </div>
 
-  <h3>Factor 2: Momentum Quality</h3>
+  <h3>Factor 2: Momentum Quality (Ranking)</h3>
   <p>
-    Stocks passing the DWAP filter are ranked by a composite momentum score that rewards short-term
-    acceleration and sustained strength, while penalizing excessive volatility:
+    Stocks passing the breakout filter are ranked by a composite momentum score combining
+    short-term acceleration, long-term trend strength, and a volatility penalty. All three
+    weights and lookback windows are <strong>adaptively tuned</strong> by the optimizer
+    every two weeks. Typical lookback: 5&ndash;20 days (short), 40&ndash;90 days (long).
   </p>
-  <div class="formula-block no-break">
-    <span class="var">composite</span> <span class="op">=</span>
-    <span class="var">short_mom</span><sub style="font-size:0.65em">10d</sub> <span class="op">&times;</span> <span class="number">0.5</span>
-    <span class="op"> + </span>
-    <span class="var">long_mom</span><sub style="font-size:0.65em">60d</sub> <span class="op">&times;</span> <span class="number">0.3</span>
-    <span class="op"> &minus; </span>
-    <span class="var">volatility</span><sub style="font-size:0.65em">20d</sub> <span class="op">&times;</span> <span class="number">0.2</span>
-  </div>
 
   <h3>Factor 3: Confirmation Filters</h3>
   <table>
@@ -885,21 +870,21 @@
       <tr><th>Filter</th><th>Condition</th><th>Purpose</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>Uptrend</strong></td><td>Price &gt; MA20 AND Price &gt; MA50</td><td>Confirms healthy trend structure</td></tr>
-      <tr><td><strong>Breakout</strong></td><td>Within 3% of 50-day high</td><td>Near breakout zone, high conviction only</td></tr>
+      <tr><td><strong>Breakout Proximity</strong></td><td>Near recent highs (adaptive, 2&ndash;8%)</td><td>High conviction entries only</td></tr>
       <tr><td><strong>Volume</strong></td><td>&ge; 500,000 shares/day</td><td>Sufficient liquidity</td></tr>
       <tr><td><strong>Price</strong></td><td>&ge; $15</td><td>Filters penny stocks</td></tr>
-      <tr><td><strong>Sector Cap</strong></td><td>Max 5 per sector</td><td>Prevents sector concentration</td></tr>
+      <tr><td><strong>Position Sizing</strong></td><td>4&ndash;8 positions at 12&ndash;20% each (adaptive)</td><td>Concentration adapts to regime</td></tr>
     </tbody>
   </table>
 
   <div class="callout-gold callout no-break">
-    <p><strong>Strong Signal Bonus:</strong> Stocks with volume &ge; 1.5&times; their 200-day average
-    AND price above both MA50 and MA200 (healthy trend) are marked as "strong" signals &mdash;
-    indicating institutional participation.</p>
+    <p><strong>Adaptive Optimization:</strong> Every two weeks, the system re-optimizes 22 strategy parameters
+    using 100 Bayesian trials against the most recent 60 days of market data. Parameters include breakout
+    sensitivity, momentum weights, position concentration, trailing stop width, and profit-lock thresholds.
+    No parameter is fixed &mdash; the system adapts to what works in the current regime.</p>
   </div>
 
-  <h4 style="margin-top: 24px;">Anti-Squeeze Filters (added Apr 2026)</h4>
+  <h4 style="margin-top: 24px;">Anti-Squeeze Filters</h4>
   <p style="font-size: 0.88rem;">
     A fourth layer of rejection criteria was added after a Feb 2021 forensic review revealed the strategy
     had entered meme-stock squeezes at their peaks (EH, TLRY, LCID) and taken catastrophic losses. These
@@ -1552,7 +1537,7 @@
         <td><strong>5-Year Avg</strong></td>
         <td class="positive"><strong>+384%</strong></td>
         <td><strong>+84%</strong></td>
-        <td><strong>~33% annualized, Sharpe 0.89, 30% max drawdown</strong></td>
+        <td><strong>~33% annualized, Sharpe 1.19, 30% max drawdown</strong></td>
       </tr>
       <tr class="highlight-row">
         <td><strong>10-Year Total</strong></td>
