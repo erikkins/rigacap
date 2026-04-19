@@ -884,7 +884,7 @@
     No parameter is fixed &mdash; the system adapts to what works in the current regime.</p>
   </div>
 
-  <h4 style="margin-top: 24px;">Anti-Squeeze Filters</h4>
+  <h4 style="margin-top: 24px; page-break-before: always;">Anti-Squeeze Filters</h4>
   <p style="font-size: 0.88rem;">
     A fourth layer of rejection criteria was added after a Feb 2021 forensic review revealed the strategy
     had entered meme-stock squeezes at their peaks (EH, TLRY, LCID) and taken catastrophic losses. These
@@ -1006,24 +1006,27 @@
 
 <div class="content page-break">
   <h3>Regime Response</h3>
-  <p>Walk-forward testing validated that <strong>fixed parameters across all regimes</strong> outperform
-  regime-adaptive adjustments by +18 percentage points annualized. The system uses a single, consistent
-  set of parameters regardless of regime. The regime's role is binary: <strong>stay invested</strong> or
-  <strong>go to cash</strong> (SPY &lt; 200-day MA).</p>
+  <p>The system detects 7 market regimes and responds at two levels: (1) a <strong>binary market filter</strong>
+  that moves to cash when SPY drops below its 200-day moving average, and (2) <strong>adaptive parameter
+  optimization</strong> that adjusts position sizing, trailing stops, and entry sensitivity based on
+  what the optimizer learned in the most recent 60-day window.</p>
   <table>
     <thead>
       <tr><th>Regime</th><th>Trailing Stop</th><th>Max Positions</th><th>Position Size</th><th>Action</th></tr>
     </thead>
     <tbody>
-      <tr><td style="color:#10B981"><strong>Strong Bull</strong></td><td>12% (fixed)</td><td>6</td><td>15%</td><td>Stay invested</td></tr>
-      <tr><td style="color:#84CC16"><strong>Weak Bull</strong></td><td>12% (fixed)</td><td>6</td><td>15%</td><td>Stay invested</td></tr>
-      <tr><td style="color:#8B5CF6"><strong>Rotating Bull</strong></td><td>12% (fixed)</td><td>6</td><td>15%</td><td>Stay invested</td></tr>
-      <tr><td style="color:#F59E0B"><strong>Range-Bound</strong></td><td>12% (fixed)</td><td>6</td><td>15%</td><td>Stay invested</td></tr>
-      <tr><td style="color:#F97316"><strong>Weak Bear</strong></td><td colspan="3" style="text-align:center; color:#EF4444;"><strong>Cash &mdash; SPY below 200-day MA</strong></td><td>Go to cash</td></tr>
+      <tr><td style="color:#10B981"><strong>Strong Bull</strong></td><td>~11%</td><td>~6</td><td>~18%</td><td>Stay invested, spread bets</td></tr>
+      <tr><td style="color:#8B5CF6"><strong>Rotating Bull</strong></td><td>~14%</td><td>~6</td><td>~17%</td><td>Stay invested, fast momentum</td></tr>
+      <tr><td style="color:#F59E0B"><strong>Range-Bound</strong></td><td>~14%</td><td>~5</td><td>~20%</td><td>Selective, concentrated</td></tr>
+      <tr><td style="color:#F97316"><strong>Weak Bear</strong></td><td>~14%</td><td>~4</td><td>~20%</td><td>Fewer, bigger conviction bets</td></tr>
       <tr><td style="color:#EF4444"><strong>Panic/Crash</strong></td><td colspan="3" style="text-align:center; color:#EF4444;"><strong>Cash &mdash; SPY below 200-day MA</strong></td><td>Go to cash</td></tr>
-      <tr><td style="color:#06B6D4"><strong>Recovery</strong></td><td>12% (fixed)</td><td>6</td><td>15%</td><td>Re-enter when SPY &gt; 200MA</td></tr>
+      <tr><td style="color:#06B6D4"><strong>Recovery</strong></td><td>~16%</td><td>~6</td><td>~14%</td><td>Cautious re-entry, wide stops</td></tr>
     </tbody>
   </table>
+  <p style="font-size: 0.82rem; color: #64748b; font-style: italic; margin-top: 8px;">
+    Values shown are averages from the optimizer&rsquo;s choices across 138 periods. Actual parameters
+    are re-optimized every two weeks and may differ from these regime averages.
+  </p>
 
   <!-- SVG 4: Regime Spectrum Bar -->
   <div class="svg-diagram no-break">
