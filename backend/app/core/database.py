@@ -498,6 +498,31 @@ class NewsletterPreference(Base):
     source = Column(String(50), nullable=True)  # where the signup happened
 
 
+class StrategyAdaptiveParams(Base):
+    """Per-period optimized strategy params from biweekly TPE.
+
+    The scanner reads the latest active row to get current strategy
+    parameters. Each biweekly optimization writes a new row with the
+    winning params, previous params, and a diff of what changed.
+    """
+    __tablename__ = "strategy_adaptive_params"
+
+    id = Column(Integer, primary_key=True)
+    effective_date = Column(Date, nullable=False, unique=True)
+    optimization_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    params_json = Column(JSON, nullable=False)
+    regime_at_optimization = Column(String(50))
+    lookback_days = Column(Integer, default=60)
+    trials_completed = Column(Integer, default=100)
+    expected_return_pct = Column(Float)
+    expected_sharpe = Column(Float)
+    adaptive_score = Column(Float)
+    previous_params_json = Column(JSON)
+    param_changes_json = Column(JSON)
+    source = Column(String(50), default="biweekly_tpe")
+    is_active = Column(Boolean, default=True)
+
+
 class User(Base):
     """User account for authentication and subscription management"""
     __tablename__ = "users"

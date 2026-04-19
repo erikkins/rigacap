@@ -929,6 +929,34 @@ resource "aws_lambda_permission" "market_measured_weekly" {
 }
 
 # ============================================================================
+# EventBridge - Biweekly TPE Strategy Optimization (Mon 8 PM ET = 00:00 UTC Tue)
+# Runs every other Monday after daily scan + emails complete. Produces new
+# adaptive strategy params and writes to strategy_adaptive_params table.
+# The daily scan reads from this table for current params.
+# ============================================================================
+
+resource "aws_cloudwatch_event_rule" "biweekly_tpe" {
+  name                = "${local.prefix}-biweekly-tpe"
+  description         = "Biweekly TPE strategy re-optimization every other Monday 8 PM ET"
+  schedule_expression = "cron(0 0 ? * TUE *)"
+}
+
+resource "aws_cloudwatch_event_target" "biweekly_tpe" {
+  rule      = aws_cloudwatch_event_rule.biweekly_tpe.name
+  target_id = "lambda-biweekly-tpe"
+  arn       = aws_lambda_function.worker.arn
+  input     = jsonencode({ biweekly_tpe = { n_trials = 100 } })
+}
+
+resource "aws_lambda_permission" "biweekly_tpe" {
+  statement_id  = "AllowBiweeklyTPEEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.worker.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.biweekly_tpe.arn
+}
+
+# ============================================================================
 # EventBridge - Daily Engagement Opportunities (9 AM ET = 13:00 UTC during EDT)
 # Scans Twitter feeds, filters for relevant posts, generates Claude-drafted
 # comment suggestions. Admin email to founder.

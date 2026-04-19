@@ -4855,6 +4855,170 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"error": str(e)}
 
+    # Biweekly TPE optimization — runs a single period of adaptive
+    # optimization using the last 60 days of data, writes winning params
+    # to strategy_adaptive_params table. The daily scan reads from this
+    # table to get current strategy params.
+    # {"biweekly_tpe": {"_": 1}} or {"biweekly_tpe": {"n_trials": 50}}
+    if event.get("biweekly_tpe"):
+        print("🧠 Biweekly TPE optimization")
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            async def _run_biweekly_tpe():
+                import json as _json
+                from app.services.walk_forward_service import walk_forward_service
+                from app.core.database import StrategyAdaptiveParams
+                from app.services.email_service import admin_email_service
+
+                cfg = event.get("biweekly_tpe") or {}
+                n_trials = cfg.get("n_trials", 100)
+                lookback = cfg.get("lookback_days", 60)
+
+                # Get current date for optimization
+                from zoneinfo import ZoneInfo
+                now_et = datetime.now(ZoneInfo('America/New_York'))
+                as_of_date = now_et.replace(hour=0, minute=0, second=0, microsecond=0)
+
+                # Build ticker list from scanner cache
+                top_symbols = sorted(
+                    scanner_service.data_cache.keys(),
+                    key=lambda s: scanner_service.data_cache[s]['volume'].iloc[-20:].mean()
+                    if len(scanner_service.data_cache.get(s, [])) >= 20 else 0,
+                    reverse=True
+                )[:500]
+                print(f"🧠 Running TPE: {n_trials} trials, {lookback}d lookback, "
+                      f"{len(top_symbols)} symbols, as_of={as_of_date.date()}")
+
+                # Run optimization
+                result = walk_forward_service._run_ai_optimization_at_date(
+                    as_of_date=as_of_date,
+                    strategy_type="ensemble",
+                    lookback_days=lookback,
+                    ticker_list=top_symbols,
+                    n_trials=n_trials,
+                    optimizer_version="v2m",
+                    risk_preference=0.8,
+                )
+
+                if not result or not result.best_params:
+                    return {"status": "error", "error": "Optimization returned no params"}
+
+                new_params = result.best_params
+                print(f"🧠 Best params: {_json.dumps(new_params, indent=2, default=str)}")
+
+                # Read previous params for diff
+                async with async_session() as db:
+                    prev_row = (await db.execute(
+                        select(StrategyAdaptiveParams)
+                        .where(StrategyAdaptiveParams.is_active == True)
+                        .order_by(StrategyAdaptiveParams.effective_date.desc())
+                        .limit(1)
+                    )).scalar_one_or_none()
+
+                    prev_params = prev_row.params_json if prev_row else {}
+
+                    # Compute diff
+                    changes = {}
+                    user_facing_keys = {"trailing_stop_pct", "near_50d_high_pct",
+                                        "max_positions", "position_size_pct",
+                                        "dwap_threshold_pct", "profit_lock_pct"}
+                    for k, v in new_params.items():
+                        old_v = prev_params.get(k)
+                        if old_v != v:
+                            changes[k] = {"old": old_v, "new": v}
+
+                    user_facing_changes = {k: v for k, v in changes.items()
+                                          if k in user_facing_keys}
+
+                    # Write new params
+                    new_row = StrategyAdaptiveParams(
+                        effective_date=as_of_date.date(),
+                        params_json=new_params,
+                        regime_at_optimization=result.market_regime,
+                        lookback_days=lookback,
+                        trials_completed=n_trials,
+                        expected_return_pct=result.expected_return_pct,
+                        expected_sharpe=result.expected_sharpe,
+                        adaptive_score=result.adaptive_score,
+                        previous_params_json=prev_params,
+                        param_changes_json=changes,
+                        source="biweekly_tpe",
+                        is_active=True,
+                    )
+                    db.add(new_row)
+                    await db.commit()
+                    print(f"✅ Params saved (id={new_row.id}, {len(changes)} changes)")
+
+                # Send guidance email if user-facing params changed
+                if user_facing_changes:
+                    guidance_lines = []
+                    for k, v in user_facing_changes.items():
+                        label = k.replace("_pct", "").replace("_", " ").title()
+                        old_val = v["old"]
+                        new_val = v["new"]
+                        if isinstance(new_val, float):
+                            guidance_lines.append(f"{label}: {old_val} → {new_val}")
+                        else:
+                            guidance_lines.append(f"{label}: {old_val} → {new_val}")
+
+                    guidance_html = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:-apple-system,sans-serif;background:#f3f4f6;">
+<table cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;margin:0 auto;background:#fff;">
+<tr><td style="background:#172554;padding:14px 20px;">
+<h1 style="margin:0;color:#fff;font-size:17px;">🧠 Strategy Update — Biweekly Optimization</h1>
+</td></tr>
+<tr><td style="padding:16px 20px;">
+<p style="margin:0 0 12px;font-size:14px;color:#374151;">
+The system re-optimized using the last {lookback} days of market data.
+Regime: <strong>{result.market_regime}</strong>.
+</p>
+<table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;">
+<tr style="background:#f9fafb;">
+<th style="padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;">Parameter</th>
+<th style="padding:8px 12px;text-align:right;font-size:12px;color:#6b7280;">Previous</th>
+<th style="padding:8px 12px;text-align:right;font-size:12px;color:#6b7280;">New</th>
+</tr>
+{''.join(f'<tr><td style="padding:6px 12px;font-size:13px;border-top:1px solid #f3f4f6;">{k.replace("_pct","").replace("_"," ").title()}</td><td style="padding:6px 12px;text-align:right;font-size:13px;color:#9ca3af;border-top:1px solid #f3f4f6;">{v["old"]}</td><td style="padding:6px 12px;text-align:right;font-size:13px;font-weight:600;border-top:1px solid #f3f4f6;">{v["new"]}</td></tr>' for k, v in user_facing_changes.items())}
+</table>
+<div style="margin-top:16px;background:#f0fdf4;border-left:3px solid #22c55e;padding:12px 16px;border-radius:4px;">
+<p style="margin:0;font-size:13px;color:#374151;line-height:1.5;">
+<strong>What to do:</strong>
+{' Don' + "t add new positions — let exits naturally bring you down to " + str(new_params.get("max_positions", "?")) + " positions." if new_params.get("max_positions", 99) < prev_params.get("max_positions", 0) else " New entries should follow the updated sizing."}
+New trailing stop: {new_params.get("trailing_stop_pct", "?")}%.
+</p></div>
+</td></tr>
+<tr><td style="padding:10px 20px;background:#f9fafb;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center;">
+RigaCap Admin · Biweekly TPE
+</td></tr></table></body></html>"""
+
+                    await admin_email_service.send_email(
+                        to_email="erik@rigacap.com",
+                        subject=f"🧠 Strategy Update: {len(user_facing_changes)} param(s) changed",
+                        html_content=guidance_html,
+                    )
+
+                return {
+                    "status": "ok",
+                    "params": new_params,
+                    "regime": result.market_regime,
+                    "changes": len(changes),
+                    "user_facing_changes": len(user_facing_changes),
+                    "adaptive_score": result.adaptive_score,
+                }
+
+            result = loop.run_until_complete(_run_biweekly_tpe())
+            print(f"🧠 TPE result: {result}")
+            return result
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            return {"error": str(e)}
+
     # Daily engagement opportunities — scans Twitter feeds from curated
     # finance accounts, filters for topics we have takes on, generates
     # Claude-drafted comment suggestions. Sent as admin email at 9 AM ET.

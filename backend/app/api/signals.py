@@ -594,24 +594,38 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
         current_regime = market_regime_service.get_current_regime()
         if current_regime:
             regime_adjustments = get_regime_adjusted_params(current_regime)
-            # Run5-optimized params (Apr 18 2026) — from the latest period
-            # of the adaptive TPE walk-forward that produced +297.8% / 1.10
-            # Sharpe over 5.3 years. These replace the old Trial 37 params
-            # which were validated on dirty data.
-            regime_effective_params = {
-                'trailing_stop_pct': 14.0,
-                'near_50d_high_pct': 7.0,
-                'max_positions': 4,
-                'position_size_pct': 20.0,
-                'dwap_threshold_pct': 5.5,
-                'short_momentum_days': 5,
-                'profit_lock_pct': 12,
-                'profit_lock_stop_pct': 6.0,
-                'max_recent_return_pct': 40,
-                'price_velocity_cap_pct': 965,
-                'sector_cap': 0,
-                'volume_ratio_min': 0.0,
-            }
+            # Read adaptive params from DB (written by biweekly TPE cron).
+            # Falls back to config.py defaults if no DB row exists.
+            try:
+                from app.core.database import StrategyAdaptiveParams
+                _ap_result = await db.execute(
+                    select(StrategyAdaptiveParams)
+                    .where(StrategyAdaptiveParams.is_active == True)
+                    .order_by(StrategyAdaptiveParams.effective_date.desc())
+                    .limit(1)
+                )
+                _ap_row = _ap_result.scalar_one_or_none()
+                if _ap_row and _ap_row.params_json:
+                    regime_effective_params = _ap_row.params_json
+                    print(f"📊 Using adaptive params from {_ap_row.effective_date} "
+                          f"(regime={_ap_row.regime_at_optimization}, "
+                          f"source={_ap_row.source})")
+                else:
+                    regime_effective_params = {
+                        'trailing_stop_pct': settings.TRAILING_STOP_PCT,
+                        'near_50d_high_pct': settings.NEAR_50D_HIGH_PCT,
+                        'max_positions': settings.MAX_POSITIONS,
+                        'position_size_pct': settings.POSITION_SIZE_PCT,
+                    }
+                    print("📊 No adaptive params in DB — using config defaults")
+            except Exception as _ap_err:
+                print(f"⚠️ Adaptive params read failed (using defaults): {_ap_err}")
+                regime_effective_params = {
+                    'trailing_stop_pct': settings.TRAILING_STOP_PCT,
+                    'near_50d_high_pct': settings.NEAR_50D_HIGH_PCT,
+                    'max_positions': settings.MAX_POSITIONS,
+                    'position_size_pct': settings.POSITION_SIZE_PCT,
+                }
             # Override the adjustments display to show no changes
             regime_adjustments['effective'] = regime_effective_params
             regime_adjustments['changes'] = []
