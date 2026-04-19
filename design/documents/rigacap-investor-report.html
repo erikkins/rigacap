@@ -954,15 +954,15 @@
   <h2>Risk Management Summary</h2>
   <div class="metrics-grid">
     <div class="metric-card">
-      <div class="value gold">6</div>
-      <div class="label">Max Positions</div>
+      <div class="value gold">4&ndash;8</div>
+      <div class="label">Max Positions (adaptive)</div>
     </div>
     <div class="metric-card">
-      <div class="value gold">15%</div>
-      <div class="label">Per-Position Size</div>
+      <div class="value gold">12&ndash;20%</div>
+      <div class="label">Position Size (adaptive)</div>
     </div>
     <div class="metric-card">
-      <div class="value gold">12%</div>
+      <div class="value gold">14%</div>
       <div class="label">Trailing Stop</div>
     </div>
     <div class="metric-card">
@@ -972,9 +972,12 @@
   </div>
 
   <div class="callout-green callout">
-    <p><strong>Downside Protection:</strong> During the 2022&ndash;2023 bear market (S&P 500 down ~20%),
-    RigaCap's regime detector triggered defensive positioning, limiting the drawdown to -15.1%.
-    The system recovered and was profitable again within 12 months.</p>
+    <p><strong>Downside Protection:</strong> During the 2022 bear market (S&amp;P 500 down ~20%),
+    RigaCap&rsquo;s regime detector moved to cash, limiting the intra-year drawdown to just -7.3%.
+    The system finished 2022 essentially flat (-0.4%) &mdash; preserving capital while the broad market lost a fifth of its value.</p>
+  </div>
+  <div class="callout-green callout" style="margin-top: 8px;">
+    <p><strong>Cascade Guard:</strong> A portfolio-level circuit breaker pauses all new entries when 3+ positions hit trailing stop on the same day. Triggered just 7 times in 5.3 years, this guardrail added +87 percentage points of return by preventing re-entry during cascade events.</p>
   </div>
 </div>
 
