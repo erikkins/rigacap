@@ -48,7 +48,7 @@ const HeroSection = ({ onGetStarted }) => (
         <p className="max-w-2xl mx-auto text-lg sm:text-xl text-blue-100 mb-3">
           Stop trading on emotions. Start trading on math.
         </p>
-        <p className="text-sm text-blue-200/70 mb-8">+240% over 5 years. ~28% annualized. Max drawdown under 25%.<br />We scan 4,000 stocks daily and only speak up when the math says go.</p>
+        <p className="text-sm text-blue-200/70 mb-8">+297% over 5 years. ~30% annualized. Walk-forward validated.<br />We scan 4,000 stocks daily and only speak up when the math says go.</p>
 
         {/* CTA Buttons */}
         <div className="flex flex-col items-center gap-4 mb-12">
@@ -210,8 +210,8 @@ const StatsSection = () => (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 text-center text-white">
         {[
           { value: '~28%', label: 'Annualized Return' },
-          { value: '+240%', label: '5-Year Return' },
-          { value: '24%', label: 'Max Drawdown' },
+          { value: '+297%', label: '5-Year Return' },
+          { value: '30%', label: 'Max Drawdown' },
           { value: '$34,000', label: 'From $10k (5yr)' },
           { value: '+6%', label: 'During 2022 Crash' },
           { value: '0.89', label: 'Sharpe Ratio' },
@@ -255,7 +255,7 @@ const PerformanceHighlightsSection = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
-            <div className="text-4xl font-bold text-emerald-600 mb-2">+240%</div>
+            <div className="text-4xl font-bold text-emerald-600 mb-2">+297%</div>
             <div className="text-sm font-medium text-gray-500 mb-1">5-Year Total Return</div>
             <div className="text-xs text-gray-400">~28% annualized</div>
             <div className="text-xs text-gray-400 mt-1">S&P 500: +84% over same period</div>
@@ -267,7 +267,7 @@ const PerformanceHighlightsSection = () => {
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap hidden sm:block">Capital Protection</div>
           </div>
           <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
-            <div className="text-4xl font-bold text-amber-600 mb-2">24%</div>
+            <div className="text-4xl font-bold text-amber-600 mb-2">30%</div>
             <div className="text-sm font-medium text-gray-500 mb-1">Max Drawdown</div>
             <div className="text-xs text-gray-400">Peak to trough, worst case</div>
             <div className="text-xs text-gray-400 mt-1">Avg hedge fund: 30-50%</div>
@@ -484,7 +484,7 @@ const FAQSection = () => (
         />
         <FAQItem
           question="What's your track record?"
-          answer={<>+240% over 5 years (~28% annualized) with a max drawdown under 25% — validated through walk-forward simulations with no hindsight bias. In 2022, while the S&P fell 20%, our system gained 6%. See our <a href="/track-record" className="text-indigo-400 hover:text-indigo-300 underline">full track record</a>.</>}
+          answer={<>+297% over 5 years (~30% annualized) with a 1.10 Sharpe ratio — validated through walk-forward simulation with no hindsight bias. In 2022, while the S&amp;P fell 20%, our system gained 6%. See our <a href="/track-record" className="text-indigo-400 hover:text-indigo-300 underline">full track record</a>.</>}
         />
         <FAQItem
           question="Has the system ever had a down year?"
