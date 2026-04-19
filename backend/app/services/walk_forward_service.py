@@ -1029,6 +1029,7 @@ class WalkForwardService:
         regime_fixed_params: Optional[Dict[str, Dict[str, Any]]] = None,  # Map regime→params, skip optimizer
         profit_lock_pct: float = 0,  # Tighten trailing stop once up X%; 0=disabled
         profit_lock_stop_pct: float = 6.0,  # Tightened trailing stop % from peak
+        precomputed_params: Optional[List[Dict[str, Any]]] = None,  # Skip TPE, use these per-period params
     ) -> WalkForwardResult:
         """
         Run walk-forward simulation with AI optimization over a historical period.
@@ -1333,8 +1334,31 @@ class WalkForwardService:
             in_warmup = warmup_periods > 0 and i < warmup_periods
             ai_result = None
 
+            # Precomputed params: skip ALL optimization, inject saved params directly.
+            # Used for replaying a prior run with modifications (e.g. circuit breaker)
+            # without re-running the 29-hour TPE.
+            if precomputed_params and i < len(precomputed_params) and precomputed_params[i]:
+                from app.services.walk_forward_service import AIOptimizationResult
+                _pc = precomputed_params[i]
+                ai_result = AIOptimizationResult(
+                    date=period_start.strftime('%Y-%m-%d'),
+                    best_params=_pc,
+                    expected_sharpe=0, expected_return_pct=0,
+                    expected_max_dd=0, expected_sortino=0,
+                    expected_calmar=0, expected_profit_factor=0,
+                    strategy_type=active_strategy_type or "ensemble",
+                    market_regime="precomputed",
+                    regime_risk_level="n/a",
+                    regime_confidence=1.0,
+                    was_adopted=True,
+                    reason="precomputed_params",
+                    adaptive_score=100,
+                    combinations_tested=0,
+                )
+                print(f"[WF-SERVICE] Using precomputed params for period {i+1}/{len(periods)}")
+
             # Feature 2: Regime-adaptive fixed params (bypasses optimizer entirely)
-            if regime_fixed_params and not in_warmup:
+            elif regime_fixed_params and not in_warmup:
                 try:
                     ai_result = self._get_regime_fixed_params(period_start, regime_fixed_params)
                 except Exception as rfp_err:

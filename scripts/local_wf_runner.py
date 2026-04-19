@@ -139,7 +139,25 @@ def parse_args():
     p.add_argument('--rs-slots', type=int, default=0, help='RS Leaders slots (0=disabled, default: 0)')
     p.add_argument('--rs-stop', type=float, default=0, help='RS trailing stop pct (0=same as primary, e.g. 20 for 20%%)')
     p.add_argument('--dry-run', action='store_true', help='Print config and exit without running')
+    p.add_argument('--precomputed-params', type=str, default='', help='Path to dir of period_NNN.json files (skip TPE, replay saved params)')
     return p.parse_args()
+
+
+def _load_precomputed(params_dir: str):
+    """Load per-period params from a directory of period_NNN.json files."""
+    import glob
+    files = sorted(glob.glob(os.path.join(params_dir, "period_*.json")))
+    if not files:
+        print(f"❌ No period files found in {params_dir}")
+        sys.exit(1)
+    params_list = []
+    for f in files:
+        with open(f) as fh:
+            data = json.load(fh)
+        params_list.append(data.get("active_params") or data.get("parameter_snapshot_json"))
+    valid = sum(1 for p in params_list if p)
+    print(f"📋 Loaded {valid}/{len(params_list)} precomputed param sets from {params_dir}")
+    return params_list
 
 
 def load_pickle(pickle_path: str) -> dict:
@@ -250,6 +268,7 @@ async def run_simulation(args):
                 periods_limit=0,  # No limit locally — run all periods
                 profit_lock_pct=args.profit_lock,
                 profit_lock_stop_pct=args.profit_lock_stop,
+                precomputed_params=_load_precomputed(args.precomputed_params) if args.precomputed_params else None,
             )
         _current_result_ref["result"] = result
     except Exception as e:
