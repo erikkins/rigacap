@@ -224,7 +224,7 @@ class BacktesterService:
         self.pyramid_size_pct = 0.0       # Size of the add-on position (% of initial capital)
         self.pyramid_max_adds = 0         # Max times to pyramid into one position; 0=disabled
         # Circuit breaker (Lever 10): halt new entries when stops cascade
-        self.circuit_breaker_stops = 3    # N stops in one period triggers pause; 0=disabled
+        self.circuit_breaker_stops = 0    # N stops in one period triggers pause; 0=disabled (let TPE tune)
         self.circuit_breaker_pause_days = 10  # Days to pause new entries after trigger
         self.circuit_breaker_tighten_pct = 0  # Tighten stops to X% when triggered; 0=no change
         # Liquidity tier bonus (injected by walk-forward service per period)
