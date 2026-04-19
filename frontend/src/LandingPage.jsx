@@ -48,7 +48,7 @@ const HeroSection = ({ onGetStarted }) => (
         <p className="max-w-2xl mx-auto text-lg sm:text-xl text-blue-100 mb-3">
           Stop trading on emotions. Start trading on math.
         </p>
-        <p className="text-sm text-blue-200/70 mb-8">+297% over 5 years. ~30% annualized. Walk-forward validated.<br />We scan 4,000 stocks daily and only speak up when the math says go.</p>
+        <p className="text-sm text-blue-200/70 mb-8">+384% over 5 years. ~33% annualized. Walk-forward validated.<br />We scan 4,000 stocks daily and only speak up when the math says go.</p>
 
         {/* CTA Buttons */}
         <div className="flex flex-col items-center gap-4 mb-12">
@@ -209,12 +209,12 @@ const StatsSection = () => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 text-center text-white">
         {[
-          { value: '~28%', label: 'Annualized Return' },
-          { value: '+297%', label: '5-Year Return' },
+          { value: '~33%', label: 'Annualized Return' },
+          { value: '+384%', label: '5-Year Return' },
           { value: '30%', label: 'Max Drawdown' },
-          { value: '$34,000', label: 'From $10k (5yr)' },
+          { value: '$48,400', label: 'From $10k (5yr)' },
           { value: '+6%', label: 'During 2022 Crash' },
-          { value: '0.89', label: 'Sharpe Ratio' },
+          { value: '1.19', label: 'Sharpe Ratio' },
         ].map(({ value, label }) => (
           <div key={label}>
             <div className="text-4xl lg:text-5xl font-bold mb-2">{value}</div>
@@ -255,7 +255,7 @@ const PerformanceHighlightsSection = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
-            <div className="text-4xl font-bold text-emerald-600 mb-2">+297%</div>
+            <div className="text-4xl font-bold text-emerald-600 mb-2">+384%</div>
             <div className="text-sm font-medium text-gray-500 mb-1">5-Year Total Return</div>
             <div className="text-xs text-gray-400">~28% annualized</div>
             <div className="text-xs text-gray-400 mt-1">S&P 500: +84% over same period</div>
@@ -484,11 +484,11 @@ const FAQSection = () => (
         />
         <FAQItem
           question="What's your track record?"
-          answer={<>+297% over 5 years (~30% annualized) with a 1.10 Sharpe ratio — validated through walk-forward simulation with no hindsight bias. In 2022, while the S&amp;P fell 20%, our system gained 6%. See our <a href="/track-record" className="text-indigo-400 hover:text-indigo-300 underline">full track record</a>.</>}
+          answer={<>+384% over 5 years (~33% annualized) with a 1.19 Sharpe ratio — validated through walk-forward simulation with no hindsight bias. In 2022, while the S&amp;P fell 20%, our system gained 6%. See our <a href="/track-record" className="text-indigo-400 hover:text-indigo-300 underline">full track record</a>.</>}
         />
         <FAQItem
           question="Has the system ever had a down year?"
-          answer="Yes — in 2023, the system had a modest negative return. That year was driven by just 7 mega-cap stocks (the 'Magnificent 7'), while the rest of the market was flat or down. Our system is built for broad momentum and capital preservation, not concentrated bets on a handful of names. The tradeoff: we keep max drawdown under 25% — something most hedge funds can't achieve — but in rare narrow-leadership markets we may lag. We're actively researching complementary strategies for these conditions."
+          answer="Yes — in 2023, the system had a modest negative return. That year was driven by just 7 mega-cap stocks (the 'Magnificent 7'), while the rest of the market was flat or down. Our system is built for broad momentum and capital preservation, not concentrated bets on a handful of names. The tradeoff: we keep max drawdown around 30% — something most hedge funds can't achieve — but in rare narrow-leadership markets we may lag. We're actively researching complementary strategies for these conditions."
         />
         <FAQItem
           question="Can I cancel anytime?"
