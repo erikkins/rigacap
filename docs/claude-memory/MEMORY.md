@@ -133,6 +133,7 @@
 
 ## User Profile
 - [Erik — solopreneur founder](user_profile.md) — actor background, lean budget, wants full automation from content to video to leads
+- [Target audience — sophisticated retail](user_target_audience.md) — know trailing stops, use brokerage apps, follow fintwit, no time to build own system
 
 ## Marketing Pipeline (Future)
 - **Content → Video → Social → Leads:** Social Intelligence Engine → HeyGen API (chosen over Synthesia — API from $5 PAYG vs $1k+/mo) → Buffer → HubSpot
