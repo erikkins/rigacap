@@ -175,7 +175,7 @@ export default function TrackRecordPage() {
         <div className="bg-gradient-to-r from-emerald-900/30 to-emerald-800/20 border border-emerald-700/30 rounded-xl p-6 sm:p-8 text-center">
           <Shield className="w-8 h-8 text-emerald-400 mx-auto mb-3" />
           <div className="text-3xl font-bold text-emerald-400 mb-1">Flat in 2022</div>
-          <p className="text-emerald-200/70 text-sm">While the S&P 500 fell 20%, our system stayed positive. 7-regime detection moved to cash before the crash — and max drawdown has never exceeded 25%.</p>
+          <p className="text-emerald-200/70 text-sm">While the S&P 500 fell 20%, our system preserved capital. 7-regime detection reduced exposure before the worst of the drawdown.</p>
         </div>
       </section>
 
