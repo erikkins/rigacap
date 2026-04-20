@@ -3408,12 +3408,6 @@ async def model_portfolio_action(
         result = await model_portfolio_service.backfill_from_date(db, as_of_date, force)
         return {"action": action, **result}
 
-    elif action == "backfill_ghosts":
-        as_of_date = body.get("as_of_date", "2026-02-01")
-        force = body.get("force", False)
-        result = await model_portfolio_service.backfill_ghosts(db, as_of_date, force)
-        return {"action": action, **result}
-
     else:
         raise HTTPException(status_code=400, detail=f"Unknown action: {action}")
 
@@ -3491,20 +3485,6 @@ async def bulk_generate_autopsies(
     portfolio_type = body.get("portfolio_type") if body else None
     limit = body.get("limit", 20) if body else 20
     return await trade_autopsy_service.bulk_generate(db, portfolio_type, limit)
-
-
-# ============================================================================
-# Ghost Portfolio Comparison
-# ============================================================================
-
-@router.get("/model-portfolio/ghost-comparison")
-async def get_ghost_comparison(
-    admin: User = Depends(get_admin_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Get side-by-side metrics for WF + ghost portfolios."""
-    from app.services.model_portfolio_service import model_portfolio_service
-    return await model_portfolio_service.get_ghost_comparison(db)
 
 
 # ============================================================================

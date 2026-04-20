@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, Activity, DollarSign, Clock, Search, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, Plus, Zap, TrendingUp, AlertCircle, CheckCircle, PlayCircle, RefreshCw, Beaker, Bot, Settings, Share2, Server, Briefcase, Sparkles, Crown, Calculator, Shield } from 'lucide-react';
+import { Users, Activity, DollarSign, Clock, Search, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, Plus, Zap, TrendingUp, AlertCircle, CheckCircle, PlayCircle, RefreshCw, Beaker, Bot, Settings, Share2, Server, Briefcase, Sparkles, Calculator, Shield } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import StrategyGenerator from './StrategyGenerator';
@@ -1217,7 +1217,6 @@ function ModelPortfolioTab({ fetchWithAuth }) {
   const [expandedTrade, setExpandedTrade] = useState(null);
   const [tradeDetail, setTradeDetail] = useState(null);
   const [subscriberPreview, setSubscriberPreview] = useState(null);
-  const [ghostComparison, setGhostComparison] = useState(null);
   const [regimeHistory, setRegimeHistory] = useState([]);
   const [regimeAccuracy, setRegimeAccuracy] = useState(null);
   const [whatIfResult, setWhatIfResult] = useState(null);
@@ -1278,15 +1277,6 @@ function ModelPortfolioTab({ fetchWithAuth }) {
       if (response.ok) setSubscriberPreview(await response.json());
     } catch (err) {
       console.error('Failed to fetch subscriber preview:', err);
-    }
-  };
-
-  const fetchGhostComparison = async () => {
-    try {
-      const response = await fetchWithAuth(`${API_URL}/api/admin/model-portfolio/ghost-comparison`);
-      if (response.ok) setGhostComparison(await response.json());
-    } catch (err) {
-      console.error('Failed to fetch ghost comparison:', err);
     }
   };
 
@@ -1463,7 +1453,6 @@ function ModelPortfolioTab({ fetchWithAuth }) {
         await fetchEquityCurve();
         await fetchTrades();
         await fetchSubscriberPreview();
-        if (action === 'backfill_ghosts') await fetchGhostComparison();
       }
     } catch (err) {
       console.error('Action failed:', err);
@@ -1802,47 +1791,6 @@ function ModelPortfolioTab({ fetchWithAuth }) {
         </div>
       )}
 
-      {/* Ghost Portfolio Comparison */}
-      {ghostComparison && Object.keys(ghostComparison).filter(k => !k.startsWith('_')).length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Ghost Portfolios</h3>
-            <span className="text-xs text-gray-400">Parallel universes with different parameters</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Object.entries(ghostComparison).filter(([k]) => !k.startsWith('_')).map(([key, g]) => {
-              const isBest = ghostComparison._best === key;
-              const returnColor = g.total_return_pct > 0 ? 'text-green-600' : g.total_return_pct < 0 ? 'text-red-600' : 'text-gray-600';
-              return (
-                <div key={key} className={`rounded-lg border p-4 ${isBest ? 'border-amber-300 bg-amber-50' : 'border-gray-200'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-sm text-gray-900">{g.label}</span>
-                    {isBest && <Crown size={16} className="text-amber-500" />}
-                  </div>
-                  <p className="text-xs text-gray-400 mb-3">{g.description}</p>
-                  <div className={`text-2xl font-bold ${returnColor} mb-2`}>
-                    {g.total_return_pct >= 0 ? '+' : ''}{g.total_return_pct?.toFixed(1)}%
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div><span className="text-gray-400">Win Rate</span> <span className="font-medium text-gray-700 ml-1">{g.win_rate}%</span></div>
-                    <div><span className="text-gray-400">Trades</span> <span className="font-medium text-gray-700 ml-1">{g.total_trades}</span></div>
-                    <div><span className="text-gray-400">Stop</span> <span className="font-medium text-gray-700 ml-1">{g.trailing_stop}%</span></div>
-                    <div><span className="text-gray-400">Slots</span> <span className="font-medium text-gray-700 ml-1">{g.max_positions}</span></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {ghostComparison._best && (
-            <p className="text-sm text-gray-500 mt-3">
-              {ghostComparison._best === 'walkforward'
-                ? "You're in the best timeline — the canonical WF portfolio is winning."
-                : `${ghostComparison._best_label} is ahead — consider parameter adjustments.`}
-            </p>
-          )}
-        </div>
-      )}
-
       {/* Regime Intelligence */}
       {regimeHistory.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -2164,13 +2112,6 @@ function ModelPortfolioTab({ fetchWithAuth }) {
         >
           {processing ? 'Running...' : 'Backfill WF from Feb 1'}
         </button>
-        <button
-          onClick={() => runAction('backfill_ghosts', { as_of_date: '2026-02-01', force: true })}
-          disabled={processing}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 disabled:opacity-50"
-        >
-          {processing ? 'Running...' : 'Backfill Ghosts'}
-        </button>
       </div>
 
       {/* Chart Modal Overlay */}
@@ -2247,9 +2188,6 @@ function EquityCurveChart({ data }) {
     return `${parts[1]}/${parts[2]}`;
   };
 
-  // Check if ghost data exists
-  const hasGhosts = data.some(d => d.ghost_aggressive_value || d.ghost_conservative_value || d.ghost_top3_value);
-
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
@@ -2263,13 +2201,6 @@ function EquityCurveChart({ data }) {
         <Legend />
         <Line type="monotone" dataKey="live_value" name="Live" stroke="#22c55e" strokeWidth={2} dot={false} />
         <Line type="monotone" dataKey="spy_value" name="SPY (benchmark)" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" dot={false} />
-        {hasGhosts && (
-          <>
-            <Line type="monotone" dataKey="ghost_aggressive_value" name="Aggressive" stroke="#ef4444" strokeWidth={1} strokeDasharray="4 4" dot={false} />
-            <Line type="monotone" dataKey="ghost_conservative_value" name="Conservative" stroke="#14b8a6" strokeWidth={1} strokeDasharray="4 4" dot={false} />
-            <Line type="monotone" dataKey="ghost_top3_value" name="Top-3" stroke="#8b5cf6" strokeWidth={1} strokeDasharray="4 4" dot={false} />
-          </>
-        )}
       </LineChart>
     </ResponsiveContainer>
   );

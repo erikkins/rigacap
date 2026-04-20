@@ -34,16 +34,7 @@ WF_PERIOD_DAYS = 14
 SIGNAL_TRACK_RECORD = "signal_track_record"
 SIGNAL_TRACK_NOTIONAL = 10000.0  # Flat $10K per pick for clean % tracking
 
-# Ghost portfolio configurations for parallel universe comparison
-GHOST_CONFIGS = {
-    "ghost_aggressive": {"trailing_stop": 8.0, "max_positions": 8, "position_size": 0.12,
-                         "label": "Aggressive", "description": "Tight stops, more positions"},
-    "ghost_conservative": {"trailing_stop": 18.0, "max_positions": 4, "position_size": 0.20,
-                           "label": "Conservative", "description": "Wide stops, fewer positions"},
-    "ghost_top3": {"trailing_stop": 12.0, "max_positions": 3, "position_size": 0.30,
-                   "label": "Top-3 Only", "description": "Concentrated best picks"},
-}
-ALL_PORTFOLIO_TYPES = PORTFOLIO_TYPES + tuple(GHOST_CONFIGS.keys()) + (SIGNAL_TRACK_RECORD,)
+ALL_PORTFOLIO_TYPES = PORTFOLIO_TYPES + (SIGNAL_TRACK_RECORD,)
 
 
 def _get_regime_trailing_stop(dashboard_data: Optional[dict] = None) -> float:
@@ -829,21 +820,6 @@ class ModelPortfolioService:
         )
         return summary
 
-    async def backfill_ghosts(
-        self, db: AsyncSession, as_of_date: str = "2026-02-01", force: bool = False
-    ) -> dict:
-        """Backfill all ghost portfolios with their respective configurations."""
-        results = {}
-        for ghost_type, config in GHOST_CONFIGS.items():
-            logger.info(f"[GHOST] Backfilling {ghost_type} ({config['label']})")
-            result = await self.backfill_from_date(
-                db, as_of_date, force,
-                portfolio_type=ghost_type,
-                config_override=config,
-            )
-            results[ghost_type] = result
-        return results
-
     async def _get_signals_for_date(self, target_date: date) -> Optional[List[dict]]:
         """Load ensemble signals for a given date from snapshot or live computation."""
         from app.services.data_export import data_export_service
@@ -1095,51 +1071,6 @@ class ModelPortfolioService:
             # AI autopsy
             "autopsy": autopsy,
         }
-
-    # ------------------------------------------------------------------
-    # Ghost portfolio comparison
-    # ------------------------------------------------------------------
-
-    async def get_ghost_comparison(self, db: AsyncSession) -> dict:
-        """Return side-by-side metrics for all portfolio types (WF + ghosts)."""
-        from sqlalchemy import asc, func as sqlfunc
-
-        comparison = {}
-        for ptype in ["walkforward"] + list(GHOST_CONFIGS.keys()):
-            state = await self._get_or_create_state(db, ptype)
-
-            # Get latest snapshot value
-            latest_snap = await db.execute(
-                select(ModelPortfolioSnapshot)
-                .where(ModelPortfolioSnapshot.portfolio_type == ptype)
-                .order_by(ModelPortfolioSnapshot.snapshot_date.desc())
-                .limit(1)
-            )
-            snap = latest_snap.scalar_one_or_none()
-
-            total_value = snap.total_value if snap else state.starting_capital
-            total_return = ((total_value / state.starting_capital) - 1) * 100 if state.starting_capital else 0
-            win_rate = (state.winning_trades / state.total_trades * 100) if state.total_trades > 0 else 0
-
-            config = GHOST_CONFIGS.get(ptype, {})
-            comparison[ptype] = {
-                "label": config.get("label", "Walk-Forward"),
-                "description": config.get("description", "Canonical ensemble strategy"),
-                "total_value": round(total_value, 2),
-                "total_return_pct": round(total_return, 2),
-                "win_rate": round(win_rate, 1),
-                "total_trades": state.total_trades,
-                "trailing_stop": config.get("trailing_stop", TRAILING_STOP_PCT),
-                "max_positions": config.get("max_positions", MAX_POSITIONS),
-                "position_size": config.get("position_size", POSITION_SIZE_PCT),
-            }
-
-        # Find the best-performing portfolio
-        best = max(comparison.items(), key=lambda x: x[1]["total_return_pct"])
-        comparison["_best"] = best[0]
-        comparison["_best_label"] = best[1]["label"]
-
-        return comparison
 
     # ------------------------------------------------------------------
     # "What If You Followed Us" Calculator

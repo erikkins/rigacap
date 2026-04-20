@@ -2596,11 +2596,6 @@ def handler(event, context):
                     force = config.get("force", False)
                     return await model_portfolio_service.backfill_from_date(db, as_of_date, force)
 
-                elif action == "backfill_ghosts":
-                    as_of_date = config.get("as_of_date", "2026-02-01")
-                    force = config.get("force", False)
-                    return await model_portfolio_service.backfill_ghosts(db, as_of_date, force)
-
                 elif action == "backfill_signal_track":
                     as_of_date = config.get("as_of_date", "2026-02-01")
                     force = config.get("force", False)
