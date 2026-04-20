@@ -96,8 +96,8 @@ export default function TrackRecordPage() {
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
             <div className="text-blue-400 text-3xl font-bold">7</div>
-            <div className="text-sm text-gray-400 mt-1">Cascade Guard Events</div>
-            <div className="text-xs text-gray-600 mt-2">~1 per year, 95% of time fully active</div>
+            <div className="text-sm text-gray-400 mt-1">Emergency Pauses</div>
+            <div className="text-xs text-gray-600 mt-2">System froze entries when multiple stops hit the same day</div>
           </div>
         </div>
       </section>
