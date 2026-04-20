@@ -35,6 +35,7 @@ PLATFORM_COOLDOWN_MINUTES = {
     "threads": 180,   # 3 hours — Threads aggressively blocks rapid posting
     "instagram": 120,  # 2 hours
     "twitter": 30,     # 30 min — Twitter is more lenient
+    "tiktok": 240,     # 4 hours — conservative until we understand rate limits
 }
 
 

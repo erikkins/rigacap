@@ -6,7 +6,7 @@ import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 const HEADLINE_METRICS = [
   { value: '+384%', label: '5-Year Return', subtitle: 'Walk-forward validated', color: 'text-emerald-400' },
-  { value: '~33%', label: 'Annualized Return', subtitle: 'Across multiple start dates', color: 'text-emerald-400' },
+  { value: '~35%', label: 'Annualized Return', subtitle: 'Across multiple start dates', color: 'text-emerald-400' },
   { value: '1.19', label: 'Sharpe Ratio', subtitle: 'Risk-adjusted performance', color: 'text-amber-400' },
   { value: '30%', label: 'Max Drawdown', subtitle: 'Peak to trough', color: 'text-amber-400' },
 ];

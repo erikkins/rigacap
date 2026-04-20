@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     APPLE_KEY_ID: str = os.getenv("APPLE_KEY_ID", "")
     TIKTOK_CLIENT_KEY: str = os.getenv("TIKTOK_CLIENT_KEY", "")
     TIKTOK_CLIENT_SECRET: str = os.getenv("TIKTOK_CLIENT_SECRET", "")
+    TIKTOK_ACCESS_TOKEN: str = os.getenv("TIKTOK_ACCESS_TOKEN", "")
     
     # Trading strategy (legacy DWAP - kept for backward compatibility)
     DWAP_THRESHOLD_PCT: float = 5.5  # Run5 adaptive optimizer (was 6.5 Trial 37)

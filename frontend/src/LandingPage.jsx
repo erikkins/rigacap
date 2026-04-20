@@ -48,7 +48,7 @@ const HeroSection = ({ onGetStarted }) => (
         <p className="max-w-2xl mx-auto text-lg sm:text-xl text-blue-100 mb-3">
           Stop trading on emotions. Start trading on math.
         </p>
-        <p className="text-sm text-blue-200/70 mb-8">+384% over 5 years. ~33% annualized. Walk-forward validated.<br />We scan 4,000 stocks daily and only speak up when the math says go.</p>
+        <p className="text-sm text-blue-200/70 mb-8">+384% over 5 years. ~35% annualized. Walk-forward validated.<br />We scan 4,000 stocks daily and only speak up when the math says go.</p>
 
         {/* CTA Buttons */}
         <div className="flex flex-col items-center gap-4 mb-12">
@@ -80,12 +80,8 @@ const HeroSection = ({ onGetStarted }) => (
         {/* Social proof */}
         <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-blue-200">
           <div className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            <span><strong className="text-white">2,500+</strong> Active Traders</span>
-          </div>
-          <div className="flex items-center gap-2">
             <Star className="w-5 h-5 text-yellow-300" />
-            <span><strong className="text-white">15</strong> Years of Development</span>
+            <span>Built on <strong className="text-white">15 years</strong> of personal quant research</span>
           </div>
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-emerald-300" />
@@ -177,7 +173,7 @@ const HowItWorksSection = () => (
           How RigaCap Works
         </h2>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          From signal to profit in 4 simple steps
+          From signal to execution in 4 simple steps
         </p>
       </div>
 
@@ -209,7 +205,7 @@ const StatsSection = () => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 text-center text-white">
         {[
-          { value: '~33%', label: 'Annualized Return' },
+          { value: '~35%', label: 'Annualized Return' },
           { value: '+384%', label: '5-Year Return' },
           { value: '30%', label: 'Max Drawdown' },
           { value: '$48,400', label: 'From $10k (5yr)' },
@@ -257,7 +253,7 @@ const PerformanceHighlightsSection = () => {
           <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
             <div className="text-4xl font-bold text-emerald-600 mb-2">+384%</div>
             <div className="text-sm font-medium text-gray-500 mb-1">5-Year Total Return</div>
-            <div className="text-xs text-gray-400">~28% annualized</div>
+            <div className="text-xs text-gray-400">~35% annualized</div>
             <div className="text-xs text-gray-400 mt-1">S&P 500: +84% over same period</div>
           </div>
           <div className="relative bg-white rounded-2xl p-8 shadow-lg border border-emerald-100 text-center">
@@ -270,7 +266,7 @@ const PerformanceHighlightsSection = () => {
             <div className="text-4xl font-bold text-amber-600 mb-2">30%</div>
             <div className="text-sm font-medium text-gray-500 mb-1">Max Drawdown</div>
             <div className="text-xs text-gray-400">Peak to trough, worst case</div>
-            <div className="text-xs text-gray-400 mt-1">Avg hedge fund: 30-50%</div>
+            <div className="text-xs text-gray-400 mt-1">Controlled by trailing stops + regime detection</div>
           </div>
         </div>
 
@@ -384,61 +380,10 @@ const PricingSection = ({ onGetStarted }) => {
   );
 };
 
-const TestimonialCard = ({ quote, author, role, avatar }) => (
-  <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-    <div className="flex gap-1 mb-4">
-      {[1,2,3,4,5].map(i => (
-        <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-      ))}
-    </div>
-    <p className="text-gray-700 mb-6 leading-relaxed">"{quote}"</p>
-    <div className="flex items-center gap-4">
-      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold">
-        {avatar}
-      </div>
-      <div>
-        <div className="font-semibold text-gray-900">{author}</div>
-        <div className="text-sm text-gray-500">{role}</div>
-      </div>
-    </div>
-  </div>
-);
-
-const TestimonialsSection = () => (
-  <section className="py-20 bg-gray-50">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="text-center mb-16">
-        <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-          Loved by Traders Everywhere
-        </h2>
-        <p className="text-lg text-gray-600">
-          See what our members are saying
-        </p>
-      </div>
-
-      <div className="grid md:grid-cols-3 gap-8">
-        <TestimonialCard
-          quote="RigaCap's signals have completely changed how I trade. The ensemble approach is brilliant - I've made more in 3 months than the entire previous year."
-          author="Michael R."
-          role="Day Trader, Texas"
-          avatar="MR"
-        />
-        <TestimonialCard
-          quote="Finally, a trading tool that doesn't overwhelm me with complexity. Simple signals, clear targets. My portfolio is up 45% since I started."
-          author="Sarah K."
-          role="Part-time Investor, NYC"
-          avatar="SK"
-        />
-        <TestimonialCard
-          quote="The daily email digest is worth the subscription alone. I check it every evening and plan my next day's trades. Absolutely essential."
-          author="James L."
-          role="Swing Trader, Chicago"
-          avatar="JL"
-        />
-      </div>
-    </div>
-  </section>
-);
+// REMOVED: Fake testimonials — SEC marketing compliance risk.
+// Uncomment and replace with real testimonials when available.
+// const TestimonialCard = ({ quote, author, role, avatar }) => ( ... );
+// const TestimonialsSection = () => ( ... );
 
 const FAQItem = ({ question, answer }) => {
   const [open, setOpen] = useState(false);
@@ -484,7 +429,7 @@ const FAQSection = () => (
         />
         <FAQItem
           question="What's your track record?"
-          answer={<>+384% over 5 years (~33% annualized) with a 1.19 Sharpe ratio — validated through walk-forward simulation with no hindsight bias. In 2022, while the S&amp;P fell 20%, our system preserved capital. See our <a href="/track-record" className="text-indigo-400 hover:text-indigo-300 underline">full track record</a>.</>}
+          answer={<>+384% over 5 years (~35% annualized) with a 1.19 Sharpe ratio — validated through walk-forward simulation with no hindsight bias. In 2022, while the S&amp;P fell 20%, our system preserved capital. See our <a href="/track-record" className="text-indigo-400 hover:text-indigo-300 underline">full track record</a>.</>}
         />
         <FAQItem
           question="Has the system ever had a down year?"
@@ -497,6 +442,10 @@ const FAQSection = () => (
         <FAQItem
           question="Do I need a brokerage account?"
           answer="Yes. RigaCap identifies what to buy and when — you execute trades through your own broker (Schwab, Fidelity, Interactive Brokers, etc.). We don't hold funds or place orders on your behalf."
+        />
+        <FAQItem
+          question="If the system works this well, why sell signals instead of running a fund?"
+          answer="Great question. Building a fund requires regulatory infrastructure, institutional capital, and a 2+ year track record — we're building that now. In the meantime, signals let us prove the system in live markets with real subscribers while we bootstrap. You get access to the same engine we'll eventually deploy with our own capital."
         />
         <FAQItem
           question="Do you provide financial advice?"
@@ -658,7 +607,6 @@ export default function LandingPage() {
       <StatsSection />
       <PerformanceHighlightsSection />
       <PricingSection onGetStarted={handleGetStarted} />
-      <TestimonialsSection />
       <FAQSection />
 
       {/* Weekly newsletter — lower-commitment alternative to the trial CTA.

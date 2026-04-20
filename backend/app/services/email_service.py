@@ -1762,7 +1762,7 @@ Unsubscribe: https://rigacap.com/unsubscribe
                         +384%
                     </p>
                     <p style="margin: 4px 0 0 0; font-size: 14px; color: #374151;">
-                        ~33% annualized &bull; 1.19 Sharpe &bull; 30% max drawdown &bull; No hindsight bias
+                        ~35% annualized &bull; 1.19 Sharpe &bull; 30% max drawdown &bull; No hindsight bias
                     </p>
                 </div>
 

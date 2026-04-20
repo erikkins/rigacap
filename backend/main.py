@@ -3222,9 +3222,8 @@ def handler(event, context):
                     script=config["script"],
                     avatar_id=config.get("avatar_id"),
                     voice_id=config.get("voice_id"),
-                    format=config.get("format", "portrait"),
-                    test=config.get("test", True),
-                    caption=config.get("caption", True),
+                    aspect_ratio=config.get("aspect_ratio", "9:16"),
+                    resolution=config.get("resolution", "1080p"),
                     background_color=config.get("background_color", "#172554"),
                 )
                 return {"status": "queued" if video_id else "failed", "video_id": video_id}

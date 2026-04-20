@@ -1,5 +1,6 @@
 """
-Social media publishing service — posts to Twitter API v2 and Instagram Graph API.
+Social media publishing service — posts to Twitter API v2, Instagram Graph API,
+Threads API, and TikTok Content Posting API.
 
 Uses httpx (already in requirements.txt) for all HTTP requests.
 OAuth 1.0a signing for Twitter is done manually (no extra dependency).
@@ -25,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class SocialPostingService:
-    """Publish posts to Twitter, Instagram, and Threads."""
+    """Publish posts to Twitter, Instagram, Threads, and TikTok."""
 
     # Twitter API v2 endpoints
     TWITTER_TWEET_URL = "https://api.twitter.com/2/tweets"
@@ -36,6 +37,9 @@ class SocialPostingService:
 
     # Threads API
     THREADS_API_BASE = "https://graph.threads.net/v1.0"
+
+    # TikTok Content Posting API
+    TIKTOK_API_BASE = "https://open.tiktokapis.com/v2"
 
     # ── Twitter ──────────────────────────────────────────────────────
 
@@ -361,6 +365,103 @@ class SocialPostingService:
 
         return None
 
+    # ── TikTok ───────────────────────────────────────────────────────
+
+    async def post_to_tiktok(
+        self, text: str, image_url: Optional[str] = None,
+    ) -> dict:
+        """Post to TikTok via the Content Posting API.
+
+        For photo posts (image_url provided): creates a photo post.
+        For text-only: TikTok requires a photo or video, so we return an error.
+
+        Returns {"tiktok_id": "..."} on success, or {"error": "..."} on failure.
+        """
+        if not settings.TIKTOK_ACCESS_TOKEN:
+            return {"error": "TikTok access token not configured"}
+
+        access_token = settings.TIKTOK_ACCESS_TOKEN
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json; charset=UTF-8",
+        }
+
+        if not image_url:
+            return {"error": "TikTok posts require an image or video"}
+
+        async with httpx.AsyncClient(timeout=60) as client:
+            # Step 1: Initialize photo upload
+            init_resp = await client.post(
+                f"{self.TIKTOK_API_BASE}/post/publish/inbox/video/init/",
+                headers=headers,
+                json={
+                    "source_info": {
+                        "source": "PULL_FROM_URL",
+                        "video_url": image_url,
+                    },
+                    "post_info": {
+                        "title": text[:150],
+                        "privacy_level": "PUBLIC_TO_EVERYONE",
+                        "disable_comment": False,
+                        "disable_duet": False,
+                        "disable_stitch": False,
+                    },
+                    "post_mode": "DIRECT_POST",
+                    "media_type": "PHOTO",
+                },
+            )
+
+            if init_resp.status_code != 200:
+                # Try the photo-specific endpoint
+                init_resp = await client.post(
+                    f"{self.TIKTOK_API_BASE}/post/publish/content/init/",
+                    headers=headers,
+                    json={
+                        "post_info": {
+                            "title": text[:150],
+                            "description": text[:2200],
+                            "privacy_level": "PUBLIC_TO_EVERYONE",
+                            "disable_comment": False,
+                        },
+                        "source_info": {
+                            "source": "PULL_FROM_URL",
+                            "photo_cover_index": 0,
+                            "photo_images": [image_url],
+                        },
+                        "post_mode": "DIRECT_POST",
+                        "media_type": "PHOTO",
+                    },
+                )
+
+            if init_resp.status_code != 200:
+                logger.error("TikTok post init failed: %s %s", init_resp.status_code, init_resp.text[:500])
+                return {"error": f"TikTok init error: {init_resp.text[:200]}"}
+
+            result = init_resp.json()
+            publish_id = result.get("data", {}).get("publish_id", "")
+
+            if not publish_id:
+                return {"error": f"No publish_id returned: {result}"}
+
+            # Step 2: Check publish status (poll up to 30s)
+            for _ in range(6):
+                status_resp = await client.post(
+                    f"{self.TIKTOK_API_BASE}/post/publish/status/fetch/",
+                    headers=headers,
+                    json={"publish_id": publish_id},
+                )
+                if status_resp.status_code == 200:
+                    status_data = status_resp.json().get("data", {})
+                    status = status_data.get("status")
+                    if status == "PUBLISH_COMPLETE":
+                        return {"tiktok_id": publish_id}
+                    if status in ("FAILED", "PUBLISH_FAILED"):
+                        fail_reason = status_data.get("fail_reason", "unknown")
+                        return {"error": f"TikTok publish failed: {fail_reason}"}
+                await _async_sleep(5)
+
+            return {"tiktok_id": publish_id}
+
     # ── Instagram Comments ───────────────────────────────────────────
 
     async def post_instagram_comment(
@@ -575,6 +676,7 @@ class SocialPostingService:
         "twitter": "twitter",
         "instagram": "instagram",
         "threads": "threads",
+        "tiktok": "tiktok",
     }
 
     _RIGACAP_URL_RE = re.compile(
@@ -662,6 +764,25 @@ class SocialPostingService:
         elif post.platform == "threads":
             reply_to = getattr(post, 'reply_to_thread_id', None)
             result = await self.post_to_threads(text, image_url, reply_to_id=reply_to)
+        elif post.platform == "tiktok":
+            if not image_url:
+                from app.services.chart_card_generator import chart_card_generator
+                png_bytes = chart_card_generator.generate_text_card(
+                    text=post.text_content or "",
+                    headline=getattr(post, 'post_type', '').replace('_', ' ').title(),
+                )
+                date_str = datetime.utcnow().strftime("%Y%m%d")
+                s3_key = chart_card_generator.upload_to_s3(
+                    png_bytes, post.id, "text", date_str
+                )
+                if s3_key:
+                    post.image_s3_key = s3_key
+                    image_url = chart_card_generator.get_presigned_url(
+                        s3_key, expires_in=3600
+                    )
+                if not image_url:
+                    return {"error": "TikTok posts require an image — failed to generate text card"}
+            result = await self.post_to_tiktok(text, image_url)
         else:
             return {"error": f"Unknown platform: {post.platform}"}
 

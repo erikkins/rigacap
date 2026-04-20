@@ -639,11 +639,11 @@ const LAUNCH_POSTS = [
       hashtags: '#trading #investing #hedgefund',
     },
     instagram: {
-      text: "Hedge fund returns. $39/month.\n\nLet that sink in.\n\nThe average hedge fund returned ~10% annually over the last decade. They charge 2% of your assets plus 20% of your profits. Minimum investment: $1 million.\n\nOur system returned ~33% annually over the same period. We charge $39/month. No minimums. No performance fees. Everyone gets the same signals, whether you invest $5k or $500k.\n\n+384% over 5 years. Max drawdown around 30%. In 2022, while the S&P fell 20%, we stayed flat.\n\n$10,000 becomes $48,400. That's not a projection \u2014 it's what 10 years of walk-forward testing shows.\n\nStop trading on emotions. Start trading on math.\n\nrigacap.com",
+      text: "Hedge fund returns. $39/month.\n\nLet that sink in.\n\nThe average hedge fund returned ~10% annually over the last decade. They charge 2% of your assets plus 20% of your profits. Minimum investment: $1 million.\n\nOur system returned ~35% annually over the same period. We charge $39/month. No minimums. No performance fees. Everyone gets the same signals, whether you invest $5k or $500k.\n\n+384% over 5 years. Max drawdown around 30%. In 2022, while the S&P fell 20%, we stayed flat.\n\n$10,000 becomes $48,400. That's not a projection \u2014 it's what 10 years of walk-forward testing shows.\n\nStop trading on emotions. Start trading on math.\n\nrigacap.com",
       hashtags: '#trading #investing #hedgefund #algotrading #stockmarket #rigacap',
     },
     threads: {
-      text: "Hedge fund returns. $39/month.\n\n+384% over 5 years. Max drawdown around 30%. $10k \u2192 $48,400.\n\nAverage hedge fund: ~10% annual, $1M minimum, 2/20 fees.\nRigaCap: ~33% annual, no minimum, $39/month.\n\nSame signals whether you invest $5k or $500k.\n\nrigacap.com",
+      text: "Hedge fund returns. $39/month.\n\n+384% over 5 years. Max drawdown around 30%. $10k \u2192 $48,400.\n\nAverage hedge fund: ~10% annual, $1M minimum, 2/20 fees.\nRigaCap: ~35% annual, no minimum, $39/month.\n\nSame signals whether you invest $5k or $500k.\n\nrigacap.com",
     },
   },
   {
@@ -671,11 +671,11 @@ const LAUNCH_POSTS = [
       hashtags: '#trading #investing #emotionaltrading',
     },
     instagram: {
-      text: "Stop trading on emotions. Start trading on math.\n\nYou know the rules:\n\u2022 Don't panic sell\n\u2022 Don't FOMO into a rally\n\u2022 Don't hold losers hoping they'll come back\n\u2022 Don't check your portfolio 40 times a day\n\nBut you do it anyway. Because you're human. And humans are terrible at this.\n\nOur algorithm doesn't have feelings. It doesn't get scared. It doesn't get greedy. It doesn't read Reddit threads at 2am and convince itself to buy GameStop.\n\nIt scans 4,000 stocks daily. It detects 7 market regimes. It waits for all three factors to align. And when nothing qualifies, it does nothing.\n\nThat mechanical discipline produced ~33% annualized returns over 5 years. Max drawdown around 30%.\n\nYou don't need more stock picks. You need a system that removes you from the equation.\n\n$39/month. rigacap.com",
+      text: "Stop trading on emotions. Start trading on math.\n\nYou know the rules:\n\u2022 Don't panic sell\n\u2022 Don't FOMO into a rally\n\u2022 Don't hold losers hoping they'll come back\n\u2022 Don't check your portfolio 40 times a day\n\nBut you do it anyway. Because you're human. And humans are terrible at this.\n\nOur algorithm doesn't have feelings. It doesn't get scared. It doesn't get greedy. It doesn't read Reddit threads at 2am and convince itself to buy GameStop.\n\nIt scans 4,000 stocks daily. It detects 7 market regimes. It waits for all three factors to align. And when nothing qualifies, it does nothing.\n\nThat mechanical discipline produced ~35% annualized returns over 5 years. Max drawdown around 30%.\n\nYou don't need more stock picks. You need a system that removes you from the equation.\n\n$39/month. rigacap.com",
       hashtags: '#trading #investing #emotionaltrading #algotrading #stockmarket #rigacap',
     },
     threads: {
-      text: "You know you shouldn't panic sell.\nYou know you shouldn't FOMO buy.\nYou do it anyway. Because you're human.\n\nOur algorithm isn't. It scans 4,000 stocks daily, detects 7 market regimes, and only acts when the math says go.\n\n~33% annualized over 5 years. Max drawdown around 30%.\n\nStop trading on emotions. $39/month.\n\nrigacap.com",
+      text: "You know you shouldn't panic sell.\nYou know you shouldn't FOMO buy.\nYou do it anyway. Because you're human.\n\nOur algorithm isn't. It scans 4,000 stocks daily, detects 7 market regimes, and only acts when the math says go.\n\n~35% annualized over 5 years. Max drawdown around 30%.\n\nStop trading on emotions. $39/month.\n\nrigacap.com",
     },
   },
   {

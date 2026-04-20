@@ -79,6 +79,13 @@ class AIContentService:
                 "Short, punchy. Similar to Twitter but slightly longer. No hashtags. "
                 "End with rigacap.com if space allows."
             )
+        elif platform == "tiktok":
+            char_limit = 150
+            platform_instruction = (
+                f"TikTok caption: max {char_limit} characters. "
+                "Ultra-short, hook-driven. One punchy line + the result. "
+                "This appears over a photo card so keep it minimal."
+            )
         else:
             char_limit = 600
             platform_instruction = (
