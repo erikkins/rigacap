@@ -92,8 +92,10 @@ export default function TrackRecordChart({ compact = false, apiUrl = null }) {
   const chartData = useMemo(() => {
     if (!data?.equity_curve) return [];
     const periods = data.regime_periods || [];
+    const maxSims = Math.max(...data.equity_curve.map(p => p.n_sims || 1));
+    const minRequired = Math.max(2, Math.floor(maxSims * 0.6));
 
-    return data.equity_curve.map(point => {
+    return data.equity_curve.filter(p => (p.n_sims || 1) >= minRequired).map(point => {
       let regime = null;
       for (const p of periods) {
         if (point.date >= p.start_date && point.date <= p.end_date) {
