@@ -896,7 +896,7 @@ const StockChartModal = ({ symbol, type, data, onClose, onAction, liveQuote, vie
                           strokeWidth={1.5}
                           strokeDasharray="5 3"
                           label={{
-                            value: `Exit $${sellY.toFixed(2)}${data?.exit_reason ? ` (${{'trailing_stop':'trailing stop','rebalance_exit':'rebalance','simulation_end':'rebalance','profit_target':'target','stop_loss':'stop loss'}[data.exit_reason] || data.exit_reason.replace(/_/g, ' ')})` : ''}`,
+                            value: `Exit $${sellY.toFixed(2)}${data?.exit_reason && data.exit_reason !== 'still_open' ? ` (${{'trailing_stop':'trailing stop','rebalance_exit':'rebalance','simulation_end':'rebalance','profit_target':'target','stop_loss':'stop loss','market_regime':'market regime'}[data.exit_reason] || data.exit_reason.replace(/_/g, ' ')})` : ''}`,
                             fill: '#141210',
                             fontWeight: 500,
                             fontSize: 11,
@@ -2457,16 +2457,16 @@ function Dashboard() {
             </div>
           </div>
 
-          <nav className="flex items-center gap-1 bg-paper-deep p-1 rounded min-w-0">
-            <button onClick={() => setActiveTab('signals')} className={`px-2 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'signals' ? 'bg-paper-card shadow text-ink' : 'text-ink-mute hover:text-ink'}`}>
-              <Zap size={16} className="inline sm:mr-2" /><span className="hidden sm:inline">Signals</span>
+          <nav className="flex items-center border border-rule-dark bg-paper-card">
+            <button onClick={() => setActiveTab('signals')} className={`px-4 sm:px-5 py-2 text-[0.85rem] font-medium border-r border-rule-dark transition-colors ${activeTab === 'signals' ? 'bg-ink text-paper' : 'text-ink-mute hover:bg-paper hover:text-ink'}`}>
+              Signals
             </button>
-            <button onClick={() => setActiveTab('history')} className={`px-2 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-paper-card shadow text-ink' : 'text-ink-mute hover:text-ink'}`}>
-              <History size={16} className="inline sm:mr-2" /><span className="hidden sm:inline">Trade History</span>
+            <button onClick={() => setActiveTab('history')} className={`px-4 sm:px-5 py-2 text-[0.85rem] font-medium border-r border-rule-dark transition-colors ${activeTab === 'history' ? 'bg-ink text-paper' : 'text-ink-mute hover:bg-paper hover:text-ink'}`}>
+              Trade History
             </button>
             {isAdmin && (
-              <button onClick={() => setActiveTab('admin')} className={`px-2 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'admin' ? 'bg-paper-card shadow text-ink' : 'text-ink-mute hover:text-ink'}`}>
-                <Settings size={16} className="inline sm:mr-2" /><span className="hidden sm:inline">Admin</span>
+              <button onClick={() => setActiveTab('admin')} className={`px-4 sm:px-5 py-2 text-[0.85rem] font-medium transition-colors ${activeTab === 'admin' ? 'bg-ink text-paper' : 'text-ink-mute hover:bg-paper hover:text-ink'}`}>
+                Admin
               </button>
             )}
           </nav>
@@ -4115,7 +4115,7 @@ function Dashboard() {
 
             <div className="overflow-hidden">
               <div className="flex items-baseline justify-between pb-3 border-b-2 border-ink mb-5">
-                <h2 className="font-display text-[1.25rem] font-medium text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>Trade History <em className="font-display italic text-ink-mute text-[0.85rem]" style={{ fontVariationSettings: '"opsz" 24' }}>1 Year Backtest</em></h2>
+                <h2 className="font-display text-[1.25rem] font-medium text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>Trade History <em className="font-display italic text-ink-mute text-[0.85rem]" style={{ fontVariationSettings: '"opsz" 24' }}>Your recorded entries &amp; exits</em></h2>
               </div>
               <div className="overflow-x-auto max-h-[600px]">
                 {trades.length > 0 ? (
@@ -4141,8 +4141,8 @@ function Dashboard() {
                   </table>
                 ) : (
                   <div className="text-center py-12 text-ink-mute">
-                    <History className="w-12 h-12 mx-auto text-ink-light mb-3" />
-                    <p>No trades in backtest period</p>
+                    <p className="font-display italic text-ink-mute" style={{ fontVariationSettings: '"opsz" 24' }}>No recorded trades yet.</p>
+                    <p className="text-sm text-ink-light mt-1">Use "Record Entry" on a signal, then "Record Exit" when you close.</p>
                   </div>
                 )}
               </div>

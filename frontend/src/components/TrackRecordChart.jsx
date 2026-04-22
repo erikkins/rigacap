@@ -7,13 +7,13 @@ import {
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const REGIME_DARK_COLORS = {
-  strong_bull: { bg: 'rgba(16, 185, 129, 0.15)', color: '#10B981', name: 'Strong Bull' },
-  weak_bull: { bg: 'rgba(132, 204, 22, 0.12)', color: '#84CC16', name: 'Weak Bull' },
-  rotating_bull: { bg: 'rgba(139, 92, 246, 0.12)', color: '#8B5CF6', name: 'Rotating Bull' },
-  range_bound: { bg: 'rgba(245, 158, 11, 0.12)', color: '#F59E0B', name: 'Range-Bound' },
-  weak_bear: { bg: 'rgba(249, 115, 22, 0.12)', color: '#F97316', name: 'Weak Bear' },
-  panic_crash: { bg: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', name: 'Panic/Crash' },
-  recovery: { bg: 'rgba(6, 182, 212, 0.12)', color: '#06B6D4', name: 'Recovery' },
+  strong_bull: { bg: 'rgba(245, 241, 232, 0.5)', color: '#C9BFAC', name: 'Strong Bull' },
+  weak_bull: { bg: 'rgba(237, 231, 216, 0.5)', color: '#C9BFAC', name: 'Weak Bull' },
+  rotating_bull: { bg: 'rgba(221, 213, 199, 0.3)', color: '#8A8279', name: 'Rotating Bull' },
+  range_bound: { bg: 'rgba(201, 191, 172, 0.2)', color: '#8A8279', name: 'Range-Bound' },
+  weak_bear: { bg: 'rgba(138, 130, 121, 0.15)', color: '#5A544E', name: 'Weak Bear' },
+  panic_crash: { bg: 'rgba(90, 84, 78, 0.12)', color: '#5A544E', name: 'Panic/Crash' },
+  recovery: { bg: 'rgba(221, 213, 199, 0.3)', color: '#8A8279', name: 'Recovery' },
 };
 
 function formatCurrency(value) {
@@ -190,7 +190,7 @@ export default function TrackRecordChart({ compact = false, apiUrl = null }) {
     <div>
       <ResponsiveContainer width="100%" height={height}>
         <ComposedChart data={displayData} margin={{ top: 10, right: 10, left: compact ? 0 : 10, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#DDD5C7" vertical={false} />
 
           {/* Regime background bands */}
           {!compact && mappedRegimePeriods.map((period, i) => (
@@ -207,16 +207,16 @@ export default function TrackRecordChart({ compact = false, apiUrl = null }) {
 
           <XAxis
             dataKey="date"
-            stroke="#6B7280"
-            tick={{ fill: '#9CA3AF', fontSize: compact ? 10 : 11 }}
+            stroke="#C9BFAC"
+            tick={{ fill: '#8A8279', fontSize: compact ? 10 : 11, fontFamily: 'IBM Plex Mono, monospace' }}
             tickFormatter={formatDate}
             interval={tickInterval}
-            axisLine={{ stroke: '#374151' }}
+            axisLine={{ stroke: '#C9BFAC' }}
             tickLine={false}
           />
           <YAxis
-            stroke="#6B7280"
-            tick={{ fill: '#9CA3AF', fontSize: compact ? 10 : 11 }}
+            stroke="#C9BFAC"
+            tick={{ fill: '#8A8279', fontSize: compact ? 10 : 11, fontFamily: 'IBM Plex Mono, monospace' }}
             tickFormatter={formatCurrency}
             axisLine={false}
             tickLine={false}
@@ -230,7 +230,7 @@ export default function TrackRecordChart({ compact = false, apiUrl = null }) {
               type="monotone"
               dataKey="best_equity"
               stroke="none"
-              fill="rgba(59, 130, 246, 0.08)"
+              fill="rgba(20, 18, 16, 0.06)"
               fillOpacity={1}
               activeDot={false}
               isAnimationActive={false}
@@ -241,7 +241,7 @@ export default function TrackRecordChart({ compact = false, apiUrl = null }) {
               type="monotone"
               dataKey="worst_equity"
               stroke="none"
-              fill="#111827"
+              fill="#F5F1E8"
               fillOpacity={1}
               activeDot={false}
               isAnimationActive={false}
@@ -252,7 +252,7 @@ export default function TrackRecordChart({ compact = false, apiUrl = null }) {
           <Line
             type="monotone"
             dataKey="spy_equity"
-            stroke="#F59E0B"
+            stroke="#B8923D"
             strokeWidth={compact ? 1.5 : 2}
             strokeDasharray="6 3"
             dot={false}
@@ -265,7 +265,7 @@ export default function TrackRecordChart({ compact = false, apiUrl = null }) {
             <Line
               type="monotone"
               dataKey="worst_equity"
-              stroke="#3B82F6"
+              stroke="#141210"
               strokeWidth={1}
               strokeDasharray="4 4"
               strokeOpacity={0.4}
@@ -280,7 +280,7 @@ export default function TrackRecordChart({ compact = false, apiUrl = null }) {
             <Line
               type="monotone"
               dataKey="best_equity"
-              stroke="#3B82F6"
+              stroke="#141210"
               strokeWidth={1}
               strokeDasharray="4 4"
               strokeOpacity={0.4}
@@ -294,10 +294,10 @@ export default function TrackRecordChart({ compact = false, apiUrl = null }) {
           <Line
             type="monotone"
             dataKey="equity"
-            stroke="#3B82F6"
+            stroke="#141210"
             strokeWidth={compact ? 2 : 2.5}
             dot={false}
-            activeDot={{ r: 4, fill: '#3B82F6', stroke: '#1E40AF' }}
+            activeDot={{ r: 4, fill: '#141210', stroke: '#F5F1E8' }}
             name="Average"
           />
         </ComposedChart>
@@ -306,33 +306,33 @@ export default function TrackRecordChart({ compact = false, apiUrl = null }) {
       {/* Legend */}
       {!compact && (
         <div className="mt-4 space-y-3">
-          <div className="flex items-center justify-center gap-6 text-xs">
+          <div className="flex items-center justify-center gap-6 text-xs font-mono">
             <span className="flex items-center gap-1.5">
-              <span className="w-5 h-0.5 bg-blue-500 inline-block rounded" />
-              <span className="text-gray-400">Average (all start dates)</span>
+              <span className="w-5 h-0.5 bg-ink inline-block" />
+              <span className="text-ink-mute">Average (all start dates)</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-5 h-0.5 inline-block rounded opacity-40" style={{ background: '#3B82F6', borderTop: '1px dashed #3B82F6' }} />
-              <span className="text-gray-500">Best / Worst start date</span>
+              <span className="w-5 h-0.5 inline-block opacity-40 bg-ink" style={{ borderTop: '1px dashed #141210' }} />
+              <span className="text-ink-light">Best / Worst start date</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-5 h-0.5 inline-block rounded" style={{ background: '#F59E0B', opacity: 0.7 }} />
-              <span className="text-gray-400">S&P 500 (SPY)</span>
+              <span className="w-5 h-0.5 inline-block" style={{ background: '#B8923D' }} />
+              <span className="text-ink-mute">S&P 500 (SPY)</span>
             </span>
           </div>
 
           {/* Regime legend */}
           {uniqueRegimes.length > 0 && (
-            <div className="pt-2 border-t border-gray-800">
-              <p className="text-xs text-gray-600 mb-2 text-center">Market Regimes</p>
-              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs">
+            <div className="pt-2 border-t border-rule">
+              <p className="text-xs text-ink-light mb-2 text-center font-mono tracking-wide">Market Regimes</p>
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs font-mono">
                 {uniqueRegimes.map(r => (
                   <span key={r.type} className="flex items-center gap-1.5">
                     <span
-                      className="w-3 h-3 rounded-sm"
+                      className="w-3 h-3"
                       style={{ backgroundColor: r.bg, border: `1px solid ${r.color}` }}
                     />
-                    <span style={{ color: r.color }}>{r.name}</span>
+                    <span className="text-ink-mute">{r.name}</span>
                   </span>
                 ))}
               </div>
