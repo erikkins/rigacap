@@ -24,6 +24,7 @@
 - **10y pickle OOMs at 3008 MB** (347 MB compressed, 728 MB raw). Needs 4096+ MB Lambda.
 - **Pickle shrink bug (fixed Apr 1 2026):** `fetch_incremental` strips indicator columns (dwap, ma_50, etc.) for lazy recompute, legitimately shrinking pickle ~50%. Old byte-size guardrail blocked ALL daily exports since Mar 28. Fixed: guardrail now checks symbol count, not byte size.
 - Backups: `s3://rigacap-prod-price-data-149218244179/prices/backups/`
+- **[Pickle build playbook](project_pickle_playbook.md)** — full build/validate/deploy process, ETF exclusions, guardrails, emergency restore
 
 ## Strategy IDs
 - ID 1: DWAP Classic | ID 2: Momentum v2 | ID 3: DWAP Hybrid | ID 4: Concentrated Momentum | ID 5: DWAP+Momentum Ensemble
