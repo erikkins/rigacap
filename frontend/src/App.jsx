@@ -273,50 +273,51 @@ const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanc
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-      <div className="bg-paper-card rounded shadow-2xl max-w-md w-full overflow-hidden">
-        <div className="px-6 py-4 border-b border-rule bg-positive">
-          <h2 className="text-xl font-bold text-white">Buy {symbol}</h2>
-          {stockInfo?.name && <p className="text-positive text-sm">{stockInfo.name}</p>}
-          {timeTravelDate && <p className="text-positive text-xs mt-1">Entry date: {timeTravelDate}</p>}
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4">
+      <div className="bg-paper max-w-md w-full border border-ink overflow-hidden">
+        <div className="px-6 py-5 border-b-2 border-ink">
+          <div className="font-body text-[0.68rem] font-medium tracking-[0.22em] uppercase text-ink-mute mb-2">Record Entry</div>
+          <h2 className="font-display text-2xl font-normal text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 96' }}>{symbol}</h2>
+          {stockInfo?.name && <p className="text-ink-mute text-sm mt-0.5">{stockInfo.name}</p>}
+          {timeTravelDate && <p className="font-mono text-[0.72rem] text-ink-light mt-1">Entry date: {timeTravelDate}</p>}
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-ink mb-1">Number of Shares</label>
+            <label className="block font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-2">Number of Shares</label>
             <input
               type="number"
               value={shares}
               onChange={(e) => setShares(Math.max(1, parseInt(e.target.value) || 0))}
-              className="w-full px-4 py-3 border border-rule-dark rounded focus:ring-2 focus:ring-emerald-500 focus:border-claret"
+              className="w-full px-4 py-3 border border-rule-dark bg-paper-card font-mono text-[0.95rem] focus:outline-none focus:border-ink"
               min="1"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-ink mb-1">Entry Price</label>
+            <label className="block font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-2">Entry Price</label>
             <input
               type="number"
               step="0.01"
               value={entryPrice}
               onChange={(e) => setEntryPrice(parseFloat(e.target.value) || 0)}
-              className="w-full px-4 py-3 border border-rule-dark rounded focus:ring-2 focus:ring-emerald-500 focus:border-claret"
+              className="w-full px-4 py-3 border border-rule-dark bg-paper-card font-mono text-[0.95rem] focus:outline-none focus:border-ink"
             />
           </div>
 
-          <div className="bg-paper-card rounded p-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-ink-mute">Total Cost</span>
-              <span className="font-semibold">${totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+          <div className="border-t border-b border-rule py-4 space-y-3">
+            <div className="flex justify-between">
+              <span className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute">Total Cost</span>
+              <span className="font-mono text-[0.95rem] font-medium text-ink">${totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-ink-mute">{viewMode === 'simple' ? '15% Safety Net' : 'Trailing Stop (15%)'}</span>
-              <span className="text-negative font-medium">${trailingStop.toFixed(2)}</span>
+            <div className="flex justify-between">
+              <span className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute">{viewMode === 'simple' ? '15% Safety Net' : 'Trailing Stop (15%)'}</span>
+              <span className="font-mono text-[0.95rem] text-ink">${trailingStop.toFixed(2)}</span>
             </div>
             {viewMode !== 'simple' && (
-              <div className="flex justify-between text-sm">
-                <span className="text-ink-mute">Exit Strategy</span>
-                <span className="text-ink-mute font-medium">Let winners run</span>
+              <div className="flex justify-between">
+                <span className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute">Exit Strategy</span>
+                <span className="font-mono text-[0.95rem] text-ink-mute">Let winners run</span>
               </div>
             )}
           </div>
@@ -325,16 +326,16 @@ const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanc
         <div className="px-6 py-4 border-t border-rule flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 text-ink-mute hover:bg-paper-deep rounded font-medium"
+            className="flex-1 px-4 py-3 text-ink-mute border border-rule-dark hover:border-ink font-body text-[0.85rem] font-medium transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleBuy}
             disabled={submitting || shares < 1 || entryPrice <= 0}
-            className="flex-1 px-4 py-3 bg-positive text-white rounded font-medium hover:bg-positive disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 bg-ink text-paper font-body text-[0.85rem] font-medium tracking-wide hover:bg-claret transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign size={18} />}
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {submitting ? 'Saving...' : 'Track Position'}
           </button>
         </div>
@@ -4083,28 +4084,28 @@ function Dashboard() {
                     <h3 className="font-display text-[1.1rem] font-medium text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>
                       Simulated Portfolio {backtest.is_walk_forward ? '(Walk-Forward)' : '(Backtest)'}
                     </h3>
-                    <p className="text-sm text-ink-mute">
+                    <p className="font-mono text-[0.78rem] text-ink-mute tracking-wide mt-1">
                       {backtest.is_walk_forward
-                        ? `Ensemble strategy${backtest.num_strategy_switches > 0 ? ` with ${backtest.num_strategy_switches} switches` : ''}`
-                        : `Based on ${backtest.strategy === 'momentum' ? 'Momentum' : 'Breakout'} strategy`
+                        ? `Ensemble strategy${backtest.num_strategy_switches > 0 ? ` · ${backtest.num_strategy_switches} switches` : ''}`
+                        : `${backtest.strategy === 'momentum' ? 'Momentum' : 'Breakout'} strategy`
                       }
-                      {' '}| {formatDate(backtest.start_date, { includeYear: true })} to {formatDate(backtest.end_date, { includeYear: true })}
+                      {' · '}{formatDate(backtest.start_date, { includeYear: true })} to {formatDate(backtest.end_date, { includeYear: true })}
                     </p>
                   </div>
-                  <div className="flex gap-6 text-sm">
-                    <div className="text-center">
-                      <p className="text-ink-mute">Return</p>
-                      <p className={`font-bold ${parseFloat(backtest.total_return_pct) >= 0 ? 'text-positive' : 'text-negative'}`}>
+                  <div className="flex gap-8">
+                    <div>
+                      <div className="font-body text-[0.64rem] font-medium tracking-[0.22em] uppercase text-ink-mute mb-1">Return</div>
+                      <div className={`font-display text-[1.5rem] font-normal leading-none tracking-tight ${parseFloat(backtest.total_return_pct) >= 0 ? 'text-positive' : 'text-negative'}`} style={{ fontVariationSettings: '"opsz" 72' }}>
                         {parseFloat(backtest.total_return_pct) >= 0 ? '+' : ''}{backtest.total_return_pct}%
-                      </p>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-ink-mute">Sharpe</p>
-                      <p className="font-bold text-ink">{backtest.sharpe_ratio}</p>
+                    <div>
+                      <div className="font-body text-[0.64rem] font-medium tracking-[0.22em] uppercase text-ink-mute mb-1">Sharpe</div>
+                      <div className="font-display text-[1.5rem] font-normal leading-none tracking-tight text-ink" style={{ fontVariationSettings: '"opsz" 72' }}>{backtest.sharpe_ratio}</div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-ink-mute">Max DD</p>
-                      <p className="font-bold text-claret">{backtest.max_drawdown_pct}%</p>
+                    <div>
+                      <div className="font-body text-[0.64rem] font-medium tracking-[0.22em] uppercase text-ink-mute mb-1">Max DD</div>
+                      <div className="font-display text-[1.5rem] font-normal leading-none tracking-tight text-ink" style={{ fontVariationSettings: '"opsz" 72' }}>{backtest.max_drawdown_pct}%</div>
                     </div>
                   </div>
                 </div>
@@ -4113,33 +4114,35 @@ function Dashboard() {
           </>
         ) : activeTab === 'history' ? (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <MetricCard title="Total Trades" value={trades.length} icon={History} />
-              <MetricCard title="Win Rate" value={`${winRate.toFixed(0)}%`} subtitle={`${wins.length}W / ${trades.length - wins.length}L`} icon={Target} trend={winRate > 50 ? 'up' : 'down'} />
-              <MetricCard title="Total P&L" value={`$${totalHistoricalPnl.toLocaleString(undefined, {maximumFractionDigits: 0})}`} icon={Wallet} trend={totalHistoricalPnl >= 0 ? 'up' : 'down'} />
-              <MetricCard title="Avg Return" value={`${trades.length ? (trades.reduce((s,t) => s + (t.pnl_pct || 0), 0) / trades.length).toFixed(1) : 0}%`} icon={BarChart3} />
+            <div className="grid grid-cols-2 sm:grid-cols-4 border-t border-b border-ink py-4 mb-6">
+              <MetricCard title="Total Trades" value={trades.length} />
+              <MetricCard title="Win Rate" value={`${winRate.toFixed(0)}%`} subtitle={`${wins.length}W / ${trades.length - wins.length}L`} trend={winRate > 50 ? 'up' : 'down'} />
+              <MetricCard title="Total P&L" value={`$${totalHistoricalPnl.toLocaleString(undefined, {maximumFractionDigits: 0})}`} trend={totalHistoricalPnl >= 0 ? 'up' : 'down'} />
+              <MetricCard title="Avg Return" value={`${trades.length ? (trades.reduce((s,t) => s + (t.pnl_pct || 0), 0) / trades.length).toFixed(1) : 0}%`} />
             </div>
 
-            <div className="bg-paper-card rounded shadow-sm border border-rule overflow-hidden">
-              <div className="px-5 py-4 border-b border-rule"><h2 className="text-lg font-semibold text-ink">Trade History (1 Year Backtest)</h2></div>
+            <div className="overflow-hidden">
+              <div className="flex items-baseline justify-between pb-3 border-b-2 border-ink mb-5">
+                <h2 className="font-display text-[1.25rem] font-medium text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>Trade History <em className="font-display italic text-ink-mute text-[0.85rem]" style={{ fontVariationSettings: '"opsz" 24' }}>1 Year Backtest</em></h2>
+              </div>
               <div className="overflow-x-auto max-h-[600px]">
                 {trades.length > 0 ? (
-                  <table className="w-full">
-                    <thead className="bg-paper-card border-b border-rule sticky top-0">
-                      <tr>{['Symbol', 'Entry', 'Exit', 'Entry $', 'Exit $', 'Return', 'P&L', 'Reason', 'Days'].map(h => <th key={h} className="py-3 px-4 text-left text-xs font-semibold text-ink-mute uppercase">{h}</th>)}</tr>
+                  <table className="w-full border-collapse" style={{ fontFeatureSettings: '"tnum"' }}>
+                    <thead>
+                      <tr>{['Symbol', 'Entry', 'Exit', 'Entry $', 'Exit $', 'Return', 'P&L', 'Reason', 'Days'].map(h => <th key={h} className="py-2 px-3 text-left font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">{h}</th>)}</tr>
                     </thead>
                     <tbody>
                       {trades.map(t => (
-                        <tr key={t.id} className="hover:bg-paper-card border-b border-gray-50">
-                          <td className="py-3 px-4 font-medium">{t.symbol}</td>
-                          <td className="py-3 px-4 text-ink-mute text-sm">{formatDate(t.entry_date)}</td>
-                          <td className="py-3 px-4 text-ink-mute text-sm">{formatDate(t.exit_date)}</td>
-                          <td className="py-3 px-4">${t.entry_price?.toFixed(2)}</td>
-                          <td className="py-3 px-4">${t.exit_price?.toFixed(2)}</td>
-                          <td className="py-3 px-4"><span className={`px-2 py-1 rounded text-sm font-semibold ${t.pnl_pct >= 0 ? 'bg-positive/10 text-positive' : 'bg-negative/10 text-negative'}`}>{t.pnl_pct >= 0 ? '+' : ''}{t.pnl_pct?.toFixed(1)}%</span></td>
-                          <td className={`py-3 px-4 font-medium ${t.pnl >= 0 ? 'text-positive' : 'text-negative'}`}>${t.pnl?.toFixed(0)}</td>
-                          <td className="py-3 px-4"><span className={`px-2 py-1 rounded text-xs font-medium ${t.exit_reason === 'profit_target' ? 'bg-positive/10 text-positive' : t.exit_reason === 'stop_loss' ? 'bg-negative/10 text-negative' : 'bg-paper-deep text-ink-mute'}`}>{({'trailing_stop':'TRAILING STOP','rebalance_exit':'REBALANCE','simulation_end':'REBALANCE','profit_target':'PROFIT TARGET','stop_loss':'STOP LOSS'}[t.exit_reason] || t.exit_reason?.toUpperCase())}</span></td>
-                          <td className="py-3 px-4 text-ink-mute">{t.days_held}d</td>
+                        <tr key={t.id} className="hover:bg-paper-card border-b border-rule">
+                          <td className="py-3 px-3 font-display text-[1.05rem] font-medium" style={{ fontVariationSettings: '"opsz" 48' }}>{t.symbol}</td>
+                          <td className="py-3 px-3 font-mono text-[0.85rem] text-ink-mute">{formatDate(t.entry_date)}</td>
+                          <td className="py-3 px-3 font-mono text-[0.85rem] text-ink-mute">{formatDate(t.exit_date)}</td>
+                          <td className="py-3 px-3 font-mono text-[0.88rem]">${t.entry_price?.toFixed(2)}</td>
+                          <td className="py-3 px-3 font-mono text-[0.88rem]">${t.exit_price?.toFixed(2)}</td>
+                          <td className="py-3 px-3 font-mono text-[0.88rem]"><span className={`font-medium ${t.pnl_pct >= 0 ? 'text-positive' : 'text-negative'}`}>{t.pnl_pct >= 0 ? '+' : ''}{t.pnl_pct?.toFixed(1)}%</span></td>
+                          <td className={`py-3 px-3 font-mono text-[0.88rem] font-medium ${t.pnl >= 0 ? 'text-positive' : 'text-negative'}`}>${t.pnl?.toFixed(0)}</td>
+                          <td className="py-3 px-3"><span className="font-mono text-[0.68rem] tracking-[0.15em] uppercase text-ink-mute px-2 py-1 border border-rule-dark">{({'trailing_stop':'TRAIL STOP','rebalance_exit':'REBALANCE','simulation_end':'REBALANCE','profit_target':'TARGET','stop_loss':'STOP LOSS'}[t.exit_reason] || t.exit_reason?.toUpperCase())}</span></td>
+                          <td className="py-3 px-3 font-mono text-[0.85rem] text-ink-mute">{t.days_held}d</td>
                         </tr>
                       ))}
                     </tbody>
