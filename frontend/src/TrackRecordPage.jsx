@@ -5,7 +5,7 @@ import TrackRecordChart from './components/TrackRecordChart';
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 const HEADLINE_METRICS = [
-  { value: '+263%', label: 'Average Return', subtitle: '8 start dates, same strategy', color: 'text-emerald-400' },
+  { value: '+263%', label: 'Average Return', subtitle: 'multiple start dates, same strategy', color: 'text-emerald-400' },
   { value: '+165%', label: 'Worst Start Date', subtitle: 'Still 2x SPY\'s +86%', color: 'text-amber-400' },
   { value: '0.92', label: 'Avg Sharpe Ratio', subtitle: 'Risk-adjusted performance', color: 'text-emerald-400' },
   { value: '27%', label: 'Avg Max Drawdown', subtitle: 'Peak to trough', color: 'text-amber-400' },
@@ -74,7 +74,7 @@ export default function TrackRecordPage() {
           </h2>
           <TrackRecordChart />
           <p className="text-xs text-gray-600 mt-3 text-center">
-            Solid line: average across 8 start dates. Shaded band: best to worst start date. All use the same strategy and parameters.
+            Solid line: average across multiple start dates. Shaded band: best to worst start date. All use the same strategy and parameters.
           </p>
         </div>
       </section>

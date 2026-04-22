@@ -51,7 +51,7 @@ export default function TrackRecordPageV2() {
         <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-rule">
             {[
-              ['+204%', 'Average Return', '8 start dates, same strategy'],
+              ['+204%', 'Average Return', 'multiple start dates, same strategy'],
               ['+86%', 'Worst Start Date', 'Still positive, still ahead of SPY'],
               ['0.95', 'Avg Sharpe Ratio', 'Risk-adjusted performance'],
               ['32%', 'Avg Max Drawdown', 'Peak to trough'],
@@ -71,13 +71,13 @@ export default function TrackRecordPageV2() {
         <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
           <SectionLabel>Equity Curve</SectionLabel>
           <h2 className="font-display text-ink mb-8 tracking-[-0.02em]" style={{ fontSize: 'clamp(1.6rem, 3vw, 2.25rem)', fontVariationSettings: '"opsz" 96' }}>
-            5-Year Growth &mdash; <em className="text-claret italic">8 start dates vs S&P 500.</em>
+            5-Year Growth &mdash; <em className="text-claret italic">multiple start dates vs S&P 500.</em>
           </h2>
 
           <div className="bg-paper-card border border-rule p-4 sm:p-8">
             <TrackRecordChart />
             <p className="text-[0.82rem] text-ink-light mt-4 text-center">
-              Solid line: average across 8 start dates. Shaded band: best to worst. All use the same strategy and parameters.
+              Solid line: average across multiple start dates. Shaded band: best to worst. All use the same strategy and parameters.
             </p>
           </div>
         </div>
@@ -104,7 +104,7 @@ export default function TrackRecordPageV2() {
               </thead>
               <tbody>
                 <tr className="border-b border-rule">
-                  <td className="py-4 pr-4 text-[0.95rem]">Simulation (avg. of 8 start dates)</td>
+                  <td className="py-4 pr-4 text-[0.95rem]">Simulation (avg. of multiple start dates)</td>
                   <td className="py-4 px-5 text-right font-mono text-[0.95rem]">+204%</td>
                   <td className="py-4 px-5 text-right font-mono text-[0.95rem]">~23%</td>
                   <td className="py-4 px-5 text-right font-mono text-[0.95rem]">0.95</td>

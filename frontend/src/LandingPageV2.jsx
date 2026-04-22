@@ -96,7 +96,7 @@ const HeroSection = ({ onGetStarted }) => (
       <div className="flex flex-wrap gap-12 mt-14 pt-8 border-t border-rule">
         {[
           ['~21.5%', 'Annualized, friction-adjusted'],
-          ['8', 'Start dates tested'],
+          ['Multi-date', 'Robustness tested'],
           ['138', 'Walk-forward periods'],
           ['4,000+', 'Stocks scanned daily'],
         ].map(([value, label]) => (
@@ -195,7 +195,7 @@ const PerformanceSection = () => (
           Five-year walk-forward results.
         </h2>
         <p className="text-ink-mute text-[1.05rem] leading-[1.65]">
-          Tested across eight different start dates in early 2021 to check robustness.
+          Tested across multiple start dates in early 2021 to check robustness.
           All three outcomes published &mdash; best, average, and worst.
         </p>
       </div>
@@ -213,7 +213,7 @@ const PerformanceSection = () => (
           </thead>
           <tbody>
             <tr className="border-b border-rule">
-              <td className="py-4 pr-4 text-[0.95rem]">Simulation (avg. of 8 start dates)</td>
+              <td className="py-4 pr-4 text-[0.95rem]">Simulation (avg. of multiple start dates)</td>
               <td className="py-4 px-5 text-right font-mono text-[0.95rem]">+204%</td>
               <td className="py-4 px-5 text-right font-mono text-[0.95rem]">~23%</td>
               <td className="py-4 px-5 text-right font-mono text-[0.95rem]">0.95</td>
