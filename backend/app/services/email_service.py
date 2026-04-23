@@ -323,12 +323,12 @@ class EmailService:
                             <div style="font-size: 12px; text-transform: uppercase; color: #6b7280; font-weight: 600; margin-bottom: 8px;">
                                 Market Regime
                             </div>
-                            <div style="font-size: 24px; font-weight: 700; color: {regime_color};">
+                            <div style="font-family: Georgia, serif; font-size: 22px; font-weight: 500; color: #141210;">
                                 {regime_label}
                             </div>
-                            <div style="margin-top: 12px; font-size: 14px; color: #374151;">
-                                S&amp;P 500: ${market_regime.get('spy_price', 'N/A') if market_regime else 'N/A'} &nbsp;•&nbsp;
-                                Market Fear: {_vix_label(market_regime.get('vix_level')) if market_regime else 'N/A'}
+                            <div style="margin-top: 8px; font-family: 'Courier New', monospace; font-size: 12px; color: #5A544E;">
+                                SPY ${market_regime.get('spy_price', 'N/A') if market_regime else 'N/A'} &nbsp;&middot;&nbsp;
+                                VIX: {market_regime.get('vix_level', 'N/A') if market_regime else 'N/A'}
                             </div>
                         </td>
                     </tr>
