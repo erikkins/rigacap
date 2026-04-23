@@ -374,7 +374,7 @@ class EmailService:
         <div style="padding: 14px 0; border-bottom: 1px solid #DDD5C7; {('border-left: 3px solid #7A2430; padding-left: 14px;' if is_fresh else '')}">
             <table cellpadding="0" cellspacing="0" style="width: 100%;">
                 <tr>
-                    <td>
+                    <td style="width: 40%;">
                         <div style="font-family: Georgia, serif; font-size: 18px; font-weight: 500; color: #141210;">
                             <a href="https://rigacap.com/app?chart={symbol}" style="color: #141210; text-decoration: none;">{symbol}</a>
                         </div>
@@ -382,13 +382,13 @@ class EmailService:
                             {age_label}
                         </div>
                     </td>
-                    <td style="text-align: right; font-family: 'Courier New', monospace; font-size: 13px; color: #141210;">
+                    <td style="width: 25%; text-align: right; font-family: 'Courier New', monospace; font-size: 13px; color: #141210;">
                         ${price:.2f}
                     </td>
-                    <td style="text-align: right; font-family: 'Courier New', monospace; font-size: 13px; color: #2D5F3F;">
+                    <td style="width: 20%; text-align: right; font-family: 'Courier New', monospace; font-size: 13px; color: #2D5F3F;">
                         +{pct_above:.1f}%
                     </td>
-                    <td style="text-align: right; font-family: 'Courier New', monospace; font-size: 11px; color: #7A2430; letter-spacing: 1px; text-transform: uppercase;">
+                    <td style="width: 15%; text-align: right; font-family: 'Courier New', monospace; font-size: 11px; color: #7A2430; letter-spacing: 1px; text-transform: uppercase;">
                         {strength_label}
                     </td>
                 </tr>
@@ -405,10 +405,12 @@ class EmailService:
         return f"""
         <tr>
             <td style="padding: 0 24px 24px;">
-                <div style="display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 8px; border-bottom: 1px solid #DDD5C7; margin-bottom: 8px;">
-                    <span style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">Monitoring <span style="font-style: italic; color: #8A8279; font-weight: 400;">({len(monitoring_signals)})</span></span>
-                    <span style="font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #5A544E;">Watching for entry</span>
-                </div>
+                <table cellpadding="0" cellspacing="0" style="width: 100%; padding-bottom: 8px; border-bottom: 1px solid #DDD5C7; margin-bottom: 8px;">
+                    <tr>
+                        <td style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">Monitoring <span style="font-style: italic; color: #8A8279; font-weight: 400;">({len(monitoring_signals)})</span></td>
+                        <td align="right" style="font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #5A544E;">Watching for entry</td>
+                    </tr>
+                </table>
                 {rows}
             </td>
         </tr>
@@ -427,13 +429,13 @@ class EmailService:
 
             rows += f"""
             <tr>
-                <td style="padding: 10px 0; border-bottom: 1px solid #DDD5C7;">
+                <td style="width: 40%; padding: 10px 0; border-bottom: 1px solid #DDD5C7;">
                     <a href="https://rigacap.com/app?chart={symbol}" style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210; text-decoration: none;">{symbol}</a>
                 </td>
-                <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 13px; color: #141210;">
+                <td style="width: 25%; padding: 10px 0; text-align: right; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 13px; color: #141210;">
                     ${price:.2f}
                 </td>
-                <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 11px; color: #5A544E;">
+                <td style="width: 35%; padding: 10px 0; text-align: right; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 11px; color: #5A544E;">
                     +{distance:.1f}% to trigger
                 </td>
             </tr>
