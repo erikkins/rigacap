@@ -105,7 +105,7 @@ export default function MethodologyPageV2() {
               curve that reflects real-time decision-making.
             </p>
             <p>
-              To test robustness, we run the same process across <strong className="font-medium">8 different start dates</strong> (Jan&ndash;Apr 2021).
+              To test robustness, we run the same process across <strong className="font-medium">multiple start dates</strong> (Jan&ndash;Apr 2021).
               The track record page shows the average, best, and worst outcomes across all start dates &mdash; not a single cherry-picked run.
             </p>
           </div>
