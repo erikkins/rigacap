@@ -55,7 +55,7 @@ const Navbar = ({ onGetStarted }) => (
 );
 
 const HeroSection = ({ onGetStarted }) => (
-  <section className="bg-paper pt-16 pb-0 sm:pt-24">
+  <section className="bg-paper pt-16 pb-12 sm:pt-24 sm:pb-16">
     <div className="max-w-[920px] mx-auto px-4 sm:px-8">
       <SectionLabel>The Ensemble Strategy &middot; Est. 2026</SectionLabel>
 
