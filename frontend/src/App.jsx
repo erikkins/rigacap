@@ -2909,12 +2909,7 @@ function Dashboard() {
                           </div>
                         )}
 
-                        {/* Market Context — AI summary of signal changes */}
-                        {dashboardData.market_context && (
-                          <div className="bg-paper-deep border-l-4 border-rule-dark rounded-r-lg px-3 py-2">
-                            <p className="text-sm text-ink leading-relaxed">{dashboardData.market_context}</p>
-                          </div>
-                        )}
+                        {/* Market Context — shown in the editorial lede above signals, not here */}
 
                         {/* Transition probability bar — editorial density visualization */}
                         {sortedProbs.length > 0 && (
@@ -3714,12 +3709,7 @@ function Dashboard() {
                         </div>
                       )}
 
-                      {/* AI Market Briefing */}
-                      {dashboardData?.market_context && (
-                        <div className="px-4 py-3 bg-paper-deep/50 border border-blue-100 rounded-lg mb-3">
-                          <p className="text-sm text-ink-mute italic leading-relaxed">{dashboardData.market_context}</p>
-                        </div>
-                      )}
+                      {/* Market context shown in editorial lede above */}
 
                       {/* B. Promoted watchlist */}
                       {(dashboardData?.watchlist || []).length > 0 && (
