@@ -42,24 +42,24 @@ export default function CookieConsent() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-50 bg-blue-950/95 backdrop-blur-sm border-t border-blue-800/50 px-4 py-3">
+    <div className="fixed bottom-0 inset-x-0 z-50 bg-ink/95 backdrop-blur-sm border-t border-rule-dark px-4 py-4">
       <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-        <p className="text-sm text-blue-200 text-center sm:text-left">
+        <p className="text-sm text-paper/80 text-center sm:text-left font-body">
           We use cookies for analytics to improve your experience.{' '}
-          <a href="/privacy" className="text-amber-400 hover:text-amber-300 underline">
+          <a href="/privacy" className="text-claret-light underline underline-offset-2 decoration-1 hover:text-paper">
             Privacy Policy
           </a>
         </p>
         <div className="flex gap-2 shrink-0">
           <button
             onClick={decline}
-            className="px-4 py-1.5 text-sm text-blue-300 hover:text-white border border-blue-700 hover:border-blue-500 rounded-lg transition-colors"
+            className="px-4 py-1.5 text-sm text-paper/60 hover:text-paper border border-paper/20 hover:border-paper/40 transition-colors font-body"
           >
             Decline
           </button>
           <button
             onClick={accept}
-            className="px-4 py-1.5 text-sm text-blue-950 bg-amber-400 hover:bg-amber-300 font-medium rounded-lg transition-colors"
+            className="px-4 py-1.5 text-sm text-ink bg-paper hover:bg-paper-deep font-medium transition-colors font-body"
           >
             Accept
           </button>
