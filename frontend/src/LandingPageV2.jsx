@@ -478,7 +478,7 @@ const Footer = () => (
         <div>
           <h4 className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink mb-4">Company</h4>
           <ul className="space-y-2">
-            {[['About', '/about'], ['Newsletter', '#newsletter'], ['Blog', '/blog'], ['Contact', '/contact']].map(([label, href]) => (
+            {[['About', '/about'], ['Newsletter', '/newsletter'], ['Blog', '/blog'], ['Contact', '/contact']].map(([label, href]) => (
               <li key={label}><a href={href} className="text-ink-mute text-[0.92rem] no-underline hover:text-ink transition-colors">{label}</a></li>
             ))}
           </ul>
