@@ -189,7 +189,10 @@ class EngagementService:
             "- Never say 'our algorithm' or 'AI-powered'. You can reference 'our system' ONLY if natural. "
             "- Most replies should NOT mention RigaCap at all — just share a smart, human take. "
             "- 1-2 sentences max. No hashtags. No emojis. "
-            "- Sound like a curious founder, not a Bloomberg terminal."
+            "- Sound like a curious founder, not a Bloomberg terminal. "
+            "- SOUND HUMAN: never start with 'Interesting' or 'Great point' or 'Just'. "
+            "  Have a real opinion. Use fragments sometimes. Vary rhythm. "
+            "  Write like you typed it on your phone, not like you drafted it."
         )
 
         market_note = f"\n\nToday's market context for reference: {market_context}" if market_context else ""
