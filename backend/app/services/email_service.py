@@ -96,6 +96,23 @@ class EmailService:
         }
         return jose_jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
+    def _email_wrapper(self, label: str, content: str, user_id: str = None) -> str:
+        """Wrap email content in the editorial header + footer."""
+        return f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background-color:#F5F1E8;-webkit-font-smoothing:antialiased;">
+<table cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;margin:0 auto;">
+<tr><td style="padding:32px 32px 0;">
+<table cellpadding="0" cellspacing="0" style="width:100%;border-bottom:2px solid #141210;padding-bottom:20px;">
+<tr>
+<td><img src="https://rigacap.com/email-header.png" alt="RigaCap." width="150" height="36" style="display:block;" /></td>
+<td align="right" style="font-family:'Courier New',monospace;font-size:11px;color:#8A8279;letter-spacing:1px;text-transform:uppercase;">{label}</td>
+</tr></table>
+</td></tr>
+<tr><td style="padding:32px;">{content}</td></tr>
+{self._email_footer_html(user_id)}
+</table></body></html>"""
+
     def _email_footer_html(self, user_id: str = None) -> str:
         """Generate the standard email footer with manage/unsubscribe links."""
         if user_id:
@@ -1201,45 +1218,26 @@ Trading involves risk. Past performance does not guarantee future results.
         """Send a password reset email with a time-limited link."""
         first_name = name.split()[0] if name else "there"
 
-        html = f"""<!DOCTYPE html>
-<html>
-<body style="margin:0; padding:0; background-color:#f9fafb; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:0 auto;">
-        <tr>
-            <td style="background:linear-gradient(135deg,#172554 0%,#1e3a5f 100%); padding:24px; text-align:center;">
-                <h1 style="margin:0; color:#c9a84c; font-size:24px; letter-spacing:1px;">RigaCap</h1>
-            </td>
-        </tr>
-        <tr>
-            <td style="background:#ffffff; padding:32px 24px;">
-                <h2 style="margin:0 0 16px; font-size:20px; color:#1f2937;">Reset Your Password</h2>
-                <p style="font-size:16px; color:#374151; line-height:1.6; margin:0 0 24px;">
-                    Hey {first_name}, we received a request to reset your password. Click the button below to choose a new one:
+        content = f"""
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
+                    {first_name},
                 </p>
-                <div style="text-align:center; margin:32px 0;">
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
+                    We received a request to reset your password. Click below to choose a new one:
+                </p>
+                <div style="text-align: center; margin: 32px 0;">
                     <a href="{reset_url}"
-                       style="display:inline-block; background:linear-gradient(135deg,#172554 0%,#1e3a5f 100%); color:#ffffff; font-size:16px; font-weight:600; padding:14px 36px; border-radius:10px; text-decoration:none;">
+                       style="display: inline-block; background: #141210; color: #F5F1E8; font-size: 13px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 36px; text-decoration: none;">
                         Reset Password
                     </a>
                 </div>
-                <p style="font-size:14px; color:#6b7280; line-height:1.6; margin:0 0 16px;">
+                <p style="font-size: 14px; color: #8A8279; margin: 0 0 16px; line-height: 1.5;">
                     This link expires in 1 hour. If you didn't request this, you can safely ignore this email.
                 </p>
-                <p style="font-size:12px; color:#9ca3af; line-height:1.6; margin:16px 0 0; word-break:break-all;">
-                    Or copy this link: {reset_url}
-                </p>
-            </td>
-        </tr>
-        <tr>
-            <td style="background-color:#f9fafb; padding:24px; text-align:center; border-top:1px solid #e5e7eb;">
-                <p style="margin:0; font-size:12px; color:#9ca3af;">
-                    &copy; {datetime.now().year} RigaCap, LLC. All rights reserved.
-                </p>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>"""
+                <p style="font-family: 'Courier New', monospace; font-size: 11px; color: #8A8279; margin: 16px 0 0; word-break: break-all;">
+                    {reset_url}
+                </p>"""
+        html = self._email_wrapper("Password Reset", content)
 
         text = f"""Reset Your Password
 
