@@ -1335,134 +1335,46 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
         """
         first_name = name.split()[0] if name else "there"
 
-        html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
-    <table cellpadding="0" cellspacing="0" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-        <!-- Header -->
-        <tr>
-            <td style="background: linear-gradient(135deg, #1f2937 0%, #374151 100%); padding: 48px 24px; text-align: center;">
-                <img src="https://rigacap.com/email-logo-v2.png" alt="RigaCap" width="48" height="48" style="display: block; margin: 0 auto 16px auto;" />
-                <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
-                    We're Sad to See You Go
-                </h1>
-            </td>
-        </tr>
+        import secrets
+        promo_code = f"WELCOME-{secrets.token_hex(3).upper()}"
 
-        <!-- Message -->
-        <tr>
-            <td style="padding: 40px 32px;">
-                <p style="font-size: 18px; color: #374151; margin: 0 0 24px 0; line-height: 1.6;">
-                    Hey {first_name},
+        content = f"""
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">{first_name},</p>
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
+                    Your subscription has ended. The system is still running — signals, regime detection, trailing stops — all operating without you.
                 </p>
-                <p style="font-size: 16px; color: #374151; margin: 0 0 24px 0; line-height: 1.6;">
-                    We noticed your RigaCap subscription has ended. We're truly sorry to see you go!
-                    Before you leave completely, we wanted to share what you might be missing...
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
+                    If something wasn't right, reply and tell me. I read every response.
                 </p>
 
-                <!-- What You're Missing -->
-                <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-radius: 16px; padding: 24px; margin: 24px 0;">
-                    <h2 style="margin: 0 0 16px 0; font-size: 18px; color: #dc2626; border-left: 4px solid #172554; padding-left: 12px;">
-                        What You're Missing Today:
-                    </h2>
-                    <ul style="margin: 0; padding: 0 0 0 20px; color: #374151; line-height: 2;">
-                        <li>Fresh daily signals from 6,500+ stocks</li>
-                        <li>Real-time market regime updates</li>
-                        <li>Buy signals before they surge</li>
-                        <li>Stop-loss alerts to protect your capital</li>
-                    </ul>
-                </div>
-
-                <!-- Stats -->
-                <div style="background-color: #f0fdf4; border-radius: 16px; padding: 24px; margin: 24px 0; text-align: center;">
-                    <p style="margin: 0; font-size: 14px; color: #059669; text-transform: uppercase; font-weight: 600;">
-                        Latest Year Performance
-                    </p>
-                    <p style="margin: 8px 0 0 0; font-size: 48px; font-weight: 700; color: #059669;">
-                        87.5%
-                    </p>
-                    <p style="margin: 4px 0 0 0; font-size: 14px; color: #374151;">
-                        Walk-forward return (2025-2026) &bull; 2.32 Sharpe ratio
+                <div style="border-left: 2px solid #7A2430; padding: 14px 18px; background: #FAF7F0; margin: 24px 0;">
+                    <p style="margin: 0; font-family: Georgia, serif; font-style: italic; font-size: 15px; color: #141210; line-height: 1.6;">
+                        The hardest work of investing isn't the analysis. It's executing boring rules consistently. That's what you were paying for.
                     </p>
                 </div>
 
-                <p style="font-size: 16px; color: #374151; margin: 24px 0; line-height: 1.6;">
-                    We'd love to have you back. If you left because something wasn't working,
-                    please reply to this email and let us know — we're always improving based on feedback.
-                </p>
+                <div style="border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; padding: 20px 0; margin: 24px 0; text-align: center;">
+                    <p style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E; margin: 0 0 8px;">Come Back</p>
+                    <p style="font-family: Georgia, serif; font-size: 24px; color: #141210; margin: 0 0 4px;">20% off your first month</p>
+                    <p style="font-family: 'Courier New', monospace; font-size: 11px; color: #8A8279; margin: 0;">Code: {promo_code}</p>
+                </div>
 
-                <!-- Special Offer -->
-                <div style="background: linear-gradient(135deg, #172554 0%, #1e3a5f 100%); border-radius: 16px; padding: 24px; margin: 24px 0; text-align: center;">
-                    <p style="margin: 0 0 8px 0; font-size: 14px; color: rgba(255,255,255,0.9); text-transform: uppercase; font-weight: 600;">
-                        Come Back Offer
-                    </p>
-                    <p style="margin: 0 0 16px 0; font-size: 24px; font-weight: 700; color: #ffffff;">
-                        Get 20% Off Your First Month
-                    </p>
-                    <a href="https://rigacap.com/app?promo=COMEBACK20"
-                       style="display: inline-block; background-color: #ffffff; color: #172554; font-size: 16px; font-weight: 600; padding: 14px 32px; border-radius: 10px; text-decoration: none;">
-                        Reactivate Now →
+                <div style="text-align: center; margin: 32px 0;">
+                    <a href="https://rigacap.com/#pricing"
+                       style="display: inline-block; background: #141210; color: #F5F1E8; font-size: 13px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 36px; text-decoration: none;">
+                        Reactivate
                     </a>
                 </div>
 
-                <p style="font-size: 16px; color: #374151; margin: 24px 0; line-height: 1.6;">
-                    Whatever you decide, we wish you the best with your trading journey.
-                    The markets will always be here, and so will we if you ever want to come back.
-                </p>
+                <p style="font-size: 14px; color: #8A8279; margin: 24px 0 0; line-height: 1.5;">— Erik</p>"""
 
-                <p style="font-size: 16px; color: #374151; margin: 24px 0 0 0; line-height: 1.6;">
-                    All the best,<br>
-                    <strong>The RigaCap Team</strong>
-                </p>
-            </td>
-        </tr>
+        html = self._email_wrapper("We'll be here", content, user_id)
 
-        <!-- Footer -->
-        <tr>
-            <td style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
-                <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                    &copy; {datetime.now().year} RigaCap, LLC. All rights reserved.
-                </p>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>
-"""
-
-        text = f"""
-Hey {first_name},
-
-We noticed your RigaCap subscription has ended. We're sad to see you go!
-
-What you're missing:
-- Fresh daily signals from 6,500+ stocks
-- Real-time market regime updates
-- Buy signals before they surge
-- Stop-loss alerts to protect your capital
-
-Our walk-forward simulation returned 87.5% in the latest year with a 2.32 Sharpe ratio. We'd love to have you back.
-
-SPECIAL OFFER: Get 20% off your first month when you reactivate.
-Visit: https://rigacap.com/app?promo=COMEBACK20
-
-If something wasn't working for you, please reply and let us know — we're always improving.
-
-All the best,
-The RigaCap Team
-
----
-Unsubscribe: https://rigacap.com/unsubscribe
-"""
+        text = f"""{first_name}, your RigaCap subscription has ended. Come back with 20% off — code {promo_code}. Reply if something wasn't right. — Erik"""
 
         return await self.send_email(
             to_email=to_email,
-            subject="💔 We Miss You at RigaCap — Here's a Special Offer",
+            subject="RigaCap — the system is still running",
             html_content=html,
             text_content=text,
             user_id=user_id
