@@ -1279,156 +1279,51 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
         first_name = name.split()[0] if name else "there"
         urgency = "tomorrow" if days_remaining == 1 else f"in {days_remaining} days"
 
-        html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
-    <table cellpadding="0" cellspacing="0" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-        <!-- Header -->
-        <tr>
-            <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 48px 24px; text-align: center;">
-                <img src="https://rigacap.com/email-logo-v2.png" alt="RigaCap" width="48" height="48" style="display: block; margin: 0 auto 16px auto;" />
-                <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
-                    Your Trial Ends {urgency.title()}
-                </h1>
-                <p style="margin: 12px 0 0 0; color: rgba(255,255,255,0.9); font-size: 18px;">
-                    Don't lose access to your trading edge
-                </p>
-            </td>
-        </tr>
-
-        <!-- Message -->
-        <tr>
-            <td style="padding: 40px 32px;">
-                <p style="font-size: 18px; color: #374151; margin: 0 0 24px 0; line-height: 1.6;">
-                    Hey {first_name},
-                </p>
-                <p style="font-size: 16px; color: #374151; margin: 0 0 24px 0; line-height: 1.6;">
-                    Just a heads up — your free trial ends <strong>{urgency}</strong>.
-                    After that, you'll lose access to daily signals, portfolio tracking,
-                    and market regime alerts.
+        content = f"""
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">{first_name},</p>
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
+                    Your free trial ends <strong>{urgency}</strong>. After that, you'll lose access to signals, regime detection, and position guidance.
                 </p>
 
-                <!-- Trial Stats -->
-                {f'''
-                <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 16px; padding: 24px; margin: 24px 0;">
-                    <h2 style="margin: 0 0 16px 0; font-size: 18px; color: #1e40af; border-left: 4px solid #172554; padding-left: 12px;">
-                        Your Trial So Far
-                    </h2>
-                    <table cellpadding="0" cellspacing="0" style="width: 100%;">
-                        <tr>
-                            <td style="padding: 8px 0; text-align: center; width: 50%;">
-                                <div style="font-size: 36px; font-weight: 700; color: #1e40af;">{signals_generated}</div>
-                                <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">Signals Generated</div>
-                            </td>
-                            <td style="padding: 8px 0; text-align: center; width: 50%;">
-                                <div style="font-size: 36px; font-weight: 700; color: #059669;">{strong_signals_seen}</div>
-                                <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">Strong Signals</div>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                ''' if signals_generated > 0 else ''}
+                {f'''<table cellpadding="0" cellspacing="0" style="width:100%; border-top:1px solid #141210; border-bottom:1px solid #DDD5C7; margin:28px 0;">
+                <tr>
+                    <td style="width:50%; padding:16px 0; text-align:center; border-right:1px solid #DDD5C7;">
+                        <div style="font-family:Georgia,serif; font-size:32px; color:#141210;">{signals_generated}</div>
+                        <div style="font-family:'Courier New',monospace; font-size:10px; color:#8A8279; margin-top:4px; letter-spacing:2px; text-transform:uppercase;">Signals generated</div>
+                    </td>
+                    <td style="width:50%; padding:16px 0; text-align:center;">
+                        <div style="font-family:Georgia,serif; font-size:32px; color:#141210;">{strong_signals_seen}</div>
+                        <div style="font-family:'Courier New',monospace; font-size:10px; color:#8A8279; margin-top:4px; letter-spacing:2px; text-transform:uppercase;">Strong signals</div>
+                    </td>
+                </tr></table>''' if signals_generated > 0 else ''}
 
-                <!-- What You'll Lose -->
-                <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-radius: 16px; padding: 24px; margin: 24px 0;">
-                    <h2 style="margin: 0 0 16px 0; font-size: 18px; color: #dc2626; border-left: 4px solid #172554; padding-left: 12px;">
-                        What You'll Lose
-                    </h2>
-                    <ul style="margin: 0; padding: 0 0 0 20px; color: #374151; line-height: 2;">
-                        <li>Daily ensemble buy signals</li>
-                        <li>Market regime alerts (bull/bear detection)</li>
-                        <li>Momentum rankings across 6,500+ stocks</li>
-                        <li>Portfolio P&L tracking</li>
-                        <li>Missed opportunity alerts</li>
-                    </ul>
+                <div style="border-left: 2px solid #7A2430; padding: 14px 18px; background: #FAF7F0; margin: 24px 0;">
+                    <p style="margin: 0; font-family: Georgia, serif; font-style: italic; font-size: 15px; color: #141210; line-height: 1.6;">
+                        Friction-adjusted ~21.5% annualized over 5 years. The system ended 2022 flat while the S&amp;P fell 20%.
+                        <a href="https://rigacap.com/track-record" style="color: #7A2430; text-decoration: underline;">Full track record.</a>
+                    </p>
                 </div>
 
-                <!-- CTA Button -->
                 <div style="text-align: center; margin: 32px 0;">
-                    <a href="https://rigacap.com/app/subscribe"
-                       style="display: inline-block; background: linear-gradient(135deg, #172554 0%, #1e3a5f 100%); color: #ffffff; font-size: 18px; font-weight: 600; padding: 18px 48px; border-radius: 12px; text-decoration: none;">
-                        Subscribe Now →
+                    <a href="https://rigacap.com/#pricing"
+                       style="display: inline-block; background: #141210; color: #F5F1E8; font-size: 13px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 36px; text-decoration: none;">
+                        Subscribe — $129/month
                     </a>
+                    <p style="font-family: 'Courier New', monospace; font-size: 11px; color: #8A8279; margin-top: 8px;">Or $1,099/year (three months free)</p>
                 </div>
 
-                <!-- Social Proof -->
-                <div style="background-color: #f0fdf4; border-radius: 12px; padding: 20px; margin: 24px 0; text-align: center;">
-                    <p style="margin: 0 0 4px 0; font-size: 14px; color: #065f46; text-transform: uppercase; font-weight: 600;">
-                        Latest Year Performance
-                    </p>
-                    <p style="margin: 0; font-size: 42px; font-weight: 700; color: #059669;">
-                        87.5%
-                    </p>
-                    <p style="margin: 4px 0 0 0; font-size: 14px; color: #374151;">
-                        Walk-forward return (2025-2026) &bull; 2.32 Sharpe ratio
-                    </p>
-                </div>
+                <p style="font-size: 14px; color: #8A8279; margin: 24px 0 0; line-height: 1.5;">
+                    Reply to this email if you have questions. — Erik
+                </p>"""
 
-                <p style="font-size: 16px; color: #374151; margin: 24px 0 0 0; line-height: 1.6;">
-                    Questions? Just reply to this email — we're happy to help.
-                </p>
+        html = self._email_wrapper(f"Trial ends {urgency}", content, user_id)
 
-                <p style="font-size: 16px; color: #374151; margin: 24px 0 0 0; line-height: 1.6;">
-                    Happy trading,<br>
-                    <strong>Erik</strong><br>
-                    <span style="font-size: 13px; color: #6b7280;">Founder, RigaCap</span>
-                </p>
-            </td>
-        </tr>
-
-        <!-- Footer -->
-        <tr>
-            <td style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
-                <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">
-                    <a href="https://rigacap.com/app" style="color: #172554; text-decoration: none;">View Dashboard</a>
-                </p>
-                <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                    Trading involves risk. Past performance does not guarantee future results.
-                </p>
-                <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">
-                    &copy; {datetime.now().year} RigaCap, LLC. All rights reserved.
-                </p>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>
-"""
-
-        text = f"""
-Hey {first_name},
-
-Your RigaCap free trial ends {urgency}!
-
-After that, you'll lose access to:
-- Daily ensemble buy signals
-- Market regime alerts
-- Momentum rankings across 6,500+ stocks
-- Portfolio P&L tracking
-- Missed opportunity alerts
-
-Subscribe now to keep your trading edge: https://rigacap.com/app/subscribe
-
-Our walk-forward simulation returned 87.5% in the latest year (2025-2026) with a 2.32 Sharpe ratio.
-
-Questions? Just reply to this email.
-
-Happy trading!
-The RigaCap Team
-
----
-Trading involves risk. Past performance does not guarantee future results.
-"""
+        text = f"""{first_name}, your RigaCap free trial ends {urgency}. Subscribe at rigacap.com/#pricing to keep access. $129/month or $1,099/year. Reply with questions. — Erik"""
 
         day_word = "Tomorrow" if days_remaining == 1 else f"in {days_remaining} Days"
         return await self.send_email(
             to_email=to_email,
-            subject=f"⏰ Your Trial Ends {day_word} — Subscribe to Keep Your Edge",
+            subject=f"RigaCap — Your trial ends {urgency}",
             html_content=html,
             text_content=text,
             user_id=user_id
