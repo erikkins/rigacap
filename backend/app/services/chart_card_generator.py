@@ -25,14 +25,14 @@ import matplotlib.dates as mdates
 from matplotlib.patches import FancyBboxPatch
 
 
-# Brand colors — matches navy+gold style guide (social-launch-cards.html)
-BRAND_GREEN = '#22c55e'
-BRAND_RED = '#EF4444'
-BRAND_DARK = '#172554'
-BRAND_LIGHT = '#F9FAFB'
-BRAND_ACCENT = '#f59e0b'
-BRAND_GOLD = '#fbbf24'
-BRAND_GRAY = '#64748b'
+# Brand colors — editorial paper/ink/claret palette
+BRAND_GREEN = '#2D5F3F'
+BRAND_RED = '#8F2D3D'
+BRAND_DARK = '#141210'
+BRAND_LIGHT = '#F5F1E8'
+BRAND_ACCENT = '#7A2430'
+BRAND_GOLD = '#B8923D'
+BRAND_GRAY = '#5A544E'
 
 
 class ChartCardGenerator:
