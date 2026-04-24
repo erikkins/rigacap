@@ -31,6 +31,7 @@ import BlogWalkForwardResultsPage from './BlogWalkForwardResultsPage';
 import BlogWeCalledItMRNAPage from './BlogWeCalledItMRNAPage';
 import BlogWeCalledItTGTXPage from './BlogWeCalledItTGTXPage';
 import BlogIndexPage from './BlogIndexPage';
+import NewsletterPage, { NewsletterIssuePage } from './NewsletterPage';
 import { PrivacyPage, TermsPage, ContactPage } from './LegalPages';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginModal from './components/LoginModal';
@@ -1575,7 +1576,7 @@ const TOUR_STEPS = [
   },
   {
     title: 'Evening Briefing',
-    description: 'Every weeknight at 6 PM ET, a briefing lands in your inbox: today\'s signals, open positions, market regime, and an AI-written market summary. Expect 3-4 signals per month in healthy markets — and silence when there\'s nothing worth buying.',
+    description: 'Every weeknight at 6 PM ET, a briefing lands in your inbox: today\'s signals, open positions, market regime, and a fresh market summary written that afternoon. Expect 3-4 signals per month in healthy markets — and silence when there\'s nothing worth buying.',
     renderIllustration: () => (
       <div className="flex items-center justify-center">
         <div className="relative w-64 h-32">
@@ -4413,6 +4414,8 @@ export default function App() {
         <Route path="/methodology" element={<MethodologyPageV2 />} />
         <Route path="/methodology-v1" element={<MethodologyPage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/newsletter" element={<NewsletterPage />} />
+        <Route path="/newsletter/:date" element={<NewsletterIssuePage />} />
         <Route path="/market-regime" element={<MarketRegimePage />} />
         <Route path="/blog" element={<BlogIndexPage />} />
         <Route path="/blog/2022-story" element={<Blog2022StoryPage />} />

@@ -1029,6 +1029,31 @@ Market, Measured. is a weekly reading from RigaCap.
 """
 
         subject = f"Market, Measured — {subject_date}"
+
+        # Archive to S3 (once per date, keyed by date for web archive)
+        try:
+            import boto3, json as _json
+            s3 = boto3.client("s3", region_name="us-east-1")
+            archive_key = f"newsletter/issues/{date.strftime('%Y-%m-%d')}.json"
+            s3.put_object(
+                Bucket="rigacap-prod-price-data-149218244179",
+                Key=archive_key,
+                Body=_json.dumps({
+                    "date": date_str,
+                    "subject": subject,
+                    "html": html,
+                    "regime": regime_name,
+                    "spy_price": spy_price,
+                    "spy_change": spy_change,
+                    "vix_level": vix_level,
+                    "fresh_count": fresh_count,
+                    "watchlist_count": len(watchlist),
+                }).encode(),
+                ContentType="application/json",
+            )
+        except Exception as e:
+            logger.warning(f"Newsletter archive failed: {e}")
+
         return await self.send_email(
             to_email, subject, html, text,
             user_id=user_id,

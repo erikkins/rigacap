@@ -538,6 +538,9 @@ export default function LandingPageV2() {
       <section id="newsletter" className="bg-paper-card py-16 border-t border-rule">
         <div className="max-w-3xl mx-auto px-4 sm:px-8">
           <MarketMeasuredSignup source="landing_v2" />
+          <Link to="/newsletter" className="inline-block mt-4 text-[0.85rem] text-ink-mute hover:text-claret no-underline transition-colors">
+            Read past issues &rarr;
+          </Link>
         </div>
       </section>
 

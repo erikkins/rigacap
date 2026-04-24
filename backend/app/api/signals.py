@@ -3069,3 +3069,60 @@ async def public_unsubscribe(
         '<p style="margin-top:24px;"><a href="https://rigacap.com" style="color:#818cf8;">Back to RigaCap</a></p>'
         '</body></html>',
     )
+
+
+@public_router.get("/newsletter/archive")
+async def newsletter_archive():
+    """List all archived Market Measured newsletter issues."""
+    import boto3, json as _json
+    s3 = boto3.client("s3", region_name="us-east-1")
+    bucket = "rigacap-prod-price-data-149218244179"
+    prefix = "newsletter/issues/"
+
+    try:
+        resp = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        issues = []
+        for obj in resp.get("Contents", []):
+            key = obj["Key"]
+            date_str = key.replace(prefix, "").replace(".json", "")
+            if not date_str or len(date_str) != 10:
+                continue
+            try:
+                body = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
+                meta = _json.loads(body)
+                issues.append({
+                    "date": date_str,
+                    "subject": meta.get("subject", ""),
+                    "regime": meta.get("regime", ""),
+                    "spy_price": meta.get("spy_price"),
+                    "spy_change": meta.get("spy_change"),
+                    "fresh_count": meta.get("fresh_count", 0),
+                    "watchlist_count": meta.get("watchlist_count", 0),
+                })
+            except Exception:
+                issues.append({"date": date_str, "subject": f"Market, Measured — {date_str}"})
+        issues.sort(key=lambda x: x["date"], reverse=True)
+        return {"issues": issues}
+    except Exception as e:
+        return {"issues": [], "error": str(e)}
+
+
+@public_router.get("/newsletter/issue/{date}")
+async def newsletter_issue(date: str):
+    """Serve a single archived newsletter issue by date (YYYY-MM-DD)."""
+    import boto3, json as _json, re
+    if not re.match(r'^\d{4}-\d{2}-\d{2}$', date):
+        raise HTTPException(status_code=400, detail="Invalid date format")
+
+    s3 = boto3.client("s3", region_name="us-east-1")
+    try:
+        body = s3.get_object(
+            Bucket="rigacap-prod-price-data-149218244179",
+            Key=f"newsletter/issues/{date}.json",
+        )["Body"].read()
+        data = _json.loads(body)
+        return data
+    except s3.exceptions.NoSuchKey:
+        raise HTTPException(status_code=404, detail="Issue not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
