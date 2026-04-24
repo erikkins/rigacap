@@ -1462,25 +1462,25 @@ const PositionRow = ({ position, onClick }) => {
 
 const TOUR_STEPS = [
   {
-    title: 'Your Buy Signals',
-    description: 'When our Ensemble finds a high-conviction opportunity, it shows up here. BUY means it\'s active. BUY NOW means it just triggered today. These are signals — you execute trades through your own broker.',
+    title: 'Your Signals',
+    description: 'When the system spots a strong setup, it appears here. Fresh signals are marked for action. You decide when and how to trade — through your own broker, on your schedule.',
     renderIllustration: () => (
       <div className="flex flex-col items-center gap-3">
-        <Zap size={32} className="text-claret" />
+        <Zap size={28} className="text-claret" />
         <div className="w-full max-w-xs space-y-2">
-          <div className="flex items-center justify-between bg-paper-card rounded-lg px-3 py-2 shadow-sm">
+          <div className="flex items-center justify-between border-b border-rule px-1 py-2.5">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm text-ink">NVDA</span>
-              <span className="text-xs text-ink-mute">$142.50</span>
+              <span className="font-display text-sm text-ink" style={{ fontVariationSettings: '"opsz" 14' }}>NVDA</span>
+              <span className="text-xs font-mono text-ink-mute">$142.50</span>
             </div>
-            <span className="text-[10px] font-bold bg-positive/10 text-positive px-2 py-0.5 rounded-full">BUY NOW</span>
+            <span className="text-[10px] font-medium tracking-wide text-positive uppercase">Fresh</span>
           </div>
-          <div className="flex items-center justify-between bg-paper-card rounded-lg px-3 py-2 shadow-sm">
+          <div className="flex items-center justify-between border-b border-rule px-1 py-2.5">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm text-ink">AVGO</span>
-              <span className="text-xs text-ink-mute">$198.30</span>
+              <span className="font-display text-sm text-ink" style={{ fontVariationSettings: '"opsz" 14' }}>AVGO</span>
+              <span className="text-xs font-mono text-ink-mute">$198.30</span>
             </div>
-            <span className="text-[10px] font-medium bg-claret/10 text-claret px-2 py-0.5 rounded-[2px] tracking-wide">ENTRY</span>
+            <span className="text-[10px] font-medium tracking-wide text-claret uppercase">Entry</span>
           </div>
         </div>
       </div>
@@ -1488,25 +1488,22 @@ const TOUR_STEPS = [
   },
   {
     title: 'Open Positions',
-    description: 'After you act on a signal, track it here. See your P&L in real-time, and we\'ll tell you when our trailing stop says it\'s time to sell.',
+    description: 'Track every position in one place. Live P&L, trailing stop levels, days held. When the system says sell, you\'ll see it here and in your evening email.',
     renderIllustration: () => (
       <div className="flex flex-col items-center gap-3">
-        <Briefcase size={32} className="text-claret" />
-        <div className="w-full max-w-xs bg-paper-card rounded-lg px-3 py-2 shadow-sm">
+        <Briefcase size={28} className="text-claret" />
+        <div className="w-full max-w-xs border-b border-rule px-1 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <span className="font-semibold text-sm text-ink">AAPL</span>
+              <span className="font-display text-sm text-ink" style={{ fontVariationSettings: '"opsz" 14' }}>AAPL</span>
               <span className="text-xs text-ink-mute ml-2">50 shares</span>
             </div>
             <div className="text-right">
-              <span className="text-sm font-semibold text-positive">+$1,240</span>
-              <span className="text-xs text-positive ml-1">+8.2%</span>
+              <span className="text-sm font-mono text-positive">+$1,240</span>
+              <span className="text-xs font-mono text-positive ml-1">+8.2%</span>
             </div>
           </div>
-          <div className="mt-1 h-1.5 bg-paper-deep rounded-full overflow-hidden">
-            <div className="h-full bg-positive/100 rounded-full" style={{ width: '68%' }} />
-          </div>
-          <div className="flex justify-between mt-1">
+          <div className="flex justify-between mt-2">
             <span className="text-[10px] text-ink-light">Entry $151.20</span>
             <span className="text-[10px] text-ink-light">Stop $140.10</span>
           </div>
@@ -1516,85 +1513,85 @@ const TOUR_STEPS = [
   },
   {
     title: 'Missed Opportunities',
-    description: 'Didn\'t catch a signal in time? This section shows profitable trades you could have taken — so you know the system is working even when you\'re away.',
+    description: 'Didn\'t catch a signal? This section tracks what it would have returned. Proof the system works, even when life gets in the way.',
     renderIllustration: () => (
       <div className="flex flex-col items-center gap-3">
-        <TrendingUp size={32} className="text-claret" />
-        <div className="w-full max-w-xs space-y-2">
-          <div className="flex items-center justify-between bg-paper-card rounded-lg px-3 py-2 shadow-sm opacity-70">
+        <TrendingUp size={28} className="text-claret" />
+        <div className="w-full max-w-xs space-y-0">
+          <div className="flex items-center justify-between border-b border-rule px-1 py-2.5 opacity-60">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm text-ink">META</span>
-              <span className="text-xs text-ink-light">Signal: Jan 28</span>
+              <span className="font-display text-sm text-ink" style={{ fontVariationSettings: '"opsz" 14' }}>META</span>
+              <span className="text-[10px] text-ink-light">Jan 28</span>
             </div>
-            <span className="text-sm font-semibold text-positive">+14.3%</span>
+            <span className="text-sm font-mono text-positive">+14.3%</span>
           </div>
-          <div className="flex items-center justify-between bg-paper-card rounded-lg px-3 py-2 shadow-sm opacity-70">
+          <div className="flex items-center justify-between border-b border-rule px-1 py-2.5 opacity-60">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm text-ink">AMZN</span>
-              <span className="text-xs text-ink-light">Signal: Jan 22</span>
+              <span className="font-display text-sm text-ink" style={{ fontVariationSettings: '"opsz" 14' }}>AMZN</span>
+              <span className="text-[10px] text-ink-light">Jan 22</span>
             </div>
-            <span className="text-sm font-semibold text-positive">+9.7%</span>
+            <span className="text-sm font-mono text-positive">+9.7%</span>
           </div>
         </div>
       </div>
     ),
   },
   {
-    title: 'Simple vs Advanced',
-    description: 'Toggle between Simple (clean, just the essentials) and Advanced (momentum scores, breakout strength, Sharpe ratios — the full picture). Find it in the top-right corner.',
+    title: 'Simple & Advanced',
+    description: 'Start with the clean view — just signals and positions. When you want the full picture (momentum scores, breakout strength, regime data), switch to Advanced in the top corner.',
     renderIllustration: () => (
       <div className="flex flex-col items-center gap-3">
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 rounded bg-claret/10 flex items-center justify-center">
-              <Eye size={24} className="text-claret" />
+        <div className="flex items-center gap-6">
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="w-11 h-11 border border-rule rounded flex items-center justify-center">
+              <Eye size={22} className="text-ink" />
             </div>
-            <span className="text-xs font-medium text-ink-mute">Simple</span>
+            <span className="text-[10px] font-medium text-ink-mute tracking-wide uppercase">Simple</span>
           </div>
-          <ChevronRight size={20} className="text-ink-light" />
-          <div className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 rounded bg-claret/10 flex items-center justify-center">
-              <Settings size={24} className="text-claret" />
+          <ChevronRight size={18} className="text-ink-light" />
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="w-11 h-11 border border-claret rounded flex items-center justify-center">
+              <Settings size={22} className="text-claret" />
             </div>
-            <span className="text-xs font-medium text-ink-mute">Advanced</span>
+            <span className="text-[10px] font-medium text-claret tracking-wide uppercase">Advanced</span>
           </div>
         </div>
-        <div className="w-full max-w-xs bg-paper-card rounded-lg px-3 py-2 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-ink-mute">Momentum Score</span>
-            <span className="text-xs font-mono text-claret">87.4</span>
+        <div className="w-full max-w-xs border-t border-rule pt-2 mt-1 space-y-1.5">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] text-ink-mute">Momentum Score</span>
+            <span className="text-[11px] font-mono text-ink">87.4</span>
           </div>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-xs text-ink-mute">Breakout</span>
-            <span className="text-xs font-mono text-claret">+5.8%</span>
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] text-ink-mute">Breakout Strength</span>
+            <span className="text-[11px] font-mono text-ink">+5.8%</span>
           </div>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-xs text-ink-mute">Sharpe Ratio</span>
-            <span className="text-xs font-mono text-claret">1.42</span>
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] text-ink-mute">Sharpe Ratio</span>
+            <span className="text-[11px] font-mono text-ink">1.42</span>
           </div>
         </div>
       </div>
     ),
   },
   {
-    title: 'Nightly Emails',
-    description: 'Every evening, you\'ll get an email with today\'s signals, your portfolio status, and the current market regime. Expect 3-4 high-conviction signals per month when conditions are healthy — and zero when they\'re not.',
+    title: 'Evening Briefing',
+    description: 'Every weeknight at 6 PM ET, a briefing lands in your inbox: today\'s signals, open positions, market regime, and an AI-written market summary. Expect 3-4 signals per month in healthy markets — and silence when there\'s nothing worth buying.',
     renderIllustration: () => (
       <div className="flex items-center justify-center">
         <div className="relative w-64 h-32">
           {[
-            { rotate: '-rotate-6', offset: 'left-2 top-2', subject: '⚡ 3 New Breakout Signals' },
-            { rotate: 'rotate-0', offset: 'left-6 top-1', subject: '📊 Daily Summary — Strong Bull' },
-            { rotate: 'rotate-6', offset: 'left-10 top-2', subject: '🔔 LIVE SIGNAL: NVDA' },
+            { rotate: '-rotate-6', offset: 'left-2 top-2', subject: '2 Fresh Signals — Strong Bull' },
+            { rotate: 'rotate-0', offset: 'left-6 top-1', subject: 'Market Update — NVDA Entry' },
+            { rotate: 'rotate-6', offset: 'left-10 top-2', subject: 'RigaCap Daily — 6 Monitoring' },
           ].map((card, i) => (
             <div
               key={i}
-              className={`absolute ${card.offset} ${card.rotate} w-44 bg-paper-card rounded-lg shadow-md overflow-hidden`}
+              className={`absolute ${card.offset} ${card.rotate} w-44 bg-paper-card rounded shadow-md overflow-hidden`}
               style={{ zIndex: i }}
             >
-              <div className="bg-[#0f1729] px-3 py-1.5 flex items-center gap-1.5">
-                <Mail size={10} className="text-[#c9a84c]" />
-                <span className="text-[9px] font-medium text-[#c9a84c]">RigaCap</span>
+              <div className="bg-ink px-3 py-1.5 flex items-center gap-1.5">
+                <Mail size={10} className="text-paper" />
+                <span className="text-[9px] font-display text-paper" style={{ fontVariationSettings: '"opsz" 9' }}>RigaCap</span>
               </div>
               <div className="px-3 py-2">
                 <p className="text-[10px] font-medium text-ink truncate">{card.subject}</p>
@@ -1647,16 +1644,16 @@ function WelcomeTour() {
   const isLast = step === TOUR_STEPS.length - 1;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4" onClick={dismiss}>
+    <div className="fixed inset-0 bg-ink/60 z-40 flex items-center justify-center p-4" onClick={dismiss}>
       <div
-        className="bg-paper-card rounded shadow-2xl max-w-lg w-full mx-4 overflow-hidden"
+        className="bg-paper rounded max-w-lg w-full mx-4 overflow-hidden border border-rule"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Illustration area */}
         <div className="relative h-48 bg-paper-deep flex items-center justify-center px-6">
           <button
             onClick={dismiss}
-            className="absolute top-3 right-3 text-ink-light hover:text-ink-mute transition-colors"
+            className="absolute top-3 right-3 text-ink-light hover:text-ink transition-colors"
           >
             <X size={20} />
           </button>
@@ -1668,7 +1665,7 @@ function WelcomeTour() {
         {/* Content */}
         <div className="px-6 pt-5 pb-6">
           <div key={`text-${fadeKey}`} className="animate-fade-in">
-            <h3 className="text-lg font-bold text-ink">{current.title}</h3>
+            <h3 className="font-display text-xl text-ink" style={{ fontVariationSettings: '"opsz" 24' }}>{current.title}</h3>
             <p className="mt-2 text-sm text-ink-mute leading-relaxed">{current.description}</p>
           </div>
 
@@ -1678,8 +1675,8 @@ function WelcomeTour() {
               {TOUR_STEPS.map((_, i) => (
                 <div
                   key={i}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    i === step ? 'bg-ink' : 'bg-rule'
+                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                    i === step ? 'bg-claret' : 'bg-rule'
                   }`}
                 />
               ))}
@@ -1692,9 +1689,9 @@ function WelcomeTour() {
               )}
               <button
                 onClick={next}
-                className="px-4 py-2 bg-ink hover:bg-claret text-white text-sm font-medium rounded-lg transition-colors"
+                className="px-4 py-2 bg-ink hover:bg-claret text-paper text-sm font-medium rounded transition-colors"
               >
-                {isLast ? 'Get Started →' : 'Next →'}
+                {isLast ? 'Get Started' : 'Continue'}
               </button>
             </div>
           </div>
