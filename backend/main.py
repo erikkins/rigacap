@@ -3473,7 +3473,8 @@ def handler(event, context):
     # force-refetch on splits → parquet diagnose → admin digest.
     # {"nightly_data_hygiene": {"_": 1}} or {"symbols": [...]} for subset test
     if event.get("nightly_data_hygiene"):
-        cfg = event.get("nightly_data_hygiene") or {}
+        cfg = event.get("nightly_data_hygiene")
+        cfg = cfg if isinstance(cfg, dict) else {}
         limit_symbols = cfg.get("symbols")  # optional subset for testing
         print("🧹 Nightly data hygiene pipeline")
 

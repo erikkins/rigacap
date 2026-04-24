@@ -1493,7 +1493,7 @@ class SchedulerService:
 
                 logger.info(f"📧 Double signal alert sent to {sent}/{len(recipients)} recipients")
             else:
-                logger.info(f"✅ No new double signals (checked {len(top_momentum)} momentum stocks)")
+                logger.info(f"✅ No new double signals found")
                 if approaching:
                     logger.info(f"   👀 {len(approaching)} stocks approaching trigger")
 
