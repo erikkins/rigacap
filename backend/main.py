@@ -6438,6 +6438,8 @@ RigaCap Admin
 
     if event.get("weekly_regime_report"):
         print("📊 Weekly regime report triggered")
+        cfg = event.get("weekly_regime_report") or {}
+        target_emails = cfg.get("target_emails") if isinstance(cfg, dict) else None
         try:
             loop = asyncio.get_event_loop()
             if loop.is_closed():
@@ -6457,6 +6459,19 @@ RigaCap Admin
                     history = await regime_forecast_service.get_forecast_history(db, days=30)
                     if not history:
                         return {"status": "skipped", "reason": "No regime history"}
+
+                    # If target_emails specified, only send to those
+                    if target_emails:
+                        for email_addr in target_emails:
+                            try:
+                                html = email_service.generate_regime_report_html(history=history)
+                                success = await email_service.send_weekly_regime_report(to_email=email_addr, html=html)
+                                sent_count += 1 if success else 0
+                                error_count += 0 if success else 1
+                            except Exception as e:
+                                print(f"Failed: {email_addr}: {e}")
+                                error_count += 1
+                        return {"status": "ok", "sent": sent_count, "errors": error_count, "target_only": True}
 
                     # Free subscribers
                     result = await db.execute(
