@@ -289,7 +289,7 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
               <button
                 type="submit"
                 disabled={twoFactorLoading || (!useBackupCode && twoFactorCode.length !== 6) || (useBackupCode && twoFactorCode.length < 8)}
-                className="w-full py-3 bg-ink text-paper font-medium hover:bg-claret transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 bg-claret text-paper font-medium hover:bg-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded"
               >
                 {twoFactorLoading ? 'Verifying...' : 'Verify'}
               </button>
@@ -453,7 +453,7 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-ink text-paper font-medium hover:bg-claret transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-claret text-paper font-medium hover:bg-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
