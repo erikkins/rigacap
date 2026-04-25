@@ -4,7 +4,7 @@ import { ArrowLeft, Zap, TrendingUp, DollarSign, BarChart3, ArrowRight, Target, 
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 export default function BlogWeCalledItTGTXPage() {
-  useEffect(() => { document.title = 'We Called It: TGTX +46% | RigaCap'; }, []);
+  useEffect(() => { document.title = 'We Called It: TGTX +46% | RigaCap';
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', 'How RigaCap spotted TG Therapeutics +46% breakout in just 14 days. A $22 biotech stock nobody was watching.');
 
@@ -31,7 +31,7 @@ export default function BlogWeCalledItTGTXPage() {
     });
     document.head.appendChild(schema);
     return () => { if (schema.parentNode) schema.remove(); };
-  return (
+  }, []);  return (
     <div className="min-h-screen bg-paper font-body text-ink">
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm border-b border-rule">

@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, TrendingUp, Filter, Shield, Zap, BarChart3, Acti
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 export default function BlogMomentumTradingPage() {
-  useEffect(() => { document.title = 'Momentum Trading Explained | RigaCap'; }, []);
+  useEffect(() => { document.title = 'Momentum Trading Explained | RigaCap';
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', 'Momentum trading is not day trading. Learn how RigaCap uses breakout timing, momentum ranking, and volume confirmation to catch breakouts.');
 
@@ -31,7 +31,7 @@ export default function BlogMomentumTradingPage() {
     });
     document.head.appendChild(schema);
     return () => { if (schema.parentNode) schema.remove(); };
-  return (
+  }, []);  return (
     <div className="min-h-screen bg-paper font-body text-ink">
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm border-b border-rule">

@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, TrendingUp, TrendingDown, BarChart3, Target, Ale
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 export default function BlogWalkForwardResultsPage() {
-  useEffect(() => { document.title = 'Inside Our 5-Year Walk-Forward | RigaCap'; }, []);
+  useEffect(() => { document.title = 'Inside Our 5-Year Walk-Forward | RigaCap';
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', 'Inside RigaCap 5-year walk-forward simulation: +384% total return, 1.19 Sharpe ratio, tested across 138 rebalancing periods.');
 
@@ -31,7 +31,7 @@ export default function BlogWalkForwardResultsPage() {
     });
     document.head.appendChild(schema);
     return () => { if (schema.parentNode) schema.remove(); };
-  return (
+  }, []);  return (
     <div className="min-h-screen bg-paper font-body text-ink">
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm border-b border-rule">

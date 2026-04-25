@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Shield, TrendingUp, Target, Brain, AlertTriangle
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 export default function BlogTrailingStopsPage() {
-  useEffect(() => { document.title = 'How Trailing Stops Protect Your Portfolio | RigaCap'; }, []);
+  useEffect(() => { document.title = 'How Trailing Stops Protect Your Portfolio | RigaCap';
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', 'Learn how trailing stop losses let your winners run while automatically protecting gains. See how to find the right trailing stop percentage.');
 
@@ -31,7 +31,7 @@ export default function BlogTrailingStopsPage() {
     });
     document.head.appendChild(schema);
     return () => { if (schema.parentNode) schema.remove(); };
-
+  }, []);
   return (
     <div className="min-h-screen bg-paper font-body text-ink">
       {/* Nav */}

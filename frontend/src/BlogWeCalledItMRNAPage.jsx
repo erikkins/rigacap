@@ -4,7 +4,7 @@ import { ArrowLeft, TrendingUp, ArrowRight, DollarSign, ShieldCheck, Target, Clo
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 export default function BlogWeCalledItMRNAPage() {
-  useEffect(() => { document.title = 'We Called It: Moderna +51% | RigaCap'; }, []);
+  useEffect(() => { document.title = 'We Called It: Moderna +51% | RigaCap';
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', 'How RigaCap caught Moderna +51% run in summer 2021 and locked in gains with a trailing stop before the stock crashed 66%.');
 
@@ -31,7 +31,7 @@ export default function BlogWeCalledItMRNAPage() {
     });
     document.head.appendChild(schema);
     return () => { if (schema.parentNode) schema.remove(); };
-  return (
+  }, []);  return (
     <div className="min-h-screen bg-paper font-body text-ink">
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm border-b border-rule">
