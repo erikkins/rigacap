@@ -2370,7 +2370,7 @@ function NewsletterTab({ fetchWithAuth }) {
   const loadDraft = async () => {
     setLoading(true);
     try {
-      const res = await fetchWithAuth('/api/admin/newsletter/draft');
+      const res = await fetchWithAuth(`${API_URL}/api/admin/newsletter/draft`);
       if (res.ok) {
         const data = await res.json();
         setDraft(data);
@@ -2388,7 +2388,7 @@ function NewsletterTab({ fetchWithAuth }) {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const res = await fetchWithAuth('/api/admin/newsletter/generate', { method: 'POST' });
+      const res = await fetchWithAuth(`${API_URL}/api/admin/newsletter/generate`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setDraft(data);
@@ -2402,7 +2402,7 @@ function NewsletterTab({ fetchWithAuth }) {
     if (!draft || !editedSections) return;
     setSaving(true);
     try {
-      const res = await fetchWithAuth(`/api/admin/newsletter/draft/${draft.date}`, {
+      const res = await fetchWithAuth(`${API_URL}/api/admin/newsletter/draft/${draft.date}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sections: editedSections }),
@@ -2420,7 +2420,7 @@ function NewsletterTab({ fetchWithAuth }) {
     if (!confirm('Lock this draft? No more edits will be possible.')) return;
     setLocking(true);
     try {
-      const res = await fetchWithAuth(`/api/admin/newsletter/lock/${draft.date}`, { method: 'POST' });
+      const res = await fetchWithAuth(`${API_URL}/api/admin/newsletter/lock/${draft.date}`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setDraft(data);
@@ -2434,7 +2434,7 @@ function NewsletterTab({ fetchWithAuth }) {
     if (!confirm('Send this newsletter to ALL free-list subscribers now?')) return;
     setSending(true);
     try {
-      const res = await fetchWithAuth(`/api/admin/newsletter/send/${draft.date}`, { method: 'POST' });
+      const res = await fetchWithAuth(`${API_URL}/api/admin/newsletter/send/${draft.date}`, { method: 'POST' });
       if (res.ok) {
         const result = await res.json();
         setSendResult(result);
