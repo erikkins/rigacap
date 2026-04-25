@@ -149,13 +149,17 @@ class NewsletterGeneratorService:
         cleaned = []
         for line in lines:
             stripped = line.strip()
-            if re.match(r'^#{1,3}\s', stripped):
+            if re.match(r'^#{1,4}\s', stripped):
                 continue
             if re.match(r'^§\s*\d', stripped):
                 continue
             if re.match(r'^\*\*§', stripped):
                 continue
-            if stripped.startswith('**The Week in Focus') or stripped.startswith('**One Idea') or stripped.startswith('**What the System') or stripped.startswith('**A Note'):
+            if re.match(r'^(The Week in Focus|One Idea|What the System|A Note From|What the system)', stripped, re.IGNORECASE):
+                continue
+            if re.match(r'^\*\*(The Week|One Idea|What the System|A Note|What the system)', stripped):
+                continue
+            if re.match(r'^---+$', stripped):
                 continue
             cleaned.append(line)
         return "\n".join(cleaned).strip()

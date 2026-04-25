@@ -3628,11 +3628,9 @@ async def send_newsletter_test(
     if not draft:
         raise HTTPException(status_code=404, detail="No draft found")
 
-    dashboard_data = data_export_service.read_dashboard_json() or {}
-    ok = await email_service.send_market_measured(
+    ok = await email_service.send_newsletter_from_draft(
         to_email=admin.email,
-        dashboard_data=dashboard_data,
-        show_symbols=False,
+        draft=draft,
     )
     return {"sent": 1 if ok else 0, "to": admin.email}
 
@@ -3652,10 +3650,6 @@ async def send_newsletter_now(
         raise HTTPException(status_code=404, detail="No draft found")
     if draft.get("status") != "locked":
         raise HTTPException(status_code=400, detail="Draft must be locked before sending")
-
-    # Load dashboard data for the email template
-    from app.services.data_export import data_export_service
-    dashboard_data = data_export_service.read_dashboard_json() or {}
 
     # Collect all recipients: free list + paid subscribers who haven't opted out
     all_emails = set()
@@ -3690,10 +3684,9 @@ async def send_newsletter_now(
     failed = 0
     for email_addr in all_emails:
         try:
-            ok = await email_service.send_market_measured(
+            ok = await email_service.send_newsletter_from_draft(
                 to_email=email_addr,
-                dashboard_data=dashboard_data,
-                show_symbols=False,
+                draft=draft,
             )
             if ok:
                 sent += 1

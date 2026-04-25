@@ -1128,6 +1128,138 @@ Market, Measured. is a weekly reading from RigaCap.
             list_unsubscribe_url=unsub_url,
         )
 
+    async def send_newsletter_from_draft(
+        self, to_email: str, draft: dict, user_id: str = None
+    ) -> bool:
+        """Send a newsletter email built from the editor draft sections."""
+        from jose import jwt as _jose_jwt
+        from app.core.config import settings as _settings
+
+        date = draft.get("date_display", draft.get("date", ""))
+        subject_date = date
+        sections = draft.get("sections", [])
+
+        _unsub_tok = _jose_jwt.encode(
+            {"email": to_email.strip().lower(), "report_type": "market_measured",
+             "purpose": "newsletter_unsubscribe"},
+            _settings.JWT_SECRET_KEY, algorithm=_settings.JWT_ALGORITHM,
+        )
+        unsub_url = f"https://api.rigacap.com/api/public/newsletter/unsubscribe?token={_unsub_tok}"
+
+        sn = 'font-size: 12px; font-weight: 500; letter-spacing: 2px; color: #7A2430; text-transform: uppercase; margin: 0 0 10px 0;'
+        sh = 'margin: 0 0 20px 0; font-size: 22px; font-weight: 500; letter-spacing: -0.3px; line-height: 1.2; color: #141210;'
+        section_break = '''
+        <tr><td style="padding: 24px 40px;">
+            <table cellpadding="0" cellspacing="0" style="width: 100%;"><tr>
+                <td style="border-bottom: 1px solid #DDD5C7; width: 45%;"></td>
+                <td style="text-align: center; font-size: 12px; color: #C4BAA9; letter-spacing: 6px; padding: 0 12px; white-space: nowrap;">···</td>
+                <td style="border-bottom: 1px solid #DDD5C7; width: 45%;"></td>
+            </tr></table>
+        </td></tr>'''
+
+        # Build section HTML from draft
+        section_html_parts = []
+        for i, sec in enumerate(sections):
+            num = sec.get("num", str(i + 1).zfill(2))
+            label = sec.get("label", "")
+            title = sec.get("title", "")
+            body = sec.get("body", "")
+            items = sec.get("items", [])
+
+            part = f'<tr><td style="padding: {"36px" if i == 0 else "0"} 40px 0 40px;">'
+            part += f'<p style="{sn}">&sect; {num} &middot; {label}</p>'
+            if title:
+                part += f'<h2 style="{sh}">{title}</h2>'
+
+            if items:
+                part += '<p style="margin: 0 0 4px 0; font-size: 16px; line-height: 1.75; color: #141210;">Right now, the system is not:</p>'
+                for item in items:
+                    part += f'''<table cellpadding="0" cellspacing="0" style="width: 100%;"><tr>
+                        <td style="padding: 12px 0 12px 20px; border-top: 1px solid #DDD5C7; font-size: 16px; line-height: 1.75; color: #141210; position: relative;">
+                        <span style="position: absolute; left: 0; color: #7A2430;">&mdash;</span>{item}</td>
+                    </tr></table>'''
+                part += '<table cellpadding="0" cellspacing="0" style="width: 100%;"><tr><td style="border-top: 1px solid #DDD5C7;"></td></tr></table>'
+                part += '<p style="margin: 12px 0 0 0; font-size: 16px; line-height: 1.75; color: #141210; font-style: italic;">If you\'re looking for a system that does all of those things, this isn\'t it. What you\'re getting instead is a system that tries to do one thing very well and is transparent about what it won\'t do.</p>'
+            elif num == '04':
+                part += f'<p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.75; color: #141210;">{body}</p>'
+                part += '<div style="border-top: 1px solid #DDD5C7; padding-top: 16px; margin-top: 16px;">'
+                part += '<p style="margin: 0; font-size: 20px; font-style: italic; color: #7A2430;">&mdash; Erik</p></div>'
+            else:
+                for para in body.split("\n\n"):
+                    para = para.strip()
+                    if para:
+                        part += f'<p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.75; color: #141210;">{para}</p>'
+
+            part += '</td></tr>'
+            section_html_parts.append(part)
+
+        sections_html = section_break.join(section_html_parts)
+
+        html = f"""<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; font-family: Georgia, 'Times New Roman', serif; background-color: #F5F1E8; color: #141210;">
+    <table cellpadding="0" cellspacing="0" style="width: 100%; max-width: 640px; margin: 0 auto; background-color: #FAF7F0;">
+        <tr>
+            <td style="padding: 48px 40px 20px 40px; text-align: center; border-bottom: 2px solid #141210;">
+                <p style="margin: 0 0 12px 0; font-size: 12px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: #5A544E;">The Weekly Letter &middot; From RigaCap</p>
+                <h1 style="margin: 0; font-size: 36px; font-weight: 400; color: #141210; letter-spacing: -0.5px;">
+                    The Market, <em style="color: #7A2430;">Measured.</em>
+                </h1>
+                <p style="margin: 10px 0 0 0; font-size: 15px; color: #5A544E; font-style: italic;">
+                    A weekly read of what the system is seeing, and why.
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 14px 40px; border-bottom: 1px solid #DDD5C7; font-size: 12px; letter-spacing: 1px; color: #8A8279;">
+                <table cellpadding="0" cellspacing="0" style="width: 100%;"><tr>
+                    <td style="font-weight: 500; color: #141210;">{date.upper()}</td>
+                    <td align="right">~5 min read</td>
+                </tr></table>
+            </td>
+        </tr>
+
+        {sections_html}
+
+        <tr><td style="padding: 36px 40px 0 40px;">
+            <div style="background: #FAF7F0; border: 1px solid #C4BAA9; padding: 28px 24px; text-align: center;">
+                <p style="margin: 0 0 6px 0; font-size: 18px; font-weight: 500; color: #141210;">
+                    The Market, Measured. <em style="color: #7A2430;">Delivered Sundays.</em>
+                </p>
+                <p style="margin: 0 0 16px 0; font-size: 14px; color: #5A544E;">Free. No spam. Unsubscribe anytime.</p>
+                <a href="https://rigacap.com/newsletter" style="display: inline-block; background-color: #141210; color: #F5F1E8; text-decoration: none; padding: 12px 24px; font-size: 14px; font-weight: 500;">Subscribe</a>
+            </div>
+        </td></tr>
+
+        <tr><td style="padding: 28px 40px 0 40px; border-top: 1px solid #DDD5C7; margin-top: 24px;">
+            <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #5A544E; font-style: italic;">
+                RigaCap is a disciplined momentum signal service. Walk-forward validated. $129/month with a 7-day free trial.
+                <a href="https://rigacap.com" style="color: #7A2430;">Start your trial &rarr;</a>
+            </p>
+        </td></tr>
+
+        <tr><td style="padding: 32px 40px 32px 40px;">
+            <p style="margin: 0; font-size: 12px; color: #8A8279; line-height: 1.6; font-style: italic; border-top: 1px solid #DDD5C7; padding-top: 16px;">
+                <em>Market, Measured.</em> is a weekly reading from RigaCap. Data-backed, noise-free. Reply anytime — we read every response.
+            </p>
+            <p style="margin: 12px 0 0 0; font-size: 11px; color: #8A8279;">
+                &copy; 2026 RigaCap, LLC. Not investment advice.
+                &nbsp;&middot;&nbsp;
+                <a href="{unsub_url}" style="color:#8A8279;text-decoration:underline;">Unsubscribe</a>
+            </p>
+        </td></tr>
+    </table>
+</body>
+</html>"""
+
+        subject = f"Market, Measured — {subject_date}"
+        return await self.send_email(
+            to_email, subject, html, "",
+            user_id=user_id,
+            list_unsubscribe_url=unsub_url,
+        )
+
     async def send_bulk_daily_summary(
         self,
         subscribers: List[str],
