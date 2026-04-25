@@ -127,7 +127,7 @@ class NewsletterGeneratorService:
                 "content-type": "application/json",
             },
             json={
-                "model": "claude-sonnet-4-5-20250514",
+                "model": "claude-sonnet-4-5-20250929",
                 "max_tokens": max_tokens,
                 "system": SYSTEM_PROMPT,
                 "messages": [{"role": "user", "content": prompt}],
@@ -138,7 +138,7 @@ class NewsletterGeneratorService:
             content = resp.json().get("content", [])
             if content and content[0].get("type") == "text":
                 return content[0]["text"].strip()
-        logger.warning(f"Claude call failed: {resp.status_code}")
+        logger.warning(f"Claude newsletter call failed: {resp.status_code} {resp.text[:300]}")
         return "(Generation failed)"
 
     def _load_dashboard_data(self) -> dict:

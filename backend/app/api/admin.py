@@ -3548,10 +3548,22 @@ async def calculate_what_if(
 async def generate_newsletter_draft(
     admin: User = Depends(get_admin_user),
 ):
-    """Generate a new newsletter draft using Claude."""
-    from app.services.newsletter_generator_service import newsletter_generator
-    draft = newsletter_generator.generate_draft()
-    return draft
+    """Generate a new newsletter draft using Claude via worker Lambda."""
+    import boto3, os
+    worker_fn = os.environ.get("WORKER_FUNCTION_NAME", "rigacap-prod-worker")
+    try:
+        lam = boto3.client("lambda", region_name="us-east-1")
+        lam.invoke(
+            FunctionName=worker_fn,
+            InvocationType="Event",
+            Payload=json.dumps({"generate_newsletter": True}).encode(),
+        )
+        return {"status": "generating", "message": "Newsletter generation started. Refresh in ~30 seconds."}
+    except Exception as e:
+        logger.warning(f"Failed to invoke worker for newsletter: {e}")
+        from app.services.newsletter_generator_service import newsletter_generator
+        draft = newsletter_generator.generate_draft()
+        return draft
 
 
 @router.get("/newsletter/draft")
