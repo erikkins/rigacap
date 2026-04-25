@@ -48,6 +48,30 @@ function formatDateShort(dateStr) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+const SectionBreak = () => (
+  <div className="flex items-center justify-center gap-2 my-14 text-rule-dark">
+    <span className="flex-1 h-px bg-rule" />
+    <span className="font-mono text-[0.7rem] tracking-[0.3em] text-rule-dark">···</span>
+    <span className="flex-1 h-px bg-rule" />
+  </div>
+);
+
+const NewsletterSection = ({ num, label, title, children }) => (
+  <div className="mb-0">
+    <p className="font-mono text-[0.75rem] font-medium tracking-[0.2em] text-claret uppercase mb-3">
+      &sect; {num} &middot; {label}
+    </p>
+    {title && (
+      <h2
+        className="font-display text-ink mb-5 tracking-[-0.02em] leading-[1.15]"
+        style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2rem)', fontVariationSettings: '"opsz" 96' }}
+        dangerouslySetInnerHTML={{ __html: title.replace(/<em>/g, '<em class="text-claret">') }}
+      />
+    )}
+    {children}
+  </div>
+);
+
 export function NewsletterIssuePage() {
   const { date } = useParams();
   const navigate = useNavigate();
@@ -80,28 +104,124 @@ export function NewsletterIssuePage() {
     </div>
   );
 
+  const sections = issue.sections;
+  const hasStructuredSections = sections && sections.length > 0;
+
   return (
-    <div className="min-h-screen bg-paper font-body text-ink antialiased">
+    <div className="min-h-screen bg-paper font-body text-ink text-[17px] leading-[1.65] antialiased">
       <Navbar />
 
-      <div className="max-w-[720px] mx-auto px-4 sm:px-8 py-8">
-        <button onClick={() => navigate('/newsletter')} className="flex items-center gap-1.5 text-ink-mute hover:text-ink text-[0.85rem] mb-8 transition-colors">
-          <ArrowLeft size={15} />
-          All issues
-        </button>
-
-        {/* Render the email HTML in a sandboxed container */}
-        <div
-          className="bg-white rounded border border-rule overflow-hidden"
-          style={{ maxWidth: 640, margin: '0 auto' }}
-        >
-          <div dangerouslySetInnerHTML={{ __html: issue.html }} />
+      {/* Masthead */}
+      <header className="pt-16 pb-10 sm:pt-20 sm:pb-12 text-center border-b-2 border-ink">
+        <div className="max-w-[720px] mx-auto px-4 sm:px-8">
+          <p className="font-body text-[0.78rem] font-medium tracking-[0.25em] uppercase text-ink-mute mb-5">
+            The Weekly Letter &middot; From RigaCap
+          </p>
+          <h1
+            className="font-display font-normal text-ink leading-none tracking-[-0.025em]"
+            style={{ fontSize: 'clamp(2.5rem, 6vw, 4rem)', fontVariationSettings: '"opsz" 144' }}
+          >
+            The Market, <em className="text-claret italic">Measured.</em>
+          </h1>
+          <p className="font-display italic text-ink-mute text-[1.15rem] mt-3" style={{ fontVariationSettings: '"opsz" 48' }}>
+            A weekly read of what the system is seeing, and why.
+          </p>
         </div>
+      </header>
 
-        <div className="mt-12 mb-8">
-          <MarketMeasuredSignup source="archive" />
+      {/* Issue bar */}
+      <div className="border-b border-rule">
+        <div className="max-w-[720px] mx-auto px-4 sm:px-8 py-3 flex justify-between items-center font-mono text-[0.78rem] tracking-[0.1em] text-ink-light">
+          <span className="font-medium text-ink">{issue.date?.toUpperCase?.() || date}</span>
+          <span>~5 min read</span>
         </div>
       </div>
+
+      {/* Article */}
+      <article className="max-w-[720px] mx-auto px-4 sm:px-8 py-12 sm:py-16">
+        {hasStructuredSections ? (
+          <>
+            {sections.map((sec, i) => (
+              <div key={sec.num || i}>
+                <NewsletterSection num={sec.num} label={sec.label} title={sec.title}>
+                  {sec.body && (
+                    <div
+                      className="text-[1.05rem] leading-[1.75] text-ink [&>p]:mb-5 [&>p:last-child]:mb-0 [&_strong]:font-medium [&_em]:font-display [&_em]:italic"
+                      dangerouslySetInnerHTML={{ __html: sec.body.replace(/<p /g, '<p ').replace(/<\/p>/g, '</p>') }}
+                    />
+                  )}
+                  {sec.items && (
+                    <>
+                      <p className="text-[1.05rem] leading-[1.75] text-ink mb-4">Right now, the system is not:</p>
+                      <ul className="list-none p-0 m-0 mb-5">
+                        {sec.items.map((item, j) => (
+                          <li key={j} className="py-3 pl-5 border-t border-rule text-[1.02rem] leading-[1.7] relative last:border-b">
+                            <span className="absolute left-0 top-3 text-claret font-display">&mdash;</span>
+                            <span dangerouslySetInnerHTML={{ __html: item }} />
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-[1.05rem] leading-[1.75] text-ink font-display italic">
+                        If you're looking for a system that does all of those things, this isn't it. What you're getting instead is a system that tries to do one thing very well and is transparent about what it won't do.
+                      </p>
+                    </>
+                  )}
+                  {sec.num === '04' && (
+                    <div className="border-t border-rule pt-6 mt-8">
+                      <p className="text-[1.05rem] text-ink mb-4">See you next Sunday.</p>
+                      <p className="font-display italic text-claret text-[1.3rem]" style={{ fontVariationSettings: '"opsz" 72' }}>&mdash; Erik</p>
+                    </div>
+                  )}
+                </NewsletterSection>
+                {i < sections.length - 1 && <SectionBreak />}
+              </div>
+            ))}
+          </>
+        ) : (
+          <div
+            className="bg-paper-card border border-rule overflow-hidden p-8"
+            style={{ maxWidth: 640, margin: '0 auto' }}
+          >
+            <div dangerouslySetInnerHTML={{ __html: issue.html }} />
+          </div>
+        )}
+
+        {/* Subscribe box */}
+        <div className="mt-14 bg-paper-card border border-rule-dark p-8 sm:p-10 text-center">
+          <h3
+            className="font-display text-[1.4rem] font-medium text-ink mb-1.5 tracking-[-0.015em]"
+            style={{ fontVariationSettings: '"opsz" 72' }}
+          >
+            The Market, Measured. <em className="text-claret italic">Delivered Sundays.</em>
+          </h3>
+          <p className="text-ink-mute text-[0.95rem] mb-5 max-w-[45ch] mx-auto">
+            A weekly read of what the system is seeing. Free. No spam. Unsubscribe anytime.
+          </p>
+          <MarketMeasuredSignup source="archive_issue" />
+        </div>
+
+        {/* Product pitch */}
+        <div className="border-t border-b border-rule py-6 mt-10 font-display italic text-[1.05rem] leading-[1.6] text-ink-mute" style={{ fontVariationSettings: '"opsz" 48' }}>
+          RigaCap is a disciplined momentum signal service built by a former Chief Innovation Officer with 15 years of quantitative research. Walk-forward validated. $129/month with a 7-day free trial.{' '}
+          <Link to="/" className="text-claret underline decoration-1 underline-offset-2">Start your trial &rarr;</Link>
+        </div>
+      </article>
+
+      {/* Footer */}
+      <footer className="border-t border-rule py-10 bg-paper-deep">
+        <div className="max-w-[720px] mx-auto px-4 sm:px-8 text-center">
+          <p className="font-display italic text-ink-mute text-[0.95rem]" style={{ fontVariationSettings: '"opsz" 24' }}>
+            Three-to-four signals a month, sometimes zero. We trade when the math is clear.
+          </p>
+          <div className="flex items-center justify-center gap-6 mt-5 text-[0.85rem] text-ink-light">
+            <Link to="/" className="no-underline hover:text-ink transition-colors">Home</Link>
+            <Link to="/methodology" className="no-underline hover:text-ink transition-colors">Methodology</Link>
+            <Link to="/track-record" className="no-underline hover:text-ink transition-colors">Track Record</Link>
+            <Link to="/about" className="no-underline hover:text-ink transition-colors">About</Link>
+          </div>
+          <p className="font-mono text-[0.7rem] text-ink-light mt-5">&copy; {new Date().getFullYear()} RigaCap, LLC. Not investment advice.</p>
+        </div>
+      </footer>
     </div>
   );
 }
@@ -126,18 +246,20 @@ export default function NewsletterPage() {
     <div className="min-h-screen bg-paper font-body text-ink text-[17px] leading-[1.65] antialiased">
       <Navbar />
 
-      {/* Header */}
-      <header className="pt-16 pb-14 sm:pt-20 sm:pb-16 border-b border-rule">
+      {/* Masthead */}
+      <header className="pt-16 pb-10 sm:pt-20 sm:pb-12 text-center border-b-2 border-ink">
         <div className="max-w-[720px] mx-auto px-4 sm:px-8">
-          <SectionLabel>Newsletter</SectionLabel>
+          <p className="font-body text-[0.78rem] font-medium tracking-[0.25em] uppercase text-ink-mute mb-5">
+            The Weekly Letter &middot; From RigaCap
+          </p>
           <h1
-            className="font-display font-normal text-ink mb-5 tracking-[-0.025em] leading-[1.05]"
-            style={{ fontSize: 'clamp(2.25rem, 4.5vw, 3.6rem)', fontVariationSettings: '"opsz" 144' }}
+            className="font-display font-normal text-ink leading-none tracking-[-0.025em]"
+            style={{ fontSize: 'clamp(2.5rem, 6vw, 4rem)', fontVariationSettings: '"opsz" 144' }}
           >
-            Market, Measured<span className="text-claret">.</span>
+            The Market, <em className="text-claret italic">Measured.</em>
           </h1>
-          <p className="font-display italic text-ink-mute text-[1.2rem] leading-[1.55]" style={{ fontVariationSettings: '"opsz" 48' }}>
-            A calm, data-backed read of what our system is seeing. Free. Delivered Sundays.
+          <p className="font-display italic text-ink-mute text-[1.15rem] mt-3" style={{ fontVariationSettings: '"opsz" 48' }}>
+            A weekly read of what the system is seeing, and why.
           </p>
         </div>
       </header>

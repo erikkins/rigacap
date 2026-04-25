@@ -890,103 +890,165 @@ class EmailService:
             </table>
         </td></tr>"""
 
+        # § 01 · Reading the Tape
+        s1_title = "What the system sees."
+        s1_body = reading_line
+        if market_context:
+            s1_body += f"</p><p style=\"margin: 16px 0 0 0; font-size: 16px; line-height: 1.75; color: #141210;\">{market_context}"
+
+        # § 02 · What the System is Doing
+        s2_title = "What the system is doing."
+        s2_body = buy_sentence
+        s2_body += f"</p><p style=\"margin: 16px 0 0 0; font-size: 16px; line-height: 1.75; color: #141210;\"><strong>On the watchlist:</strong> {wl_sentence}"
+        s2_body += "</p><p style=\"margin: 16px 0 0 0; font-size: 16px; line-height: 1.75; color: #141210;\"><strong>Still holding:</strong> existing positions continue to be managed by our standard risk discipline."
+
+        # § 03 · The Anti-Pitch
+        s3_title = "What the system is <em>not</em> doing."
+        s3_items = [
+            f"<strong>Chasing headlines.</strong> If a stock is in the news, it's usually too late for our system. We catch breakouts before they're obvious — that's the point of running math instead of reading Twitter.",
+            f"<strong>Forcing trades.</strong> {fresh_count} signal{'s' if fresh_count != 1 else ''} this week. If it were zero, that would be fine. Quiet weeks are the system working as designed, not broken.",
+            f"<strong>Predicting the macro.</strong> We don't forecast recessions, rate cuts, or elections. The regime detector reads what's happening now. When conditions change, so do we — but not before.",
+        ]
+        s3_list = "".join(
+            f'<tr><td style="padding: 12px 0 12px 20px; border-top: 1px solid #DDD5C7; font-size: 16px; line-height: 1.75; color: #141210; position: relative;">'
+            f'<span style="position: absolute; left: 0; color: #7A2430;">—</span>{item}</td></tr>'
+            for item in s3_items
+        )
+        s3_list_html = f'<table cellpadding="0" cellspacing="0" style="width: 100%; margin: 16px 0;">{s3_list}<tr><td style="border-top: 1px solid #DDD5C7;"></td></tr></table>'
+
+        # Section break helper
+        section_break = '''
+        <tr><td style="padding: 24px 40px;">
+            <table cellpadding="0" cellspacing="0" style="width: 100%;"><tr>
+                <td style="border-bottom: 1px solid #DDD5C7; width: 45%;"></td>
+                <td style="text-align: center; font-size: 12px; color: #C4BAA9; letter-spacing: 6px; padding: 0 12px; white-space: nowrap;">···</td>
+                <td style="border-bottom: 1px solid #DDD5C7; width: 45%;"></td>
+            </tr></table>
+        </td></tr>'''
+
+        # Section number style
+        sn = 'font-size: 12px; font-weight: 500; letter-spacing: 2px; color: #7A2430; text-transform: uppercase; margin: 0 0 10px 0;'
+        sh = 'margin: 0 0 20px 0; font-size: 22px; font-weight: 500; letter-spacing: -0.3px; line-height: 1.2; color: #141210;'
+
         html = f"""<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Georgia, serif; background-color: #f5f5f0; color: #1f2937;">
-    <table cellpadding="0" cellspacing="0" style="width: 100%; max-width: 640px; margin: 0 auto; background-color: #ffffff;">
+<body style="margin: 0; padding: 0; font-family: Georgia, 'Times New Roman', serif; background-color: #F5F1E8; color: #141210;">
+    <table cellpadding="0" cellspacing="0" style="width: 100%; max-width: 640px; margin: 0 auto; background-color: #FAF7F0;">
+        <!-- Masthead -->
         <tr>
-            <td style="padding: 48px 40px 24px 40px; border-bottom: 1px solid #e5e7eb;">
-                <h1 style="margin: 0; font-size: 32px; font-weight: 700; color: #172554; letter-spacing: -0.5px;">
-                    Market, Measured.
+            <td style="padding: 48px 40px 20px 40px; text-align: center; border-bottom: 2px solid #141210;">
+                <p style="margin: 0 0 12px 0; font-size: 12px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: #5A544E;">The Weekly Letter &middot; From RigaCap</p>
+                <h1 style="margin: 0; font-size: 36px; font-weight: 400; color: #141210; letter-spacing: -0.5px;">
+                    The Market, <em style="color: #7A2430;">Measured.</em>
                 </h1>
-                <p style="margin: 8px 0 0 0; font-size: 14px; color: #6b7280; font-style: italic;">
-                    {date_str}
+                <p style="margin: 10px 0 0 0; font-size: 15px; color: #5A544E; font-style: italic;">
+                    A weekly read of what the system is seeing, and why.
                 </p>
             </td>
         </tr>
 
-        <tr><td style="padding: 32px 40px 0 40px;">
-            <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 1px;">
-                The Reading
-            </h2>
-            <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #1f2937;">
-                {reading_line}
+        <!-- Issue bar -->
+        <tr>
+            <td style="padding: 14px 40px; border-bottom: 1px solid #DDD5C7; font-size: 12px; letter-spacing: 1px; color: #8A8279;">
+                <table cellpadding="0" cellspacing="0" style="width: 100%;"><tr>
+                    <td style="font-weight: 500; color: #141210;">{date_str.upper()}</td>
+                    <td align="right">~5 min read</td>
+                </tr></table>
+            </td>
+        </tr>
+
+        <!-- § 01 · Reading the Tape -->
+        <tr><td style="padding: 36px 40px 0 40px;">
+            <p style="{sn}">&sect; 01 &middot; Reading the Tape</p>
+            <h2 style="{sh}">{s1_title}</h2>
+            <p style="margin: 0; font-size: 16px; line-height: 1.75; color: #141210;">
+                {s1_body}
             </p>
         </td></tr>
 
-        {f'''<tr><td style="padding: 28px 40px 0 40px;">
-            <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 1px;">
-                What the System Sees
-            </h2>
-            <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #1f2937;">
-                {market_context}
-            </p>
-        </td></tr>''' if market_context else ''}
+        {section_break}
 
-        <tr><td style="padding: 28px 40px 0 40px;">
-            <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 1px;">
-                What the System is Doing
-            </h2>
-            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.7; color: #1f2937;">
-                {buy_sentence}
-            </p>
-            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.7; color: #1f2937;">
-                <strong>On the watchlist:</strong> {wl_sentence}
-            </p>
-            <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #1f2937;">
-                <strong>Still holding:</strong> existing positions continue to be managed by our standard risk discipline.
+        <!-- § 02 · What the System is Doing -->
+        <tr><td style="padding: 0 40px;">
+            <p style="{sn}">&sect; 02 &middot; Signal Report</p>
+            <h2 style="{sh}">{s2_title}</h2>
+            <p style="margin: 0; font-size: 16px; line-height: 1.75; color: #141210;">
+                {s2_body}
             </p>
         </td></tr>
 
         {proof_block}
 
-        <tr><td style="padding: 28px 40px 0 40px;">
-            <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 1px;">
-                What Would Change Things
-            </h2>
-            <ul style="margin: 0; padding: 0 0 0 20px; font-size: 16px; line-height: 1.8; color: #1f2937;">
-                <li><strong>For more buys:</strong> we'd need broader rally conditions where many stocks break out simultaneously.</li>
-                <li><strong>For defensive posture:</strong> a meaningful broad-market breakdown would flip the regime and move us to cash.</li>
-                <li><strong>For now:</strong> stay patient. Quiet weeks are normal. The system is measuring, not reacting.</li>
-            </ul>
+        {section_break}
+
+        <!-- § 03 · The Anti-Pitch -->
+        <tr><td style="padding: 0 40px;">
+            <p style="{sn}">&sect; 03 &middot; The Anti-Pitch</p>
+            <h2 style="{sh}">{s3_title}</h2>
+            <p style="margin: 0 0 4px 0; font-size: 16px; line-height: 1.75; color: #141210;">Right now, the system is not:</p>
+            {s3_list_html}
+            <p style="margin: 0; font-size: 16px; line-height: 1.75; color: #141210; font-style: italic;">
+                If you're looking for a system that does all of those things, this isn't it. What you're getting instead is a system that tries to do one thing very well and is transparent about what it won't do.
+            </p>
         </td></tr>
 
+        {section_break}
+
+        <!-- § 04 · Signoff -->
+        <tr><td style="padding: 0 40px;">
+            <p style="{sn}">&sect; 04 &middot; A Note From Erik</p>
+            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.75; color: #141210;">
+                See you next Sunday.
+            </p>
+            <p style="margin: 0; font-size: 20px; font-style: italic; color: #7A2430;">
+                &mdash; Erik
+            </p>
+        </td></tr>
+
+        <!-- Subscribe box -->
         <tr><td style="padding: 36px 40px 0 40px;">
-            <div style="border-top: 1px solid #e5e7eb; padding-top: 28px;">
-                <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.7; color: #1f2937; font-style: italic;">
-                    Three-to-four signals a month, sometimes zero.<br>
-                    We trade when the math is clear — not when the news is loud.
+            <div style="background: #FAF7F0; border: 1px solid #C4BAA9; padding: 28px 24px; text-align: center;">
+                <p style="margin: 0 0 6px 0; font-size: 18px; font-weight: 500; color: #141210;">
+                    The Market, Measured. <em style="color: #7A2430;">Delivered Sundays.</em>
                 </p>
-                <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;">
-                    Want the signals when they fire?
+                <p style="margin: 0 0 16px 0; font-size: 14px; color: #5A544E;">
+                    Free. No spam. Unsubscribe anytime.
                 </p>
-                <a href="https://rigacap.com" style="display: inline-block; background-color: #172554; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 15px; font-weight: 600;">
-                    Start a 7-day trial →
+                <a href="https://rigacap.com/newsletter" style="display: inline-block; background-color: #141210; color: #F5F1E8; text-decoration: none; padding: 12px 24px; font-size: 14px; font-weight: 500;">
+                    Subscribe
                 </a>
             </div>
         </td></tr>
 
-        {'' if show_symbols else '''<tr><td style="padding: 24px 40px 0 40px;">
-            <div style="background: #f9fafb; border-left: 3px solid #172554; padding: 14px 18px; border-radius: 4px;">
-                <p style="margin: 0; font-size: 13px; color: #6b7280;">
+        <!-- Product pitch -->
+        <tr><td style="padding: 28px 40px 0 40px; border-top: 1px solid #DDD5C7; margin-top: 24px;">
+            <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #5A544E; font-style: italic;">
+                RigaCap is a disciplined momentum signal service built by a former Chief Innovation Officer with 15 years of quantitative research. Walk-forward validated. $129/month with a 7-day free trial.
+                <a href="https://rigacap.com" style="color: #7A2430;">Start your trial &rarr;</a>
+            </p>
+        </td></tr>
+
+        {'' if show_symbols else '''<tr><td style="padding: 20px 40px 0 40px;">
+            <div style="background: #ECE6D9; border-left: 3px solid #7A2430; padding: 14px 18px;">
+                <p style="margin: 0; font-size: 13px; color: #5A544E;">
                     <em>Was this forwarded to you?</em>
-                    &nbsp;<a href="https://rigacap.com/?subscribe=market_measured#newsletter" style="color: #172554; font-weight: 600; text-decoration: none;">Subscribe — free, Sundays only&nbsp;→</a>
+                    &nbsp;<a href="https://rigacap.com/newsletter" style="color: #7A2430; font-weight: 500; text-decoration: none;">Subscribe — free, Sundays only&nbsp;&rarr;</a>
                 </p>
             </div>
         </td></tr>'''}
 
-        <tr><td style="padding: 36px 40px 32px 40px;">
-            <p style="margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.6; font-style: italic; border-top: 1px solid #f3f4f6; padding-top: 16px;">
+        <tr><td style="padding: 32px 40px 32px 40px;">
+            <p style="margin: 0; font-size: 12px; color: #8A8279; line-height: 1.6; font-style: italic; border-top: 1px solid #DDD5C7; padding-top: 16px;">
                 <em>Market, Measured.</em> is a weekly reading from RigaCap. Data-backed, noise-free. Reply anytime — we read every response.
             </p>
-            <p style="margin: 12px 0 0 0; font-size: 11px; color: #9ca3af;">
+            <p style="margin: 12px 0 0 0; font-size: 11px; color: #8A8279;">
                 &copy; {date.year} RigaCap, LLC. Not investment advice.
-                &nbsp;·&nbsp;
-                <a href="{unsub_url}" style="color:#9ca3af;text-decoration:underline;">Unsubscribe</a>
+                &nbsp;&middot;&nbsp;
+                <a href="{unsub_url}" style="color:#8A8279;text-decoration:underline;">Unsubscribe</a>
             </p>
         </td></tr>
     </table>
@@ -1048,6 +1110,12 @@ Market, Measured. is a weekly reading from RigaCap.
                     "vix_level": vix_level,
                     "fresh_count": fresh_count,
                     "watchlist_count": len(watchlist),
+                    "sections": [
+                        {"num": "01", "label": "Reading the Tape", "title": s1_title, "body": s1_body},
+                        {"num": "02", "label": "Signal Report", "title": s2_title, "body": s2_body},
+                        {"num": "03", "label": "The Anti-Pitch", "title": "What the system is not doing.", "items": s3_items},
+                        {"num": "04", "label": "A Note From Erik", "body": "See you next Sunday."},
+                    ],
                 }).encode(),
                 ContentType="application/json",
             )
