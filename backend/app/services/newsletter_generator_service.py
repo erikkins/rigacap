@@ -495,12 +495,24 @@ IMPORTANT: Output ONLY the personal note text. Do NOT include any section header
         draft["status"] = "locked"
         draft["locked_at"] = datetime.now(timezone.utc).isoformat()
 
+        draft_json = json.dumps(draft).encode()
+
+        # Save locked draft
         self.s3.put_object(
             Bucket=S3_BUCKET,
             Key=f"{DRAFT_KEY_PREFIX}{date_str}.json",
-            Body=json.dumps(draft).encode(),
+            Body=draft_json,
             ContentType="application/json",
         )
+
+        # Also publish to issues/ for the public web archive
+        self.s3.put_object(
+            Bucket=S3_BUCKET,
+            Key=f"{ISSUE_KEY_PREFIX}{date_str}.json",
+            Body=draft_json,
+            ContentType="application/json",
+        )
+
         logger.warning(f"Newsletter draft locked for {date_str}")
         return draft
 
