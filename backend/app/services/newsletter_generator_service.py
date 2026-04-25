@@ -197,10 +197,9 @@ If there were fresh signals, mention that the system found opportunities (don't 
 Title: {topic['title']}
 Concept to explain: {topic['seed']}
 
-Current market context (weave in if natural, don't force it):
-{market_summary}
-
 Write 2-3 paragraphs explaining this concept to a smart person who isn't a quant. Use a concrete example or thought experiment. Make it genuinely educational — this is the section that makes readers smarter, which is why they stay subscribed.
+
+CRITICAL: This section is purely educational. Do NOT reference any specific trades, positions, stops, tickers, or events from this week. Do NOT make up specific numbers about what the system did or didn't do. Teach the concept abstractly with hypothetical examples only.
 
 200-300 words."""
 
