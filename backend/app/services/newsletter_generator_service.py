@@ -307,6 +307,8 @@ CRITICAL RULES:
 - Do NOT include any preamble, section header, title, or intro text like "Right now, the system is not:" — just the 3 items.
 - Do NOT include the closing italic sentence about "if you're looking for a system" — that's added separately.
 - Do NOT number them.
+- Do NOT use any specific ticker symbols (no AAPL, NVDA, FCX, etc.). Refer to stocks generically ("a name," "one position," "a tech stock").
+- Do NOT invent or fabricate any events, exits, or trades. Only reference the counts from the data above.
 
 150-200 words total."""
 
