@@ -193,29 +193,37 @@ class NewsletterGeneratorService:
         stops_count = 0
         profit_exits_count = 0
         try:
-            import os
-            from sqlalchemy import create_engine, text
-            db_url = os.environ.get("DATABASE_URL", "")
-            if db_url.startswith("postgresql+asyncpg://"):
-                db_url = db_url.replace("postgresql+asyncpg://", "postgresql://", 1)
-            engine = create_engine(db_url)
-            with engine.connect() as conn:
-                row = conn.execute(text(
-                    "SELECT COUNT(*) FROM model_positions WHERE status = 'open'"
-                )).scalar()
-                open_count = row or 0
-                rows = conn.execute(text(
-                    "SELECT exit_reason, pnl_pct FROM model_positions "
-                    "WHERE status = 'closed' AND exit_date >= CURRENT_DATE - INTERVAL '7 days'"
-                )).fetchall()
-                for r in rows:
-                    reason = (r[0] or "").lower()
-                    pnl = r[1] or 0
-                    if reason in ("trailing_stop", "stop_loss", "regime_exit"):
-                        stops_count += 1
-                    elif pnl > 0:
-                        profit_exits_count += 1
-            engine.dispose()
+            import asyncio
+            from app.core.database import async_session
+            from sqlalchemy import text as sa_text
+
+            async def _fetch_portfolio():
+                nonlocal open_count, stops_count, profit_exits_count
+                async with async_session() as db:
+                    row = await db.execute(sa_text(
+                        "SELECT COUNT(*) FROM model_positions WHERE status = 'open' AND portfolio_type = 'live'"
+                    ))
+                    open_count = row.scalar() or 0
+                    rows = await db.execute(sa_text(
+                        "SELECT exit_reason, pnl_pct FROM model_positions "
+                        "WHERE status = 'closed' AND portfolio_type = 'live' "
+                        "AND exit_date >= CURRENT_DATE - INTERVAL '7 days'"
+                    ))
+                    for r in rows.fetchall():
+                        reason = (r[0] or "").lower()
+                        pnl = r[1] or 0
+                        if reason in ("trailing_stop", "stop_loss", "regime_exit"):
+                            stops_count += 1
+                        elif pnl > 0:
+                            profit_exits_count += 1
+
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    pool.submit(lambda: asyncio.run(_fetch_portfolio())).result(timeout=10)
+            else:
+                loop.run_until_complete(_fetch_portfolio())
         except Exception as e:
             logger.warning(f"Could not load portfolio data for newsletter: {e}")
             # Fall back to dashboard data
