@@ -4757,11 +4757,11 @@ def handler(event, context):
     if event.get("generate_newsletter"):
         from app.services.newsletter_generator_service import newsletter_generator
         draft = newsletter_generator.generate_draft()
-        return {"statusCode": 200, "body": json.dumps({
+        return {
             "message": f"Newsletter draft generated: {draft['word_count']} words",
             "date": draft["date"],
             "status": draft["status"],
-        })}
+        }
 
     # Optional: {"daily_emails": {"target_emails": ["user@example.com"]}}
     # Weekly "Market, Measured." free-list email — Sunday evening.
