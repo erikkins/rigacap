@@ -2387,9 +2387,9 @@ function NewsletterTab({ fetchWithAuth }) {
 
   const handleGenerate = async () => {
     setGenerating(true);
+    const prevGeneratedAt = draft?.generated_at || '';
     try {
       await fetchWithAuth(`${API_URL}/api/admin/newsletter/generate`, { method: 'POST' });
-      // Worker generates async — poll for the draft
       let attempts = 0;
       const poll = setInterval(async () => {
         attempts++;
@@ -2397,7 +2397,7 @@ function NewsletterTab({ fetchWithAuth }) {
           const res = await fetchWithAuth(`${API_URL}/api/admin/newsletter/draft`);
           if (res.ok) {
             const data = await res.json();
-            if (data.sections?.every(s => !s.body?.includes('Generation failed') || s.items?.length > 0)) {
+            if (data.generated_at && data.generated_at !== prevGeneratedAt) {
               setDraft(data);
               setEditedSections(JSON.parse(JSON.stringify(data.sections)));
               setGenerating(false);
@@ -2405,8 +2405,12 @@ function NewsletterTab({ fetchWithAuth }) {
             }
           }
         } catch {}
-        if (attempts >= 12) { setGenerating(false); clearInterval(poll); }
-      }, 5000);
+        if (attempts >= 20) {
+          setGenerating(false);
+          clearInterval(poll);
+          loadDraft();
+        }
+      }, 3000);
     } catch (e) { console.error(e); setGenerating(false); }
   };
 
