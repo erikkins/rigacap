@@ -142,6 +142,24 @@ class NewsletterGeneratorService:
         logger.warning(f"Claude newsletter call failed: {resp.status_code} {resp.text[:300]}")
         return "(Generation failed)"
 
+    def _clean_body(self, text: str) -> str:
+        """Strip section headers/titles that Claude sometimes includes."""
+        import re
+        lines = text.strip().split("\n")
+        cleaned = []
+        for line in lines:
+            stripped = line.strip()
+            if re.match(r'^#{1,3}\s', stripped):
+                continue
+            if re.match(r'^§\s*\d', stripped):
+                continue
+            if re.match(r'^\*\*§', stripped):
+                continue
+            if stripped.startswith('**The Week in Focus') or stripped.startswith('**One Idea') or stripped.startswith('**What the System') or stripped.startswith('**A Note'):
+                continue
+            cleaned.append(line)
+        return "\n".join(cleaned).strip()
+
     def _load_dashboard_data(self) -> dict:
         try:
             obj = self.s3.get_object(Bucket=S3_BUCKET, Key="signals/dashboard.json")
@@ -201,9 +219,11 @@ Write 2-3 paragraphs explaining what the system is seeing in plain English. Tran
 
 You may reference: number of fresh signals, watchlist count, open positions, stops triggered, profit exits — but ONLY the exact numbers from the data above. Do NOT make up any numbers. If the data says 1 stop was triggered, say 1. If it says 0, say 0. Do not name specific tickers.
 
+IMPORTANT: Output ONLY the body paragraphs. Do NOT include any section header, title, number, or label like "§01" or "The Week in Focus" — those are added separately.
+
 150-250 words."""
 
-        s1_text = self._call_claude(s1_prompt)
+        s1_text = self._clean_body(self._call_claude(s1_prompt))
 
         # §02 — One Idea, Explained
         topic = self._get_topic_for_week(target_date)
@@ -216,9 +236,11 @@ Write 2-3 paragraphs explaining this concept to a smart person who isn't a quant
 
 CRITICAL: This section is purely educational. Do NOT reference any specific trades, positions, stops, tickers, or events from this week. Do NOT make up specific numbers about what the system did or didn't do. Teach the concept abstractly with hypothetical examples only.
 
+IMPORTANT: Output ONLY the body paragraphs. Do NOT include any section header, title, number, or label — those are added separately.
+
 200-300 words."""
 
-        s2_text = self._call_claude(s2_prompt)
+        s2_text = self._clean_body(self._call_claude(s2_prompt))
 
         # §03 — What the System is Not Doing
         s3_prompt = f"""Write §03 "What the System is Not Doing" for this week.
@@ -228,47 +250,43 @@ THIS IS THE MOST IMPORTANT SECTION. It builds trust by naming things we're expli
 Market context:
 {market_summary}
 
-Based on the current regime and market conditions, name 3 specific things the system is NOT doing right now, and explain why for each. Format each as a bold lead-in followed by 1-2 sentences of explanation.
+Based on the current regime and market conditions, write EXACTLY 3 items — things the system is NOT doing right now, and why.
 
-Examples of what "not doing" means:
-- Not chasing a specific sector rally that's overextended
+Format: Each item starts with **Bold lead-in.** followed by 1-2 sentences. Example:
+**Not chasing the AI rally.** The momentum scores have diverged from price in ways that historically precede pullbacks. We might miss more upside. That's fine.
+
+Choose from ideas like:
+- Not chasing a specific hot sector
 - Not shorting anything (long-only by design)
 - Not touching small caps (volume/price filters)
 - Not adding positions in a weakening regime
 - Not panic-selling existing positions despite headlines
 - Not following the crowd into a popular trade
 
-End with one italic sentence: "If you're looking for a system that does all of those things, this isn't it. What you're getting instead is a system that tries to do one thing very well and is transparent about what it won't do."
+CRITICAL RULES:
+- Output EXACTLY 3 items, each starting with **bold text.**
+- Do NOT include any preamble, section header, title, or intro text like "Right now, the system is not:" — just the 3 items.
+- Do NOT include the closing italic sentence about "if you're looking for a system" — that's added separately.
+- Do NOT number them.
 
-150-200 words for the three items."""
+150-200 words total."""
 
         s3_text = self._call_claude(s3_prompt)
 
-        # Parse §03 into items (Claude returns them as bold lead-ins)
+        # Parse §03 into exactly 3 items
+        import re
         s3_items = []
-        current_item = ""
-        for line in s3_text.split("\n"):
-            line = line.strip()
-            if not line:
+        # Split on bold markers — each item starts with **
+        parts = re.split(r'\n(?=\*\*)', s3_text.strip())
+        for part in parts:
+            part = part.strip()
+            if not part or not part.startswith('**'):
                 continue
-            if line.startswith("**") or line.startswith("- **") or line.startswith("—"):
-                if current_item:
-                    s3_items.append(current_item.strip())
-                current_item = line.lstrip("-—").strip()
-            elif line.startswith("*If you") or line.startswith("If you"):
-                if current_item:
-                    s3_items.append(current_item.strip())
-                    current_item = ""
-            else:
-                current_item += " " + line
-        if current_item:
-            s3_items.append(current_item.strip())
-
-        # Clean markdown bold to HTML
-        s3_items = [
-            item.replace("**", "<strong>", 1).replace("**", "</strong>", 1)
-            for item in s3_items[:3]
-        ]
+            # Convert markdown bold to HTML
+            part = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', part, count=1)
+            part = part.replace('\n', ' ').strip()
+            s3_items.append(part)
+        s3_items = s3_items[:3]
 
         # §04 — A Note From Erik
         s4_prompt = f"""Write §04 "A Note From Erik" — the founder signoff.
@@ -277,9 +295,11 @@ End with one italic sentence: "If you're looking for a system that does all of t
 
 End with "See you next Sunday." on its own line.
 
+IMPORTANT: Output ONLY the personal note text. Do NOT include any section header, title, number, or label. Do NOT start with "A Note From Erik" or similar — just the note itself.
+
 50 words max."""
 
-        s4_text = self._call_claude(s4_prompt, max_tokens=200)
+        s4_text = self._clean_body(self._call_claude(s4_prompt, max_tokens=200))
 
         # Build the draft
         date_str = target_date.strftime("%Y-%m-%d")
