@@ -2455,6 +2455,22 @@ function NewsletterTab({ fetchWithAuth }) {
     setSending(false);
   };
 
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+
+  const handleTestSend = async () => {
+    if (!draft) return;
+    setTestSending(true);
+    try {
+      const res = await fetchWithAuth(`${API_URL}/api/admin/newsletter/test/${draft.date}`, { method: 'POST' });
+      if (res.ok) {
+        const result = await res.json();
+        setTestResult(result);
+      }
+    } catch (e) { console.error(e); }
+    setTestSending(false);
+  };
+
   const updateSection = (idx, field, value) => {
     const updated = [...editedSections];
     if (field === 'items') {
@@ -2521,6 +2537,16 @@ function NewsletterTab({ fetchWithAuth }) {
               </button>
             </>
           )}
+          {draft && (
+            <button
+              onClick={handleTestSend}
+              disabled={testSending}
+              className="flex items-center gap-2 px-3 py-2 border border-rule text-ink-mute rounded hover:bg-paper-deep transition-colors disabled:opacity-50 text-sm"
+            >
+              {testSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+              {testSending ? 'Sending...' : 'Send Test to Me'}
+            </button>
+          )}
           {isLocked && !sendResult && (
             <button
               onClick={handleSend}
@@ -2528,7 +2554,7 @@ function NewsletterTab({ fetchWithAuth }) {
               className="flex items-center gap-2 px-4 py-2 bg-positive text-paper rounded hover:bg-positive/80 transition-colors disabled:opacity-50"
             >
               {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-              {sending ? 'Sending...' : 'Send Now'}
+              {sending ? 'Sending...' : 'Send to All'}
             </button>
           )}
         </div>
@@ -2547,6 +2573,12 @@ function NewsletterTab({ fetchWithAuth }) {
           <span className="text-ink-light">{draft.regime}</span>
           {draft.fresh_count > 0 && <span className="text-positive">{draft.fresh_count} signals</span>}
           {isDirty && <span className="text-claret font-medium">Unsaved changes</span>}
+        </div>
+      )}
+
+      {testResult && (
+        <div className="p-3 bg-claret/10 border border-claret/30 rounded text-claret text-sm">
+          Test email sent to {testResult.to}
         </div>
       )}
 

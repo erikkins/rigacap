@@ -3614,6 +3614,29 @@ async def lock_newsletter_draft(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.post("/newsletter/test/{date}")
+async def send_newsletter_test(
+    date: str,
+    admin: User = Depends(get_admin_user),
+):
+    """Send the newsletter draft to admin only for preview."""
+    from app.services.newsletter_generator_service import newsletter_generator
+    from app.services.email_service import email_service
+    from app.services.data_export import data_export_service
+
+    draft = newsletter_generator.get_draft(date)
+    if not draft:
+        raise HTTPException(status_code=404, detail="No draft found")
+
+    dashboard_data = data_export_service.read_dashboard_json() or {}
+    ok = await email_service.send_market_measured(
+        to_email=admin.email,
+        dashboard_data=dashboard_data,
+        show_symbols=False,
+    )
+    return {"sent": 1 if ok else 0, "to": admin.email}
+
+
 @router.post("/newsletter/send/{date}")
 async def send_newsletter_now(
     date: str,
