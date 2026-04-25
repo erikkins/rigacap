@@ -92,7 +92,7 @@ export default function BlogWeCalledItMRNAPage() {
 
       {/* Article Body */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
 
           {/* The Setup */}
           <h2 className="font-display text-2xl font-bold text-ink mt-0 mb-4 flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
@@ -194,7 +194,7 @@ export default function BlogWeCalledItMRNAPage() {
           </div>
         </div>
 
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           {/* The Exit */}
           <h2 className="font-display text-2xl font-bold text-ink mt-12 mb-4 flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
             <ShieldCheck className="w-6 h-6 text-positive flex-shrink-0" />
@@ -241,7 +241,7 @@ export default function BlogWeCalledItMRNAPage() {
           </div>
         </div>
 
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           {/* The Lesson */}
           <h2 className="font-display text-2xl font-bold text-ink mt-12 mb-4 flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
             <Clock className="w-6 h-6 text-claret flex-shrink-0" />

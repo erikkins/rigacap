@@ -78,7 +78,7 @@ export default function BlogWalkForwardResultsPage() {
 
       {/* Article Body */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
 
           {/* Opening */}
           <h2 className="font-display text-2xl font-bold text-ink mt-0 mb-4" style={{ fontVariationSettings: '"opsz" 48' }}>
@@ -147,7 +147,7 @@ export default function BlogWalkForwardResultsPage() {
           ))}
         </div>
 
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <p className="text-ink-mute leading-relaxed text-base">
             This window captures everything: the post-COVID momentum surge of early 2021,
             the brutal 2022 bear market, the cautious 2023 recovery, and the AI-fueled rally
@@ -190,7 +190,7 @@ export default function BlogWalkForwardResultsPage() {
           </table>
         </div>
 
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <p className="text-ink-mute leading-relaxed text-base">
             A 1.19 Sharpe ratio won't make hedge fund managers jealous — but for a fully
             systematic, rules-based strategy with no discretionary overrides, it signals
@@ -269,7 +269,7 @@ export default function BlogWalkForwardResultsPage() {
           </table>
         </div>
 
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <p className="text-ink-mute leading-relaxed text-base">
             The worst drawdowns both came during the meme stock frenzy of early 2021.
             Momentum strategies are vulnerable to sudden reversals, and the GameStop/AMC
@@ -306,7 +306,7 @@ export default function BlogWalkForwardResultsPage() {
           </div>
         </div>
 
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <p className="text-ink-mute leading-relaxed text-base">
             The fixed-parameter version still beat the S&P 500 — which validates the
             underlying strategy logic. But periodic re-optimization tripled the returns.
@@ -346,7 +346,7 @@ export default function BlogWalkForwardResultsPage() {
           </p>
         </div>
 
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <p className="text-ink-mute leading-relaxed text-base">
             We publish these numbers because we believe in the methodology, and because
             we think investors deserve to see exactly what they're getting — the rough

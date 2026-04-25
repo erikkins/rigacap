@@ -61,7 +61,7 @@ export default function BlogTrailingStopsPage() {
 
       {/* Article Body */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
 
           {/* Section 1: What is a trailing stop */}
           <h2 className="font-display text-2xl font-bold text-ink mt-0 mb-4 flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
@@ -89,7 +89,7 @@ export default function BlogTrailingStopsPage() {
         </div>
 
         {/* Section 2: Fixed vs Trailing */}
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <h2 className="font-display text-2xl font-bold text-ink mt-12 mb-4 flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
             <TrendingUp className="w-6 h-6 text-claret flex-shrink-0" />
             Fixed Stop Loss vs. Trailing Stop
@@ -157,7 +157,7 @@ export default function BlogTrailingStopsPage() {
         </div>
 
         {/* Section 3: How RigaCap uses 12% */}
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <h2 className="font-display text-2xl font-bold text-ink mt-12 mb-4 flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
             <Shield className="w-6 h-6 text-positive flex-shrink-0" />
             How RigaCap Uses Trailing Stops
@@ -178,7 +178,7 @@ export default function BlogTrailingStopsPage() {
         </div>
 
         {/* Section 4: Real Example */}
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <h2 className="font-display text-2xl font-bold text-ink mt-12 mb-4" style={{ fontVariationSettings: '"opsz" 48' }}>
             A Real-World Example
           </h2>
@@ -236,7 +236,7 @@ export default function BlogTrailingStopsPage() {
         </div>
 
         {/* Section 5: Why percentage matters */}
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <h2 className="font-display text-2xl font-bold text-ink mt-12 mb-4 flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
             <AlertTriangle className="w-6 h-6 text-claret flex-shrink-0" />
             Why the Percentage Matters
@@ -299,7 +299,7 @@ export default function BlogTrailingStopsPage() {
           </div>
         </div>
 
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <p className="text-ink-mute leading-relaxed text-base">
             At our chosen percentage, the trailing stop is loose enough that a stock's normal
             daily fluctuations won't trigger it. Most healthy stocks pull back several percent
@@ -309,7 +309,7 @@ export default function BlogTrailingStopsPage() {
         </div>
 
         {/* Section 6: Psychological benefit */}
-        <div className="prose prose-lg max-w-none">
+        <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <h2 className="font-display text-2xl font-bold text-ink mt-12 mb-4 flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
             <Brain className="w-6 h-6 text-claret flex-shrink-0" />
             The Psychological Edge
