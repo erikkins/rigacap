@@ -455,6 +455,20 @@ IMPORTANT: Output ONLY the personal note text. Do NOT include any section header
         )
         return draft
 
+    def unlock_draft(self, date_str: str) -> dict:
+        draft = self.get_draft(date_str)
+        if not draft:
+            raise ValueError(f"No draft found for {date_str}")
+        draft["status"] = "draft"
+        draft.pop("locked_at", None)
+        self.s3.put_object(
+            Bucket=S3_BUCKET,
+            Key=f"{DRAFT_KEY_PREFIX}{date_str}.json",
+            Body=json.dumps(draft).encode(),
+            ContentType="application/json",
+        )
+        return draft
+
     def lock_draft(self, date_str: str) -> dict:
         draft = self.get_draft(date_str)
         if not draft:

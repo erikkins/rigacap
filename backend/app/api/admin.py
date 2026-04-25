@@ -3600,6 +3600,20 @@ async def update_newsletter_draft(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.post("/newsletter/unlock/{date}")
+async def unlock_newsletter_draft(
+    date: str,
+    admin: User = Depends(get_admin_user),
+):
+    """Unlock a locked draft for further editing."""
+    from app.services.newsletter_generator_service import newsletter_generator
+    try:
+        draft = newsletter_generator.unlock_draft(date)
+        return draft
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.post("/newsletter/lock/{date}")
 async def lock_newsletter_draft(
     date: str,

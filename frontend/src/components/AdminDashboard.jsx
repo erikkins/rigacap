@@ -2436,6 +2436,14 @@ function NewsletterTab({ fetchWithAuth }) {
     if (!confirm('Lock this draft? No more edits will be possible.')) return;
     setLocking(true);
     try {
+      // Auto-save edits before locking
+      if (editedSections) {
+        await fetchWithAuth(`${API_URL}/api/admin/newsletter/draft/${draft.date}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sections: editedSections }),
+        });
+      }
       const res = await fetchWithAuth(`${API_URL}/api/admin/newsletter/lock/${draft.date}`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
@@ -2549,6 +2557,20 @@ function NewsletterTab({ fetchWithAuth }) {
             >
               {testSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
               {testSending ? 'Sending...' : 'Send Test to Me'}
+            </button>
+          )}
+          {isLocked && (
+            <button
+              onClick={async () => {
+                if (!confirm('Unlock this draft for further editing?')) return;
+                try {
+                  const res = await fetchWithAuth(`${API_URL}/api/admin/newsletter/unlock/${draft.date}`, { method: 'POST' });
+                  if (res.ok) { const data = await res.json(); setDraft(data); }
+                } catch (e) { console.error(e); }
+              }}
+              className="flex items-center gap-2 px-3 py-2 border border-rule text-ink-mute rounded hover:bg-paper-deep transition-colors text-sm"
+            >
+              <Lock className="w-4 h-4" /> Unlock
             </button>
           )}
           {isLocked && !sendResult && (
