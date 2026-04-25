@@ -237,13 +237,13 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
     return (
       <div className="fixed inset-0 bg-ink/60 flex items-center justify-center z-50 p-4">
         <div className="bg-paper rounded max-w-md w-full overflow-hidden border border-rule">
-          <div className="bg-ink px-6 py-4 flex justify-between items-center">
-            <h2 className="font-display text-lg text-paper flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 24' }}>
-              <Shield size={18} /> Two-Factor Authentication
+          <div className="px-6 py-5 border-b border-rule flex justify-between items-center">
+            <h2 className="font-display text-lg text-ink flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
+              <Shield size={18} className="text-claret" /> Verification
             </h2>
             <button
               onClick={() => { cancel2FA(); setTwoFactorCode(''); setTwoFactorError(''); setUseBackupCode(false); }}
-              className="text-paper/70 hover:text-paper transition-colors"
+              className="text-ink-light hover:text-ink transition-colors"
             >
               <X size={22} />
             </button>
@@ -319,13 +319,13 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
     <div className="fixed inset-0 bg-ink/60 flex items-center justify-center z-50 p-4">
       <div className="bg-paper rounded max-w-md w-full overflow-hidden border border-rule">
         {/* Header */}
-        <div className="bg-ink px-6 py-4 flex justify-between items-center">
-          <h2 className="font-display text-lg text-paper" style={{ fontVariationSettings: '"opsz" 24' }}>
+        <div className="px-6 py-5 border-b border-rule flex justify-between items-center">
+          <h2 className="font-display text-xl text-ink" style={{ fontVariationSettings: '"opsz" 48' }}>
             {mode === 'login' ? 'Welcome Back' : 'Start Your Free Trial'}
           </h2>
           <button
             onClick={onClose}
-            className="text-paper/70 hover:text-paper transition-colors"
+            className="text-ink-light hover:text-ink transition-colors"
           >
             <X size={22} />
           </button>
@@ -338,15 +338,15 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
             <div id="google-signin-button" className="w-full">
               <button
                 onClick={handleGoogleLogin}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-rule-dark hover:bg-paper-deep transition-colors"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-rule hover:bg-paper-deep transition-colors rounded"
               >
-                <Chrome size={20} className="text-ink-mute" />
-                <span className="font-medium text-ink">Continue with Google</span>
+                <Chrome size={20} className="text-ink-light" />
+                <span className="font-medium text-ink-mute">Continue with Google</span>
               </button>
             </div>
             <button
               onClick={handleAppleLogin}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-ink text-paper hover:bg-claret transition-colors"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-ink text-ink hover:bg-paper-deep transition-colors rounded"
             >
               <Apple size={20} />
               <span className="font-medium">Continue with Apple</span>
@@ -374,7 +374,7 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
               <div>
-                <label className="block text-sm font-medium text-ink mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-ink-mute mb-1">Full Name</label>
                 <div className="relative">
                   <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-light" />
                   <input
@@ -389,7 +389,7 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
             )}
 
             <div>
-              <label className="block text-sm font-medium text-ink mb-1">Email</label>
+              <label className="block text-sm font-medium text-ink-mute mb-1">Email</label>
               <div className="relative">
                 <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-light" />
                 <input
@@ -404,7 +404,7 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-ink mb-1">Password</label>
+              <label className="block text-sm font-medium text-ink-mute mb-1">Password</label>
               <div className="relative">
                 <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-light" />
                 <input
