@@ -175,3 +175,4 @@
 - [Newsletter ops and timing](project_newsletter_ops.md) — Sat 8PM generate, Sun 10AM auto-send, no weekend refresh by design
 - [Newsletter has no signals](feedback_newsletter_no_signals.md) — purely editorial, same for free and paid, no tickers ever
 - [Never blast emails without target_emails check](feedback_never_blast_without_target.md) — verify handler supports filtering BEFORE invoking
+- [Newsletter cron MUST use locked draft](feedback_newsletter_cron_draft.md) — Apr 26 outage: cron sent wrong version to all subscribers
