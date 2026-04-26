@@ -4774,7 +4774,74 @@ def handler(event, context):
         cfg = event.get("market_measured") or {}
         target_emails = cfg.get("target_emails") if isinstance(cfg, dict) else None
         show_symbols = cfg.get("show_symbols", False) if isinstance(cfg, dict) else False
+        force_legacy = cfg.get("force_legacy", False) if isinstance(cfg, dict) else False
         print(f"📨 Market, Measured triggered (show_symbols={show_symbols})" + (f" for {target_emails}" if target_emails else " (full list)"))
+
+        # Check for a locked newsletter draft — if it exists, use the curated version
+        if not force_legacy:
+            try:
+                from app.services.newsletter_generator_service import newsletter_generator
+                from datetime import datetime as _dt
+                today_str = _dt.now().strftime("%Y-%m-%d")
+                draft = newsletter_generator.get_draft(today_str)
+                if not draft:
+                    draft = newsletter_generator.get_latest_draft()
+                if draft and draft.get("status") == "locked":
+                    print(f"📨 Using locked newsletter draft from {draft.get('date')}")
+
+                    async def _send_from_draft():
+                        from app.services.email_service import email_service
+                        from app.core.database import NewsletterPreference, User as _NUser, Subscription
+                        from sqlalchemy import select, and_
+
+                        all_emails = set()
+                        async with async_session() as db:
+                            result = await db.execute(
+                                select(NewsletterPreference).where(
+                                    NewsletterPreference.report_type == "market_measured",
+                                    NewsletterPreference.unsubscribed_at.is_(None),
+                                )
+                            )
+                            for sub in result.scalars().all():
+                                all_emails.add(sub.email.strip().lower())
+
+                            result = await db.execute(
+                                select(_NUser).join(Subscription, _NUser.id == Subscription.user_id).where(
+                                    and_(
+                                        Subscription.status.in_(["active", "trialing"]),
+                                        _NUser.is_active == True,
+                                    )
+                                )
+                            )
+                            for user in result.scalars().all():
+                                prefs = user.email_preferences or {}
+                                if prefs.get("market_measured", True):
+                                    all_emails.add(user.email.strip().lower())
+
+                        if target_emails:
+                            all_emails = {e.strip().lower() for e in target_emails}
+
+                        sent = 0
+                        failed = 0
+                        for email_addr in all_emails:
+                            try:
+                                ok = await email_service.send_newsletter_from_draft(
+                                    to_email=email_addr, draft=draft,
+                                )
+                                sent += 1 if ok else 0
+                                failed += 0 if ok else 1
+                            except Exception as e:
+                                print(f"Newsletter send failed for {email_addr}: {e}")
+                                failed += 1
+                        return {"status": "ok", "sent": sent, "failed": failed, "source": "locked_draft"}
+
+                    loop = asyncio.get_event_loop()
+                    if loop.is_closed():
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                    return loop.run_until_complete(_send_from_draft())
+            except Exception as e:
+                print(f"⚠️ Locked draft check failed, falling back to legacy: {e}")
 
         async def _send_market_measured():
             import json as _json
@@ -4783,7 +4850,7 @@ def handler(event, context):
             from app.services.email_service import email_service
             from app.core.database import EnsembleSignal
 
-            # Pull latest dashboard.json from S3
+            # Pull latest dashboard.json from S3 (legacy path — no locked draft found)
             bucket = "rigacap-prod-price-data-149218244179"
             try:
                 s3 = boto3.client('s3', region_name='us-east-1')
