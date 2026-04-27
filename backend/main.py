@@ -4755,6 +4755,47 @@ def handler(event, context):
     # Handle daily email digest (EventBridge: 6 PM ET Mon-Fri)
     # Generate newsletter draft (Saturday evening cron or manual trigger)
     # {"generate_newsletter": true}
+    if event.get("save_wf_from_s3"):
+        cfg = event["save_wf_from_s3"]
+        import boto3 as _b3
+        _s3 = _b3.client("s3", region_name="us-east-1")
+        _bucket = "rigacap-prod-price-data-149218244179"
+        ec_json = _s3.get_object(Bucket=_bucket, Key=cfg["equity_curve_key"])["Body"].read().decode()
+        trades_json = _s3.get_object(Bucket=_bucket, Key=cfg["trades_key"])["Body"].read().decode()
+        switches_json = _s3.get_object(Bucket=_bucket, Key=cfg["switches_key"])["Body"].read().decode()
+
+        async def _save_wf():
+            from app.core.database import async_session, WalkForwardSimulation
+            from datetime import datetime as _dt
+            sim = WalkForwardSimulation(
+                start_date=_dt.strptime(cfg["start_date"], "%Y-%m-%d"),
+                end_date=_dt.strptime(cfg["end_date"], "%Y-%m-%d"),
+                reoptimization_frequency="biweekly",
+                status="completed",
+                total_return_pct=cfg["total_return_pct"],
+                sharpe_ratio=cfg["sharpe_ratio"],
+                max_drawdown_pct=cfg["max_drawdown_pct"],
+                benchmark_return_pct=cfg["benchmark_return_pct"],
+                num_strategy_switches=cfg.get("num_strategy_switches", 0),
+                equity_curve_json=ec_json,
+                trades_json=trades_json,
+                switch_history_json=switches_json,
+                simulation_date=_dt.utcnow(),
+                is_daily_cache=False,
+            )
+            async with async_session() as db:
+                db.add(sim)
+                await db.commit()
+                await db.refresh(sim)
+                return {"id": sim.id, "return": sim.total_return_pct}
+
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(_save_wf())
+        return {"status": "ok", "simulation": result}
+
     if event.get("generate_newsletter"):
         from app.services.newsletter_generator_service import newsletter_generator
         draft = newsletter_generator.generate_draft()
