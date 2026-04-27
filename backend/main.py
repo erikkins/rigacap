@@ -4806,60 +4806,60 @@ def handler(event, context):
             else:
                 print(f"📨 Using locked newsletter draft from {draft.get('date')}")
 
-                    async def _send_from_draft():
-                        from app.services.email_service import email_service
-                        from app.core.database import NewsletterPreference, User as _NUser, Subscription
-                        from sqlalchemy import select, and_
+                async def _send_from_draft():
+                    from app.services.email_service import email_service
+                    from app.core.database import NewsletterPreference, User as _NUser, Subscription
+                    from sqlalchemy import select, and_
 
-                        all_emails = set()
-                        async with async_session() as db:
-                            result = await db.execute(
-                                select(NewsletterPreference).where(
-                                    NewsletterPreference.report_type == "market_measured",
-                                    NewsletterPreference.unsubscribed_at.is_(None),
+                    all_emails = set()
+                    async with async_session() as db:
+                        result = await db.execute(
+                            select(NewsletterPreference).where(
+                                NewsletterPreference.report_type == "market_measured",
+                                NewsletterPreference.unsubscribed_at.is_(None),
+                            )
+                        )
+                        for sub in result.scalars().all():
+                            all_emails.add(sub.email.strip().lower())
+
+                        result = await db.execute(
+                            select(_NUser).join(Subscription, _NUser.id == Subscription.user_id).where(
+                                and_(
+                                    Subscription.status.in_(["active", "trialing"]),
+                                    _NUser.is_active == True,
                                 )
                             )
-                            for sub in result.scalars().all():
-                                all_emails.add(sub.email.strip().lower())
+                        )
+                        for user in result.scalars().all():
+                            prefs = user.email_preferences or {}
+                            if prefs.get("market_measured", True):
+                                all_emails.add(user.email.strip().lower())
 
-                            result = await db.execute(
-                                select(_NUser).join(Subscription, _NUser.id == Subscription.user_id).where(
-                                    and_(
-                                        Subscription.status.in_(["active", "trialing"]),
-                                        _NUser.is_active == True,
-                                    )
-                                )
+                    if target_emails:
+                        all_emails = {e.strip().lower() for e in target_emails}
+
+                    sent = 0
+                    failed = 0
+                    for email_addr in all_emails:
+                        try:
+                            ok = await email_service.send_newsletter_from_draft(
+                                to_email=email_addr, draft=draft,
                             )
-                            for user in result.scalars().all():
-                                prefs = user.email_preferences or {}
-                                if prefs.get("market_measured", True):
-                                    all_emails.add(user.email.strip().lower())
+                            sent += 1 if ok else 0
+                            failed += 0 if ok else 1
+                        except Exception as e:
+                            print(f"Newsletter send failed for {email_addr}: {e}")
+                            failed += 1
+                    return {"status": "ok", "sent": sent, "failed": failed, "source": "locked_draft"}
 
-                        if target_emails:
-                            all_emails = {e.strip().lower() for e in target_emails}
-
-                        sent = 0
-                        failed = 0
-                        for email_addr in all_emails:
-                            try:
-                                ok = await email_service.send_newsletter_from_draft(
-                                    to_email=email_addr, draft=draft,
-                                )
-                                sent += 1 if ok else 0
-                                failed += 0 if ok else 1
-                            except Exception as e:
-                                print(f"Newsletter send failed for {email_addr}: {e}")
-                                failed += 1
-                        return {"status": "ok", "sent": sent, "failed": failed, "source": "locked_draft"}
-
-                    loop = asyncio.get_event_loop()
-                    if loop.is_closed():
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                    return loop.run_until_complete(_send_from_draft())
-            except Exception as e:
-                print(f"❌ Locked draft send failed: {e}")
-                return {"status": "error", "error": str(e)}
+                loop = asyncio.get_event_loop()
+                if loop.is_closed():
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                return loop.run_until_complete(_send_from_draft())
+        except Exception as e:
+            print(f"❌ Locked draft send failed: {e}")
+            return {"status": "error", "error": str(e)}
 
         async def _send_market_measured():
             import json as _json
