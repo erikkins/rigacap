@@ -1452,7 +1452,8 @@ def handler(event, context):
             # IndentError where entries silently failed while signals kept firing.
             try:
                 entries_opened = entry_result.get('entries', 0) if isinstance(entry_result, dict) else 0
-                if persisted > 0 and entries_opened == 0:
+                fresh_count = len([s for s in (data.get('buy_signals') or []) if s.get('is_fresh')])
+                if fresh_count > 0 and entries_opened == 0:
                     from sqlalchemy import select as _sel, func as _fn
                     from app.core.database import ModelPosition as _MP
                     async with async_session() as _cap_db:
@@ -1465,7 +1466,7 @@ def handler(event, context):
                     if open_count < 6:  # MAX_POSITIONS
                         pipeline_failures.append((
                             "Silent Cash",
-                            f"{persisted} fresh ensemble signals, 0 entries opened, "
+                            f"{fresh_count} fresh signals, 0 entries opened, "
                             f"{open_count}/6 positions held — entry pipeline may be silently broken"
                         ))
             except Exception as _cde:
