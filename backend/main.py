@@ -1346,6 +1346,26 @@ def handler(event, context):
                     print(f"⚠️ Shadow parquet failed: {pq_result.get('message')}")
             except Exception as _e:
                 print(f"⚠️ Shadow parquet error (non-blocking): {_e}")
+
+            # 4c. PARALLEL-READ DIFF (Parquet migration Stage 3a, Apr 2026).
+            # When PARQUET_PARALLEL_READ=true, compare pickle vs parquet and log
+            # divergences to parquet_divergence_events. Gated behind env var so
+            # it can be disabled instantly without redeploy. Wrapped in try/except
+            # so it can NEVER break the daily scan — divergence logging is
+            # observation only, not load-bearing. See project_parquet_stage3_plan.md.
+            if os.environ.get("PARQUET_PARALLEL_READ", "").lower() in ("1", "true", "yes"):
+                try:
+                    diff_summary = await data_export_service.compare_pickle_to_parquet(
+                        pickle_data=scanner_service.data_cache,
+                    )
+                    print(
+                        f"🔬 Parquet diff: compared={diff_summary['compared']} "
+                        f"diverged_symbols={diff_summary['diverged_symbols']} "
+                        f"events={diff_summary['diverged']} "
+                        f"by_type={diff_summary['by_type']}"
+                    )
+                except Exception as _diff_err:
+                    print(f"⚠️ Parquet diff error (non-blocking): {_diff_err}")
             if not pkl_ok:
                 pkl_detail = export_result.get('message', 'export failed')
                 print(f"⚠️ Pickle export failed: {pkl_detail}")
