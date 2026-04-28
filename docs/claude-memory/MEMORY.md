@@ -9,6 +9,9 @@
 - **Always deploy via CI/CD (push to main).** Manual `deploy-container.sh` races with CI/CD.
 - The `run_migration` Lambda event handler can run ALTER TABLE without auth.
 
+## CRITICAL STRATEGY RULE
+- **[WF backtest ↔ production signal generation MUST be identical](feedback_wf_prod_parity.md)** — any lever proven in walk-forward backtesting MUST be ported into production signal code in lockstep. Marketing claims come from backtests; subscribers must be able to realize them. **Known gap (Apr 28 2026): CB pause logic exists in backtester only, not in production scanner.**
+
 ## AWS
 - **Always use `--profile rigacap`** (account 149218244179). Default profile = wrong account (774558858301).
 - **Two Lambdas:** `rigacap-prod-api` (1024 MB, 30s) and `rigacap-prod-worker` (3008 MB, 900s). Same image, `LAMBDA_ROLE` env var.
