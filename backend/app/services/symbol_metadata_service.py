@@ -95,7 +95,8 @@ class SymbolMetadataService:
             active_assets = []
 
         active_by_symbol: Dict[str, object] = {a.symbol: a for a in active_assets}
-        logger.info(f"verify_asset_ids: fetched {len(active_by_symbol)} active assets")
+        # print() not logger.info() — Lambda CloudWatch swallows logger.info; print is "must-see"
+        print(f"verify_asset_ids: fetched {len(active_by_symbol)} active assets")
 
         # 2. Find symbols missing from active list — fetch inactive only if any
         missing_in_active = [s for s in symbols if _to_alpaca(s) not in active_by_symbol]
@@ -109,12 +110,12 @@ class SymbolMetadataService:
                     None, client.get_all_assets, inactive_req
                 )
                 inactive_by_symbol = {a.symbol: a for a in inactive_assets}
-                logger.info(
+                print(
                     f"verify_asset_ids: fetched {len(inactive_by_symbol)} inactive assets "
                     f"(needed for {len(missing_in_active)} not-in-active symbols)"
                 )
             except Exception as e:
-                logger.warning(f"get_all_assets(inactive) failed: {e}")
+                print(f"⚠️ get_all_assets(inactive) failed: {e}")
 
         # 3. Process all symbols against the in-memory maps
         summary: Dict[str, Dict] = {}
