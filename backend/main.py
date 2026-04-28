@@ -1358,13 +1358,18 @@ def handler(event, context):
             try:
                 if data.get('market_context'):
                     from sqlalchemy import text as _sql_text
+                    from datetime import date as _date
+                    # market_context_history.date is a DATE column. asyncpg
+                    # rejects bare strings here ("'str' has no attribute
+                    # 'toordinal'") — convert YYYY-MM-DD to a date object.
+                    ctx_date = _date.fromisoformat(today_str) if isinstance(today_str, str) else today_str
                     async with async_session() as ctx_db:
                         await ctx_db.execute(_sql_text(
                             "INSERT INTO market_context_history (date, context, regime, spy_price, vix_level, signal_count) "
                             "VALUES (:date, :context, :regime, :spy, :vix, :signals) "
                             "ON CONFLICT (date) DO UPDATE SET context = :context, regime = :regime, spy_price = :spy, vix_level = :vix, signal_count = :signals"
                         ), {
-                            "date": today_str,
+                            "date": ctx_date,
                             "context": data['market_context'],
                             "regime": data.get('regime_forecast', {}).get('current_regime', ''),
                             "spy": data.get('market_stats', {}).get('spy_price'),
@@ -2794,7 +2799,7 @@ def handler(event, context):
             from datetime import timedelta
             from app.core.database import WalkForwardSimulation
             from app.services.walk_forward_service import walk_forward_service
-            from sqlalchemy import delete, select
+            from sqlalchemy import select
             import json
 
             days_back = config.get("days_back", 90)
@@ -2805,12 +2810,11 @@ def handler(event, context):
             start_date = end_date - timedelta(days=days_back)
 
             async with async_session() as db:
-                # Delete old nightly cache
-                await db.execute(
-                    delete(WalkForwardSimulation).where(
-                        WalkForwardSimulation.is_nightly_missed_opps == True
-                    )
-                )
+                # Append-only: never delete prior nightly cache rows. Readers
+                # (signals.py, social_content_service.py) already do
+                # ORDER BY simulation_date DESC LIMIT 1, so latest-cache
+                # semantics are preserved without a DELETE that races with
+                # the FK on walk_forward_period_results.
 
                 job = WalkForwardSimulation(
                     simulation_date=datetime.utcnow(),

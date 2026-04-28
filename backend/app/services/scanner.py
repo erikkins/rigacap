@@ -1065,7 +1065,7 @@ class ScannerService:
             elif distance_to_stop_pct < 3 and action != "sell":
                 action = "warning"
                 if not action_reason:
-                    action_reason = f"Within {distance_to_stop_pct:.1f}% of trailing stop ${trailing_stop_level:.2f}"
+                    action_reason = f"Within {distance_to_stop_pct:.1f}% of its ${trailing_stop_level:.2f} trailing stop"
 
             # Default hold reason
             if action == "hold" and not action_reason:

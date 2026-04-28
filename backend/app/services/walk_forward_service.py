@@ -118,6 +118,32 @@ class PeriodTrade:
 
 
 @dataclass
+class PeriodSimulationOutput:
+    """
+    Output from a single period simulation (_simulate_period_with_params or
+    _simulate_period_trading). Replaces the prior ad-hoc tuples which had
+    inconsistent shape (5 vs 6 elements) and inconsistent field naming
+    ('error' vs 'info' for the same slot) across call sites.
+    """
+    ending_capital: float
+    period_return_pct: float
+    info: str
+    trades: List[PeriodTrade]
+    raw_positions: Dict[str, dict]
+    # _simulate_period_trading also produces an equity-points list; left empty
+    # for _simulate_period_with_params which doesn't compute one.
+    equity_points: List[Dict] = field(default_factory=list)
+    # Pause carryover: number of calendar days remaining on an active pause when
+    # this period ended. Threaded into the next period via cb_pause_days_remaining
+    # (loose name — could be any source, not just CB) so a pause that triggered
+    # near a period boundary is enforced through the boundary.
+    pause_days_remaining: int = 0
+    # Source-rich pause activation log for this period only. Aggregated across
+    # periods on WalkForwardResult.pause_events.
+    pause_events: List[Dict] = field(default_factory=list)
+
+
+@dataclass
 class WalkForwardResult:
     """Complete walk-forward simulation result"""
     start_date: str
@@ -135,6 +161,10 @@ class WalkForwardResult:
     parameter_evolution: List[ParameterSnapshot] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)  # Simulation errors for debugging
     trades: List[PeriodTrade] = field(default_factory=list)  # All trades across all periods
+    # Aggregated pause activation log across all periods. Each entry includes
+    # source ('circuit_breaker' | 'carryover_from_prior_period' | ...), trigger
+    # date, target until_date, days, and source-specific context.
+    pause_events: List[Dict] = field(default_factory=list)
     continuation_state: Optional[Dict] = None  # Non-None if more chunks remain (self-chaining)
 
 
@@ -749,7 +779,10 @@ class WalkForwardService:
                 "profit_factor": result.profit_factor,
                 "adaptive_score": adaptive_score,
             }
-        except Exception:
+        except Exception as _e:
+            # Diagnostic: silent None-returns historically masked Optuna pruning storms.
+            # Log once-per-rare-error to surface what's actually breaking trial backtests.
+            print(f"[WF-TRIAL] _test_param_combination failed: {type(_e).__name__}: {_e}")
             return None
 
     def _simulate_period_with_params(
@@ -773,12 +806,14 @@ class WalkForwardService:
         regime_reentry_mode: bool = False,
         bear_keep_pct: float = 0.0,
         graduated_reentry: bool = False,
-    ) -> Tuple[float, float, str, List[PeriodTrade], Dict[str, dict]]:
+        pause_days_remaining: int = 0,
+    ) -> PeriodSimulationOutput:
         """
         Simulate trading for a period using custom parameters (for AI-generated strategies).
 
-        Returns:
-            Tuple of (ending_capital, period_return_pct, info_string, trades, raw_positions)
+        pause_days_remaining: calendar days of pause carried over from the prior period.
+        If > 0, seeds backtester._pause_until at start_date + N days so the pause is
+        enforced into this period regardless of regime.
         """
         try:
             strategy_params = StrategyParams(**params)
@@ -815,6 +850,16 @@ class WalkForwardService:
                 backtester.circuit_breaker_pause_days = strategy_params.circuit_breaker_pause_days
             if hasattr(strategy_params, 'circuit_breaker_tighten_pct'):
                 backtester.circuit_breaker_tighten_pct = strategy_params.circuit_breaker_tighten_pct
+
+            # Seed carryover pause from prior period. Original triggering source is
+            # preserved in the prior period's pause_events log; here we only know it's
+            # a continuation, so the marker is generic.
+            if pause_days_remaining > 0:
+                backtester._pause_until = start_date + timedelta(days=pause_days_remaining)
+                backtester._pause_source = 'carryover_from_prior_period'
+            else:
+                backtester._pause_until = None
+                backtester._pause_source = None
 
             # Apply sector cap to ticker list if V2 param is set
             effective_tickers = ticker_list
@@ -869,15 +914,33 @@ class WalkForwardService:
                 for t in result.trades
             ]
 
-            # Always return info about the period for debugging
+            new_pause_days_remaining = 0
+            if backtester._pause_until is not None and backtester._pause_until > end_date:
+                new_pause_days_remaining = (backtester._pause_until - end_date).days
+
             info = (f"Period {start_date.strftime('%Y-%m-%d')}: {backtest_debug}")
-            return ending_capital, result.total_return_pct, info, period_trades, result.raw_positions
+            return PeriodSimulationOutput(
+                ending_capital=ending_capital,
+                period_return_pct=result.total_return_pct,
+                info=info,
+                trades=period_trades,
+                raw_positions=result.raw_positions,
+                pause_days_remaining=new_pause_days_remaining,
+                pause_events=list(getattr(result, 'pause_events', []) or []),
+            )
         except Exception as e:
             error_msg = f"Period {start_date.strftime('%Y-%m-%d')}: ERROR {str(e)}"
             print(f"[WF-SIM] ERROR: {error_msg}")
             import traceback
             traceback.print_exc()
-            return starting_capital, 0.0, error_msg, [], {}
+            return PeriodSimulationOutput(
+                ending_capital=starting_capital,
+                period_return_pct=0.0,
+                info=error_msg,
+                trades=[],
+                raw_positions={},
+                pause_days_remaining=pause_days_remaining,  # pass through unchanged on error
+            )
 
     def _simulate_period_trading(
         self,
@@ -898,12 +961,12 @@ class WalkForwardService:
         regime_reentry_mode: bool = False,
         bear_keep_pct: float = 0.0,
         graduated_reentry: bool = False,
-    ) -> Tuple[float, List[Dict], float, str, List[PeriodTrade], Dict[str, dict]]:
+        pause_days_remaining: int = 0,
+    ) -> PeriodSimulationOutput:
         """
         Simulate trading for a single period using a specific strategy.
 
-        Returns:
-            Tuple of (ending_capital, equity_points, period_return_pct, info, trades, raw_positions)
+        pause_days_remaining: see _simulate_period_with_params docstring.
         """
         params = StrategyParams.from_json(strategy.parameters)
 
@@ -926,6 +989,14 @@ class WalkForwardService:
         backtester.regime_reentry_mode = regime_reentry_mode
         backtester.bear_keep_pct = bear_keep_pct
 
+        # Seed carryover pause from prior period.
+        if pause_days_remaining > 0:
+            backtester._pause_until = start_date + timedelta(days=pause_days_remaining)
+            backtester._pause_source = 'carryover_from_prior_period'
+        else:
+            backtester._pause_until = None
+            backtester._pause_source = None
+
         try:
             result = backtester.run_backtest(
                 start_date=start_date,
@@ -938,7 +1009,6 @@ class WalkForwardService:
 
             ending_capital = starting_capital * (1 + result.total_return_pct / 100)
             print(f"[WF-SIM] Period {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}: {result.total_return_pct:.2f}% return, {result.total_trades} trades (strategy: {strategy.name})")
-            # Always return info about the period for debugging
             info = f"Period {start_date.strftime('%Y-%m-%d')}: {result.total_trades} trades, {result.total_return_pct:.1f}% ({strategy.name})"
 
             # Build equity curve points for this period
@@ -987,7 +1057,20 @@ class WalkForwardService:
                 for t in result.trades
             ]
 
-            return ending_capital, equity_points, result.total_return_pct, info, period_trades, result.raw_positions
+            new_pause_days_remaining = 0
+            if backtester._pause_until is not None and backtester._pause_until > end_date:
+                new_pause_days_remaining = (backtester._pause_until - end_date).days
+
+            return PeriodSimulationOutput(
+                ending_capital=ending_capital,
+                period_return_pct=result.total_return_pct,
+                info=info,
+                trades=period_trades,
+                raw_positions=result.raw_positions,
+                equity_points=equity_points,
+                pause_days_remaining=new_pause_days_remaining,
+                pause_events=list(getattr(result, 'pause_events', []) or []),
+            )
 
         except Exception as e:
             # If backtest fails, assume flat return
@@ -995,7 +1078,15 @@ class WalkForwardService:
             print(f"[WF-SIM] ERROR: {error_msg}")
             import traceback
             traceback.print_exc()
-            return starting_capital, [], 0.0, error_msg, [], {}
+            return PeriodSimulationOutput(
+                ending_capital=starting_capital,
+                period_return_pct=0.0,
+                info=error_msg,
+                trades=[],
+                raw_positions={},
+                equity_points=[],
+                pause_days_remaining=pause_days_remaining,
+            )
 
     async def run_walk_forward_simulation(
         self,
@@ -1121,6 +1212,8 @@ class WalkForwardService:
             simulation_errors = continuation_state.get("simulation_errors", [])
             spy_start_price = continuation_state.get("spy_start_price")
             previous_best_params = continuation_state.get("warm_start_params")
+            pause_days_remaining = continuation_state.get("pause_days_remaining", 0)
+            all_pause_events = continuation_state.get("pause_events", [])
 
             # Restore active strategy state
             _active_id = continuation_state.get("active_strategy_id")
@@ -1161,6 +1254,11 @@ class WalkForwardService:
             carried_positions: Dict[str, dict] = {}
             prev_active_strategy_id = None
             prev_using_ai_params = False
+            # Generic pause state threaded across periods. pause_days_remaining is the
+            # calendar-day budget left on an active pause when the prior period ended;
+            # all_pause_events accumulates source-rich activation logs for forensics.
+            pause_days_remaining: int = 0
+            all_pause_events: List[Dict] = []
 
             # Get SPY starting price for benchmark line
             spy_start_price = None
@@ -1275,6 +1373,8 @@ class WalkForwardService:
                     "risk_preference": risk_preference,
                     "ensemble_seeds": ensemble_seeds,
                     "regime_fixed_params": regime_fixed_params,
+                    "pause_days_remaining": pause_days_remaining,
+                    "pause_events": all_pause_events,
                 }
                 return WalkForwardResult(
                     start_date=start_date.strftime('%Y-%m-%d'),
@@ -1286,6 +1386,7 @@ class WalkForwardService:
                     period_details=period_details,
                     errors=simulation_errors[:10],
                     trades=all_trades,
+                    pause_events=all_pause_events,
                     continuation_state=cont_state,
                 )
 
@@ -1392,6 +1493,8 @@ class WalkForwardService:
                         )
                 except Exception as ai_err:
                     print(f"[WF-SERVICE] AI optimization failed for period {i+1}: {ai_err}")
+                    import traceback as _tb
+                    _tb.print_exc()
 
             if ai_result:
                 period_ai_opt = ai_result
@@ -1539,7 +1642,7 @@ class WalkForwardService:
 
             # Simulate trading for this period
             if using_ai_params and active_params:
-                new_capital, period_return, error, period_trades, new_carried = self._simulate_period_with_params(
+                sim_out = self._simulate_period_with_params(
                     active_params, active_strategy_type, period_start, period_end,
                     capital, ticker_list=top_symbols, strategy_name="AI-Optimized",
                     initial_positions=carry_in if carry_in else None,
@@ -1554,13 +1657,11 @@ class WalkForwardService:
                     regime_reentry_mode=regime_reentry_mode,
                     bear_keep_pct=bear_keep_pct,
                     graduated_reentry=graduated_reentry,
+                    pause_days_remaining=pause_days_remaining,
                 )
                 strategy_name = "AI-Optimized"
-                if error:
-                    simulation_errors.append(error)
-                all_trades.extend(period_trades)
             else:
-                new_capital, period_equity, period_return, error, period_trades, new_carried = self._simulate_period_trading(
+                sim_out = self._simulate_period_trading(
                     active_strategy, period_start, period_end, capital, ticker_list=top_symbols,
                     initial_positions=carry_in if carry_in else None,
                     force_close_at_end=force_close,
@@ -1574,11 +1675,21 @@ class WalkForwardService:
                     regime_reentry_mode=regime_reentry_mode,
                     bear_keep_pct=bear_keep_pct,
                     graduated_reentry=graduated_reentry,
+                    pause_days_remaining=pause_days_remaining,
                 )
                 strategy_name = active_strategy.name
-                if error:
-                    simulation_errors.append(error)
-                all_trades.extend(period_trades)
+
+            new_capital = sim_out.ending_capital
+            period_return = sim_out.period_return_pct
+            period_trades = sim_out.trades
+            new_carried = sim_out.raw_positions
+            pause_days_remaining = sim_out.pause_days_remaining
+            all_pause_events.extend(sim_out.pause_events)
+            # Preserve prior behavior: simulation_errors accumulates the info string
+            # for every period (used for debugging period-level activity, not strictly errors).
+            if sim_out.info:
+                simulation_errors.append(sim_out.info)
+            all_trades.extend(period_trades)
 
             # Update carried positions for next period
             if force_close or strategy_changed:
@@ -1846,6 +1957,7 @@ class WalkForwardService:
             parameter_evolution=parameter_evolution,
             errors=simulation_errors[:10],
             trades=all_trades,
+            pause_events=all_pause_events,
         )
 
         # Save or update simulation in database.
@@ -2070,6 +2182,11 @@ class WalkForwardService:
         simulation_id = state["simulation_id"]
         capital = state["capital"]
         config = state["config"]
+        # Pause carryover from prior period (set 0 on first call). Threaded through
+        # state so a CB pause that triggers near a period boundary is enforced into
+        # the next period regardless of regime change.
+        pause_days_remaining = state.get("pause_days_remaining", 0)
+        all_pause_events_in: List[Dict] = state.get("pause_events", [])
 
         start_date = datetime.strptime(config["start_date"], "%Y-%m-%d")
         end_date = datetime.strptime(config["end_date"], "%Y-%m-%d")
@@ -2343,7 +2460,7 @@ class WalkForwardService:
             _graduated_reentry = config.get("graduated_reentry", False)
 
             if using_ai_params and active_params:
-                new_capital, period_return, info, period_trades, new_carried = self._simulate_period_with_params(
+                sim_out = self._simulate_period_with_params(
                     active_params, active_strategy_type, period_start, period_end,
                     capital, ticker_list=top_symbols, strategy_name="AI-Optimized",
                     initial_positions=carry_in if carry_in else None,
@@ -2356,16 +2473,23 @@ class WalkForwardService:
                     regime_reentry_mode=_regime_reentry,
                     bear_keep_pct=_bear_keep_pct,
                     graduated_reentry=_graduated_reentry,
+                    pause_days_remaining=pause_days_remaining,
                 )
                 strategy_name = "AI-Optimized"
-                if info:
-                    error_info = info
+                new_capital = sim_out.ending_capital
+                period_return = sim_out.period_return_pct
+                period_trades = sim_out.trades
+                new_carried = sim_out.raw_positions
+                pause_days_remaining = sim_out.pause_days_remaining
+                all_pause_events_in.extend(sim_out.pause_events)
+                if sim_out.info:
+                    error_info = sim_out.info
                 equity_points = [
                     {"date": period_start.strftime('%Y-%m-%d'), "equity": capital, "strategy": strategy_name},
                     {"date": period_end.strftime('%Y-%m-%d'), "equity": new_capital, "strategy": strategy_name}
                 ]
             elif active_strategy:
-                new_capital, eq_pts, period_return, info, period_trades, new_carried = self._simulate_period_trading(
+                sim_out = self._simulate_period_trading(
                     active_strategy, period_start, period_end, capital, ticker_list=top_symbols,
                     initial_positions=carry_in if carry_in else None,
                     force_close_at_end=force_close,
@@ -2377,10 +2501,18 @@ class WalkForwardService:
                     regime_reentry_mode=_regime_reentry,
                     bear_keep_pct=_bear_keep_pct,
                     graduated_reentry=_graduated_reentry,
+                    pause_days_remaining=pause_days_remaining,
                 )
                 strategy_name = active_strategy.name
-                if info:
-                    error_info = info
+                new_capital = sim_out.ending_capital
+                period_return = sim_out.period_return_pct
+                period_trades = sim_out.trades
+                new_carried = sim_out.raw_positions
+                pause_days_remaining = sim_out.pause_days_remaining
+                all_pause_events_in.extend(sim_out.pause_events)
+                if sim_out.info:
+                    error_info = sim_out.info
+                eq_pts = sim_out.equity_points
                 equity_points = eq_pts if eq_pts else [
                     {"date": period_start.strftime('%Y-%m-%d'), "equity": capital, "strategy": strategy_name},
                     {"date": period_end.strftime('%Y-%m-%d'), "equity": new_capital, "strategy": strategy_name}
@@ -2520,6 +2652,8 @@ class WalkForwardService:
             "carried_positions": carried_positions_out,
             "prev_active_strategy_id": active_strategy_id,
             "prev_using_ai_params": using_ai_params,
+            "pause_days_remaining": pause_days_remaining,
+            "pause_events": all_pause_events_in,
             "config": config
         }
 

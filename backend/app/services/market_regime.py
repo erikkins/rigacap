@@ -296,10 +296,15 @@ class MarketRegimeService:
     ) -> MarketConditions:
         """Calculate market condition indicators for a given date."""
         if as_of_date:
-            # Handle timezone-aware index comparison
+            # Align as_of_ts to spy_df's index tz semantics. Pandas (newer
+            # versions, AL2023 stack) raises TypeError on tz-naive vs tz-aware
+            # comparison. as_of_date arrives tz-aware from cron callers; pickle
+            # SPY index is typically tz-naive — handle both directions.
             as_of_ts = pd.Timestamp(as_of_date)
             if spy_df.index.tz is not None:
                 as_of_ts = as_of_ts.tz_localize(spy_df.index.tz) if as_of_ts.tz is None else as_of_ts.tz_convert(spy_df.index.tz)
+            elif as_of_ts.tz is not None:
+                as_of_ts = as_of_ts.tz_localize(None)
             spy_df = spy_df[spy_df.index <= as_of_ts]
 
         if len(spy_df) < 200:
@@ -336,6 +341,8 @@ class MarketRegimeService:
                 vix_ts = pd.Timestamp(as_of_date)
                 if vix_df.index.tz is not None:
                     vix_ts = vix_ts.tz_localize(vix_df.index.tz) if vix_ts.tz is None else vix_ts.tz_convert(vix_df.index.tz)
+                elif vix_ts.tz is not None:
+                    vix_ts = vix_ts.tz_localize(None)
                 vix_df = vix_df[vix_df.index <= vix_ts]
             vix_level = vix_df.iloc[-1]['close'] if len(vix_df) > 0 else 20
             vix_1y = vix_df['close'].tail(252)
@@ -361,6 +368,8 @@ class MarketRegimeService:
                     sym_ts = pd.Timestamp(as_of_date)
                     if df.index.tz is not None:
                         sym_ts = sym_ts.tz_localize(df.index.tz) if sym_ts.tz is None else sym_ts.tz_convert(df.index.tz)
+                    elif sym_ts.tz is not None:
+                        sym_ts = sym_ts.tz_localize(None)
                     df = df[df.index <= sym_ts]
                 if len(df) >= 252:
                     latest_price = df.iloc[-1]['close']
@@ -539,6 +548,8 @@ class MarketRegimeService:
             as_of_ts = pd.Timestamp(as_of_date)
             if spy_df.index.tz is not None:
                 as_of_ts = as_of_ts.tz_localize(spy_df.index.tz) if as_of_ts.tz is None else as_of_ts.tz_convert(spy_df.index.tz)
+            elif as_of_ts.tz is not None:
+                as_of_ts = as_of_ts.tz_localize(None)
             spy_slice = spy_df[spy_df.index <= as_of_ts]
         else:
             spy_slice = spy_df

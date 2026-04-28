@@ -123,6 +123,7 @@ def parse_args():
     p.add_argument('--optimizer', default='v2m', help='Optimizer version: v2m, v2c, v2 (default: v2m)')
     p.add_argument('--risk-pref', type=float, default=0.8, help='Risk preference 0-1 (default: 0.8)')
     p.add_argument('--warmup', type=int, default=0, help='Warmup periods before optimizer kicks in (default: 0)')
+    p.add_argument('--smoothing', type=float, default=0.0, help='Param smoothing alpha (0=raw, 0.7=blend 70%% prior + 30%% new); damps overfit thrash (default: 0)')
     p.add_argument('--ensemble', type=int, default=0, help='Ensemble seeds (0=disabled, default: 0)')
     p.add_argument('--pickle', default='backend/data/all_data.pkl.gz', help='Path to pickle file')
     p.add_argument('--strategy-id', type=int, default=5, help='Strategy ID (default: 5 = ensemble)')
@@ -265,6 +266,7 @@ async def run_simulation(args):
                 optimizer_version=args.optimizer,
                 risk_preference=args.risk_pref,
                 warmup_periods=args.warmup,
+                param_smoothing=args.smoothing,
                 ensemble_seeds=args.ensemble,
                 periods_limit=0,  # No limit locally — run all periods
                 profit_lock_pct=args.profit_lock,

@@ -166,6 +166,10 @@ class BacktestResult:
     # Raw position state for walk-forward carry-over (not serialized to API)
     raw_positions: Dict = field(default_factory=dict)
 
+    # Pause activations during the run (every source, every trigger, with context).
+    # Source-rich telemetry — see BacktesterService._request_pause for entry shape.
+    pause_events: List[Dict] = field(default_factory=list)
+
     def to_dict(self):
         result = {**asdict(self)}
         result.pop('raw_positions', None)  # Don't expose internal state
@@ -228,6 +232,14 @@ class BacktesterService:
         self.circuit_breaker_stops = 3    # N stops SAME DAY triggers pause; grid-search winner
         self.circuit_breaker_pause_days = 10  # Days to pause new entries after trigger
         self.circuit_breaker_tighten_pct = 0  # Tighten stops to X% when triggered; 0=no change
+        # Generic pause primitive — any source (CB, regime exit, manual) can request a pause window.
+        # Longer-pause-wins: a new request only extends _pause_until if it pushes further out.
+        # Source-rich telemetry lives in _pause_events (every activation logged with context).
+        # _pause_until/_pause_source are intentionally NOT reset in run_backtest so a carryover
+        # from the prior walk-forward period (set by walk_forward_service) survives.
+        self._pause_until = None    # datetime | None — current pause expiry
+        self._pause_source = None   # str | None — source label of the active pause
+        self._pause_events: List[Dict] = []  # full activation log; reset per run_backtest
         # Liquidity tier bonus (injected by walk-forward service per period)
         self.tier1_set: set = set()
         self.tier1_bonus: float = 0.0
@@ -842,6 +854,35 @@ class BacktesterService:
             'dist_from_high': dist_from_high
         }
 
+    def _request_pause(self, current_date, source: str, days: int, context: Optional[Dict] = None):
+        """
+        Request a trading pause from any source (circuit_breaker, regime_exit, carryover, manual).
+
+        Longer-pause-wins: only extends _pause_until if the new expiry is further out than the
+        current one. Every call appends to _pause_events for telemetry, even when shadowed by a
+        longer existing pause — so analysis can see every trigger that happened, not just the one
+        that won.
+        """
+        new_until = current_date + timedelta(days=days)
+        currently_paused = self._pause_until is not None and current_date <= self._pause_until
+        extends = self._pause_until is None or new_until > self._pause_until
+
+        self._pause_events.append({
+            'trigger_date': current_date.strftime('%Y-%m-%d') if hasattr(current_date, 'strftime') else str(current_date),
+            'source': source,
+            'days': days,
+            'until_date': new_until.strftime('%Y-%m-%d'),
+            'extended_active_pause': currently_paused and extends,
+            'shadowed_by_longer_pause': not extends,
+            'prior_until_date': self._pause_until.strftime('%Y-%m-%d') if self._pause_until else None,
+            'prior_source': self._pause_source,
+            'context': context or {},
+        })
+
+        if extends:
+            self._pause_until = new_until
+            self._pause_source = source
+
     def run_backtest(
         self,
         lookback_days: int = 252,  # 1 year default
@@ -969,6 +1010,10 @@ class BacktesterService:
         last_rebalance: Optional[pd.Timestamp] = None
         in_cash_mode = False  # True when market is unfavorable
         cash_mode_day_count = 0  # Days spent in cash mode (for anti-churn cooldown)
+        # Reset per-run pause event log. _pause_until / _pause_source are NOT reset here so a
+        # carryover from the prior walk-forward period (set by walk_forward_service before
+        # this call) survives into this run.
+        self._pause_events = []
         regime_cooldown_remaining = 0  # Trading days left before allowing re-entry after regime exit
         graduated_deploy_pct = 0.0  # Current graduated deployment level (0-1)
         prev_breadth = 50.0  # Previous day's breadth for thrust detection
@@ -1191,21 +1236,32 @@ class BacktesterService:
             # Previously accumulated across days, which meant normal churn
             # (1 stop per week × 3 weeks = trigger) caused false alarms.
             if self.circuit_breaker_stops > 0:
-                if not hasattr(self, '_cb_pause_until'):
-                    self._cb_pause_until = None
                 today_stops = sum(1 for t in trades
                                  if t.exit_reason == 'trailing_stop'
                                  and t.exit_date == date_str)
                 if (today_stops >= self.circuit_breaker_stops
-                        and (self._cb_pause_until is None or date > self._cb_pause_until)):
-                    self._cb_pause_until = date + timedelta(days=self.circuit_breaker_pause_days)
+                        and (self._pause_until is None or date > self._pause_until)):
+                    stopped_symbols = [t.symbol for t in trades
+                                       if t.exit_reason == 'trailing_stop'
+                                       and t.exit_date == date_str]
+                    self._request_pause(
+                        current_date=date,
+                        source='circuit_breaker',
+                        days=self.circuit_breaker_pause_days,
+                        context={
+                            'stops_today': today_stops,
+                            'threshold': self.circuit_breaker_stops,
+                            'stopped_symbols': stopped_symbols,
+                        },
+                    )
                     if self.circuit_breaker_tighten_pct > 0:
                         for _sym, _pos in positions.items():
                             _pos['tightened_stop'] = self.circuit_breaker_tighten_pct / 100
 
-            # Circuit breaker pause: skip new entries
-            if (hasattr(self, '_cb_pause_until') and self._cb_pause_until
-                    and date <= self._cb_pause_until):
+            # Pause check: skip new entries while any pause source is active.
+            # This runs BEFORE the regime cash_mode check below — a regime flip back to bull
+            # cannot lift an active pause.
+            if self._pause_until is not None and date <= self._pause_until:
                 # Still in pause window — track equity but don't enter
                 position_value = sum(
                     pos['shares'] * self._get_row_for_date(
@@ -1214,7 +1270,11 @@ class BacktesterService:
                     if sym in scanner_service.data_cache
                     and self._get_row_for_date(scanner_service.data_cache[sym], date) is not None
                 )
-                equity_curve.append({'date': date_str, 'equity': capital + position_value})
+                equity_curve.append({
+                    'date': date_str,
+                    'equity': capital + position_value,
+                    'pause_source': self._pause_source,
+                })
                 continue
 
             # Skip new entries if in cash mode (unfavorable market)
@@ -1750,6 +1810,7 @@ class BacktesterService:
             start_date=dates[0].strftime('%Y-%m-%d'),
             end_date=dates[-1].strftime('%Y-%m-%d'),
             debug_info=debug_info,
+            pause_events=list(self._pause_events),
             **enhanced_metrics
         )
 

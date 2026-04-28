@@ -109,7 +109,14 @@ class StrategyOptimizerV2:
 
             result = objective_fn(params)
             if result is None:
-                raise optuna.TrialPruned()
+                # Optuna 4.8 has a bug where PRUNED trials (values=None) leak into
+                # the multi-objective TPE Pareto weight calc and crash the sampler
+                # with "NoneType * float". Returning a strongly-dominated sentinel
+                # instead of pruning keeps the trial as COMPLETE with valid values,
+                # which Optuna treats as universally bad and never selects.
+                # Bad trials are excluded from trial_results so Pareto selection
+                # downstream doesn't see them.
+                return -1e9, 1e9
 
             total_return_pct, max_drawdown_pct = result
 

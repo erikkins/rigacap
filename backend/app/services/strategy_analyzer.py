@@ -74,6 +74,18 @@ class StrategyParams:
     max_recent_return_pct: float = 1000    # Reject candidate if up > X% in last 30 days; 1000=disabled
     price_velocity_cap_pct: float = 1000   # Reject candidate if up > X% in last 5 days; 1000=disabled
 
+    # V2 lever 10: Circuit breaker — halt entries on cascading same-day stops.
+    # Defaults match BacktesterService.__init__ (stops=3, pause=10d, tighten=0).
+    # When Lever 10 was added to V2_PARAM_SPACES (commit 0412009, Apr 19 2026),
+    # these fields were NOT added here in lockstep — every Optuna trial after
+    # that crashed on StrategyParams(**suggested_params) with "unexpected
+    # keyword argument 'circuit_breaker_stops'", got swallowed by
+    # _test_param_combination's broad except, and Optuna's multi-objective TPE
+    # eventually choked on the all-pruned trial set. Silent AI failure for 8 days.
+    circuit_breaker_stops: int = 3
+    circuit_breaker_pause_days: int = 10
+    circuit_breaker_tighten_pct: float = 0
+
     @classmethod
     def from_json(cls, json_str: str) -> "StrategyParams":
         """Create StrategyParams from JSON string"""

@@ -45,19 +45,25 @@ class SymbolMetadataService:
     # ─────────────────────────── Asset-ID integrity ───────────────────────────
 
     async def verify_asset_ids(
-        self, symbols: List[str], record_events: bool = True, concurrency: int = 10
+        self, symbols: List[str], record_events: bool = True
     ) -> Dict[str, Dict]:
         """
         For each symbol in `symbols`, compare the stored asset_id against
         Alpaca's current asset_id. Records SymbolMetadataEvent entries for
         any mismatches and returns a summary.
 
-        PARALLELIZED (Apr 15 2026): uses asyncio.gather with a semaphore
-        (default 10 concurrent) to fetch asset records via a thread pool.
-        4500 symbols drops from ~15 min (serial) to ~2-3 min (10-way).
-        Alpaca Pro SIP handles 200 req/min — 10 concurrent stays well under.
+        BULK-FETCH (Apr 28 2026): single API call to Alpaca's get_all_assets()
+        returns the full US equity universe (~10K assets), then per-symbol
+        lookups happen against an in-memory hash map. Drops 4677-symbol
+        verification from ~15 min (was timing out the 15-min Lambda) to
+        ~2-3 sec. Replaces the prior per-symbol-with-thread-pool approach
+        which never met its claimed 2-3 min throughput in production.
 
-        On first run (no stored asset_id yet), populates the record.
+        Symbol normalization: Alpaca uses dots (BRK.B) where our pickle uses
+        hyphens (BRK-B). The hash-map lookup converts hyphens→dots.
+
+        Inactive list is queried as a fallback only when symbols aren't
+        found in the active list — handles delisted-but-still-tracked names.
 
         Returns dict keyed by symbol: {
             "status": "ok" | "new" | "reused" | "missing_in_alpaca",
@@ -66,58 +72,80 @@ class SymbolMetadataService:
         }
         """
         import asyncio as _asyncio
+        from alpaca.trading.requests import GetAssetsRequest
+        from alpaca.trading.enums import AssetClass, AssetStatus
+
         client = self._get_trading_client()
-        summary: Dict[str, Dict] = {}
-
-        # Pre-fetch stored metadata for all symbols in one DB query
-        async with async_session() as db:
-            result = await db.execute(
-                select(SymbolMetadata).where(SymbolMetadata.symbol.in_(symbols))
-            )
-            stored = {row.symbol: row for row in result.scalars().all()}
-
-        # Fetch all asset records in parallel via thread pool
-        sem = _asyncio.Semaphore(concurrency)
         loop = _asyncio.get_event_loop()
 
-        async def _fetch_one(sym: str):
-            async with sem:
-                try:
-                    asset = await loop.run_in_executor(None, client.get_asset, sym)
-                    return sym, asset, None
-                except Exception as e:
-                    return sym, None, e
+        def _to_alpaca(sym: str) -> str:
+            """yfinance hyphens → Alpaca dots (BRK-B → BRK.B)."""
+            return sym.replace('-', '.')
 
-        fetch_tasks = [_fetch_one(s) for s in symbols]
-        fetch_results = await _asyncio.gather(*fetch_tasks)
+        # 1. Bulk fetch active US equities (one API call, ~10K rows, ~1-2s)
+        try:
+            active_req = GetAssetsRequest(
+                asset_class=AssetClass.US_EQUITY, status=AssetStatus.ACTIVE
+            )
+            active_assets = await loop.run_in_executor(
+                None, client.get_all_assets, active_req
+            )
+        except Exception as e:
+            logger.error(f"get_all_assets(active) failed: {e}")
+            active_assets = []
 
-        # Now process the results in a DB transaction (single session)
+        active_by_symbol: Dict[str, object] = {a.symbol: a for a in active_assets}
+        logger.info(f"verify_asset_ids: fetched {len(active_by_symbol)} active assets")
+
+        # 2. Find symbols missing from active list — fetch inactive only if any
+        missing_in_active = [s for s in symbols if _to_alpaca(s) not in active_by_symbol]
+        inactive_by_symbol: Dict[str, object] = {}
+        if missing_in_active:
+            try:
+                inactive_req = GetAssetsRequest(
+                    asset_class=AssetClass.US_EQUITY, status=AssetStatus.INACTIVE
+                )
+                inactive_assets = await loop.run_in_executor(
+                    None, client.get_all_assets, inactive_req
+                )
+                inactive_by_symbol = {a.symbol: a for a in inactive_assets}
+                logger.info(
+                    f"verify_asset_ids: fetched {len(inactive_by_symbol)} inactive assets "
+                    f"(needed for {len(missing_in_active)} not-in-active symbols)"
+                )
+            except Exception as e:
+                logger.warning(f"get_all_assets(inactive) failed: {e}")
+
+        # 3. Process all symbols against the in-memory maps
+        summary: Dict[str, Dict] = {}
+
         async with async_session() as db:
-            # Re-load stored metadata in the new session (for ORM operations)
             result = await db.execute(
                 select(SymbolMetadata).where(SymbolMetadata.symbol.in_(symbols))
             )
             stored = {row.symbol: row for row in result.scalars().all()}
 
-            for symbol, asset, err in fetch_results:
+            for symbol in symbols:
+                alpaca_sym = _to_alpaca(symbol)
+                asset = active_by_symbol.get(alpaca_sym) or inactive_by_symbol.get(alpaca_sym)
                 stored_meta = stored.get(symbol)
-                if err is not None:
+
+                if asset is None:
                     summary[symbol] = {
                         "status": "missing_in_alpaca",
                         "stored_asset_id": stored_meta.asset_id if stored_meta else None,
                         "current_asset_id": None,
-                        "error": str(err)[:200],
                     }
                     if record_events:
                         db.add(SymbolMetadataEvent(
                             symbol=symbol,
                             event_type="missing_in_alpaca",
-                            details_json=json.dumps({"error": str(err)[:200]}),
+                            details_json=json.dumps({"reason": "not in active or inactive list"}),
                         ))
                     continue
 
                 try:
-                    current_id = str(asset.id) if asset and asset.id else None
+                    current_id = str(asset.id) if asset.id else None
                 except Exception as e:
                     summary[symbol] = {
                         "status": "missing_in_alpaca",

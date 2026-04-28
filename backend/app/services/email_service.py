@@ -1903,9 +1903,9 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
                             <td style="padding:10px 0; border-bottom:1px solid #DDD5C7; text-align:right; font-family:'Courier New',monospace; font-size:14px; color:#141210;">${stop_price:.2f}</td></tr>""" if stop_price else ""
 
         content = f"""
-                <p style="font-size: 17px; color: #141210; margin: 0 0 20px; line-height: 1.65;">{first_name.split()[0] if first_name else 'there'},</p>
+                <p style="font-size: 17px; color: #141210; margin: 0 0 20px; line-height: 1.65;">Hi {first_name},</p>
                 <p style="font-size: 17px; color: #141210; margin: 0 0 20px; line-height: 1.65;">
-                    Your position in <strong>{symbol}</strong> {'has hit its trailing stop' if is_sell else 'needs attention'}. {reason}.
+                    Your position in <strong>{symbol}</strong> {'has hit its trailing stop' if is_sell else 'is approaching its trailing stop'}.
                 </p>
 
                 <table cellpadding="0" cellspacing="0" style="width:100%; margin:24px 0;">

@@ -254,21 +254,26 @@ class SchedulerService:
         from datetime import timedelta
         from app.core.database import async_session, WalkForwardSimulation
         from app.services.walk_forward_service import walk_forward_service
-        from sqlalchemy import select, delete
+        from sqlalchemy import select
 
         from zoneinfo import ZoneInfo
         now_et = datetime.now(ZoneInfo("America/New_York"))
         end_date = now_et.replace(tzinfo=None)
         start_date = end_date - timedelta(days=365)  # 1 year lookback
 
+        # Initialize so the except handler can safely reference it even if the
+        # failure happens before a new job row is created.
+        job_id = None
+
         async with async_session() as db:
             try:
-                # Delete old daily cache entries (keep only last one)
-                await db.execute(
-                    delete(WalkForwardSimulation).where(
-                        WalkForwardSimulation.is_daily_cache == True
-                    )
-                )
+                # Append-only design: never delete prior cache rows. Every reader
+                # of is_daily_cache=True (main.py /api/walk-forward-cached, etc.)
+                # already does ORDER BY simulation_date DESC LIMIT 1, so the
+                # "latest cache" semantics are preserved without DELETE. Bonus:
+                # we get a free historical record of how the cache changed
+                # day-to-day. Growth: 1 row + ~70 period_results per trading day =
+                # ~17.5K rows/year. Trivial; revisit pruning if it ever matters.
 
                 # Create new job record
                 job = WalkForwardSimulation(
@@ -311,14 +316,15 @@ class SchedulerService:
 
             except Exception as e:
                 logger.error(f"[DAILY-WF] Failed: {e}")
-                # Update job status to failed
-                result = await db.execute(
-                    select(WalkForwardSimulation).where(WalkForwardSimulation.id == job_id)
-                )
-                job = result.scalar_one_or_none()
-                if job:
-                    job.status = "failed"
-                    await db.commit()
+                # Update job status to failed (only if we got far enough to create one)
+                if job_id is not None:
+                    result = await db.execute(
+                        select(WalkForwardSimulation).where(WalkForwardSimulation.id == job_id)
+                    )
+                    job = result.scalar_one_or_none()
+                    if job:
+                        job.status = "failed"
+                        await db.commit()
                 raise
 
     async def _run_nightly_walk_forward(self):
@@ -333,7 +339,7 @@ class SchedulerService:
         from datetime import timedelta
         from app.core.database import async_session, WalkForwardSimulation
         from app.services.walk_forward_service import walk_forward_service
-        from sqlalchemy import select, delete
+        from sqlalchemy import select
 
         now = datetime.now(ET)
         if not self._is_trading_day(now):
@@ -345,14 +351,13 @@ class SchedulerService:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=90)
 
+        # Append-only — see _run_daily_walk_forward for design rationale.
+        # Readers (signals.py, social_content_service.py) already use
+        # ORDER BY simulation_date DESC LIMIT 1.
+        job_id = None
+
         async with async_session() as db:
             try:
-                # Delete old nightly missed opps cache
-                await db.execute(
-                    delete(WalkForwardSimulation).where(
-                        WalkForwardSimulation.is_nightly_missed_opps == True
-                    )
-                )
 
                 # Create new job record
                 job = WalkForwardSimulation(
@@ -409,17 +414,18 @@ class SchedulerService:
                 logger.error(f"[NIGHTLY-WF] Failed: {e}")
                 import traceback
                 traceback.print_exc()
-                # Update job status to failed
-                try:
-                    result = await db.execute(
-                        select(WalkForwardSimulation).where(WalkForwardSimulation.id == job_id)
-                    )
-                    job = result.scalar_one_or_none()
-                    if job:
-                        job.status = "failed"
-                        await db.commit()
-                except Exception:
-                    pass
+                # Update job status to failed (only if we got far enough to create one)
+                if job_id is not None:
+                    try:
+                        result = await db.execute(
+                            select(WalkForwardSimulation).where(WalkForwardSimulation.id == job_id)
+                        )
+                        job = result.scalar_one_or_none()
+                        if job:
+                            job.status = "failed"
+                            await db.commit()
+                    except Exception:
+                        pass
 
     def _is_trading_day(self, dt: datetime) -> bool:
         """
@@ -487,7 +493,7 @@ class SchedulerService:
         elif distance_to_stop_pct < 3 and action != "sell":
             action = "warning"
             if not reason:
-                reason = f"Within {distance_to_stop_pct:.1f}% of trailing stop ${trailing_stop_level:.2f}"
+                reason = f"Within {distance_to_stop_pct:.1f}% of its ${trailing_stop_level:.2f} trailing stop"
 
         if action:
             return {
