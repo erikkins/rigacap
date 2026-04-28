@@ -146,10 +146,9 @@
 - [Full text in approval emails](feedback_social_emails_full_text.md) — never truncate post previews in admin emails
 - [No "7 dates" in public content](feedback_no_7_dates.md) — say "multiple start dates", never cite the specific count
 
-## Redesign — Premium Editorial Publication
-- **[Full redesign spec](project_redesign_spec.md)** — $129/mo premium, editorial aesthetic, Fraunces+IBM Plex, Claret accent, founder-led. Source: `~/Downloads/rigacap-redesign-reprice-session-notes.md`
-- **[Rebrand positioning](project_rebrand_premium_publication.md)** — $39 fintech → $129 premium financial publication
-- Pervasive change: landing page, dashboard, all emails, social posts, charts, regime bars — everything
+## Redesign — Premium Editorial Publication (SHIPPED Apr 27, 2026)
+- **[Rebrand SHIPPED](project_rebrand_premium_publication.md)** — $129/mo premium publication is live. Treat editorial framing as the live brand.
+- **[Design system spec](project_redesign_spec.md)** — Fraunces+IBM Plex, Claret accent, paper background — source of truth for ongoing decisions.
 
 ## Planned Features
 - [Signal slippage tracking](project_signal_slippage_tracking.md) — post-publication price monitoring to measure real achievable execution vs published entry price
