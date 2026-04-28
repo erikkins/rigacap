@@ -882,8 +882,8 @@ resource "aws_lambda_permission" "daily_emails" {
 
 resource "aws_cloudwatch_event_rule" "weekly_regime_report" {
   name                = "${local.prefix}-weekly-regime-report"
-  description         = "Send weekly market regime intelligence email every Monday 9 AM ET"
-  schedule_expression = "cron(0 13 ? * MON *)"
+  description         = "Send weekly market regime intelligence email every Tuesday 9 AM ET"
+  schedule_expression = "cron(0 13 ? * TUE *)"
 }
 
 resource "aws_cloudwatch_event_target" "weekly_regime_report" {
