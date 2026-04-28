@@ -1022,6 +1022,125 @@ async def get_pipeline_log(admin: User = Depends(get_admin_user)):
         raise HTTPException(status_code=404, detail=f"No pipeline log found: {str(e)[:100]}")
 
 
+@router.get("/parquet-divergence")
+async def get_parquet_divergence(
+    days: int = Query(7, ge=1, le=90, description="Window in days"),
+    recent_limit: int = Query(20, ge=0, le=200, description="Number of recent raw events to return"),
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Summary of parquet vs pickle divergences from the Stage 3a observation
+    window. Counts by divergence_type, top symbols by event count, and a
+    sample of the most recent raw events for drill-down.
+
+    Used to gate the cutover from pickle to parquet — see
+    project_parquet_stage3_plan.md. Acceptance for moving to Stage 3b is
+    zero divergences on close/volume/indicator columns for 7 consecutive
+    days, OR all observed divergences are explainable + filterable.
+    """
+    from app.core.database import ParquetDivergenceEvent
+    cutoff = datetime.utcnow() - timedelta(days=days)
+
+    # Total + breakdown by type
+    by_type_rows = (await db.execute(
+        select(
+            ParquetDivergenceEvent.divergence_type,
+            func.count(ParquetDivergenceEvent.id).label("n"),
+        )
+        .where(ParquetDivergenceEvent.detected_at >= cutoff)
+        .group_by(ParquetDivergenceEvent.divergence_type)
+        .order_by(desc("n"))
+    )).all()
+    by_type = {row.divergence_type: row.n for row in by_type_rows}
+    total = sum(by_type.values())
+
+    # Top symbols by event count
+    by_symbol_rows = (await db.execute(
+        select(
+            ParquetDivergenceEvent.symbol,
+            func.count(ParquetDivergenceEvent.id).label("n"),
+        )
+        .where(ParquetDivergenceEvent.detected_at >= cutoff)
+        .group_by(ParquetDivergenceEvent.symbol)
+        .order_by(desc("n"))
+        .limit(20)
+    )).all()
+    top_symbols = [{"symbol": row.symbol, "events": row.n} for row in by_symbol_rows]
+
+    # Day-by-day counts so we can spot a flaky day vs a chronic divergence
+    by_day_rows = (await db.execute(
+        select(
+            func.date(ParquetDivergenceEvent.detected_at).label("day"),
+            func.count(ParquetDivergenceEvent.id).label("n"),
+        )
+        .where(ParquetDivergenceEvent.detected_at >= cutoff)
+        .group_by("day")
+        .order_by(desc("day"))
+    )).all()
+    by_day = [{"date": str(row.day), "events": row.n} for row in by_day_rows]
+
+    # Recent raw events for drill-down
+    recent = []
+    if recent_limit > 0:
+        recent_rows = (await db.execute(
+            select(ParquetDivergenceEvent)
+            .order_by(desc(ParquetDivergenceEvent.detected_at))
+            .limit(recent_limit)
+        )).scalars().all()
+        for ev in recent_rows:
+            details = None
+            if ev.details_json:
+                try:
+                    details = json.loads(ev.details_json)
+                except Exception:
+                    details = ev.details_json[:500]
+            recent.append({
+                "id": ev.id,
+                "detected_at": ev.detected_at.isoformat() if ev.detected_at else None,
+                "symbol": ev.symbol,
+                "type": ev.divergence_type,
+                "pickle_rows": ev.pickle_row_count,
+                "parquet_rows": ev.parquet_row_count,
+                "details": details,
+            })
+
+    return {
+        "window_days": days,
+        "total_events": total,
+        "by_type": by_type,
+        "top_symbols": top_symbols,
+        "by_day": by_day,
+        "recent_events": recent,
+        "stage_status": _interpret_divergence_status(by_type, by_day),
+    }
+
+
+def _interpret_divergence_status(by_type: dict, by_day: list) -> dict:
+    """
+    Compute a quick verdict on whether we're ready to advance to Stage 3b.
+    Mirrors the acceptance criteria in project_parquet_stage3_plan.md.
+    """
+    total = sum(by_type.values())
+    structural_count = sum(
+        n for t, n in by_type.items()
+        if t in ("missing_in_pickle", "missing_in_parquet", "row_count_diff",
+                 "column_set_diff", "value_diff", "compare_error")
+    )
+    consecutive_clean_days = 0
+    for d in by_day:
+        if d["events"] == 0:
+            consecutive_clean_days += 1
+        else:
+            break
+    return {
+        "total_events": total,
+        "structural_events": structural_count,
+        "consecutive_clean_days": consecutive_clean_days,
+        "ready_for_stage_3b": structural_count == 0 and consecutive_clean_days >= 7,
+    }
+
+
 @router.post("/ticker-health-check")
 async def run_ticker_health_check(
     admin: User = Depends(get_admin_user)
