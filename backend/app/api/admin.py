@@ -16,7 +16,9 @@ from app.core.database import (
 )
 from app.core.security import get_admin_user
 from app.core.config import settings
-from app.services.scheduler import scheduler_service
+# scheduler_service is deferred — only used by check_ticker_health admin
+# endpoint. Avoiding the eager import shaves cold-start time off the API
+# Lambda for routes that never touch the scheduler.
 from app.services.strategy_analyzer import strategy_analyzer_service
 from sqlalchemy import text
 
@@ -1033,6 +1035,7 @@ async def run_ticker_health_check(
 
     Sends alert email if issues found.
     """
+    from app.services.scheduler import scheduler_service
     try:
         await scheduler_service.check_ticker_health()
         return {

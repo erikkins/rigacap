@@ -39,7 +39,13 @@ from app.api.social import router as social_router
 from app.api.push import router as push_router
 from app.api.two_factor import router as two_factor_router
 from app.services.scanner import scanner_service
-from app.services.scheduler import scheduler_service
+# scheduler_service is deferred — imported inline by:
+#   * the lifespan startup (local dev only; Lambda doesn't run lifespan)
+#   * handler() (worker event paths reference it many places)
+#   * /health, /scheduler-status, /scheduler/run-now endpoints
+# Saves ~235ms of Python module import on API Lambda cold start, where
+# scheduler_service is purely a status-getter and never actually drives
+# anything (cron lives on the Worker, not the API).
 from app.services.backtester import backtester_service
 from app.services.market_analysis import market_analysis_service
 from app.services.data_export import data_export_service
@@ -263,8 +269,9 @@ async def lifespan(app: FastAPI):
         if cached_data:
             scanner_service.data_cache = cached_data
             print(f"📊 Loaded {len(cached_data)} symbols from cached parquet files")
-        scheduler_service.add_callback(store_signals_callback)
-        scheduler_service.start()
+        from app.services.scheduler import scheduler_service as _sched
+        _sched.add_callback(store_signals_callback)
+        _sched.start()
         print("📅 Scheduler started for daily EOD updates")
 
     yield
@@ -272,7 +279,8 @@ async def lifespan(app: FastAPI):
     # Cleanup
     print("👋 Shutting down RigaCap API...")
     if not is_lambda:
-        scheduler_service.stop()
+        from app.services.scheduler import scheduler_service as _sched
+        _sched.stop()
 
 
 # ============================================================================
@@ -786,6 +794,11 @@ def handler(event, context):
     """
     import asyncio
     import os
+    # Defer scheduler_service to here — it's only used in the worker-side
+    # event paths below (send_daily_emails, check_double_signal_alerts, etc.)
+    # plus the FastAPI /health endpoint which has its own inline import.
+    # Keeping it out of module-level shaves ~235ms off API Lambda cold start.
+    from app.services.scheduler import scheduler_service
     global _mangum_handler
 
     # Log every non-warmer event for debugging (EventBridge async invocations were failing silently)
@@ -6697,6 +6710,7 @@ async def root(admin: User = Depends(get_admin_user)):
 
 @app.get("/health")
 async def health(user: User = Depends(get_current_user)):
+    from app.services.scheduler import scheduler_service
     scheduler_status = scheduler_service.get_status()
 
     # Use local cache if available, otherwise get metadata from S3
@@ -7259,6 +7273,7 @@ async def get_market_summary(admin: User = Depends(get_admin_user)):
 @app.get("/api/scheduler/status")
 async def get_scheduler_status(admin: User = Depends(get_admin_user)):
     """Get scheduler status and next run times"""
+    from app.services.scheduler import scheduler_service
     return scheduler_service.get_status()
 
 
@@ -7269,6 +7284,7 @@ async def trigger_manual_update(admin: User = Depends(get_admin_user)):
 
     This runs the same job that runs daily at 4:30 PM ET
     """
+    from app.services.scheduler import scheduler_service
     try:
         await scheduler_service.run_now()
         return {
