@@ -103,6 +103,7 @@
 
 ## Active Tasks
 - **[Parquet migration 4-stage plan](project_storage_migration_roadmap.md)** — Stage 1 shadow write ✅ (Apr 14-15). **Stage 2 AL2023 ✅ (deployed before Apr 28 via commit `21f9e51`).** Stage 3 consumer migration → Stage 4 decommission pickle. Goal: parquet becomes primary, pickle retired.
+- **[Stage 3 detailed plan](project_parquet_stage3_plan.md)** — 6 work packages (3a-1, 3a-2, 3a-3, 3a-4, 3b, 3c, 4) with parallel-read diff harness + 2-week observation window before any cutover. Three independent safety nets. ~25-30h total spread over ~6 weeks.
 
 ## Deferred UX Improvements
 - **[Daily digest email watchlist UX](feedback_email_watchlist_ux.md)** — subject/body count mismatch (subject says "4 on Watchlist" but body renders 3); tickers in email should deep-link to platform chart popup
