@@ -1407,38 +1407,68 @@ class DataExportService:
     async def compare_pickle_to_parquet(
         self,
         pickle_data: Dict[str, "pd.DataFrame"],
-        parquet_data: Optional[Dict[str, "pd.DataFrame"]] = None,
         sample_value_diffs: int = 5,
+        batch_size: int = 100,
     ) -> Dict:
         """
-        Compare a pickle-sourced data_cache against parquet for the same symbols
-        and write divergence rows to parquet_divergence_events. Returns a summary
-        dict.
+        Compare pickle-sourced data_cache against parquet symbol-by-symbol via
+        batched filtered reads. Writes divergence rows to
+        parquet_divergence_events. Returns a summary dict.
 
         Args:
             pickle_data: dict[symbol -> DataFrame] — typically scanner_service.data_cache
-            parquet_data: optional pre-loaded parquet (saves a redundant load); if
-                None, calls self.import_parquet() to load all symbols.
             sample_value_diffs: how many mismatched cells to record per (symbol,
                 column) — keeps details_json bounded.
+            batch_size: how many symbols to filter-read per parquet query. Trades
+                memory (~50KB/symbol × batch) against query overhead.
 
-        Behavior:
-        - For each symbol present in either store: log divergence rows for any
-          structural mismatch (missing on one side, row-count differs, column set
-          differs, dtype differs, value differs on overlapping rows).
-        - Returns: {"compared": N, "diverged": M, "by_type": {type: count}, ...}.
-        - Does not raise on individual symbol failures — logs and continues.
+        Memory profile: downloads parquet to /tmp once (disk, not RAM), then
+        reads `batch_size` symbols at a time via pyarrow filter. Peak RAM
+        beyond pickle_data is ~batch_size × 50KB = ~5 MB. Constant regardless
+        of universe size — won't OOM the Worker like the prior load-the-whole-
+        parquet approach did on Apr 28 2026.
 
-        Used by Stage 3a parallel-read observation; see project_parquet_stage3_plan.md.
+        Used by Stage 3a parallel-read observation; see
+        project_parquet_stage3_plan.md.
         """
         import json as _json
         import pandas as _pd
+        import os
+        import tempfile
         from app.core.database import async_session, ParquetDivergenceEvent
 
-        if parquet_data is None:
-            parquet_data = self.import_parquet()
+        # 1. Stage parquet to /tmp (disk, not RAM) — single S3 download
+        tmp_path = None
+        try:
+            if self._use_s3():
+                s3 = self._get_s3_client()
+                tmp_path = os.path.join(tempfile.gettempdir(), "compare_data.parquet")
+                with open(tmp_path, 'wb') as f:
+                    obj = s3.get_object(Bucket=S3_BUCKET, Key='prices/all_data.parquet')
+                    for chunk in obj['Body'].iter_chunks(chunk_size=8 * 1024 * 1024):
+                        f.write(chunk)
+                source = tmp_path
+            else:
+                source = str(LOCAL_DATA_DIR / "all_data.parquet")
+        except Exception as e:
+            print(f"⚠️ compare_pickle_to_parquet: failed to stage parquet: {e}")
+            return {"compared": 0, "diverged": 0, "diverged_symbols": 0,
+                    "by_type": {}, "error": str(e)[:300]}
 
-        all_symbols = set(pickle_data.keys()) | set(parquet_data.keys())
+        # 2. Discover parquet's symbol set (CHEAP — read just the symbol column)
+        try:
+            import pyarrow.parquet as pq
+            sym_table = pq.read_table(source, columns=['symbol'])
+            parquet_symbols = set(sym_table.column('symbol').unique().to_pylist())
+            del sym_table
+        except Exception as e:
+            print(f"⚠️ compare_pickle_to_parquet: failed to list parquet symbols: {e}")
+            if tmp_path and os.path.exists(tmp_path):
+                os.remove(tmp_path)
+            return {"compared": 0, "diverged": 0, "diverged_symbols": 0,
+                    "by_type": {}, "error": str(e)[:300]}
+
+        all_symbols = sorted(set(pickle_data.keys()) | parquet_symbols)
         events: List[Dict] = []  # accumulated, single-batch write at the end
 
         # Columns we actually care about value-comparing. Indicators (dwap,
@@ -1447,108 +1477,132 @@ class DataExportService:
         # raw columns.
         value_cols = ['open', 'high', 'low', 'close', 'volume']
 
-        for sym in sorted(all_symbols):
+        # 3. Process symbols in batches: filter-read each batch from the staged
+        #    parquet (constant memory ~5 MB regardless of universe size),
+        #    compare against pickle, free the batch, move on.
+        def _read_parquet_batch(syms):
             try:
-                p_df = pickle_data.get(sym)
-                q_df = parquet_data.get(sym)
+                df = _pd.read_parquet(source, filters=[('symbol', 'in', syms)])
+                if df.empty:
+                    return {}
+                out = {}
+                for s, group in df.groupby('symbol'):
+                    out[s] = group.drop(columns=['symbol']).set_index('date').sort_index()
+                return out
+            except Exception as e:
+                print(f"⚠️ compare: batch read failed: {e}")
+                return {}
 
-                p_rows = len(p_df) if p_df is not None else 0
-                q_rows = len(q_df) if q_df is not None else 0
+        for batch_start in range(0, len(all_symbols), batch_size):
+            batch_syms = all_symbols[batch_start:batch_start + batch_size]
+            # Only filter-read the batch_syms that exist in parquet at all
+            batch_syms_in_parquet = [s for s in batch_syms if s in parquet_symbols]
+            parquet_batch = _read_parquet_batch(batch_syms_in_parquet) if batch_syms_in_parquet else {}
 
-                if p_df is None:
-                    events.append({
-                        "symbol": sym, "type": "missing_in_pickle",
-                        "details": {"parquet_rows": q_rows},
-                        "p_rows": 0, "q_rows": q_rows,
-                    })
-                    continue
+            for sym in batch_syms:
+                p_rows = 0
+                q_rows = 0
+                try:
+                    p_df = pickle_data.get(sym)
+                    q_df = parquet_batch.get(sym)
 
-                if q_df is None:
-                    events.append({
-                        "symbol": sym, "type": "missing_in_parquet",
-                        "details": {"pickle_rows": p_rows},
-                        "p_rows": p_rows, "q_rows": 0,
-                    })
-                    continue
+                    p_rows = len(p_df) if p_df is not None else 0
+                    q_rows = len(q_df) if q_df is not None else 0
 
-                # Both present — structural compare
-                if p_rows != q_rows:
-                    events.append({
-                        "symbol": sym, "type": "row_count_diff",
-                        "details": {"pickle_rows": p_rows, "parquet_rows": q_rows,
-                                    "delta": p_rows - q_rows},
-                        "p_rows": p_rows, "q_rows": q_rows,
-                    })
-
-                p_cols = set(p_df.columns)
-                q_cols = set(q_df.columns)
-                if p_cols != q_cols:
-                    events.append({
-                        "symbol": sym, "type": "column_set_diff",
-                        "details": {"only_in_pickle": sorted(p_cols - q_cols),
-                                    "only_in_parquet": sorted(q_cols - p_cols)},
-                        "p_rows": p_rows, "q_rows": q_rows,
-                    })
-
-                # Value compare on overlapping date range, common columns
-                shared_cols = [c for c in value_cols if c in p_cols and c in q_cols]
-                if not shared_cols:
-                    continue
-
-                # Align on shared dates only — pickle/parquet may have different
-                # tail behavior (e.g. one has today's bar, other doesn't yet)
-                shared_idx = p_df.index.intersection(q_df.index)
-                if len(shared_idx) == 0:
-                    events.append({
-                        "symbol": sym, "type": "index_range_diff",
-                        "details": {
-                            "pickle_first": str(p_df.index.min()) if p_rows else None,
-                            "pickle_last": str(p_df.index.max()) if p_rows else None,
-                            "parquet_first": str(q_df.index.min()) if q_rows else None,
-                            "parquet_last": str(q_df.index.max()) if q_rows else None,
-                        },
-                        "p_rows": p_rows, "q_rows": q_rows,
-                    })
-                    continue
-
-                p_sub = p_df.loc[shared_idx, shared_cols]
-                q_sub = q_df.loc[shared_idx, shared_cols]
-
-                # Use a small relative tolerance — float roundtrip via parquet can
-                # introduce 1e-7 noise on prices; that's not corruption.
-                # Only flag genuine value differences.
-                for col in shared_cols:
-                    p_col = _pd.to_numeric(p_sub[col], errors='coerce')
-                    q_col = _pd.to_numeric(q_sub[col], errors='coerce')
-                    diff_mask = ~((p_col == q_col) | (p_col.isna() & q_col.isna()))
-                    # Tolerate tiny float roundtrip noise (relative 1e-6)
-                    if col != 'volume':  # volume is integer, no tolerance needed
-                        rel_err = (p_col - q_col).abs() / p_col.abs().replace(0, 1)
-                        diff_mask = diff_mask & (rel_err > 1e-6)
-                    n_diffs = int(diff_mask.sum())
-                    if n_diffs > 0:
-                        sample = []
-                        for idx in p_sub.index[diff_mask][:sample_value_diffs]:
-                            sample.append({
-                                "date": str(idx),
-                                "pickle": _safe_json_value(p_col.loc[idx]),
-                                "parquet": _safe_json_value(q_col.loc[idx]),
-                            })
+                    if p_df is None:
                         events.append({
-                            "symbol": sym, "type": "value_diff",
-                            "details": {"column": col, "n_diffs": n_diffs,
-                                        "compared_rows": len(shared_idx),
-                                        "sample": sample},
+                            "symbol": sym, "type": "missing_in_pickle",
+                            "details": {"parquet_rows": q_rows},
+                            "p_rows": 0, "q_rows": q_rows,
+                        })
+                        continue
+
+                    if q_df is None:
+                        events.append({
+                            "symbol": sym, "type": "missing_in_parquet",
+                            "details": {"pickle_rows": p_rows},
+                            "p_rows": p_rows, "q_rows": 0,
+                        })
+                        continue
+
+                    # Both present — structural compare
+                    if p_rows != q_rows:
+                        events.append({
+                            "symbol": sym, "type": "row_count_diff",
+                            "details": {"pickle_rows": p_rows, "parquet_rows": q_rows,
+                                        "delta": p_rows - q_rows},
                             "p_rows": p_rows, "q_rows": q_rows,
                         })
 
-            except Exception as e:
-                events.append({
-                    "symbol": sym, "type": "compare_error",
-                    "details": {"error": str(e)[:300]},
-                    "p_rows": p_rows if 'p_rows' in dir() else None,
-                    "q_rows": q_rows if 'q_rows' in dir() else None,
-                })
+                    p_cols = set(p_df.columns)
+                    q_cols = set(q_df.columns)
+                    if p_cols != q_cols:
+                        events.append({
+                            "symbol": sym, "type": "column_set_diff",
+                            "details": {"only_in_pickle": sorted(p_cols - q_cols),
+                                        "only_in_parquet": sorted(q_cols - p_cols)},
+                            "p_rows": p_rows, "q_rows": q_rows,
+                        })
+
+                    # Value compare on overlapping date range, common columns
+                    shared_cols = [c for c in value_cols if c in p_cols and c in q_cols]
+                    if not shared_cols:
+                        continue
+
+                    # Align on shared dates only — pickle/parquet may have different
+                    # tail behavior (e.g. one has today's bar, other doesn't yet)
+                    shared_idx = p_df.index.intersection(q_df.index)
+                    if len(shared_idx) == 0:
+                        events.append({
+                            "symbol": sym, "type": "index_range_diff",
+                            "details": {
+                                "pickle_first": str(p_df.index.min()) if p_rows else None,
+                                "pickle_last": str(p_df.index.max()) if p_rows else None,
+                                "parquet_first": str(q_df.index.min()) if q_rows else None,
+                                "parquet_last": str(q_df.index.max()) if q_rows else None,
+                            },
+                            "p_rows": p_rows, "q_rows": q_rows,
+                        })
+                        continue
+
+                    p_sub = p_df.loc[shared_idx, shared_cols]
+                    q_sub = q_df.loc[shared_idx, shared_cols]
+
+                    # Use a small relative tolerance — float roundtrip via parquet can
+                    # introduce 1e-7 noise on prices; that's not corruption.
+                    # Only flag genuine value differences.
+                    for col in shared_cols:
+                        p_col = _pd.to_numeric(p_sub[col], errors='coerce')
+                        q_col = _pd.to_numeric(q_sub[col], errors='coerce')
+                        diff_mask = ~((p_col == q_col) | (p_col.isna() & q_col.isna()))
+                        # Tolerate tiny float roundtrip noise (relative 1e-6)
+                        if col != 'volume':  # volume is integer, no tolerance needed
+                            rel_err = (p_col - q_col).abs() / p_col.abs().replace(0, 1)
+                            diff_mask = diff_mask & (rel_err > 1e-6)
+                        n_diffs = int(diff_mask.sum())
+                        if n_diffs > 0:
+                            sample = []
+                            for idx in p_sub.index[diff_mask][:sample_value_diffs]:
+                                sample.append({
+                                    "date": str(idx),
+                                    "pickle": _safe_json_value(p_col.loc[idx]),
+                                    "parquet": _safe_json_value(q_col.loc[idx]),
+                                })
+                            events.append({
+                                "symbol": sym, "type": "value_diff",
+                                "details": {"column": col, "n_diffs": n_diffs,
+                                            "compared_rows": len(shared_idx),
+                                            "sample": sample},
+                                "p_rows": p_rows, "q_rows": q_rows,
+                            })
+
+                except Exception as e:
+                    events.append({
+                        "symbol": sym, "type": "compare_error",
+                        "details": {"error": str(e)[:300]},
+                        "p_rows": p_rows,
+                        "q_rows": q_rows,
+                    })
 
         # Single batched DB write — keeps connection cost low even with many events
         if events:
@@ -1562,6 +1616,13 @@ class DataExportService:
                         parquet_row_count=e.get("q_rows"),
                     ))
                 await db.commit()
+
+        # Cleanup: remove the staged parquet from /tmp (frees ~350 MB ephemeral)
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
 
         # Build summary
         from collections import Counter
