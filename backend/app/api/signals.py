@@ -4,7 +4,7 @@ Signals API - Trading signal endpoints
 
 import os
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from typing import List, Optional
@@ -1412,6 +1412,7 @@ async def _get_positions_with_guidance(db: AsyncSession, user, regime_forecast_d
 
 @router.get("/dashboard")
 async def get_dashboard_data(
+    response: Response,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user_optional),
     momentum_top_n: int = 30,
@@ -1428,7 +1429,16 @@ async def get_dashboard_data(
 
     Subscription enforcement: unauthenticated or expired users see a teaser
     (regime, market stats, signal count) but not actual buy signals.
+
+    No-cache headers: signal data goes stale fast — the daily scan rewrites
+    dashboard.json every weekday afternoon, and we don't want any layer
+    (browser, CloudFront, API Gateway) serving the prior day's cache after
+    a fresh scan lands.
     """
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+
     import pandas as pd
     from sqlalchemy.orm import selectinload
     from app.core.database import Subscription

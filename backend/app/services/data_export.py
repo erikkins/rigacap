@@ -1225,7 +1225,7 @@ class DataExportService:
                     Key='signals/latest.json',
                     Body=json_content.encode('utf-8'),
                     ContentType='application/json',
-                    CacheControl='public, max-age=300'  # 5 min cache
+                    CacheControl='no-cache, no-store, must-revalidate'  # always fetch fresh — signal data goes stale fast
                 )
 
                 # Also save timestamped version for history
@@ -1285,7 +1285,7 @@ class DataExportService:
                     Key='signals/dashboard.json',
                     Body=json_content.encode('utf-8'),
                     ContentType='application/json',
-                    CacheControl='public, max-age=300'  # 5 min cache
+                    CacheControl='no-cache, no-store, must-revalidate'  # always fetch fresh — signal data goes stale fast
                 )
                 logger.info(f"Exported dashboard JSON to S3 ({len(json_content)} bytes)")
                 return {"success": True, "storage": "s3", "bucket": S3_BUCKET}
