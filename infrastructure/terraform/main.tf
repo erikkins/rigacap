@@ -679,12 +679,12 @@ resource "aws_lambda_function" "worker" {
     variables = merge(local.lambda_env_vars, {
       LAMBDA_ROLE          = "worker"
       SIGNAL_UNIVERSE_SIZE = "100"
-      # Parquet migration Stage 3a — turn on the parallel-read diff harness
-      # in the daily scan. Logs divergence between pickle and parquet to the
-      # parquet_divergence_events table. Observation-only, never alters
-      # the pickle read path. Disable by setting to "false" or removing.
-      # See project_parquet_stage3_plan.md.
-      PARQUET_PARALLEL_READ = "true"
+      # Parquet migration Stage 3a — diff harness DISABLED Apr 28 2026 after
+      # OOMing the daily scan twice (compare_pickle_to_parquet loaded full
+      # parquet on top of resident pickle, blew through the 3008 MB ceiling).
+      # Re-enable as "true" once compare_pickle_to_parquet streams symbol-by-
+      # symbol. See project_parquet_stage3_plan.md.
+      PARQUET_PARALLEL_READ = "false"
     })
   }
 
