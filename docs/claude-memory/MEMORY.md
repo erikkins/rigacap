@@ -102,13 +102,12 @@
 - [Pickle → Parquet/DuckDB/TimescaleDB migration](project_storage_migration_roadmap.md) — triggers, options, sequencing. Stay on pickle through ~500 paid subs, then start with Parquet on S3.
 
 ## Active Tasks
-- **[Parquet migration 4-stage plan](project_storage_migration_roadmap.md)** — Stage 1 shadow write ✅ (Apr 14-15). Stage 2 Lambda AL2023 upgrade → Stage 3 consumer migration → Stage 4 decommission pickle. Goal: parquet becomes primary, pickle retired.
+- **[Parquet migration 4-stage plan](project_storage_migration_roadmap.md)** — Stage 1 shadow write ✅ (Apr 14-15). **Stage 2 AL2023 ✅ (deployed before Apr 28 via commit `21f9e51`).** Stage 3 consumer migration → Stage 4 decommission pickle. Goal: parquet becomes primary, pickle retired.
 
 ## Deferred UX Improvements
 - **[Daily digest email watchlist UX](feedback_email_watchlist_ux.md)** — subject/body count mismatch (subject says "4 on Watchlist" but body renders 3); tickers in email should deep-link to platform chart popup
 
 ## Deferred Infra Improvements
-- **Lambda AL2023 migration** — update Dockerfile base from `python:3.9` to `python:3.11+` (AL2023). Enables DuckDB httpfs extension (needs glibc 2.28+), 10-25% faster Python. Zero AWS cost increase. Estimated 2-4 hours. Do after Parquet Session 3 cutover completes.
 - **[WF cache table size check — Oct 2026](project_wf_cache_size_check.md)** — daily/nightly WF cache rows are now append-only (no DELETE). Revisit Oct 2026 to confirm growth isn't problematic.
 
 ## Data Hygiene Roadmap
