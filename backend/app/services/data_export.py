@@ -1534,7 +1534,14 @@ class DataExportService:
                             "p_rows": p_rows, "q_rows": q_rows,
                         })
 
+                    # In pickle, `date` lives on the DataFrame index; in parquet
+                    # it's an explicit column. Normalize so the index name (if
+                    # set) is treated as part of the pickle column set — otherwise
+                    # the harness flags every symbol on a structural-but-spurious
+                    # `only_in_parquet=['date']` divergence.
                     p_cols = set(p_df.columns)
+                    if p_df.index.name:
+                        p_cols.add(p_df.index.name)
                     q_cols = set(q_df.columns)
                     if p_cols != q_cols:
                         events.append({
