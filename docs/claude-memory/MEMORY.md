@@ -160,10 +160,12 @@
 ## Planned Features
 - [Signal slippage tracking](project_signal_slippage_tracking.md) — post-publication price monitoring to measure real achievable execution vs published entry price
 - [Balanced content rule](project_balanced_content_rule.md) — every 4th social post must be a loss/quiet week/limitation; trust-building differentiator
+- [Trial length decision (post-launch+60d)](project_trial_length_decision.md) — default $0/14d auto-extend, A/B-test $19/30d paid; SaaS data favors paid trials for conversion. Don't act before 60 days of launch data.
 
 ## References
 - [HeyGen avatar ID](reference_heygen.md) — Erik's current avatar for AI video generation
 - [Twitter media upload field naming](reference_twitter_media_api.md) — use 'media' for raw bytes, 'media_data' for base64; wrong field silently drops images
+- [Cascade Guard = Circuit Breaker](reference_naming_cascade_guard.md) — external/marketing name vs internal/code name; same mechanism
 
 ## Other
 - [No dated callouts in design docs](feedback_no_dated_callouts_in_docs.md) — don't sprinkle "(Apr 2026)" or "newly added" markers; keep docs evergreen, let git history carry the session-dated context
