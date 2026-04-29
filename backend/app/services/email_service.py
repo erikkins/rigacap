@@ -1617,13 +1617,24 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
 
     async def send_onboarding_email(self, step: int, to_email: str, name: str, user_id: str = None) -> bool:
         """
-        Send an onboarding drip email (steps 1-5).
+        Send an onboarding drip email.
 
-        Step 1 (Day 1): How Your Signals Work
-        Step 2 (Day 3): Pro Tips for Better Returns
-        Step 3 (Day 5): Your Trial Ends in 2 Days
-        Step 4 (Day 6): Last Day of Your Free Trial
-        Step 5 (Day 8): We Miss You (win-back)
+        Time-based (lifecycle, fired by day count from signup):
+          Step 1 (Day 1): How Your Signals Work
+          Step 2 (Day 3): Pro Tips for Better Returns
+          Step 3 (Day 5): Your Trial Ends in 2 Days
+          Step 4 (Day 6): Last Day of Your Free Trial
+          Step 5 (Day 8): We Miss You (win-back)
+
+        Event-triggered (per marketing doc §14 — fire when the named event
+        occurs for a subscriber, not on a calendar):
+          Step 6: First trailing-stop hit (DR-005 in marketing doc)
+          Step 7: First profitable exit (DR-006)
+          Step 8: 7-day no-signal streak (DR-008)
+
+        Step-6/7/8 triggering is event-driven, not day-based — see
+        scheduler hooks (TODO) for when they fire. Each is one-shot
+        per subscriber.
         """
         first_name = name.split()[0] if name else "there"
 
@@ -1633,6 +1644,9 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
             3: "Your trial ends in 2 days",
             4: "Last day of your free trial",
             5: "What you've been missing",
+            6: "About that trailing stop",
+            7: "Locked in",
+            8: "Quiet week",
         }
 
         subject = f"RigaCap — {subjects.get(step, 'RigaCap')}"
@@ -1814,6 +1828,111 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
 
                 <p style="font-size: 14px; color: #8A8279; margin: 24px 0 0 0; line-height: 1.5;">
                     If something wasn't right, reply and tell me. I read every response. — Erik
+                </p>
+            """,
+            6: f"""
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
+                    {first_name},
+                </p>
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
+                    A trailing stop just fired on one of your positions. That can feel like a loss — and on this trade, financially, it was. But the stop firing isn't the system failing. It's the system doing the hardest job in trading.
+                </p>
+
+                <div style="border-left: 2px solid #7A2430; padding: 20px 24px; background: #FAF7F0; margin: 28px 0;">
+                    <p style="margin: 0; font-family: Georgia, serif; font-style: italic; font-size: 17px; color: #141210; line-height: 1.65;">
+                        Discretionary traders override stops constantly. "It'll come back." "Just one more day." That's how a 12% loss becomes a 30% loss. The system doesn't have that conversation.
+                    </p>
+                </div>
+
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
+                    Trailing stops aren't designed to maximize a single trade. They're designed to keep losses bounded across hundreds of trades. The math only works if every stop fires — including this one. The next signal already ranks fresh; that's where capital goes next.
+                </p>
+
+                <table cellpadding="0" cellspacing="0" style="width:100%; border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; margin: 28px 0;">
+                    <tr>
+                        <td style="padding: 14px 16px 14px 0; border-right: 1px solid #DDD5C7;">
+                            <div style="font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">What You Avoided</div>
+                            <div style="font-family: Georgia, serif; font-size: 13px; color: #141210; margin-top: 4px;">A 12% loss capped before it became 25%</div>
+                        </td>
+                        <td style="padding: 14px 16px;">
+                            <div style="font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">What's Next</div>
+                            <div style="font-family: Georgia, serif; font-size: 13px; color: #141210; margin-top: 4px;">Capital redeploys to the strongest current signal</div>
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="font-size: 14px; color: #8A8279; margin: 24px 0 0 0; line-height: 1.5;">
+                    If you're tempted to override the next one, reply and tell me — I'll talk you out of it. — Erik
+                </p>
+            """,
+            7: f"""
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
+                    {first_name},
+                </p>
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
+                    One of your positions just closed at a profit. The trailing stop did its other job — letting a winner run, then closing it before the gain evaporated. Worth pausing on what happened, because most retail traders never see this trade end this way.
+                </p>
+
+                <div style="border-left: 2px solid #7A2430; padding: 20px 24px; background: #FAF7F0; margin: 28px 0;">
+                    <p style="margin: 0; font-family: Georgia, serif; font-style: italic; font-size: 17px; color: #141210; line-height: 1.65;">
+                        The instinct on a winner is to take it early — "lock it in before it gives back." That instinct is exactly why most retail underperforms. Winners need room to compound; losers need to be cut.
+                    </p>
+                </div>
+
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
+                    The system doesn't care that you "had a feeling" about exiting earlier. It tracks the high water mark and only closes when the trail breaches. The trade ended where the math said it should end — not where your emotions wanted it to.
+                </p>
+
+                <table cellpadding="0" cellspacing="0" style="width:100%; border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; margin: 28px 0;">
+                    <tr>
+                        <td style="padding: 14px 16px 14px 0; border-right: 1px solid #DDD5C7;">
+                            <div style="font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Win/Loss Ratio</div>
+                            <div style="font-family: Georgia, serif; font-size: 13px; color: #141210; margin-top: 4px;">Winners average 1.7× the size of losers</div>
+                        </td>
+                        <td style="padding: 14px 16px;">
+                            <div style="font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Why It Works</div>
+                            <div style="font-family: Georgia, serif; font-size: 13px; color: #141210; margin-top: 4px;">Asymmetric outcomes, executed without flinching</div>
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="font-size: 14px; color: #8A8279; margin: 24px 0 0 0; line-height: 1.5;">
+                    Worth a small celebration. Not a strategy change. — Erik
+                </p>
+            """,
+            8: f"""
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
+                    {first_name},
+                </p>
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
+                    The system has been quiet for a week — no fresh signals, no entries. If you're wondering whether something's broken, it isn't. Quiet is one of the system's outputs.
+                </p>
+
+                <div style="border-left: 2px solid #7A2430; padding: 20px 24px; background: #FAF7F0; margin: 28px 0;">
+                    <p style="margin: 0; font-family: Georgia, serif; font-style: italic; font-size: 17px; color: #141210; line-height: 1.65;">
+                        When the system stays quiet, that's the discipline working. Most active traders force trades during quiet weeks — and most of those trades lose money. The hardest skill in this business is sitting still.
+                    </p>
+                </div>
+
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
+                    The seven-regime detector is reading current conditions and finding none of the criteria are met: breakouts aren't confirming, momentum is mid-pack, or breadth is thin. Any one of those alone might still produce a signal. All three together — silence.
+                </p>
+
+                <table cellpadding="0" cellspacing="0" style="width:100%; border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; margin: 28px 0;">
+                    <tr>
+                        <td style="padding: 14px 16px 14px 0; border-right: 1px solid #DDD5C7;">
+                            <div style="font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Typical Cadence</div>
+                            <div style="font-family: Georgia, serif; font-size: 13px; color: #141210; margin-top: 4px;">3–4 signals per month in healthy markets</div>
+                        </td>
+                        <td style="padding: 14px 16px;">
+                            <div style="font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">When Conditions Improve</div>
+                            <div style="font-family: Georgia, serif; font-size: 13px; color: #141210; margin-top: 4px;">You'll see fresh signals back in the dashboard</div>
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="font-size: 14px; color: #8A8279; margin: 24px 0 0 0; line-height: 1.5;">
+                    Boring is the price of consistent. — Erik
                 </p>
             """,
         }
