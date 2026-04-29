@@ -1533,7 +1533,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
 
                 <div style="border-left: 2px solid #7A2430; padding: 14px 18px; background: #FAF7F0; margin: 24px 0;">
                     <p style="margin: 0; font-family: Georgia, serif; font-style: italic; font-size: 15px; color: #141210; line-height: 1.6;">
-                        ~21.5% annualized over 5 years, walk-forward validated. The system ended 2022 flat while the S&amp;P fell 20%.
+                        ~21.5% annualized over 5 years, walk-forward validated. Every start date stayed positive in 2022 (avg ~+8%) while the S&amp;P fell 20%.
                         <a href="https://rigacap.com/track-record" style="color: #7A2430; text-decoration: underline;">Full track record.</a>
                     </p>
                 </div>
@@ -1775,7 +1775,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
 
                 <div style="border-left: 2px solid #7A2430; padding: 16px 20px; background: #FAF7F0; margin: 24px 0;">
                     <p style="margin: 0; font-family: Georgia, serif; font-style: italic; font-size: 16px; color: #141210; line-height: 1.6;">
-                        The system ended 2022 flat while the S&amp;P fell 20%. That behavior — not the headline return — is what you're paying for.
+                        Every start date in our 5-year walk-forward stayed positive in 2022 (averaging ~+8%) while the S&amp;P fell 20%. That behavior — not the headline return — is what you're paying for.
                     </p>
                 </div>
 

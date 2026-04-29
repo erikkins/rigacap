@@ -635,15 +635,15 @@ const LAUNCH_POSTS = [
     label: 'The Pitch',
     imageUrl: '/launch-cards/launch-1.png',
     twitter: {
-      text: "Hedge fund returns. $39/month.\n\n+384% over 5 years. Max drawdown around 30%. $10k becomes $48,400.\n\nThe average hedge fund charges 2% + 20% of profits and requires $1M minimum.\n\nWe charge less than your Netflix subscription.\n\nrigacap.com",
+      text: "Walk-forward validated returns. $129/month \u2014 less than a Seeking Alpha Premium subscription.\n\n+160% over 5 years. ~21.5% annualized. 20% max drawdown. Worst-case start date still nearly doubled capital.\n\nAverage hedge fund: ~10% annual, 2/20 fees, $1M minimum.\n\nNo minimums. Same signals for everyone.\n\nrigacap.com",
       hashtags: '#trading #investing #hedgefund',
     },
     instagram: {
-      text: "Hedge fund returns. $39/month.\n\nLet that sink in.\n\nThe average hedge fund returned ~10% annually over the last decade. They charge 2% of your assets plus 20% of your profits. Minimum investment: $1 million.\n\nOur system returned ~37% annually over the same period. We charge $39/month. No minimums. No performance fees. Everyone gets the same signals, whether you invest $5k or $500k.\n\n+384% over 5 years. Max drawdown around 30%. In 2022, while the S&P fell 20%, we stayed flat.\n\n$10,000 becomes $48,400. That's not a projection \u2014 it's what 10 years of walk-forward testing shows.\n\nStop trading on emotions. Start trading on math.\n\nrigacap.com",
+      text: "Better-than-hedge-fund returns. $129/month.\n\nLet that sink in.\n\nThe average hedge fund returned ~10% annually over the last decade. They charge 2% of your assets plus 20% of your profits. Minimum investment: $1 million.\n\nOur 5-year walk-forward averaged ~21.5% annualized across multiple start dates. We charge $129/month. No minimums. No performance fees. Everyone gets the same signals, whether you invest $5k or $500k.\n\n+160% average over 5 years. 20% max drawdown. In 2022, while the S&P fell 20%, every start date in our test ended in positive territory \u2014 averaging about +8%.\n\nStop trading on emotions. Start trading on math.\n\nrigacap.com",
       hashtags: '#trading #investing #hedgefund #algotrading #stockmarket #rigacap',
     },
     threads: {
-      text: "Hedge fund returns. $39/month.\n\n+384% over 5 years. Max drawdown around 30%. $10k \u2192 $48,400.\n\nAverage hedge fund: ~10% annual, $1M minimum, 2/20 fees.\nRigaCap: ~37% annual, no minimum, $39/month.\n\nSame signals whether you invest $5k or $500k.\n\nrigacap.com",
+      text: "Better-than-hedge-fund returns. $129/month.\n\n+160% over 5 years. ~21.5% annualized. 20% max drawdown.\n\nAverage hedge fund: ~10% annual, $1M minimum, 2/20 fees.\nRigaCap: ~21.5% annual, no minimum, $129/month.\n\nSame signals whether you invest $5k or $500k.\n\nrigacap.com",
     },
   },
   {
@@ -651,15 +651,15 @@ const LAUNCH_POSTS = [
     label: 'The 2022 Story',
     imageUrl: '/launch-cards/launch-2.png',
     twitter: {
-      text: "In 2022, the S&P 500 fell 20%.\n\nOur system stayed flat.\n\nIt didn't predict the crash. It just refused to trade in bad conditions. For 5 months, it generated zero signals. Most people would call that broken.\n\nWe call it discipline. And it's why we beat the market.\n\nrigacap.com",
+      text: "In 2022, the S&P 500 fell 20%.\n\nEvery start date in our 5-year walk-forward ended 2022 in positive territory \u2014 averaging about +8%.\n\nThe system didn't predict the crash. It responded to data. Regime-aware sizing and trailing-stop discipline kept the strategy on the right side of risk.\n\nThat behavior is the reason to subscribe.\n\nrigacap.com",
       hashtags: '#trading #investing #riskmanagement',
     },
     instagram: {
-      text: "In 2022, the S&P 500 fell 20%. Every \"buy the dip\" bro got crushed.\n\nOur system stayed flat.\n\nHow? It didn't predict the crash. It didn't short anything. It simply refused to trade.\n\nFor 5 consecutive months, it generated zero buy signals. Zero. It detected that conditions were unfavorable and sat on its hands.\n\nMost signal services would've kept spamming you with picks to justify their subscription. We went silent. Because the math said \"not now.\"\n\nThat discipline \u2014 knowing when NOT to trade \u2014 is worth more than any stock pick. It's the difference between flat and -20%.\n\nYear by year:\n2021: +76%\n2022: Flat (SPY: -20%)\n2023: +28%\n2024: +1%\n2025: +53%\n\nNever. A. Losing. Year.\n\nrigacap.com/track-record",
+      text: "In 2022, the S&P 500 fell 20%. Every \"buy the dip\" bro got crushed.\n\nOur 5-year walk-forward says every start date averaged about +8% in 2022.\n\nNot flat. Positive.\n\nHow? The system didn't predict the crash. It didn't short anything. It just responded to data \u2014 regime-aware position sizing, trailing-stop discipline, and Cascade Guard pausing new entries when multiple positions hit their stops on the same day.\n\nThat discipline \u2014 knowing when NOT to deploy capital \u2014 is worth more than any stock pick. It's the difference between +8% and -20% in a bear year.\n\nClean-data year by year:\n2022: +8% avg (SPY: -20%)\n2023: +12% avg\n2024: +32% avg\n2025: +50% (partial)\n\nEvery year, every start date positive.\n\nrigacap.com/track-record",
       hashtags: '#trading #investing #riskmanagement #bearmarket #algotrading #rigacap',
     },
     threads: {
-      text: "In 2022, the S&P 500 fell 20%.\n\nOur system stayed flat.\n\nFor 5 months it generated zero signals. It refused to trade in bad conditions.\n\nMost services spam you with picks to justify the fee. We went silent. Because the math said \"not now.\"\n\nThat discipline is why we never had a losing year.\n\nrigacap.com/track-record",
+      text: "In 2022, the S&P 500 fell 20%.\n\nEvery start date in our 5-year walk-forward ended 2022 in positive territory \u2014 averaging about +8%.\n\nThe system didn't predict the crash. It responded to data: regime-aware sizing, trailing stops, Cascade Guard.\n\nThat discipline is why every year, every start date came back positive.\n\nrigacap.com/track-record",
     },
   },
   {
@@ -667,15 +667,15 @@ const LAUNCH_POSTS = [
     label: 'Stop Trading on Emotions',
     imageUrl: '/launch-cards/launch-3.png',
     twitter: {
-      text: "You know you shouldn't panic sell.\nYou know you shouldn't FOMO buy.\nYou know you shouldn't check your portfolio 40 times a day.\n\nBut you do it anyway. Because you're human.\n\nOur algorithm isn't. That's the point.\n\n$39/month. rigacap.com",
+      text: "You know you shouldn't panic sell.\nYou know you shouldn't FOMO buy.\nYou know you shouldn't check your portfolio 40 times a day.\n\nBut you do it anyway. Because you're human.\n\nThe system isn't. That's the point.\n\n$129/month. rigacap.com",
       hashtags: '#trading #investing #emotionaltrading',
     },
     instagram: {
-      text: "Stop trading on emotions. Start trading on math.\n\nYou know the rules:\n\u2022 Don't panic sell\n\u2022 Don't FOMO into a rally\n\u2022 Don't hold losers hoping they'll come back\n\u2022 Don't check your portfolio 40 times a day\n\nBut you do it anyway. Because you're human. And humans are terrible at this.\n\nOur algorithm doesn't have feelings. It doesn't get scared. It doesn't get greedy. It doesn't read Reddit threads at 2am and convince itself to buy GameStop.\n\nIt scans 4,000 stocks daily. It detects 7 market regimes. It waits for all three factors to align. And when nothing qualifies, it does nothing.\n\nThat mechanical discipline produced ~37% annualized returns over 5 years. Max drawdown around 30%.\n\nYou don't need more stock picks. You need a system that removes you from the equation.\n\n$39/month. rigacap.com",
+      text: "Stop trading on emotions. Start trading on math.\n\nYou know the rules:\n\u2022 Don't panic sell\n\u2022 Don't FOMO into a rally\n\u2022 Don't hold losers hoping they'll come back\n\u2022 Don't check your portfolio 40 times a day\n\nBut you do it anyway. Because you're human. And humans are terrible at this.\n\nThe system doesn't have feelings. It doesn't get scared. It doesn't get greedy. It doesn't read Reddit threads at 2am and convince itself to buy GameStop.\n\nIt scans 4,000+ stocks daily. It tracks 7 market regimes. It waits for breakout timing, momentum quality, and volume to align. And when nothing qualifies, it does nothing.\n\nThat mechanical discipline produced ~21.5% annualized returns over 5 years. 20% max drawdown.\n\nYou don't need more stock picks. You need a system that removes you from the equation.\n\n$129/month. rigacap.com",
       hashtags: '#trading #investing #emotionaltrading #algotrading #stockmarket #rigacap',
     },
     threads: {
-      text: "You know you shouldn't panic sell.\nYou know you shouldn't FOMO buy.\nYou do it anyway. Because you're human.\n\nOur algorithm isn't. It scans 4,000 stocks daily, detects 7 market regimes, and only acts when the math says go.\n\n~37% annualized over 5 years. Max drawdown around 30%.\n\nStop trading on emotions. $39/month.\n\nrigacap.com",
+      text: "You know you shouldn't panic sell.\nYou know you shouldn't FOMO buy.\nYou do it anyway. Because you're human.\n\nThe system isn't. It scans 4,000+ stocks daily across 7 regimes, and only acts when the math says go.\n\n~21.5% annualized over 5 years. 20% max drawdown.\n\nStop trading on emotions. $129/month.\n\nrigacap.com",
     },
   },
   {
@@ -683,15 +683,15 @@ const LAUNCH_POSTS = [
     label: 'The Math',
     imageUrl: '/launch-cards/launch-4.png',
     twitter: {
-      text: "$10,000 invested 10 years ago:\n\nS&P 500 index fund: $25,700\nAverage hedge fund: $26,000\nRigaCap: $48,400\n\nOne of these costs $39/month.\nOne charges 2% + 20% and needs $1M to get in.\nOne you can buy at Vanguard.\n\nrigacap.com",
+      text: "$10,000 invested 5 years ago across our walk-forward:\n\nS&P 500 (price-only): $19,300\nAverage hedge fund: $16,100\nRigaCap (avg of multiple starts): $26,000\n\nOne charges 2% + 20% and needs $1M minimum.\nOne is the index.\nOne is $129/month.\n\nrigacap.com",
       hashtags: '#trading #investing #compounding',
     },
     instagram: {
-      text: "Let's do the math.\n\n$10,000 invested 10 years ago:\n\n\ud83d\udfe2 RigaCap: $48,400 (+384%)\n\ud83d\udfe1 S&P 500: $25,700 (+257%)\n\ud83d\udd34 Average hedge fund: $26,000 (~10% ann)\n\nRigaCap beat the market by 2x. And the average hedge fund.\n\nThe hedge fund charges:\n\u2022 2% of your assets annually\n\u2022 20% of your profits\n\u2022 $1M+ minimum investment\n\nRigaCap charges:\n\u2022 $39/month\n\u2022 No minimums\n\u2022 No performance fees\n\u2022 Same signals for everyone\n\nA $50k portfolio earning 20% annually = $10k/year in returns.\nRigaCap's annual cost: $468.\n\nThat's a 21:1 value ratio.\n\nPast performance doesn't guarantee future results. But the math is the math.\n\nrigacap.com",
+      text: "Let's do the math.\n\n$10,000 invested 5 years ago, walk-forward validated:\n\nRigaCap: $26,000 (+160%)\nS&P 500 (price-only): $19,300 (+93%)\nAverage hedge fund: $16,100 (~10% ann)\n\nThe hedge fund charges:\n\u2022 2% of your assets annually\n\u2022 20% of your profits\n\u2022 $1M+ minimum investment\n\nRigaCap charges:\n\u2022 $129/month\n\u2022 No minimums\n\u2022 No performance fees\n\u2022 Same signals for everyone\n\nA $100k portfolio earning ~21.5% annually = roughly $21,500/year.\nRigaCap annual cost: $1,548 (or $1,099 on the annual plan).\n\nPast performance doesn't guarantee future results. But the math is the math.\n\nrigacap.com",
       hashtags: '#trading #investing #compounding #hedgefund #algotrading #rigacap',
     },
     threads: {
-      text: "$10,000 over 5 years:\n\nS&P 500: $25,700\nAvg hedge fund: $26,000\nRigaCap: $48,400\n\nThe hedge fund charges 2/20 and needs $1M minimum.\nWe charge $39/month. No minimums.\n\n$50k portfolio \u00d7 20% return = $10k/year.\nRigaCap cost: $468/year.\n\n21:1 value ratio.\n\nrigacap.com",
+      text: "$10,000 over 5 years:\n\nRigaCap: $26,000 (+160%)\nS&P 500: $19,300\nAvg hedge fund: $16,100\n\nThe hedge fund charges 2/20 and needs $1M minimum.\nWe charge $129/month. No minimums.\n\n$100k portfolio \u00d7 ~21.5% return = ~$21,500/year potential.\nRigaCap cost: $1,548/year.\n\nrigacap.com",
     },
   },
   {
@@ -699,15 +699,15 @@ const LAUNCH_POSTS = [
     label: 'The Anti-Signal Service',
     imageUrl: '/launch-cards/launch-5.png',
     twitter: {
-      text: "Most signal services send you 15 picks a week to justify the subscription.\n\nWe send 3-4 a month. Sometimes zero.\n\nBecause we'd rather say nothing than say something wrong. And that discipline is why we returned +384% over 5 years.\n\nrigacap.com",
+      text: "Most signal services send you 15 picks a week to justify the subscription.\n\nWe send 3-4 a month. Sometimes zero.\n\nBecause we'd rather say nothing than say something wrong. That discipline is why we averaged +160% over 5 years across multiple start dates.\n\nrigacap.com",
       hashtags: '#trading #signals #investing',
     },
     instagram: {
-      text: "We're the anti-signal service.\n\nMotley Fool sends you a pick every week. Seeking Alpha has 47 \"strong buys\" right now. Your buddy's Discord has a new hot stock every hour.\n\nWe send 3-4 signals per month. Sometimes zero.\n\nWhy? Because our system scans 4,000 stocks daily through a 3-factor gauntlet \u2014 breakout timing, momentum quality, and market regime \u2014 and most days, nothing passes. Not one stock out of 4,000 meets the bar.\n\nThat's not a bug. That's the whole point.\n\nThe signal services that spam you with picks are optimizing for engagement. We're optimizing for returns.\n\n+384% over 5 years. Max drawdown around 30%.\n\nYou don't need more picks. You need better picks. And the discipline to do nothing the rest of the time.\n\n$39/month. rigacap.com",
+      text: "We're the anti-signal service.\n\nMotley Fool sends you a pick every week. Seeking Alpha has 47 \"strong buys\" right now. Your buddy's Discord has a new hot stock every hour.\n\nWe send 3-4 signals per month. Sometimes zero.\n\nWhy? The system scans 4,000+ stocks daily through a 3-factor gauntlet \u2014 breakout timing, momentum quality, and volume confirmation \u2014 and most days, nothing passes. Not one stock out of 4,000 meets the bar.\n\nThat's not a bug. That's the whole point.\n\nThe signal services that spam you with picks are optimizing for engagement. We're optimizing for returns.\n\n+160% over 5 years across multiple start dates. 20% max drawdown.\n\nYou don't need more picks. You need better picks. And the discipline to do nothing the rest of the time.\n\n$129/month. rigacap.com",
       hashtags: '#trading #signals #investing #stockmarket #algotrading #rigacap',
     },
     threads: {
-      text: "Most signal services send 15 picks a week to justify the fee.\n\nWe send 3-4 a month. Sometimes zero.\n\nOur system scans 4,000 stocks daily. Most days, nothing passes. That's not broken \u2014 that's discipline.\n\n+384% over 5 years. Max drawdown around 30%.\n\nYou don't need more picks. You need better picks.\n\n$39/month. rigacap.com",
+      text: "Most signal services send 15 picks a week to justify the fee.\n\nWe send 3-4 a month. Sometimes zero.\n\nThe system scans 4,000+ stocks daily. Most days, nothing passes. That's not broken \u2014 that's discipline.\n\n+160% over 5 years. 20% max drawdown.\n\nYou don't need more picks. You need better picks.\n\n$129/month. rigacap.com",
     },
   },
 ];

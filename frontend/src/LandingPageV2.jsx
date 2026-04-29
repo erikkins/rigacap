@@ -121,8 +121,8 @@ const ValuePropSection = () => (
       <SectionLabel>What You're Actually Paying For</SectionLabel>
 
       <p className="font-display text-[1.5rem] leading-[1.45] text-ink mb-7" style={{ fontVariationSettings: '"opsz" 48' }}>
-        You can find signals anywhere. What's harder to find is the{' '}
-        <em className="text-claret italic">discipline to follow them.</em>
+        You can find signals anywhere.<br />
+        What's harder to find is the <em className="text-claret italic">discipline to follow them.</em>
       </p>
 
       <div className="space-y-5 text-[1.05rem] leading-[1.75] text-ink max-w-[62ch]">
@@ -245,9 +245,8 @@ const PerformanceSection = () => (
           The bear-market test.
         </h3>
         <p className="text-ink leading-[1.7]">
-          The five-year window included one major bear market. The system ended it flat while the S&P fell 20% &mdash;{' '}
-          <strong className="font-medium">not by luck, but by design.</strong> Regime detection triggered de-risking before the drawdown
-          and kept the system in cash until conditions improved.{' '}
+          The five-year window included one major bear market. <strong className="font-medium">Every start date ended 2022 in positive territory</strong> while the S&P fell 20% &mdash;{' '}
+          not by luck, but by design. Regime-aware position sizing and trailing-stop discipline kept the strategy on the right side of risk through the year &mdash; responding to data as it changed, not predicting the drawdown.<br />
           <em className="font-display italic text-claret">That behavior, not the headline return, is the reason to subscribe.</em>
         </p>
       </div>

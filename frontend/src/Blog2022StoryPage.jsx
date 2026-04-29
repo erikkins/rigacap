@@ -311,7 +311,7 @@ export default function Blog2022StoryPage() {
             </Link>
           </div>
           <p className="text-xs text-ink-light mt-4">
-            7-day free trial. $39/month after. Cancel anytime.
+            7-day free trial. $129/month after. Cancel anytime.
           </p>
         </div>
 
