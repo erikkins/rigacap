@@ -14,6 +14,19 @@ originSessionId: 1081317d-f863-470f-ab07-65ddc614e856
 - When auditing prod vs backtest: grep the codebase for the relevant param/mechanism in BOTH `app/services/backtester.py` AND `app/services/scanner.py`. If counts differ, there's a parity gap.
 - When updating marketing numbers: confirm the strategy that produced them is fully realized in prod signal generation as of the date you cite the numbers.
 
+**When memorializing a winning lever** (after A/B ablation testing):
+1. Update the default value in code (e.g., flag default in `walk_forward_service.run_walk_forward_simulation`)
+2. Update **`docs/MarketingNewsletterStrategyCLAUDE.md` §15** (marketing-doc methodology)
+3. Update **`design/documents/rigacap-signal-intelligence.html`** (the "secret sauce" / Signal Intelligence doc)
+4. Regenerate the PDF via headless Chrome (CLAUDE.md has the exact command pattern):
+   ```
+   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+     --headless --disable-gpu --no-pdf-header-footer --print-to-pdf-no-header \
+     --print-to-pdf="design/documents/rigacap-signal-intelligence.pdf" \
+     design/documents/rigacap-signal-intelligence.html
+   ```
+5. If the lever's prod parity hasn't been ported yet (bot it should be after the win is confirmed), open a follow-up to port it into `app/services/scanner.py` before citing the numbers anywhere external.
+
 ## Known violations as of Apr 28 2026
 
 - **Circuit breaker pause logic** (`_request_pause`, `_pause_until`, `circuit_breaker_stops`, etc.) lives in `backtester.py` (25 references) but is entirely absent from `scanner.py` (0 references). Backtests can simulate "after 3 same-day stops, pause new entries for 10 days." Production signal generation does not implement this. Marketing numbers that depend on CB protection during stress periods cannot be honestly cited until prod implements an equivalent mechanism (e.g., centralized model-portfolio stops counter + a "no new signals fire until DATE" gate in the daily scan). Surfaced when Erik asked "are we doing the CB pause carryover in prod?" on Apr 28.
