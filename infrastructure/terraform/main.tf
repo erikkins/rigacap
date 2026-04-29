@@ -680,11 +680,13 @@ resource "aws_lambda_function" "worker" {
       LAMBDA_ROLE          = "worker"
       SIGNAL_UNIVERSE_SIZE = "100"
       # Parquet migration Stage 3a — diff harness DISABLED Apr 28 2026 after
-      # OOMing the daily scan twice (compare_pickle_to_parquet loaded full
-      # parquet on top of resident pickle, blew through the 3008 MB ceiling).
-      # Re-enable as "true" once compare_pickle_to_parquet streams symbol-by-
-      # symbol. See project_parquet_stage3_plan.md.
-      PARQUET_PARALLEL_READ = "false"
+      # Re-enabled 2026-04-29 after compare_pickle_to_parquet was refactored
+      # to stream symbols in batches of 100 via pyarrow filter (downloads
+      # parquet to /tmp disk, ~5 MB peak RAM beyond pickle, regardless of
+      # universe size). Try/except wrap (3a-2) ensures harness failure never
+      # breaks the scan. Starts the 2-week Stage 3a observation window.
+      # See project_parquet_stage3_plan.md.
+      PARQUET_PARALLEL_READ = "true"
     })
   }
 
