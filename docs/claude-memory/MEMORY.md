@@ -157,6 +157,9 @@
 - **[Rebrand SHIPPED](project_rebrand_premium_publication.md)** — $129/mo premium publication is live. Treat editorial framing as the live brand.
 - **[Design system spec](project_redesign_spec.md)** — Fraunces+IBM Plex, Claret accent, paper background — source of truth for ongoing decisions. (Now extended by the marketing strategy doc above.)
 
+## Numbers Discipline
+- **[Numbers citations registry](project_numbers_citations_registry.md)** — `docs/numbers-citations-registry.md` enumerates every surface citing perf numbers. Walk it before any number refresh. No partial updates.
+
 ## Planned Features
 - [Signal slippage tracking](project_signal_slippage_tracking.md) — post-publication price monitoring to measure real achievable execution vs published entry price
 - [Balanced content rule](project_balanced_content_rule.md) — every 4th social post must be a loss/quiet week/limitation; trust-building differentiator
