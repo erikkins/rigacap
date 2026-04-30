@@ -511,6 +511,24 @@ export default function LandingPageV2() {
     if (!loading && isAuthenticated) navigate('/app', { replace: true });
   }, [isAuthenticated, loading, navigate]);
 
+  // Scroll-to-hash on mount: when arriving with /#pricing (or any anchor) from
+  // another page, the browser's native anchor scroll fires before React renders
+  // the target section, so it lands at the top instead. This finds the target
+  // post-render and scrolls smoothly. Re-runs if the hash changes.
+  useEffect(() => {
+    const scrollToHash = () => {
+      if (!window.location.hash) return;
+      const id = window.location.hash.slice(1);
+      const el = document.getElementById(id);
+      if (el) {
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+      }
+    };
+    scrollToHash();
+    window.addEventListener('hashchange', scrollToHash);
+    return () => window.removeEventListener('hashchange', scrollToHash);
+  }, []);
+
   const handleGetStarted = (plan = 'monthly') => {
     if (isAuthenticated) {
       navigate('/app', { replace: true });
