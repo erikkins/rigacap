@@ -17,6 +17,7 @@ from app.core.security import (
     create_2fa_trust_token,
     decode_token,
     get_admin_user,
+    get_client_ip,
     get_password_hash,
     verify_password,
     rate_limiter,
@@ -153,7 +154,7 @@ async def setup_2fa(
     db: AsyncSession = Depends(get_db),
 ):
     """Generate TOTP secret and backup codes. Does NOT enable 2FA yet."""
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = get_client_ip(request) or "unknown"
     if not rate_limiter.check(f"2fa_setup:{client_ip}", max_requests=3, window_seconds=60):
         raise HTTPException(status_code=429, detail="Too many attempts. Please try again later.")
 
@@ -224,7 +225,7 @@ async def verify_2fa(
     """Verify TOTP or backup code during login. Returns full auth tokens."""
     from sqlalchemy import select
 
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = get_client_ip(request) or "unknown"
     if not rate_limiter.check(f"2fa_verify:{client_ip}", max_requests=5, window_seconds=60):
         raise HTTPException(status_code=429, detail="Too many attempts. Please try again later.")
 

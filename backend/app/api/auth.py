@@ -18,6 +18,7 @@ from app.core.security import (
     create_refresh_token,
     create_challenge_token,
     decode_token,
+    get_client_ip,
     get_current_user,
     rate_limiter,
 )
@@ -182,7 +183,7 @@ async def register(
     db: AsyncSession = Depends(get_db)
 ):
     """Register a new user with email/password."""
-    client_ip = req.client.host if req.client else "unknown"
+    client_ip = get_client_ip(req) or "unknown"
 
     # Rate limit: 3 registrations per minute per IP
     if not rate_limiter.check(f"register:{client_ip}", max_requests=3, window_seconds=60):
@@ -264,7 +265,7 @@ async def login(
     db: AsyncSession = Depends(get_db)
 ):
     """Login with email/password."""
-    client_ip = req.client.host if req.client else "unknown"
+    client_ip = get_client_ip(req) or "unknown"
 
     # Rate limit: 5 login attempts per minute per IP
     if not rate_limiter.check(f"login:{client_ip}", max_requests=5, window_seconds=60):
@@ -457,7 +458,7 @@ async def google_auth(
         user.last_login = datetime.utcnow()
     else:
         # Verify Turnstile for new users (mandatory)
-        client_ip = req.client.host if req.client else None
+        client_ip = get_client_ip(req)
         if not request.turnstile_token or not await verify_turnstile(request.turnstile_token, client_ip):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -585,7 +586,7 @@ async def apple_auth(
             )
 
         # Verify Turnstile for new users (mandatory)
-        client_ip = req.client.host if req.client else None
+        client_ip = get_client_ip(req)
         if not request.turnstile_token or not await verify_turnstile(request.turnstile_token, client_ip):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -668,7 +669,7 @@ async def forgot_password(
     db: AsyncSession = Depends(get_db)
 ):
     """Send a password reset email. Always returns 200 to prevent email enumeration."""
-    client_ip = req.client.host if req.client else "unknown"
+    client_ip = get_client_ip(req) or "unknown"
 
     # Rate limit: 3 reset requests per minute per IP
     if not rate_limiter.check(f"forgot:{client_ip}", max_requests=3, window_seconds=60):

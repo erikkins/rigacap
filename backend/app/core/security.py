@@ -1,5 +1,6 @@
 """Security utilities for authentication and authorization."""
 
+import os
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -8,7 +9,7 @@ import uuid
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -39,6 +40,21 @@ class RateLimiter:
 
 
 rate_limiter = RateLimiter()
+
+
+def get_client_ip(request: Request) -> Optional[str]:
+    """Return the originating client IP.
+
+    When the API sits behind CloudFront (or another trusted proxy), set
+    TRUST_FORWARDED_FOR=true so the first entry of X-Forwarded-For is used.
+    Without the flag, X-Forwarded-For is ignored — anyone can spoof the
+    header against API Gateway directly today.
+    """
+    if os.getenv("TRUST_FORWARDED_FOR", "false").lower() == "true":
+        xff = request.headers.get("x-forwarded-for")
+        if xff:
+            return xff.split(",")[0].strip()
+    return request.client.host if request.client else None
 
 
 # Password hashing
