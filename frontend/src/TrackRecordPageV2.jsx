@@ -145,7 +145,8 @@ export default function TrackRecordPageV2() {
             </p>
             <p className="mt-3 text-[0.85rem] text-ink-light leading-relaxed">
               The longer window includes more bear cycles, so the max drawdown reads slightly higher (28% vs the 5-year's 20%). SPY over the same 11-year window: +318% (about ~14% annualized).
-          </p>
+            </p>
+          </div>
         </div>
       </section>
 
