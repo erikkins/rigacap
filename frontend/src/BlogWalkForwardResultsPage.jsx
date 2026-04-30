@@ -433,9 +433,10 @@ export default function BlogWalkForwardResultsPage() {
 
         {/* Disclaimer */}
         <p className="text-xs text-ink-light leading-relaxed">
-          Walk-forward simulation results. Past performance does not guarantee future results.
-          Not investment advice. RigaCap provides trading signals only — execute trades through
-          your own brokerage account. See our{' '}
+          Walk-forward simulation results.
+          For information purposes only — not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest.
+          RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.
+          Execute trades through your own brokerage account. See our{' '}
           <Link to="/terms" className="text-ink-light underline hover:text-ink-mute">Terms of Service</Link>{' '}
           for full disclaimers.
         </p>

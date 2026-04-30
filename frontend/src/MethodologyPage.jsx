@@ -218,8 +218,9 @@ export default function MethodologyPage() {
               All results shown are from walk-forward simulations using historical data and do not represent actual trading returns.
               Simulations assume zero slippage and zero commissions, which favors simulated returns over real-world results.
               SPY benchmark comparisons use price return only (excluding dividends).
-              Past performance is not indicative of future results. Investing involves risk, including the possible loss of principal.
-              RigaCap provides algorithmic signals and educational information only — we are not registered investment advisors.
+              For information purposes only and not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest.
+              Past performance does not guarantee future results. Investing involves risk, including the possible loss of principal.
+              RigaCap, LLC is not a registered investment advisor.
               See our{' '}
               <Link to="/terms" className="text-amber-400 hover:text-amber-300 underline">Terms of Service</Link> for full details.
             </p>

@@ -497,8 +497,8 @@ const Footer = () => (
       </div>
       <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
         <p>
-          Trading involves risk. Past performance does not guarantee future results.
-          RigaCap provides algorithmic signals for educational purposes only and is not a registered investment advisor.
+          For information purposes only. Not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest.
+          RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.
         </p>
       </div>
     </div>

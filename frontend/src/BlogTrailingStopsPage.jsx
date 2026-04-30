@@ -404,12 +404,12 @@ export default function BlogTrailingStopsPage() {
 
         {/* Disclaimer */}
         <p className="text-xs text-ink-light leading-relaxed">
-          This is educational content, not investment advice. All performance figures are
-          from walk-forward simulations using historical market data. Past performance does
-          not guarantee future results. Trailing stops do not guarantee execution at the
-          exact stop price — in fast-moving markets, actual exit prices may differ.
-          RigaCap provides trading signals only —
-          execute trades through your own brokerage account. See our{' '}
+          All performance figures are from walk-forward simulations using historical market data.
+          Trailing stops do not guarantee execution at the exact stop price —
+          in fast-moving markets, actual exit prices may differ.
+          For information purposes only — not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest.
+          RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.
+          Execute trades through your own brokerage account. See our{' '}
           <Link to="/terms" className="text-ink-light underline hover:text-ink-mute">Terms of Service</Link>{' '}
           for full disclaimers.
         </p>

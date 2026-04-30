@@ -264,8 +264,9 @@ export default function MethodologyPageV2() {
               All results shown are from walk-forward simulations using historical data and do not represent actual trading returns.
               Simulations assume zero slippage and zero commissions, which favors simulated returns over real-world results.
               SPY benchmark comparisons use price return only (excluding dividends).
-              Past performance is not indicative of future results. Investing involves risk, including the possible loss of principal.
-              RigaCap provides algorithmic signals and educational information only &mdash; we are not registered investment advisors.
+              For information purposes only and not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest.
+              Past performance does not guarantee future results. Investing involves risk, including the possible loss of principal.
+              RigaCap, LLC is not a registered investment advisor.
               See our <Link to="/terms" className="text-claret underline underline-offset-2 decoration-1">Terms of Service</Link> for full details.
             </p>
           </div>
@@ -276,7 +277,7 @@ export default function MethodologyPageV2() {
       <footer className="bg-paper-deep border-t border-rule py-8">
         <div className="max-w-[800px] mx-auto px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-start gap-4">
           <p className="text-[0.78rem] text-ink-light max-w-[50ch] leading-relaxed">
-            Trading involves risk. Past performance is not indicative of future results.
+            For information purposes only. Past performance does not guarantee future results.
           </p>
           <p className="text-[0.78rem] text-ink-light">&copy; 2026 RigaCap, LLC</p>
         </div>

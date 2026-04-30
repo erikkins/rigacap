@@ -216,8 +216,9 @@ export default function TrackRecordPageV2() {
         <div className="max-w-[800px] mx-auto px-4 sm:px-8">
           <p className="text-[0.78rem] text-ink-light leading-relaxed">
             All results shown are from walk-forward simulations using historical data and do not represent actual trading returns.
-            Past performance is not indicative of future results. Investing involves risk, including the possible loss of principal.
-            RigaCap provides algorithmic signals and educational information only &mdash; we are not registered investment advisors.
+            For information purposes only and not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest.
+            Past performance does not guarantee future results. Investing involves risk, including the possible loss of principal.
+            RigaCap, LLC is not a registered investment advisor.
             See our <Link to="/terms" className="text-claret underline underline-offset-2 decoration-1">Terms of Service</Link> for full details.
           </p>
           <p className="text-[0.78rem] text-ink-light mt-4">&copy; 2026 RigaCap, LLC</p>

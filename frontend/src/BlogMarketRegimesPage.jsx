@@ -335,10 +335,10 @@ export default function BlogMarketRegimesPage() {
         {/* Disclaimer */}
         <p className="text-xs text-ink-light leading-relaxed">
           All performance figures are from walk-forward simulations using historical market data.
-          Past performance does not guarantee future results. Market regime classifications are
-          derived from quantitative models and may not predict future market conditions.
-          RigaCap provides trading signals only —
-          execute trades through your own brokerage account. See our{' '}
+          Market regime classifications are derived from quantitative models and may not predict future market conditions.
+          For information purposes only — not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest.
+          RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.
+          Execute trades through your own brokerage account. See our{' '}
           <Link to="/terms" className="text-ink-light underline hover:text-ink-mute">Terms of Service</Link>{' '}
           for full disclaimers.
         </p>

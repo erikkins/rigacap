@@ -134,8 +134,8 @@ class EmailService:
                     <a href="{unsub_url}" style="color: #8A8279; text-decoration: underline;">Unsubscribe</a>
                 </p>
                 <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 9px; color: #C9BFAC; line-height: 1.6; text-align: center;">
-                    Signals are not financial advice. Past performance does not guarantee future results.<br>
-                    RigaCap is not a registered investment advisor.
+                    For information purposes only. Not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest.<br>
+                    RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.
                 </p>
                 <p style="margin: 8px 0 0; font-family: 'Courier New', monospace; font-size: 9px; color: #C9BFAC; text-align: center;">
                     &copy; {datetime.now().year} RigaCap, LLC
@@ -629,7 +629,7 @@ class EmailService:
             "",
             "---",
             "RigaCap - Ensemble Trading Signals",
-            "Trading involves risk. Past performance does not guarantee future results."
+            "For information purposes only. RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results."
         ])
 
         return "\n".join(lines)
@@ -1046,7 +1046,7 @@ class EmailService:
                 <em>Market, Measured.</em> is a weekly reading from RigaCap. Data-backed, noise-free. Reply anytime — we read every response.
             </p>
             <p style="margin: 12px 0 0 0; font-size: 11px; color: #8A8279;">
-                &copy; {date.year} RigaCap, LLC. Not investment advice.
+                &copy; {date.year} RigaCap, LLC &middot; For information purposes only
                 &nbsp;&middot;&nbsp;
                 <a href="{unsub_url}" style="color:#8A8279;text-decoration:underline;">Unsubscribe</a>
             </p>
@@ -1244,7 +1244,7 @@ Market, Measured. is a weekly reading from RigaCap.
                 <em>Market, Measured.</em> is a weekly reading from RigaCap. Data-backed, noise-free. Reply anytime — we read every response.
             </p>
             <p style="margin: 12px 0 0 0; font-size: 11px; color: #8A8279;">
-                &copy; 2026 RigaCap, LLC. Not investment advice.
+                &copy; 2026 RigaCap, LLC &middot; For information purposes only
                 &nbsp;&middot;&nbsp;
                 <a href="{unsub_url}" style="color:#8A8279;text-decoration:underline;">Unsubscribe</a>
             </p>
@@ -1437,7 +1437,7 @@ Happy trading!
 The RigaCap Team
 
 ---
-Trading involves risk. Past performance does not guarantee future results.
+For information purposes only. RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.
 """
 
         return await self.send_email(
@@ -2350,8 +2350,8 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
             "View dashboard: https://rigacap.com/app",
             "",
             "---",
-            "This is not financial advice. Always do your own research before trading.",
-            "Past performance does not guarantee future results.",
+            "For information purposes only. Not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest.",
+            "RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.",
         ])
 
         return await self.send_email(
@@ -2527,7 +2527,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
                         <a href="{unsub_url}" style="color: #5A544E; text-decoration: underline;">Unsubscribe</a>
                     </p>
                     <p style="margin: 8px 0 0 0; font-size: 12px; color: #8A8279;">
-                        Trading involves risk. Past performance does not guarantee future results.
+                        For information purposes only. RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.
                     </p>
                 </td>
             </tr>'''
@@ -2537,7 +2537,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
             footer = '''<tr>
                 <td style="background-color: #ECE6D9; padding: 24px; text-align: center; border-top: 1px solid #DDD5C7;">
                     <p style="margin: 0; font-size: 12px; color: #8A8279;">
-                        Trading involves risk. Past performance does not guarantee future results.
+                        For information purposes only. RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.
                     </p>
                 </td>
             </tr>'''

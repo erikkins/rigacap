@@ -189,11 +189,11 @@ export default function TrackRecordPage() {
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 text-xs text-gray-500 leading-relaxed">
           <p className="font-semibold text-gray-400 mb-2">Important Disclaimer</p>
           <p>
-            Past performance is not indicative of future results. All results shown are from walk-forward simulations
-            using historical data and do not represent actual trading returns. Investing involves risk, including the
-            possible loss of principal. RigaCap provides algorithmic signals and educational information only — we are
-            not financial advisors. Always do your own research and consider consulting a licensed professional before
-            making investment decisions. See our{' '}
+            All results shown are from walk-forward simulations using historical data and do not represent actual trading returns.
+            For information purposes only and not a solicitation to invest, purchase, or sell securities in which RigaCap has
+            an interest. Past performance does not guarantee future results. Investing involves risk, including the possible
+            loss of principal. RigaCap, LLC is not a registered investment advisor. Always do your own research and consider
+            consulting a licensed professional before making investment decisions. See our{' '}
             <Link to="/terms" className="text-amber-400 hover:text-amber-300 underline">Terms of Service</Link> for
             full details.
           </p>

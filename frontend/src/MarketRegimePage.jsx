@@ -366,8 +366,8 @@ export default function MarketRegimePage() {
       {/* Footer disclaimer */}
       <footer className="border-t border-rule py-8 text-center">
         <p className="text-xs text-ink-light max-w-2xl mx-auto px-4">
-          Trading involves risk. Past performance does not guarantee future results.
-          This is market analysis, not investment advice. Always do your own research.
+          For information purposes only. Not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest.
+          RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.
         </p>
         <div className="mt-4 flex items-center justify-center gap-4 text-xs text-ink-light">
           <Link to="/privacy" className="hover:text-ink">Privacy</Link>

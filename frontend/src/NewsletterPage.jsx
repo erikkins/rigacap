@@ -214,7 +214,7 @@ export function NewsletterIssuePage() {
             <Link to="/track-record" className="no-underline hover:text-ink transition-colors">Track Record</Link>
             <Link to="/about" className="no-underline hover:text-ink transition-colors">About</Link>
           </div>
-          <p className="font-mono text-[0.7rem] text-ink-light mt-5">&copy; {new Date().getFullYear()} RigaCap, LLC. Not investment advice.</p>
+          <p className="font-mono text-[0.7rem] text-ink-light mt-5">&copy; {new Date().getFullYear()} RigaCap, LLC &middot; For information purposes only</p>
         </div>
       </footer>
     </div>
@@ -362,7 +362,7 @@ export default function NewsletterPage() {
             <Link to="/track-record" className="no-underline hover:text-ink transition-colors">Track Record</Link>
             <Link to="/about" className="no-underline hover:text-ink transition-colors">About</Link>
           </div>
-          <p className="font-mono text-[0.7rem] text-ink-light mt-5">&copy; {new Date().getFullYear()} RigaCap, LLC. Not investment advice.</p>
+          <p className="font-mono text-[0.7rem] text-ink-light mt-5">&copy; {new Date().getFullYear()} RigaCap, LLC &middot; For information purposes only</p>
         </div>
       </footer>
     </div>

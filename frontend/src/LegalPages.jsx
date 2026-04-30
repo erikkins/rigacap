@@ -111,7 +111,7 @@ export function TermsPage() {
       </Section>
 
       <Section title="Not Investment Advice">
-        <p className="text-amber-400/80 font-medium">RigaCap, LLC is not a registered investment advisor, broker-dealer, or financial planner. The signals, data, and content provided through the Service are for informational and educational purposes only and do not constitute investment advice, financial advice, trading advice, or any other kind of advice.</p>
+        <p className="text-amber-400/80 font-medium">RigaCap, LLC is not a registered investment advisor, broker-dealer, or financial planner. The signals, data, content, and methodology provided through the Service are for information purposes only and are not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest. They do not constitute investment advice, financial advice, trading advice, or any other kind of advice.</p>
         <p>You are solely responsible for your own investment decisions. Trading stocks involves substantial risk of loss and is not suitable for every investor. Past performance of our algorithms does not guarantee future results.</p>
       </Section>
 

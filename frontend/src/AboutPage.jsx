@@ -221,7 +221,7 @@ export default function AboutPage() {
           </div>
           <div className="pt-8 flex flex-col sm:flex-row justify-between items-start gap-8">
             <p className="text-[0.78rem] text-ink-light leading-relaxed max-w-[70ch]">
-              Trading involves risk. Past performance is not indicative of future results. RigaCap provides algorithmic signals for educational purposes only and is not a registered investment advisor.
+              For information purposes only. Not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest. RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.
             </p>
             <p className="text-[0.78rem] text-ink-light shrink-0">&copy; 2026 RigaCap, LLC</p>
           </div>

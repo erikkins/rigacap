@@ -158,12 +158,14 @@ On a $100K portfolio:
 ## 5. Brand & Visual System
 
 ### Aesthetic Category
-RigaCap is an **editorial financial publication**. References:
+RigaCap's visual and editorial register draws from financial publications, not from fintech apps. References:
 - *Grant's Interest Rate Observer*
 - *The Economist*
 - *Financial Times*
 - Bloomberg research notes
 - Stratechery
+
+**This is an aesthetic and voice choice, not a product-category claim.** The product is a signal service (see §1). The publications above are reference points for *how it presents* — restrained typography, editorial prose, no hype, treats the reader as intelligent. Calling RigaCap "a publication" in customer-facing copy creates a different kind of confusion: prospects expect to be paying for the writing, when they're actually paying for the decisions. Bios, taglines, and lead copy should foreground the signal product; the editorial register is carried by the *voice*, not by labeling the product as a publication.
 
 RigaCap is **NOT**:
 - A modern fintech app aesthetic (Robinhood, Stripe-derivative SaaS)

@@ -155,8 +155,9 @@ export default function BlogIndexPage() {
       <section className="max-w-[720px] mx-auto px-4 sm:px-8 pb-8">
         <p className="text-[0.78rem] text-ink-light leading-relaxed">
           All performance figures are from walk-forward simulations using historical market data.
-          Past performance does not guarantee future results. RigaCap provides trading signals only —
-          execute trades through your own brokerage account. See our{' '}
+          For information purposes only — not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest.
+          RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.
+          Execute trades through your own brokerage account. See our{' '}
           <Link to="/terms" className="text-ink-mute underline hover:text-ink transition-colors">Terms of Service</Link>{' '}
           for full disclaimers.
         </p>
