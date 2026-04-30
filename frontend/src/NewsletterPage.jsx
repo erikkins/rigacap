@@ -21,9 +21,9 @@ const Navbar = () => (
       </Link>
       <div className="flex items-center gap-7">
         <Link to="/" className="hidden sm:inline text-[0.9rem] text-ink-mute no-underline hover:text-ink transition-colors">Home</Link>
-        <Link to="/about" className="hidden sm:inline text-[0.9rem] text-ink-mute no-underline hover:text-ink transition-colors">About</Link>
         <Link to="/methodology" className="hidden sm:inline text-[0.9rem] text-ink-mute no-underline hover:text-ink transition-colors">Methodology</Link>
         <Link to="/track-record" className="hidden sm:inline text-[0.9rem] text-ink-mute no-underline hover:text-ink transition-colors">Track Record</Link>
+        <Link to="/blog" className="hidden sm:inline text-[0.9rem] text-ink-mute no-underline hover:text-ink transition-colors">Blog</Link>
         <a href="/#pricing" className="hidden sm:inline text-[0.9rem] text-ink-mute no-underline hover:text-ink transition-colors">Pricing</a>
         <Link to="/" className="bg-ink text-paper px-4 py-2.5 text-[0.9rem] font-medium rounded-[2px] hover:bg-claret transition-colors no-underline">Start Trial</Link>
       </div>
