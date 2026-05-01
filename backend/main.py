@@ -1037,7 +1037,10 @@ def handler(event, context):
 
         from app.services.intraday_cache import get_intraday_cache
         from app.services.intraday_wf_validator import IntradayWFValidator
-        from app.services.scanner import scanner_service
+        # NOTE: scanner_service is already imported at module level (line 41).
+        # Re-importing inside this if-block would shadow it as a local in the
+        # entire handler() function, breaking warmer + every other path that
+        # reads scanner_service before this branch runs (UnboundLocalError).
 
         loop = asyncio.get_event_loop()
         if loop.is_closed():
