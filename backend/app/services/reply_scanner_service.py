@@ -22,39 +22,37 @@ logger = logging.getLogger(__name__)
 
 # Claude API (same endpoint/model as ai_content_service)
 CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
-CLAUDE_MODEL = "claude-sonnet-4-5-20250929"
+CLAUDE_MODEL = "claude-sonnet-4-6"
 
-REPLY_SYSTEM_PROMPT = """You write Twitter replies as Erik, founder of RigaCap — a disciplined momentum strategy for self-directed investors.
-Someone you follow tweeted about a stock that our system traded. Write a brief, natural reply that adds value.
 
-VOICE: You are Erik, the founder. Earnest, direct, like a colleague — not a brand account.
+def _build_reply_system_prompt(char_limit: int, platform_name: str) -> str:
+    """Build a reply-system prompt with the canonical voice + voice-filter ban list.
+
+    Keeping this dynamic so the banned-vocabulary stays in sync with the
+    post-filter (single source of truth in voice_filters.py).
+    """
+    from app.services.voice_filters import banned_summary_for_prompt
+    return f"""You write {platform_name} replies as Erik, founder of RigaCap — an equity signal service for the investor tired of fighting their own worst instincts.
+Someone you follow {('tweeted' if platform_name == 'Twitter' else 'posted')} about a stock that our system traded. Write a brief, natural reply that adds value.
+
+VOICE: You are Erik, the founder. Considered, restrained, methodical. Editorial-financial-publication register (think FT, Economist, Stratechery). Earnest and direct, like a colleague — not a brand account.
 - Say "our system flagged this" or "we caught this move", never "we predicted"
 - NEVER give financial advice
 - NEVER use hashtags in replies
 - NEVER start with "Great post!" "Nice call!" "Interesting" "Just" or "Here's the thing"
-- NEVER use jargon: no "tape," "printing," "ripping," "LFG"
+- {banned_summary_for_prompt()}
 - One concise point. Don't ramble.
+- Em-dashes are welcome — they're editorial.
 - Sound like you typed this on your phone. Not polished, not drafted. Real.
 - Have an opinion. Don't hedge.
 
-FORMAT: Under 260 chars. Plain text only. No markdown. No emojis at start.
+FORMAT: Under {char_limit} chars. Plain text only. No markdown. No emojis at start.
 Include rigacap.com/track-record only if space allows naturally."""
 
-THREADS_REPLY_SYSTEM_PROMPT = """You write Threads replies as Erik, founder of RigaCap — a disciplined momentum strategy for self-directed investors.
-Someone posted about a stock that our system traded. Write a brief, natural reply that adds value.
 
-VOICE: You are Erik, the founder. Earnest, direct, like a colleague — not a brand account.
-- Say "our system flagged this" or "we caught this move", never "we predicted"
-- NEVER give financial advice
-- NEVER use hashtags in replies
-- NEVER start with "Great post!" "Nice call!" "Interesting" "Just" or "Here's the thing"
-- NEVER use jargon: no "tape," "printing," "ripping," "LFG"
-- One concise point. Don't ramble.
-- Sound like you typed this on your phone. Not polished, not drafted. Real.
-- Have an opinion. Don't hedge.
-
-FORMAT: Under 350 chars. Plain text only. No markdown. No emojis at start.
-Include rigacap.com/track-record if space allows naturally."""
+# Cached prompts (built lazily on first use to avoid import-order issues)
+REPLY_SYSTEM_PROMPT = _build_reply_system_prompt(260, "Twitter")
+THREADS_REPLY_SYSTEM_PROMPT = _build_reply_system_prompt(350, "Threads")
 
 # Twitter API v2 endpoint for user tweets
 TWITTER_USER_TWEETS_URL = "https://api.twitter.com/2/users/{user_id}/tweets"
@@ -802,23 +800,49 @@ class ReplyScannerService:
             else REPLY_SYSTEM_PROMPT
         )
 
-        try:
-            text = await self._call_claude(user_prompt, system_prompt=system_prompt)
-            if not text:
+        # Voice filter: regenerate up to 2x if banned vocabulary leaks through
+        from app.services.voice_filters import contains_banned
+
+        for attempt in range(3):
+            extra_directive = None
+            if attempt > 0:
+                # Stronger reminder on retry
+                extra_directive = (
+                    "YOUR PRIOR DRAFT CONTAINED BANNED WORDS. Regenerate from scratch "
+                    "without ANY trader jargon, SaaS-speak, or proprietary indicator names. "
+                    "If you previously used 'tape', 'printing', 'ripping', 'AI-powered', "
+                    "'hedge fund returns', 'unlock', 'autonomous', 'guaranteed', or 'DWAP', "
+                    "find different words. Do not paraphrase by adding 'so-called' or quotes."
+                )
+
+            try:
+                full_system = system_prompt + (("\n\n" + extra_directive) if extra_directive else "")
+                text = await self._call_claude(user_prompt, system_prompt=full_system)
+                if not text:
+                    return None
+
+                text = self._strip_markdown(text)
+
+                # Voice filter check
+                violations = contains_banned(text)
+                if violations:
+                    terms = ", ".join(t for t, _ in violations)
+                    logger.warning(f"[reply-scanner] @{username}/{symbol} attempt {attempt + 1}: banned terms: {terms}")
+                    continue
+
+                # Enforce char limit
+                if len(text) > char_limit:
+                    text = text[:char_limit - 3].rsplit(" ", 1)[0] + "..."
+
+                return text
+
+            except Exception as e:
+                logger.error(f"Reply generation failed for @{username}/{symbol}: {e}")
                 return None
 
-            # Strip markdown
-            text = self._strip_markdown(text)
-
-            # Enforce char limit
-            if len(text) > char_limit:
-                text = text[:char_limit - 3].rsplit(" ", 1)[0] + "..."
-
-            return text
-
-        except Exception as e:
-            logger.error(f"Reply generation failed for @{username}/{symbol}: {e}")
-            return None
+        # All 3 attempts contained banned terms — give up on auto-draft
+        logger.warning(f"[reply-scanner] @{username}/{symbol}: voice filter rejected all 3 attempts")
+        return None
 
     async def _find_we_called_it_url(self, symbol: str, db) -> Optional[str]:
         """Find an existing posted 'we_called_it' post for this symbol."""

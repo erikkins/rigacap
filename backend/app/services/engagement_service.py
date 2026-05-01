@@ -171,25 +171,35 @@ class EngagementService:
 
     def _generate_comment(self, tweet_text: str, author: str, matched_topics: List[str],
                           market_context: str = "") -> str:
-        """Use Claude to draft a suggested comment."""
+        """Use Claude to draft a suggested comment, post-filtered for voice violations."""
         import httpx
         from app.core.config import settings
+        from app.services.voice_filters import (
+            banned_summary_for_prompt,
+            generate_with_voice_filter,
+        )
 
         if not settings.ANTHROPIC_API_KEY:
             return "(Claude API key not available — draft manually)"
 
-        system = (
-            "You write short Twitter replies as Erik, founder of RigaCap — a disciplined momentum strategy "
-            "for self-directed investors. You're a real person, not a brand account. "
-            "VOICE: Earnest, direct, thoughtful — like a smart colleague at dinner, not a fintech CEO on stage. "
+        # Voice ban list is enforced via post-filter; this prompt-time mention
+        # is a soft hint only. The hard enforcement happens after generation.
+        banned_hint = banned_summary_for_prompt()
+
+        base_system = (
+            "You write short Twitter replies as Erik, founder of RigaCap — an equity signal "
+            "service for the investor tired of fighting their own worst instincts. "
+            "You're a real person, not a brand account. "
+            "VOICE: Considered, restrained, methodical. Editorial-financial-publication register "
+            "(think FT, Economist, Stratechery). Earnest and direct — like a smart colleague at "
+            "dinner, not a fintech CEO on stage. "
             "RULES: "
-            "- Plain English only. NO jargon: no 'tape', 'bid', 'offered', 'risk-on', 'price action', "
-            "  'positioning', 'flows', 'carry', 'printing', 'ripping', or any trader-speak. "
-            "- Say it like you'd say it to a friend who's interested in markets but isn't a trader. "
-            "- Never say 'our algorithm' or 'AI-powered'. You can reference 'our system' ONLY if natural. "
+            f"- {banned_hint} "
+            "- Say it like you'd say it to a friend who reads the FT but isn't a trader. "
+            "- Never say 'our algorithm'. You can reference 'our system' ONLY if natural. "
             "- Most replies should NOT mention RigaCap at all — just share a smart, human take. "
             "- 1-2 sentences max. No hashtags. No emojis. "
-            "- Sound like a curious founder, not a Bloomberg terminal. "
+            "- Em-dashes are welcome — they're editorial. "
             "- SOUND HUMAN: never start with 'Interesting' or 'Great point' or 'Just'. "
             "  Have a real opinion. Use fragments sometimes. Vary rhythm. "
             "  Write like you typed it on your phone, not like you drafted it."
@@ -197,37 +207,43 @@ class EngagementService:
 
         market_note = f"\n\nToday's market context for reference: {market_context}" if market_context else ""
 
-        prompt = (
+        base_prompt = (
             f"Write a reply to this tweet by @{author}:\n\n"
             f'"{tweet_text}"\n\n'
             f"Relevant topics: {', '.join(matched_topics)}.{market_note}\n\n"
             f"Draft a 1-2 sentence reply that adds insight. Don't pitch anything."
         )
 
-        try:
-            resp = httpx.post(
-                "https://api.anthropic.com/v1/messages",
-                headers={
-                    "x-api-key": settings.ANTHROPIC_API_KEY,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
-                },
-                json={
-                    "model": "claude-haiku-4-5-20251001",
-                    "max_tokens": 150,
-                    "system": system,
-                    "messages": [{"role": "user", "content": prompt}],
-                },
-                timeout=15,
-            )
-            if resp.status_code == 200:
-                content = resp.json().get("content", [])
-                if content and content[0].get("type") == "text":
-                    return content[0]["text"].strip().strip('"')
-        except Exception as e:
-            logger.warning(f"Claude comment generation failed: {e}")
+        def _call_claude(extra_directive: Optional[str]) -> Optional[str]:
+            system = base_system + ("\n\n" + extra_directive if extra_directive else "")
+            try:
+                resp = httpx.post(
+                    "https://api.anthropic.com/v1/messages",
+                    headers={
+                        "x-api-key": settings.ANTHROPIC_API_KEY,
+                        "anthropic-version": "2023-06-01",
+                        "content-type": "application/json",
+                    },
+                    json={
+                        "model": "claude-sonnet-4-6",
+                        "max_tokens": 150,
+                        "system": system,
+                        "messages": [{"role": "user", "content": base_prompt}],
+                    },
+                    timeout=15,
+                )
+                if resp.status_code == 200:
+                    content = resp.json().get("content", [])
+                    if content and content[0].get("type") == "text":
+                        return content[0]["text"].strip().strip('"')
+            except Exception as e:
+                logger.warning(f"Claude comment generation failed: {e}")
+            return None
 
-        return "(Draft generation failed — reply manually)"
+        clean = generate_with_voice_filter(_call_claude, max_retries=2, label="engagement")
+        if clean:
+            return clean
+        return "(Voice filter failed — manual draft needed; banned terms detected in all attempts)"
 
     async def scan_engagement_opportunities(
         self, max_opportunities: int = 5, since_hours: int = 24

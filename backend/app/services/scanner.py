@@ -548,6 +548,11 @@ class ScannerService:
             df['ma_200'] = self.sma(df['close'], 200)
             df['vol_avg'] = self.sma(df['volume'], 200)
             df['high_52w'] = self.high_52w(df['close'])
+            # ATR was missing from this lazy-recompute path, causing pickle to
+            # diverge from parquet (parquet has it from a different code path).
+            # Adding here so future incremental updates restore it.
+            from app.services.strategy_params_v2 import compute_atr
+            df['atr'] = compute_atr(df['high'], df['low'], df['close'], period=14)
         return df
 
     def _get_signal_universe(self) -> Optional[Set[str]]:

@@ -1237,7 +1237,7 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                 day_type = "normal"
 
             system_prompt = (
-                "You write daily market context for RigaCap, an AI-powered stock signal service. "
+                "You write daily market context for RigaCap, a walk-forward-validated equity signal service. "
                 "Your tone: witty, confident, data-driven. You talk like a sharp analyst friend — "
                 "not a robot, not a hype machine. You're briefing someone who trusts your system.\n\n"
                 "Rules:\n"
@@ -1287,7 +1287,7 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                         "content-type": "application/json",
                     }
                     payload = {
-                        "model": "claude-haiku-4-5-20251001",
+                        "model": "claude-sonnet-4-6",
                         "max_tokens": 150,
                         "system": system_prompt,
                         "messages": [{"role": "user", "content": user_prompt}],

@@ -664,7 +664,7 @@ async def regenerate_post_ai(
     if new_text:
         post.text_content = new_text
         post.ai_generated = True
-        post.ai_model = "claude-sonnet-4-5-20250929"
+        post.ai_model = "claude-sonnet-4-6"
         post.status = "draft"
         post.reviewed_at = None
         post.reviewed_by = None

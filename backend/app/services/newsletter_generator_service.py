@@ -128,7 +128,7 @@ class NewsletterGeneratorService:
                 "content-type": "application/json",
             },
             json={
-                "model": "claude-sonnet-4-5-20250929",
+                "model": "claude-sonnet-4-6",
                 "max_tokens": max_tokens,
                 "system": SYSTEM_PROMPT,
                 "messages": [{"role": "user", "content": prompt}],

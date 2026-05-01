@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Claude API (same endpoint/model as other services)
 CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
-CLAUDE_MODEL = "claude-sonnet-4-5-20250929"
+CLAUDE_MODEL = "claude-sonnet-4-6"
 
 COMMENT_REPLY_SYSTEM_PROMPT = """You reply to Instagram comments as Erik, founder of RigaCap.
 A follower commented on one of your posts. Write a brief, warm reply.
