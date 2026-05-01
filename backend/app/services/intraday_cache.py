@@ -60,7 +60,7 @@ class IntradayBarCache:
         """Return full-day minute bars for symbol on date.
 
         Cache-first. If cached file is missing or marked incomplete, fetch
-        from Alpaca, write to cache, return.
+        from Alpaca, write to cache, return cache-canonical form.
 
         Returns None if Alpaca has no data for that symbol on that date
         (e.g., before IPO, market holiday).
@@ -74,7 +74,10 @@ class IntradayBarCache:
             return None
 
         self._write_cache(symbol, date, df, complete=True)
-        return df
+        # Re-read from cache so callers always get the parquet-canonical form
+        # (avoids subtle dtype/precision drift between in-memory and round-trip).
+        canonical = self._read_cache(symbol, date)
+        return canonical if canonical is not None else df
 
     def is_cached(self, symbol: str, date: str) -> bool:
         """Cheap existence + completeness check without loading the data."""
