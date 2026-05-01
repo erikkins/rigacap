@@ -111,6 +111,7 @@
 ## Active Tasks
 - **[Wire Circuit Breaker / Cascade Guard into production](project_cb_production_wiring.md)** — scheduled early week of May 4 2026. Closes the WF ↔ prod parity gap. Marketing numbers assume CB protection that subscribers don't currently get.
 - **[Production ticker-rename plumbing](project_ticker_rename_plumbing.md)** — same week. SQ/XYZ duplicate surfaced in 11y WF result. Switch to asset_id as primary key, verify Layer 2 catches ticker changes, backfill-cleanup utility for the pickle.
+- **[Intraday data-anomaly execution model](project_intraday_data_anomalies.md)** — real fix for FCEL/AMRN flash-spike artifacts in minute bars. Multi-minute confirmation + slippage model. ~1-2 day research project after tonight's validation lands.
 - **[Parquet migration 4-stage plan](project_storage_migration_roadmap.md)** — Stage 1 shadow write ✅ (Apr 14-15). **Stage 2 AL2023 ✅ (deployed before Apr 28 via commit `21f9e51`).** Stage 3 consumer migration → Stage 4 decommission pickle. Goal: parquet becomes primary, pickle retired.
 - **[Stage 3 detailed plan](project_parquet_stage3_plan.md)** — 6 work packages (3a-1, 3a-2, 3a-3, 3a-4, 3b, 3c, 4) with parallel-read diff harness + 2-week observation window before any cutover. Three independent safety nets. ~25-30h total spread over ~6 weeks.
 
