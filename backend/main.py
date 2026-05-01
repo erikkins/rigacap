@@ -1026,6 +1026,64 @@ def handler(event, context):
             "col_dtype_diff": {c: f"{df[c].dtype} -> {df2[c].dtype}" for c in df.columns if str(df[c].dtype) != str(df2[c].dtype)},
         }
 
+    # Intraday WF reconciliation: re-run trailing-stop exits with minute-bar
+    # accuracy. Closes the parity gap between WF (EOD-only) and production
+    # (intraday). Payload: {"intraday_wf_validation": {"trades": [...], "trailing_stop_pct": 0.12}}
+    if event.get("intraday_wf_validation"):
+        cfg = event["intraday_wf_validation"]
+        trades = cfg.get("trades", [])
+        ts_pct = float(cfg.get("trailing_stop_pct", 0.12))
+        s3_output_key = cfg.get("s3_output_key")  # optional S3 key to write full results
+
+        from app.services.intraday_cache import get_intraday_cache
+        from app.services.intraday_wf_validator import IntradayWFValidator
+        from app.services.scanner import scanner_service
+
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        # Ensure pickle is loaded so daily bars are accessible
+        _ensure_lambda_data_loaded()
+        print(f"📊 Intraday WF validation starting: {len(trades)} trades, trailing_stop_pct={ts_pct}, daily-bar cache={len(scanner_service.data_cache)} symbols")
+
+        cache = get_intraday_cache()
+        validator = IntradayWFValidator(trailing_stop_pct=ts_pct)
+
+        def daily_lookup(symbol):
+            return scanner_service.data_cache.get(symbol)
+
+        result = loop.run_until_complete(
+            validator.validate_trades(trades, daily_lookup, cache)
+        )
+
+        # Optionally write full results to S3 (results list can be large)
+        if s3_output_key:
+            try:
+                import boto3
+                import json as _json
+                s3 = boto3.client("s3")
+                bucket = os.environ.get("PRICE_DATA_BUCKET")
+                if bucket:
+                    s3.put_object(
+                        Bucket=bucket,
+                        Key=s3_output_key,
+                        Body=_json.dumps(result, default=str).encode(),
+                        ContentType="application/json",
+                    )
+                    print(f"📦 Full results written to s3://{bucket}/{s3_output_key}")
+            except Exception as e:
+                print(f"⚠️ S3 write failed: {e}")
+
+        return {
+            "summary": result["summary"],
+            "trailing_stop_pct": result["trailing_stop_pct"],
+            "skipped": result["skipped"],
+            "s3_output_key": s3_output_key,
+            "result_count": len(result["results"]),
+        }
+
     # Handle warmer events - just return success to keep Lambda warm
     if event.get("warmer"):
         print(f"🔥 Warmer ping - {len(scanner_service.data_cache)} symbols in cache")
