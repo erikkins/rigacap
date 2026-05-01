@@ -976,6 +976,44 @@ def handler(event, context):
 
         return _mangum_handler(event, context)
 
+    # Test intraday cache fetch — verifies Alpaca minute-bar pipeline end-to-end.
+    if event.get("test_intraday_fetch"):
+        cfg = event["test_intraday_fetch"]
+        symbol = cfg.get("symbol", "AAPL")
+        date_str = cfg.get("date", "2024-03-15")
+        import time as _time
+        from app.services.intraday_cache import get_intraday_cache
+        cache = get_intraday_cache()
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        t0 = _time.time()
+        df = loop.run_until_complete(cache.get_or_fetch(symbol, date_str))
+        t_first = _time.time() - t0
+        if df is None or df.empty:
+            return {"status": "no_data", "symbol": symbol, "date": date_str, "first_fetch_seconds": round(t_first, 2)}
+        t0 = _time.time()
+        df2 = loop.run_until_complete(cache.get_or_fetch(symbol, date_str))
+        t_second = _time.time() - t0
+        return {
+            "status": "ok",
+            "symbol": symbol,
+            "date": date_str,
+            "rows": len(df),
+            "first_minute": str(df.index.min()),
+            "last_minute": str(df.index.max()),
+            "columns": list(df.columns),
+            "open_first_minute": round(float(df["open"].iloc[0]), 2),
+            "close_last_minute": round(float(df["close"].iloc[-1]), 2),
+            "intraday_high": round(float(df["high"].max()), 2),
+            "intraday_low": round(float(df["low"].min()), 2),
+            "total_volume": int(df["volume"].sum()),
+            "first_fetch_seconds": round(t_first, 2),
+            "cache_hit_seconds": round(t_second, 3),
+            "data_match": bool(df.equals(df2)),
+        }
+
     # Handle warmer events - just return success to keep Lambda warm
     if event.get("warmer"):
         print(f"🔥 Warmer ping - {len(scanner_service.data_cache)} symbols in cache")

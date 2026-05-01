@@ -252,51 +252,5 @@ def handler(event, context):
         result = asyncio.get_event_loop().run_until_complete(_run_walk_forward_job(job_config))
         return result
 
-    # Test intraday cache fetch — verifies Alpaca minute-bar pipeline
-    if event.get("test_intraday_fetch"):
-        cfg = event["test_intraday_fetch"]
-        result = asyncio.get_event_loop().run_until_complete(
-            _test_intraday_fetch(cfg.get("symbol", "AAPL"), cfg.get("date", "2024-03-15"))
-        )
-        return result
-
     # For API Gateway events, use Mangum
     return _mangum_handler(event, context)
-
-
-async def _test_intraday_fetch(symbol: str, date: str) -> dict:
-    """Verify IntradayBarCache + Alpaca minute-bar fetch end-to-end."""
-    import time
-    from app.services.intraday_cache import get_intraday_cache
-
-    cache = get_intraday_cache()
-
-    print(f"🔍 Test intraday fetch: {symbol} {date}")
-    t0 = time.time()
-    df = await cache.get_or_fetch(symbol, date)
-    t_first = time.time() - t0
-
-    if df is None or df.empty:
-        return {"status": "no_data", "symbol": symbol, "date": date, "first_fetch_seconds": round(t_first, 2)}
-
-    t0 = time.time()
-    df2 = await cache.get_or_fetch(symbol, date)
-    t_second = time.time() - t0
-
-    return {
-        "status": "ok",
-        "symbol": symbol,
-        "date": date,
-        "rows": len(df),
-        "first_minute": str(df.index.min()),
-        "last_minute": str(df.index.max()),
-        "columns": list(df.columns),
-        "open_first_minute": round(float(df["open"].iloc[0]), 2),
-        "close_last_minute": round(float(df["close"].iloc[-1]), 2),
-        "intraday_high": round(float(df["high"].max()), 2),
-        "intraday_low": round(float(df["low"].min()), 2),
-        "total_volume": int(df["volume"].sum()),
-        "first_fetch_seconds": round(t_first, 2),
-        "cache_hit_seconds": round(t_second, 3),
-        "data_match": bool(df.equals(df2)),
-    }
