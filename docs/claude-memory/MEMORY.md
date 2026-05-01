@@ -109,9 +109,11 @@
 - [Pickle → Parquet/DuckDB/TimescaleDB migration](project_storage_migration_roadmap.md) — triggers, options, sequencing. Stay on pickle through ~500 paid subs, then start with Parquet on S3.
 
 ## Active Tasks
+- **[Intraday WF validation pickup (Apr 30 night → May 1)](project_intraday_validation_apr30.md)** — production-matched 5-min cadence simulator suggests WF overstates production by ~5 pp annualized (linear approx). Tomorrow: verify prod code → b-full re-run → cadence sweep. Material parity-gap signal.
 - **[Wire Circuit Breaker / Cascade Guard into production](project_cb_production_wiring.md)** — scheduled early week of May 4 2026. Closes the WF ↔ prod parity gap. Marketing numbers assume CB protection that subscribers don't currently get.
 - **[Production ticker-rename plumbing](project_ticker_rename_plumbing.md)** — same week. SQ/XYZ duplicate surfaced in 11y WF result. Switch to asset_id as primary key, verify Layer 2 catches ticker changes, backfill-cleanup utility for the pickle.
-- **[Intraday data-anomaly execution model](project_intraday_data_anomalies.md)** — real fix for FCEL/AMRN flash-spike artifacts in minute bars. Multi-minute confirmation + slippage model. ~1-2 day research project after tonight's validation lands.
+- **[Intraday data-anomaly execution model](project_intraday_data_anomalies.md)** — real fix for FCEL/AMRN flash-spike artifacts in minute bars. Multi-minute confirmation + slippage model. ~1-2 day research project.
+- **[TPE on intraday execution parameters](project_intraday_tpe_optimization.md)** — after b-full baseline + univariate sweeps. Cadence × lockout × stop-width × confirmation. Mid-May target.
 - **[Parquet migration 4-stage plan](project_storage_migration_roadmap.md)** — Stage 1 shadow write ✅ (Apr 14-15). **Stage 2 AL2023 ✅ (deployed before Apr 28 via commit `21f9e51`).** Stage 3 consumer migration → Stage 4 decommission pickle. Goal: parquet becomes primary, pickle retired.
 - **[Stage 3 detailed plan](project_parquet_stage3_plan.md)** — 6 work packages (3a-1, 3a-2, 3a-3, 3a-4, 3b, 3c, 4) with parallel-read diff harness + 2-week observation window before any cutover. Three independent safety nets. ~25-30h total spread over ~6 weeks.
 
