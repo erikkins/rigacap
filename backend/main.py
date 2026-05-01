@@ -1051,8 +1051,69 @@ def handler(event, context):
         cache = get_intraday_cache()
         validator = IntradayWFValidator(trailing_stop_pct=ts_pct)
 
+        # Pre-fetch daily bars for trades outside the pickle's range (pre-2019).
+        # Pickle has 7y of data; older trades (2016-2018) need supplementary fetch.
+        import pandas as _pd
+        from collections import defaultdict
+        from app.services.market_data_provider import dual_source_provider
+
+        ts_trades = [t for t in trades if t.get("exit_reason") == "trailing_stop"]
+        symbol_ranges: dict = defaultdict(lambda: [None, None])  # symbol -> [earliest_entry, latest_exit]
+        for t in ts_trades:
+            sym = t["symbol"]
+            entry = t["entry_date"]
+            exit_d = t["exit_date"]
+            if symbol_ranges[sym][0] is None or entry < symbol_ranges[sym][0]:
+                symbol_ranges[sym][0] = entry
+            if symbol_ranges[sym][1] is None or exit_d > symbol_ranges[sym][1]:
+                symbol_ranges[sym][1] = exit_d
+
+        supplementary: dict = {}
+        symbols_needing_fetch = []
+        for sym, (earliest, latest) in symbol_ranges.items():
+            pickle_df = scanner_service.data_cache.get(sym)
+            need_fetch = True
+            if pickle_df is not None and not pickle_df.empty:
+                pickle_start = pickle_df.index.min()
+                if pickle_df.index.tz is not None:
+                    pickle_start = pickle_start.tz_localize(None)
+                if _pd.to_datetime(earliest) >= pickle_start:
+                    need_fetch = False
+            if need_fetch:
+                symbols_needing_fetch.append((sym, earliest, latest))
+
+        print(f"📥 {len(symbols_needing_fetch)} symbols need supplementary daily-bar fetch from Alpaca")
+
+        # Batch fetches in chunks of 100 (Alpaca-friendly batch size)
+        for i in range(0, len(symbols_needing_fetch), 100):
+            chunk = symbols_needing_fetch[i:i + 100]
+            chunk_syms = [s[0] for s in chunk]
+            min_start = min(s[1] for s in chunk)
+            max_end = max(s[2] for s in chunk)
+            try:
+                bars = loop.run_until_complete(
+                    dual_source_provider.fetch_bars(
+                        symbols=chunk_syms,
+                        start_date=min_start,
+                        end_date=max_end,
+                    )
+                )
+                supplementary.update(bars)
+            except Exception as e:
+                print(f"⚠️ supplementary fetch chunk {i} failed: {e}")
+
+        print(f"📥 supplementary daily bars fetched: {len(supplementary)} symbols")
+
         def daily_lookup(symbol):
-            return scanner_service.data_cache.get(symbol)
+            # Pickle first; supplementary fallback for pre-2019 history
+            cached = scanner_service.data_cache.get(symbol)
+            supp = supplementary.get(symbol)
+            if cached is not None and supp is not None:
+                # Combine: supp covers older range, cached covers newer
+                combined = _pd.concat([supp, cached]).sort_index()
+                combined = combined[~combined.index.duplicated(keep="last")]
+                return combined
+            return cached if cached is not None else supp
 
         result = loop.run_until_complete(
             validator.validate_trades(trades, daily_lookup, cache)
