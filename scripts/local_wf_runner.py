@@ -140,6 +140,7 @@ def parse_args():
     p.add_argument('--no-ai', action='store_true', help='Disable AI optimizer (use fixed params)')
     p.add_argument('--cb-pause-no-carry-periods', action='store_true', help='Ablation flag: CB pause does NOT carry across period boundaries (mimics pre-Apr 28 implicit behavior where regime change at period boundary cleared pause). Default: pause carries.')
     p.add_argument('--disable-cg', action='store_true', help='Ablation flag: disable Cascade Guard / circuit breaker entirely (force circuit_breaker_stops=0). Used to compute the no-CG baseline for CG-impact analysis.')
+    p.add_argument('--intraday-aware', action='store_true', help='b-full validation: trailing-stop check uses day H/L instead of close-only. Matches production intraday-monitor logic. Default off (legacy EOD-only) for reproducibility.')
     p.add_argument('--rs-slots', type=int, default=0, help='RS Leaders slots (0=disabled, default: 0)')
     p.add_argument('--rs-stop', type=float, default=0, help='RS trailing stop pct (0=same as primary, e.g. 20 for 20%%)')
     p.add_argument('--dry-run', action='store_true', help='Print config and exit without running')
@@ -276,6 +277,7 @@ async def run_simulation(args):
                 precomputed_params=_load_precomputed(args.precomputed_params) if args.precomputed_params else None,
                 cb_pause_carries_periods=(not args.cb_pause_no_carry_periods),
                 disable_circuit_breaker=args.disable_cg,
+                intraday_aware=args.intraday_aware,
             )
         _current_result_ref["result"] = result
     except Exception as e:

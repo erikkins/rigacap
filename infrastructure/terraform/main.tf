@@ -918,7 +918,7 @@ resource "aws_lambda_function" "worker" {
   package_type  = "Image"
   image_uri     = "${aws_ecr_repository.api.repository_url}:${var.lambda_image_tag}"
   timeout       = 900  # 15 minutes (max for Lambda)
-  memory_size   = 4096 # 11y pickle requires >3008 (raw 728 MB after decompression). Bumped May 3 2026.
+  memory_size   = 3008 # AWS account quota cap (verified May 3 2026). 11y pickle won't fit — research jobs run locally via Docker. Request quota increase before any future bump attempt.
 
   ephemeral_storage {
     size = 1024 # MB — needed for streaming pickle export (344 MB compressed)
