@@ -110,7 +110,7 @@
 
 ## Active Tasks
 - **[Intraday WF validation pickup (Apr 30 night → May 1)](project_intraday_validation_apr30.md)** — production-matched 5-min cadence simulator suggests WF overstates production by ~5 pp annualized (linear approx). Tomorrow: verify prod code → b-full re-run → cadence sweep. Material parity-gap signal.
-- **[CB-in-production wired May 3 2026 (flag-gated, default off)](project_cb_production_wiring.md)** — `circuit_breaker_state.py` module + trigger/pause hooks landed in fe4f05e. Set `CIRCUIT_BREAKER_ENABLED=true` via terraform on Worker Lambda env to flip on. Re-engagement tightening deferred to v2.
+- **[CB live in production May 3 2026](project_cb_production_wiring.md)** — `CIRCUIT_BREAKER_ENABLED=true` on Worker Lambda; closes WF↔prod parity gap. State persists at `s3://rigacap-prod-price-data-149218244179/cb-state/<portfolio_type>.json`. Threshold default 3 same-day stops → 10-day pause. Smoke test passing (`scripts/test_circuit_breaker_smoke.py`, 35/35). Re-engagement tightening deferred to v2.
 - **[Production ticker-rename plumbing](project_ticker_rename_plumbing.md)** — same week. SQ/XYZ duplicate surfaced in 11y WF result. Switch to asset_id as primary key, verify Layer 2 catches ticker changes, backfill-cleanup utility for the pickle.
 - **[Intraday data-anomaly execution model](project_intraday_data_anomalies.md)** — real fix for FCEL/AMRN flash-spike artifacts in minute bars. Multi-minute confirmation + slippage model. ~1-2 day research project.
 - **[TPE on intraday execution parameters](project_intraday_tpe_optimization.md)** — after b-full baseline + univariate sweeps. Cadence × lockout × stop-width × confirmation. Mid-May target.
