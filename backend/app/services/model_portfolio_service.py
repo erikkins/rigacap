@@ -116,6 +116,17 @@ class ModelPortfolioService:
         if portfolio_type not in PORTFOLIO_TYPES:
             return {"error": f"Invalid portfolio type: {portfolio_type}"}
 
+        # Circuit Breaker: skip new entries while in pause (live + WF both honor)
+        from app.services import circuit_breaker_state as cb
+        if cb.is_paused(portfolio_type):
+            cb_state = cb.get_state(portfolio_type)
+            return {
+                "entries": 0,
+                "reason": "Circuit breaker pause active",
+                "pause_until": cb_state.get("pause_until"),
+                "pause_source": cb_state.get("pause_source"),
+            }
+
         # WF portfolio only enters at period boundaries (once per period)
         today = date.today()
         current_period = self._get_wf_period(today)
@@ -1327,6 +1338,17 @@ class ModelPortfolioService:
         No position limit, no cash gating — flat $10K notional per pick.
         """
         from app.services.data_export import data_export_service
+        from app.services import circuit_breaker_state as cb
+
+        # Circuit Breaker: skip new entries while in pause
+        if cb.is_paused(SIGNAL_TRACK_RECORD):
+            cb_state = cb.get_state(SIGNAL_TRACK_RECORD)
+            return {
+                "entries": 0,
+                "reason": "Circuit breaker pause active",
+                "pause_until": cb_state.get("pause_until"),
+                "pause_source": cb_state.get("pause_source"),
+            }
 
         dashboard = data_export_service.read_dashboard_json()
         if not dashboard:

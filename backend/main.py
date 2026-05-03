@@ -1583,6 +1583,20 @@ def handler(event, context):
                     if exit_result:
                         print(f"📈 [MODEL-LIVE] EOD exits: {len(exit_result)} closed — {[c.get('symbol') for c in exit_result]}")
                         await _notify_portfolio_change("SELL", exit_result)
+
+                # Circuit Breaker: count today's trailing-stop closures and
+                # trigger CB pause if threshold (default 3 same-day) met.
+                # No-op when CIRCUIT_BREAKER_ENABLED=false (default).
+                try:
+                    from app.services import circuit_breaker_state as cb
+                    from datetime import date as _date
+                    ts_symbols = [c.get("symbol") for c in (exit_result or []) if c.get("exit_reason") == "trailing_stop"]
+                    if ts_symbols:
+                        triggered = cb.record_eod_trailing_stops("live", _date.today(), ts_symbols)
+                        if triggered:
+                            print(f"🛑 [CB] Circuit breaker triggered for live: {triggered}")
+                except Exception as cbe:
+                    print(f"⚠️ CB record failed (non-fatal): {cbe}")
             except Exception as pe:
                 print(f"⚠️ Portfolio exit processing failed (non-fatal): {pe}")
                 pipeline_failures.append(("Portfolio Exits", repr(pe)))
@@ -1643,12 +1657,23 @@ def handler(event, context):
 
             # 7c. Signal track record: enter ALL fresh signals + check exits (regime-aware)
             try:
-                from app.services.model_portfolio_service import model_portfolio_service, _get_regime_trailing_stop
+                from app.services.model_portfolio_service import model_portfolio_service, _get_regime_trailing_stop, SIGNAL_TRACK_RECORD
                 regime_stop = _get_regime_trailing_stop(data)
                 async with async_session() as st_db:
                     st_exits = await model_portfolio_service.process_signal_track_exits(
                         st_db, trailing_stop_pct=regime_stop
                     )
+                    # CB record/trigger for STR (entries below honor any pause that's set)
+                    try:
+                        from app.services import circuit_breaker_state as cb
+                        from datetime import date as _date
+                        ts_symbols = [c.get("symbol") for c in (st_exits or []) if c.get("exit_reason") == "trailing_stop"]
+                        if ts_symbols:
+                            triggered = cb.record_eod_trailing_stops(SIGNAL_TRACK_RECORD, _date.today(), ts_symbols)
+                            if triggered:
+                                print(f"🛑 [CB] Circuit breaker triggered for signal_track_record: {triggered}")
+                    except Exception as cbe:
+                        print(f"⚠️ CB STR record failed (non-fatal): {cbe}")
                     st_entries = await model_portfolio_service.process_signal_track_entries(st_db)
                     print(f"📊 [SIGNAL-TRACK] exits={len(st_exits)}, entries={st_entries} (stop={regime_stop}%)")
             except Exception as ste:
