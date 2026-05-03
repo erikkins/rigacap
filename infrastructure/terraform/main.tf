@@ -195,6 +195,11 @@ variable "price_data_pickle_key" {
   default     = ""
 }
 
+variable "circuit_breaker_enabled" {
+  description = "Production circuit breaker / cascade guard kill switch. 'true' = active (CB fires after N same-day trailing stops, pauses entries N days). 'false' = disabled (legacy behavior). Defaults to 'true' as of May 3 2026 — closes the WF↔production parity gap (CB adds ~3.7 pp ann)."
+  default     = "true"
+}
+
 data "aws_caller_identity" "current" {}
 
 locals {
@@ -940,6 +945,10 @@ resource "aws_lambda_function" "worker" {
       # production pickle (prices/all_data.pkl.gz). Set via -var on apply when
       # running 11y or other long-history WF research; revert back to "" after.
       PRICE_DATA_PICKLE_KEY = var.price_data_pickle_key
+      # Production circuit breaker. Default "true" (May 3 2026) closes the
+      # WF↔prod parity gap. CB fires when N same-day trailing stops occur,
+      # then pauses new entries for N days. State persisted to S3.
+      CIRCUIT_BREAKER_ENABLED = var.circuit_breaker_enabled
     })
   }
 
