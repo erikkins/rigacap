@@ -1578,6 +1578,7 @@ def handler(event, context):
                     exit_result = await model_portfolio_service.process_live_exits(
                         exit_db, close_prices, regime_forecast,
                         trailing_stop_pct=regime_stop,
+                        is_eod=True,
                     )
                     if exit_result:
                         print(f"📈 [MODEL-LIVE] EOD exits: {len(exit_result)} closed — {[c.get('symbol') for c in exit_result]}")

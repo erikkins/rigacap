@@ -210,11 +210,17 @@ class ModelPortfolioService:
         regime_forecast: Optional[dict] = None,
         day_highs: Optional[Dict[str, float]] = None,
         trailing_stop_pct: Optional[float] = None,
+        is_eod: bool = False,
     ) -> List[dict]:
         """
-        Called by intraday monitor every 5 min.
+        Called by intraday monitor every 5 min, AND by daily scan post-close.
         Checks all open live positions for trailing stop and regime exit.
         Updates highest_price using day_high to capture peaks between checks.
+
+        is_eod=True signals "this is the post-close pass with end-of-day prices"
+        — when set, the trailing-stop fire happens regardless of the
+        INTRADAY_TRAILING_STOP_ENABLED kill switch (b-full validation showed
+        EOD trailing stops are positive; only intraday firing was negative).
         """
         positions = await self._get_open_positions(db, "live")
         if not positions:
@@ -244,12 +250,13 @@ class ModelPortfolioService:
                     exit_reason = "regime_exit"
 
             # Check trailing stop (overrides regime) — INTRADAY GATED.
-            # As of May 3 2026, intraday trailing stops are disabled in
-            # production by default. HWM tracking continues every 5 min so
-            # EOD checks have an accurate intraday-peak HWM, but the
-            # firing decision is deferred to EOD via process_live_exits_eod.
-            # Set INTRADAY_TRAILING_STOP_ENABLED=true to re-enable.
-            if _intraday_trailing_stop_enabled() and price <= trailing_stop_level:
+            # b-full WF validation (May 3 2026) showed intraday trailing stops
+            # cost ~17 pp ann. Production default: disable intraday firing,
+            # allow EOD firing through (EOD trailing stops are positive). The
+            # daily scan post-close pass sets is_eod=True; the every-5-min
+            # intraday cron leaves is_eod=False.
+            allow_trailing_stop_fire = is_eod or _intraday_trailing_stop_enabled()
+            if allow_trailing_stop_fire and price <= trailing_stop_level:
                 exit_reason = "trailing_stop"
 
             if exit_reason:
