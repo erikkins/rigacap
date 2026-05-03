@@ -286,7 +286,11 @@ resource "aws_route53_record" "frontend_www" {
   }
 }
 
-# A record for api.rigacap.com -> API Gateway
+# A record for api.rigacap.com -> CloudFront (which fronts API Gateway).
+# Cutover from direct API GW alias to CloudFront on May 3 2026 to bring WAF
+# coverage to api.rigacap.com (WAFv2 doesn't support API GW HTTP API v2 directly).
+# The aws_apigatewayv2_domain_name.api resource is preserved as a fallback —
+# we can revert this alias if anything regresses.
 resource "aws_route53_record" "api" {
   count   = var.use_route53 ? 1 : 0
   zone_id = aws_route53_zone.main[0].zone_id
@@ -294,8 +298,8 @@ resource "aws_route53_record" "api" {
   type    = "A"
 
   alias {
-    name                   = aws_apigatewayv2_domain_name.api.domain_name_configuration[0].target_domain_name
-    zone_id                = aws_apigatewayv2_domain_name.api.domain_name_configuration[0].hosted_zone_id
+    name                   = aws_cloudfront_distribution.api.domain_name
+    zone_id                = aws_cloudfront_distribution.api.hosted_zone_id
     evaluate_target_health = false
   }
 }
@@ -583,6 +587,75 @@ resource "aws_cloudfront_distribution" "frontend" {
 }
 
 # ============================================================================
+# CloudFront — API distribution
+# ============================================================================
+# Fronts the API Gateway HTTP API so api.rigacap.com gets WAF coverage.
+# WAFv2 doesn't support API Gateway HTTP API v2 directly; CloudFront does.
+# CachingDisabled + AllViewer policies = transparent pass-through to API GW
+# (no caching, all headers/cookies/query strings forwarded). Multi-attach
+# WAF reuses the same ACL as the frontend distribution at $0 extra cost.
+
+resource "aws_cloudfront_distribution" "api" {
+  enabled         = true
+  price_class     = "PriceClass_100"
+  is_ipv6_enabled = true
+
+  # Reuse the existing CloudFront-scope WAF ACL (already attached to the
+  # frontend). Multi-attach is supported up to 20 distributions per ACL.
+  web_acl_id = aws_wafv2_web_acl.cloudfront.arn
+
+  aliases = ["api.${var.domain_name}"]
+
+  origin {
+    # Direct execute-api endpoint (regional). Once cutover is verified, we
+    # can optionally lock this down with a shared-secret header so direct
+    # hits to the execute-api URL are rejected (closes the WAF bypass hole).
+    domain_name = "${aws_apigatewayv2_api.main.id}.execute-api.${var.aws_region}.amazonaws.com"
+    origin_id   = "APIGW-${aws_apigatewayv2_api.main.id}"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  default_cache_behavior {
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "APIGW-${aws_apigatewayv2_api.main.id}"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    # AWS-managed CachingDisabled policy: every request goes through to API GW.
+    cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+
+    # AWS-managed AllViewer origin-request policy: forward all viewer headers,
+    # cookies, and query strings to API GW unchanged. Includes Authorization.
+    origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate_validation.main.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
+
+  tags = {
+    Name = "${local.prefix}-api"
+  }
+
+  depends_on = [aws_acm_certificate_validation.main]
+}
+
+# ============================================================================
 # Lambda Function - Backend API
 # ============================================================================
 
@@ -817,6 +890,12 @@ resource "aws_lambda_function" "api" {
   environment {
     variables = merge(local.lambda_env_vars, {
       LAMBDA_ROLE = "api"
+      # CloudFront now fronts api.rigacap.com (cutover May 3 2026). The API
+      # Lambda must read the originating client IP from X-Forwarded-For
+      # (set by CloudFront) instead of the connection IP (which is now a
+      # CloudFront edge). app/core/security.py.get_client_ip honors this
+      # flag for rate-limit + Turnstile bot scoring fidelity.
+      TRUST_FORWARDED_FOR = "true"
     })
   }
 
