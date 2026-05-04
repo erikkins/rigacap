@@ -286,7 +286,12 @@ class DataExportService:
             # Fallback 1: Parquet via DuckDB httpfs (AL2023 native, no /tmp)
             if not data_cache:
                 try:
-                    import duckdb, os
+                    # NOTE: os is already imported at module level. Importing
+                    # it AGAIN here makes os a local-to-this-function variable,
+                    # which collides with the os.environ.get() reads earlier
+                    # in this function (UnboundLocalError). Same Python scoping
+                    # pitfall as the scanner_service incident May 2 2026.
+                    import duckdb
                     print("📦 Loading from parquet via DuckDB httpfs...")
                     conn = duckdb.connect(':memory:')
                     conn.execute("SET home_directory='/tmp';")
