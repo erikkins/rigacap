@@ -1631,26 +1631,35 @@ def handler(event, context):
                        f"{entry_result.get('entries', 0) if isinstance(entry_result, dict) else 0} entries, cash={entry_result.get('remaining_cash', '?') if isinstance(entry_result, dict) else '?'}")
 
             # Silent-cash detector: fresh ensemble signals exist but live portfolio
-            # opened zero positions AND has free slots. Flags cases like the Apr 6-15
-            # IndentError where entries silently failed while signals kept firing.
+            # opened zero positions AND has free slots AND there's at least one fresh
+            # signal that ISN'T already held. The "already held" check matters because
+            # GOOG and GOOGL (or any signal where we already own the position) being
+            # "fresh" but skipped is correct-by-design, not a broken pipeline.
             try:
                 entries_opened = entry_result.get('entries', 0) if isinstance(entry_result, dict) else 0
-                fresh_count = len([s for s in (data.get('buy_signals') or []) if s.get('is_fresh')])
+                fresh_signals = [s for s in (data.get('buy_signals') or []) if s.get('is_fresh')]
+                fresh_count = len(fresh_signals)
                 if fresh_count > 0 and entries_opened == 0:
                     from sqlalchemy import select as _sel, func as _fn
                     from app.core.database import ModelPosition as _MP
                     async with async_session() as _cap_db:
-                        open_count = (await _cap_db.execute(
-                            _sel(_fn.count(_MP.id)).where(
+                        open_positions = (await _cap_db.execute(
+                            _sel(_MP.symbol).where(
                                 _MP.portfolio_type == "live",
                                 _MP.status == "open",
                             )
-                        )).scalar() or 0
-                    if open_count < 6:  # MAX_POSITIONS
+                        )).scalars().all()
+                    open_count = len(open_positions)
+                    held_symbols = {sym for sym in open_positions}
+                    # Real broken-pipeline signal = at least one fresh signal we DON'T hold
+                    actionable_fresh = [s for s in fresh_signals if s.get('symbol') not in held_symbols]
+                    actionable_count = len(actionable_fresh)
+                    if open_count < 6 and actionable_count > 0:
                         pipeline_failures.append((
                             "Silent Cash",
-                            f"{fresh_count} fresh signals, 0 entries opened, "
-                            f"{open_count}/6 positions held — entry pipeline may be silently broken"
+                            f"{actionable_count} actionable fresh signals (of {fresh_count} total), "
+                            f"0 entries opened, {open_count}/6 positions held — entry pipeline may be silently broken. "
+                            f"Skipped: {[s.get('symbol') for s in actionable_fresh]}"
                         ))
             except Exception as _cde:
                 print(f"⚠️ Silent-cash detector failed (non-fatal): {_cde}")
