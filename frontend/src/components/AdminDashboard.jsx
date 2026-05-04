@@ -1695,11 +1695,15 @@ function ModelPortfolioTab({ fetchWithAuth }) {
               <p className="text-xs text-gray-400">Best / Worst</p>
               <p className="font-semibold">
                 {signalTrackStats.best_pick ? (
-                  <span className="text-green-600">{signalTrackStats.best_pick.symbol} +{signalTrackStats.best_pick.pnl_pct}%</span>
+                  <span className={signalTrackStats.best_pick.pnl_pct >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    {signalTrackStats.best_pick.symbol} {signalTrackStats.best_pick.pnl_pct >= 0 ? '+' : ''}{signalTrackStats.best_pick.pnl_pct}%
+                  </span>
                 ) : '—'}
                 {' / '}
                 {signalTrackStats.worst_pick ? (
-                  <span className="text-red-600">{signalTrackStats.worst_pick.symbol} {signalTrackStats.worst_pick.pnl_pct}%</span>
+                  <span className={signalTrackStats.worst_pick.pnl_pct >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    {signalTrackStats.worst_pick.symbol} {signalTrackStats.worst_pick.pnl_pct >= 0 ? '+' : ''}{signalTrackStats.worst_pick.pnl_pct}%
+                  </span>
                 ) : '—'}
               </p>
             </div>

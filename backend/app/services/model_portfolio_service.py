@@ -1359,14 +1359,25 @@ class ModelPortfolioService:
         if not fresh_signals:
             return {"entries": 0, "reason": "No fresh signals"}
 
-        # Skip symbols already open in signal track record
+        # STR is a SIGNAL track record, not a portfolio: every fresh signal
+        # gets its own row, even if the same symbol is already open. The
+        # logical PK is (symbol, entry_date), not symbol alone — a re-signal
+        # on a later date is a meaningful event the system wants to record.
+        # Same-day duplicate guard remains: don't enter the SAME (symbol, today)
+        # twice if the scan somehow runs more than once on the same day.
+        from datetime import date as _date
+        today = _date.today()
         open_positions = await self._get_open_positions(db, SIGNAL_TRACK_RECORD)
-        held_symbols = {p.symbol for p in open_positions}
+        same_day_held = {
+            p.symbol for p in open_positions
+            if p.entry_date and p.entry_date.date() == today
+        }
 
         entries = 0
         for sig in fresh_signals:
             symbol = sig["symbol"]
-            if symbol in held_symbols:
+            if symbol in same_day_held:
+                # Already opened a position for this symbol TODAY — don't double-enter
                 continue
 
             price = sig.get("price", 0)
@@ -1388,7 +1399,7 @@ class ModelPortfolioService:
             )
             db.add(pos)
             entries += 1
-            held_symbols.add(symbol)
+            same_day_held.add(symbol)
 
             logger.info(
                 f"[SIGNAL-TRACK] Entered {symbol} @ ${price:.2f} "
@@ -1398,7 +1409,7 @@ class ModelPortfolioService:
         if entries:
             await db.commit()
 
-        return {"entries": entries, "open_total": len(held_symbols)}
+        return {"entries": entries, "open_today": len(same_day_held)}
 
     async def process_signal_track_exits(
         self,
@@ -1551,17 +1562,45 @@ class ModelPortfolioService:
             reverse=True,
         )[:20]
 
-        # Open positions with current unrealized P&L
+        # Open positions with current unrealized P&L.
+        # During market hours, prefer LIVE quotes from the dual-source provider
+        # (Alpaca SIP + yfinance fallback). After hours, fall back to the
+        # latest close in scanner_service.data_cache. If the quote-fetch fails
+        # for any reason, fall back to the latest close — never to entry_price
+        # (which would render misleading 0% P&L).
         from app.services.scanner import scanner_service
+        from app.services.market_data_provider import dual_source_provider
+        from datetime import datetime as _dt
+        from zoneinfo import ZoneInfo
+
+        # Detect "market open" — naive cutoff: 9:30 AM - 4:00 PM ET on weekdays.
+        now_et = _dt.now(ZoneInfo("America/New_York"))
+        is_weekday = now_et.weekday() < 5
+        market_minute = now_et.hour * 60 + now_et.minute
+        is_market_hours = is_weekday and 570 <= market_minute < 960  # 9:30 - 16:00
+
+        live_quotes: Dict[str, float] = {}
+        if is_market_hours and open_positions:
+            try:
+                quotes = await dual_source_provider.fetch_quotes(
+                    [p.symbol for p in open_positions]
+                )
+                live_quotes = {sym: q.price for sym, q in quotes.items() if q and q.price}
+            except Exception as e:
+                logger.warning(f"STR live-quote fetch failed (falling back to close): {e}")
 
         open_data = []
         for pos in open_positions:
-            df = scanner_service.data_cache.get(pos.symbol)
-            current_price = (
-                float(df["close"].iloc[-1])
-                if df is not None and not df.empty
-                else pos.entry_price
-            )
+            current_price = live_quotes.get(pos.symbol)
+            price_source = "live" if current_price is not None else None
+            if current_price is None:
+                df = scanner_service.data_cache.get(pos.symbol)
+                if df is not None and not df.empty:
+                    current_price = float(df["close"].iloc[-1])
+                    price_source = "close"
+                else:
+                    current_price = pos.entry_price
+                    price_source = "entry_fallback"
             pnl_pct = ((current_price / pos.entry_price) - 1) * 100
             open_data.append({
                 "symbol": pos.symbol,
@@ -1570,6 +1609,7 @@ class ModelPortfolioService:
                 "current_price": round(current_price, 2),
                 "pnl_pct": round(pnl_pct, 2),
                 "highest_price": pos.highest_price,
+                "price_source": price_source,
             })
 
         return {
