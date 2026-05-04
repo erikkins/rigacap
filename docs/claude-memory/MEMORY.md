@@ -70,6 +70,7 @@
 - Symbol normalization: hyphens (yfinance) ↔ dots (Alpaca) handled automatically.
 
 ## Lambda Gotchas
+- **[Lambda payloads must be TRUTHY](feedback_lambda_payload_truthy.md)** — `if event.get("foo"):` skips on `{}` (falsy) → Mangum errors. Use `{"_": 1}` for config-less handlers. Burned twice in 3 days.
 - **`anthropic` SDK not installed** — use raw httpx POST
 - **NEVER add `from datetime import datetime` in handler() body** — shadows module-level, breaks all nested functions. Use aliased imports. See CLAUDE.md for full explanation.
 - **`select(User).join(Subscription)` fails** with multiple FKs — use explicit join condition.
