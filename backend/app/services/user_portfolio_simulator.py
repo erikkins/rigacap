@@ -124,6 +124,7 @@ def simulate(
     signup_date: _date,
     portfolio_size: float,
     as_of_date: Optional[_date] = None,
+    trade_log: Optional[List[dict]] = None,
 ) -> SimResult:
     """
     Replay signals from signup_date forward at the user's portfolio_size.
@@ -192,6 +193,19 @@ def simulate(
                         if trade_pnl > 0:
                             winning_count += 1
                         cash += proceeds
+                        if trade_log is not None:
+                            trade_log.append({
+                                "symbol": pos.symbol,
+                                "entry_date": pos.entry_date,
+                                "entry_price": round(pos.entry_price, 2),
+                                "exit_date": date_str,
+                                "exit_price": round(close, 2),
+                                "hwm": round(pos.hwm, 2),
+                                "trailing_level": round(trailing_level, 2),
+                                "exit_reason": exit_reason,
+                                "pnl_dollars": round(trade_pnl, 2),
+                                "pnl_pct": round((close / pos.entry_price - 1) * 100, 2),
+                            })
                     else:
                         survivors.append(pos)
                 open_positions = survivors
@@ -225,6 +239,16 @@ def simulate(
                     )
                     cash -= alloc
                     held_symbols.add(sym)
+                    if trade_log is not None:
+                        trade_log.append({
+                            "symbol": sym,
+                            "entry_date": date_str,
+                            "entry_price": round(entry_price, 2),
+                            "alloc": round(alloc, 2),
+                            "shares": round(shares, 4),
+                            "ensemble_entry_date": sig.get("ensemble_entry_date"),
+                            "action": "ENTRY",
+                        })
 
         cur += _td(days=1)
 

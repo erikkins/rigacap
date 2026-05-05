@@ -2030,6 +2030,52 @@ def handler(event, context):
             return {"status": "failed", "error": str(e)}
 
     # Handle CSV export (chained from pickle rebuild)
+    # Debug: run user_portfolio_simulator for one user and dump every trade.
+    if event.get("debug_user_portfolio_simulate"):
+        from datetime import date as _date
+        from app.services import user_portfolio_simulator as ups
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        async def _debug_sim():
+            from app.core.database import async_session, User
+            email = event.get("email") or "erik@rigacap.com"
+            async with async_session() as db:
+                row = await db.execute(select(User).where(User.email == email))
+                user = row.scalar_one_or_none()
+                if not user or not user.created_at:
+                    return {"error": f"user {email} not found or no created_at"}
+                signup = user.created_at.date()
+                size = float(user.portfolio_size or 10000.0)
+                trade_log = []
+                sim = ups.simulate(signup, size, _date.today(), trade_log=trade_log)
+                ups.clear_caches()
+                return {
+                    "email": email,
+                    "signup": signup.isoformat(),
+                    "portfolio_size": size,
+                    "result": {
+                        "portfolio_value": sim.portfolio_value,
+                        "open_pnl_pct": sim.open_pnl_pct,
+                        "open_positions_count": sim.open_positions_count,
+                        "closed_trades_count": sim.closed_trades_count,
+                        "winning_trades_count": sim.winning_trades_count,
+                        "total_pnl_dollars": sim.total_pnl_dollars,
+                        "open_positions": sim.open_positions,
+                    },
+                    "trade_log": trade_log,
+                }
+
+        try:
+            return {"statusCode": 200, "body": loop.run_until_complete(_debug_sim())}
+        except Exception as e:
+            import traceback
+            print(f"❌ debug sim failed: {e}")
+            traceback.print_exc()
+            return {"statusCode": 500, "body": {"error": str(e)}}
+
     # Recompute per-user portfolio state for every active subscriber.
     # Chained from the daily-scan as step 11 — fires after dashboard +
     # snapshots are written so the simulator has fresh inputs.
