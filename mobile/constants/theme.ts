@@ -71,10 +71,17 @@ export const Palette = {
 // Regime colors — functional, kept across rebrand
 // ──────────────────────────────────────────────────────────────
 
+// Tuned to contrast on the paper background (#F5F1E8). Strong colors stay
+// vivid. Two adjustments from the original navy-bg palette:
+// - rotating_bull was a pale mint (#BBF7D0) → sage/teal #4C9277, distinct
+//   hue from strong_bull while staying bull-family.
+// - weak_bull was a pale green (#86EFAC) → calmer sage #5DA974 with
+//   enough darkness to read on paper.
+// weak_bear (#FCA5A5) is borderline but Erik's choice to keep.
 export const Regime: Record<string, string> = {
   strong_bull: '#22C55E',
-  weak_bull: '#86EFAC',
-  rotating_bull: '#BBF7D0',
+  weak_bull: '#5DA974',
+  rotating_bull: '#4C9277',
   range_bound: '#F59E0B',
   weak_bear: '#FCA5A5',
   panic_crash: '#EF4444',

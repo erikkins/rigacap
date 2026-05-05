@@ -27,7 +27,7 @@ import Animated, {
   useSharedValue,
   runOnJS,
 } from 'react-native-reanimated';
-import { Colors, FontSize, Spacing } from '@/constants/theme';
+import { Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
 import { ChartPoint } from '@/hooks/useChartData';
 
 interface PriceChartProps {
@@ -264,8 +264,8 @@ export default function PriceChart({
             <Svg width={chartWidth} height={chartHeight}>
               <Defs>
                 <LinearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0" stopColor={Colors.gold} stopOpacity="0.25" />
-                  <Stop offset="1" stopColor={Colors.gold} stopOpacity="0.02" />
+                  <Stop offset="0" stopColor={Palette.ink} stopOpacity="0.18" />
+                  <Stop offset="1" stopColor={Palette.ink} stopOpacity="0.0" />
                 </LinearGradient>
               </Defs>
 
@@ -277,14 +277,14 @@ export default function PriceChart({
                     y1={l.y}
                     x2={chartWidth - PADDING.right}
                     y2={l.y}
-                    stroke={Colors.cardBorder}
+                    stroke={Palette.rule}
                     strokeWidth={0.5}
                   />
                   <SvgText
                     x={PADDING.left - 6}
                     y={l.y + 4}
                     fontSize={10}
-                    fill={Colors.textMuted}
+                    fill={Palette.inkLight}
                     textAnchor="end"
                   >
                     {l.label}
@@ -299,7 +299,7 @@ export default function PriceChart({
                   x={l.x}
                   y={chartHeight - 6}
                   fontSize={10}
-                  fill={Colors.textMuted}
+                  fill={Palette.inkLight}
                   textAnchor="middle"
                 >
                   {l.label}
@@ -311,22 +311,22 @@ export default function PriceChart({
                 <Path d={areaPath} fill="url(#areaGrad)" />
               ) : null}
 
-              {/* DWAP line */}
+              {/* DWAP line — subtle reference */}
               {dwapPath ? (
                 <Path
                   d={dwapPath}
-                  stroke={Colors.blue}
+                  stroke={Palette.inkLight}
                   strokeWidth={1}
                   fill="none"
-                  opacity={0.6}
+                  opacity={0.7}
                 />
               ) : null}
 
-              {/* Breakout trigger (DWAP * 1.05) */}
+              {/* Breakout trigger (DWAP * 1.05) — claret = "the line that matters" */}
               {breakoutPath ? (
                 <Path
                   d={breakoutPath}
-                  stroke={Colors.green}
+                  stroke={Palette.claret}
                   strokeWidth={1}
                   strokeDasharray="4,4"
                   fill="none"
@@ -334,17 +334,17 @@ export default function PriceChart({
                 />
               ) : null}
 
-              {/* Price line */}
+              {/* Price line — primary, ink, dominant */}
               {pricePath ? (
                 <Path
                   d={pricePath}
-                  stroke={Colors.gold}
-                  strokeWidth={1.5}
+                  stroke={Palette.ink}
+                  strokeWidth={1.75}
                   fill="none"
                 />
               ) : null}
 
-              {/* Breakout date marker */}
+              {/* Breakout date marker — claret accent */}
               {breakoutX && (
                 <>
                   <Line
@@ -352,7 +352,7 @@ export default function PriceChart({
                     y1={PADDING.top}
                     x2={breakoutX.x}
                     y2={PADDING.top + plotH}
-                    stroke={Colors.gold}
+                    stroke={Palette.claret}
                     strokeWidth={1}
                     strokeDasharray="4,4"
                     opacity={0.7}
@@ -361,7 +361,7 @@ export default function PriceChart({
                     x={breakoutX.x}
                     y={PADDING.top - 4}
                     fontSize={9}
-                    fill={Colors.gold}
+                    fill={Palette.claret}
                     textAnchor={breakoutX.x > chartWidth - 50 ? 'end' : breakoutX.x < PADDING.left + 50 ? 'start' : 'middle'}
                     fontWeight="600"
                   >
@@ -370,7 +370,7 @@ export default function PriceChart({
                 </>
               )}
 
-              {/* Entry date marker */}
+              {/* Entry date marker — positive green */}
               {entryX && (
                 <>
                   <Line
@@ -378,7 +378,7 @@ export default function PriceChart({
                     y1={PADDING.top}
                     x2={entryX.x}
                     y2={PADDING.top + plotH}
-                    stroke={Colors.green}
+                    stroke={Palette.positive}
                     strokeWidth={1}
                     strokeDasharray="3,3"
                     opacity={0.7}
@@ -387,7 +387,7 @@ export default function PriceChart({
                     x={entryX.x}
                     y={PADDING.top - 4}
                     fontSize={9}
-                    fill={Colors.green}
+                    fill={Palette.positive}
                     textAnchor={entryX.x > chartWidth - 40 ? 'end' : entryX.x < PADDING.left + 40 ? 'start' : 'middle'}
                     fontWeight="600"
                   >
@@ -404,7 +404,7 @@ export default function PriceChart({
                     y1={PADDING.top}
                     x2={crosshair.x}
                     y2={PADDING.top + plotH}
-                    stroke={Colors.textMuted}
+                    stroke={Palette.inkMute}
                     strokeWidth={0.5}
                     strokeDasharray="2,2"
                   />
@@ -413,7 +413,7 @@ export default function PriceChart({
                     y1={crosshair.y}
                     x2={chartWidth - PADDING.right}
                     y2={crosshair.y}
-                    stroke={Colors.textMuted}
+                    stroke={Palette.inkMute}
                     strokeWidth={0.5}
                     strokeDasharray="2,2"
                   />
@@ -421,8 +421,8 @@ export default function PriceChart({
                     cx={crosshair.x}
                     cy={crosshair.y}
                     r={4}
-                    fill={Colors.gold}
-                    stroke={Colors.background}
+                    fill={Palette.ink}
+                    stroke={Palette.paper}
                     strokeWidth={2}
                   />
                 </>
@@ -435,21 +435,21 @@ export default function PriceChart({
       {/* Legend */}
       <View style={[styles.legend, isLandscape && styles.legendLandscape]}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendLine, { backgroundColor: Colors.gold }]} />
+          <View style={[styles.legendLine, { backgroundColor: Palette.ink }]} />
           <Text style={styles.legendText}>Price</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendLine, { backgroundColor: Colors.blue, opacity: 0.6 }]} />
+          <View style={[styles.legendLine, { backgroundColor: Palette.inkLight, opacity: 0.7 }]} />
           <Text style={styles.legendText}>Wtd Avg</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDashed, { borderColor: Colors.green }]} />
+          <View style={[styles.legendDashed, { borderColor: Palette.claret }]} />
           <Text style={styles.legendText}>Trigger</Text>
         </View>
         {breakoutDate && (
           <View style={styles.legendItem}>
-            <View style={[styles.legendDashed, { borderColor: Colors.gold }]} />
-            <Text style={styles.legendText}>Breakout</Text>
+            <View style={[styles.legendDashed, { borderColor: Palette.positive }]} />
+            <Text style={styles.legendText}>Entry</Text>
           </View>
         )}
       </View>
@@ -459,44 +459,46 @@ export default function PriceChart({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
     padding: Spacing.xs,
     overflow: 'hidden',
   },
   landscapeContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Palette.paper,
   },
   tooltip: {
     position: 'absolute',
     top: Spacing.xs,
     right: Spacing.md,
-    backgroundColor: Colors.navy + 'EE',
-    borderRadius: 8,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     padding: Spacing.sm,
     zIndex: 10,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
   },
   tooltipLandscape: {
     top: Spacing.md,
     right: Spacing.lg,
   },
   tooltipDate: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
   },
   tooltipPrice: {
-    color: Colors.gold,
+    color: Palette.ink,
     fontSize: FontSize.md,
-    fontWeight: '700',
+    fontFamily: Fonts.mono.medium,
   },
   tooltipDwap: {
-    color: Colors.blue,
+    color: Palette.inkMute,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.mono.regular,
     marginTop: 2,
   },
   legend: {
@@ -529,7 +531,9 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   legendText: {
-    color: Colors.textMuted,
+    color: Palette.inkMute,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
+    letterSpacing: 0.3,
   },
 });

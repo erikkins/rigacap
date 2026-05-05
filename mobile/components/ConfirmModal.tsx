@@ -11,7 +11,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Colors, FontSize, Spacing } from '@/constants/theme';
+import { Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
 
 interface ConfirmModalProps {
   visible: boolean;
@@ -29,7 +29,7 @@ export default function ConfirmModal({
   title,
   children,
   confirmLabel,
-  confirmColor = Colors.gold,
+  confirmColor = Palette.ink,
   onConfirm,
   onCancel,
   loading = false,
@@ -47,19 +47,23 @@ export default function ConfirmModal({
           <View style={styles.body}>{children}</View>
           <View style={styles.buttons}>
             <Pressable
-              style={styles.cancelButton}
+              style={({ pressed }) => [styles.cancelButton, pressed && styles.pressed]}
               onPress={onCancel}
               disabled={loading}
             >
               <Text style={styles.cancelText}>Cancel</Text>
             </Pressable>
             <Pressable
-              style={[styles.confirmButton, { backgroundColor: confirmColor }]}
+              style={({ pressed }) => [
+                styles.confirmButton,
+                { backgroundColor: confirmColor },
+                pressed && styles.pressed,
+              ]}
               onPress={onConfirm}
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={Palette.paper} />
               ) : (
                 <Text style={styles.confirmText}>{confirmLabel}</Text>
               )}
@@ -74,20 +78,23 @@ export default function ConfirmModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    // Dark scrim so the paper sheet reads as elevated
+    backgroundColor: 'rgba(20,18,16,0.55)',
     justifyContent: 'flex-end',
   },
   card: {
-    backgroundColor: Colors.card,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: Palette.paper,
+    borderTopLeftRadius: Radii.xl,
+    borderTopRightRadius: Radii.xl,
+    borderTopWidth: 1,
+    borderTopColor: Palette.rule,
     padding: Spacing.lg,
     paddingBottom: Spacing.xl + 16,
   },
   title: {
-    color: Colors.textPrimary,
-    fontSize: FontSize.lg,
-    fontWeight: '700',
+    color: Palette.ink,
+    fontSize: FontSize.xl,
+    fontFamily: Fonts.display.semibold,
     marginBottom: Spacing.md,
   },
   body: {
@@ -97,27 +104,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.sm,
   },
+  pressed: {
+    opacity: 0.85,
+  },
   cancelButton: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 10,
-    backgroundColor: Colors.cardBorder,
+    borderRadius: Radii.md,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Palette.rule,
     alignItems: 'center',
   },
   cancelText: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.md,
-    fontWeight: '600',
+    fontFamily: Fonts.body.medium,
+    letterSpacing: 0.4,
   },
   confirmButton: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: Radii.md,
     alignItems: 'center',
   },
   confirmText: {
-    color: '#fff',
+    color: Palette.paper,
     fontSize: FontSize.md,
-    fontWeight: '700',
+    fontFamily: Fonts.body.semibold,
+    letterSpacing: 0.4,
   },
 });

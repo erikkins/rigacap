@@ -347,7 +347,7 @@ export default function DashboardScreen() {
           visible
           title={`Track ${trackModal.signal.symbol}`}
           confirmLabel="Track"
-          confirmColor={Colors.gold}
+          confirmColor={Palette.ink}
           onConfirm={handleTrack}
           onCancel={() => setTrackModal(null)}
           loading={trackLoading}
@@ -375,7 +375,7 @@ export default function DashboardScreen() {
           visible
           title={`Sell ${sellModal.position.symbol}`}
           confirmLabel="Sell"
-          confirmColor={Colors.red}
+          confirmColor={Palette.negative}
           onConfirm={handleSell}
           onCancel={() => setSellModal(null)}
           loading={sellLoading}

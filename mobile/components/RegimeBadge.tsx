@@ -4,14 +4,14 @@
 
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Colors, FontSize, Spacing } from '@/constants/theme';
+import { Fonts, FontSize, Palette, Radii, Regime, Spacing } from '@/constants/theme';
 import { RegimeForecast } from '@/hooks/useSignals';
 
 const REGIME_LABELS: Record<string, string> = {
   strong_bull: 'Strong Bull',
   weak_bull: 'Weak Bull',
   rotating_bull: 'Rotating Bull',
-  range_bound: 'Range Bound',
+  range_bound: 'Range-Bound',
   weak_bear: 'Weak Bear',
   panic_crash: 'Panic / Crash',
   recovery: 'Recovery',
@@ -38,12 +38,12 @@ const ALL_REGIMES = [
 ];
 
 function getVixLabel(vix: number | null | undefined): { label: string; color: string } {
-  if (vix == null) return { label: 'N/A', color: Colors.textSecondary };
-  if (vix < 15) return { label: 'Calm', color: Colors.green };
-  if (vix < 20) return { label: 'Normal', color: Colors.textSecondary };
-  if (vix < 25) return { label: 'Elevated', color: '#F59E0B' };
-  if (vix < 35) return { label: 'High Fear', color: '#F97316' };
-  return { label: 'Extreme Fear', color: Colors.red };
+  if (vix == null) return { label: 'N/A', color: Palette.inkLight };
+  if (vix < 15) return { label: 'Calm', color: Palette.positive };
+  if (vix < 20) return { label: 'Normal', color: Palette.inkMute };
+  if (vix < 25) return { label: 'Elevated', color: '#B8860B' };
+  if (vix < 35) return { label: 'High Fear', color: Palette.claretLight };
+  return { label: 'Extreme Fear', color: Palette.negative };
 }
 
 interface RegimeBadgeProps {
@@ -66,14 +66,14 @@ export default function RegimeBadge({
   const [expanded, setExpanded] = useState(false);
 
   const currentRegime = forecast?.current_regime || regime || '';
-  const color = Colors.regime[currentRegime] || Colors.textMuted;
+  const color = Regime[currentRegime] || Palette.inkLight;
   const label = REGIME_LABELS[currentRegime] || currentRegime;
 
   if (compact) {
     return (
-      <View style={[styles.compactBadge, { backgroundColor: color + '22' }]}>
+      <View style={[styles.compactBadge, { borderColor: color }]}>
         <View style={[styles.dot, { backgroundColor: color }]} />
-        <Text style={[styles.compactText, { color }]}>{label}</Text>
+        <Text style={[styles.compactText, { color: Palette.ink }]}>{label}</Text>
       </View>
     );
   }
@@ -81,14 +81,18 @@ export default function RegimeBadge({
   // Collapsed banner (tap to expand)
   const banner = (
     <Pressable
-      style={[styles.banner, { borderLeftColor: color }]}
+      style={({ pressed }) => [
+        styles.banner,
+        { borderLeftColor: color },
+        pressed && styles.pressed,
+      ]}
       onPress={() => setExpanded((v) => !v)}
     >
       <View style={styles.bannerContent}>
         <View style={styles.bannerTopRow}>
           <View style={[styles.dot, { backgroundColor: color }]} />
           <Text style={styles.bannerLabel}>Market Regime</Text>
-          <Text style={[styles.bannerValue, { color }]}>{label}</Text>
+          <Text style={styles.bannerValue}>{label}</Text>
           <View style={{ flex: 1 }} />
           <Text style={styles.chevron}>{expanded ? '▲' : '▼'}</Text>
         </View>
@@ -97,7 +101,7 @@ export default function RegimeBadge({
             <Text style={styles.spyBanner}>
               SPY {marketStats.spy_price.toFixed(2)}
               {marketStats.spy_change_pct != null && (
-                <Text style={{ color: marketStats.spy_change_pct >= 0 ? Colors.green : Colors.red }}>
+                <Text style={{ color: marketStats.spy_change_pct >= 0 ? Palette.positive : Palette.negative }}>
                   {' '}({marketStats.spy_change_pct >= 0 ? '+' : ''}{marketStats.spy_change_pct.toFixed(2)}%)
                 </Text>
               )}
@@ -125,24 +129,18 @@ export default function RegimeBadge({
         {/* Outlook / Risk / Action pills */}
         <View style={styles.pillRow}>
           {forecast.outlook && (
-            <View style={[styles.pill, { backgroundColor: Colors.blue + '22' }]}>
-              <Text style={[styles.pillText, { color: Colors.blue }]}>
-                {forecast.outlook}
-              </Text>
+            <View style={styles.pill}>
+              <Text style={styles.pillText}>{forecast.outlook}</Text>
             </View>
           )}
           {forecast.risk_change && (
-            <View style={[styles.pill, { backgroundColor: Colors.yellow + '22' }]}>
-              <Text style={[styles.pillText, { color: Colors.yellow }]}>
-                {forecast.risk_change}
-              </Text>
+            <View style={[styles.pill, styles.pillAccent]}>
+              <Text style={[styles.pillText, styles.pillTextAccent]}>{forecast.risk_change}</Text>
             </View>
           )}
           {forecast.recommended_action && (
-            <View style={[styles.pill, { backgroundColor: Colors.green + '22' }]}>
-              <Text style={[styles.pillText, { color: Colors.green }]}>
-                {forecast.recommended_action}
-              </Text>
+            <View style={styles.pill}>
+              <Text style={styles.pillText}>{forecast.recommended_action}</Text>
             </View>
           )}
         </View>
@@ -164,7 +162,7 @@ export default function RegimeBadge({
                 <Text
                   style={[
                     styles.marketChange,
-                    { color: marketStats.spy_change_pct >= 0 ? Colors.green : Colors.red },
+                    { color: marketStats.spy_change_pct >= 0 ? Palette.positive : Palette.negative },
                   ]}
                 >
                   {marketStats.spy_change_pct >= 0 ? '+' : ''}
@@ -188,7 +186,7 @@ export default function RegimeBadge({
             <Text style={styles.probTitle}>Transition Probabilities</Text>
             <View style={styles.probBar}>
               {sortedProbs.map(([regKey, pct]) => {
-                const regColor = Colors.regime[regKey] || Colors.textMuted;
+                const regColor = Regime[regKey] || Palette.inkLight;
                 return (
                   <View
                     key={regKey}
@@ -202,7 +200,7 @@ export default function RegimeBadge({
             </View>
             <View style={styles.probLegend}>
               {sortedProbs.map(([regKey, pct]) => {
-                const regColor = Colors.regime[regKey] || Colors.textMuted;
+                const regColor = Regime[regKey] || Palette.inkLight;
                 return (
                   <View key={regKey} style={styles.probLegendItem}>
                     <View style={[styles.probDot, { backgroundColor: regColor }]} />
@@ -219,7 +217,7 @@ export default function RegimeBadge({
         {/* All 7 regimes list */}
         <View style={styles.regimeList}>
           {ALL_REGIMES.map((regKey) => {
-            const regColor = Colors.regime[regKey] || Colors.textMuted;
+            const regColor = Regime[regKey] || Palette.inkLight;
             const isCurrent = regKey === currentRegime;
             const prob = probs[regKey];
             return (
@@ -227,7 +225,7 @@ export default function RegimeBadge({
                 key={regKey}
                 style={[
                   styles.regimeRow,
-                  isCurrent && { backgroundColor: regColor + '15' },
+                  isCurrent && styles.regimeRowCurrent,
                 ]}
               >
                 <View style={styles.regimeRowLeft}>
@@ -236,7 +234,7 @@ export default function RegimeBadge({
                     <Text
                       style={[
                         styles.regimeName,
-                        isCurrent && { color: regColor, fontWeight: '700' },
+                        isCurrent && styles.regimeNameCurrent,
                       ]}
                     >
                       {REGIME_LABELS[regKey]}{isCurrent ? ' ●' : ''}
@@ -247,7 +245,7 @@ export default function RegimeBadge({
                   </View>
                 </View>
                 {prob != null && (
-                  <Text style={[styles.regimeProb, { color: regColor }]}>
+                  <Text style={styles.regimeProb}>
                     {prob.toFixed(0)}%
                   </Text>
                 )}
@@ -262,10 +260,15 @@ export default function RegimeBadge({
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: Colors.card,
-    borderRadius: 8,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    borderColor: Palette.rule,
     borderLeftWidth: 3,
     padding: Spacing.md,
+  },
+  pressed: {
+    opacity: 0.9,
   },
   bannerContent: {
     gap: 4,
@@ -281,15 +284,19 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
   },
   bannerLabel: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.sm,
+    color: Palette.inkLight,
+    fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   bannerValue: {
+    color: Palette.ink,
     fontSize: FontSize.md,
-    fontWeight: '700',
+    fontFamily: Fonts.display.semibold,
   },
   chevron: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: 10,
   },
   dot: {
@@ -300,54 +307,71 @@ const styles = StyleSheet.create({
   compactBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: Radii.pill,
+    borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 4,
     gap: 6,
   },
   compactText: {
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontFamily: Fonts.body.medium,
+    letterSpacing: 0.3,
   },
 
   // Expanded panel
   expandedPanel: {
-    backgroundColor: Colors.card,
-    borderRadius: 8,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: Palette.rule,
     marginTop: -4,
     padding: Spacing.md,
     gap: Spacing.md,
   },
 
-  // Pills
+  // Pills (now: outline style with ink text; one accent variant in claret)
   pillRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
   },
   pill: {
-    borderRadius: 12,
-    paddingHorizontal: 10,
+    borderRadius: Radii.pill,
+    borderWidth: 1,
+    borderColor: Palette.ink,
+    paddingHorizontal: 12,
     paddingVertical: 4,
   },
   pillText: {
+    color: Palette.ink,
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontFamily: Fonts.body.medium,
+    letterSpacing: 0.3,
+  },
+  pillAccent: {
+    borderColor: Palette.claret,
+    backgroundColor: 'transparent',
+  },
+  pillTextAccent: {
+    color: Palette.claret,
   },
 
   outlookDetail: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
-    lineHeight: 18,
+    fontFamily: Fonts.body.regular,
+    lineHeight: 22,
   },
 
   // SPY in collapsed banner
   spyBanner: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontFamily: Fonts.mono.regular,
   },
 
   // Market stats in expanded
@@ -359,18 +383,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   marketLabel: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
     marginBottom: 2,
   },
   marketValue: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.md,
-    fontWeight: '700',
+    fontFamily: Fonts.display.semibold,
   },
   marketChange: {
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontFamily: Fonts.mono.regular,
+    color: Palette.inkMute,
     marginTop: 2,
   },
 
@@ -379,15 +407,18 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   probTitle: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontFamily: Fonts.body.medium,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   probBar: {
     flexDirection: 'row',
     height: 6,
     borderRadius: 3,
     overflow: 'hidden',
+    backgroundColor: Palette.rule,
   },
   probSegment: {
     height: 6,
@@ -408,14 +439,15 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   probLegendText: {
-    color: Colors.textMuted,
+    color: Palette.inkMute,
     fontSize: 10,
+    fontFamily: Fonts.body.regular,
   },
 
   // All regimes list
   regimeList: {
     borderTopWidth: 1,
-    borderTopColor: Colors.cardBorder,
+    borderTopColor: Palette.rule,
     paddingTop: Spacing.sm,
   },
   regimeRow: {
@@ -424,7 +456,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.sm,
-    borderRadius: 6,
+    borderRadius: Radii.sm,
+  },
+  regimeRowCurrent: {
+    backgroundColor: Palette.paperDeep,
   },
   regimeRowLeft: {
     flexDirection: 'row',
@@ -433,18 +468,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   regimeName: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontFamily: Fonts.body.medium,
+  },
+  regimeNameCurrent: {
+    color: Palette.ink,
+    fontFamily: Fonts.body.semibold,
   },
   regimeDesc: {
-    color: Colors.textMuted,
-    fontSize: 10,
+    color: Palette.inkLight,
+    fontSize: 11,
+    fontFamily: Fonts.body.regular,
+    fontStyle: 'italic',
     marginTop: 1,
   },
   regimeProb: {
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
-    fontWeight: '700',
+    fontFamily: Fonts.mono.medium,
     minWidth: 36,
     textAlign: 'right',
   },
