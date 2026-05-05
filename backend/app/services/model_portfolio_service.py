@@ -24,6 +24,43 @@ from app.services.market_data_provider import market_data_provider
 
 logger = logging.getLogger(__name__)
 
+S3_PRICE_BUCKET = "rigacap-prod-price-data-149218244179"
+_s3_client = None
+
+
+def _get_s3_client():
+    global _s3_client
+    if _s3_client is None:
+        import boto3
+        _s3_client = boto3.client("s3", region_name="us-east-1")
+    return _s3_client
+
+
+def _fetch_latest_close_from_s3(symbol: str) -> Optional[float]:
+    """Read the close from the last row of prices/<symbol>.csv via byte-range tail.
+
+    CSV columns: date,open,high,low,close,volume,atr,dwap,ma_50,ma_200,vol_avg,high_52w
+    close is index 4. Returns None on any failure.
+    """
+    try:
+        resp = _get_s3_client().get_object(
+            Bucket=S3_PRICE_BUCKET,
+            Key=f"prices/{symbol}.csv",
+            Range="bytes=-4096",
+        )
+        tail = resp["Body"].read().decode("utf-8", errors="replace")
+        lines = [ln for ln in tail.splitlines() if ln.strip()]
+        if len(lines) < 2:
+            return None
+        last = lines[-1]
+        cols = last.split(",")
+        if len(cols) < 5:
+            return None
+        return float(cols[4])
+    except Exception as e:
+        logger.warning(f"STR S3 close-fetch failed for {symbol}: {e}")
+        return None
+
 # Constants
 PORTFOLIO_TYPES = ("live", "walkforward")
 MAX_POSITIONS = 6
@@ -1598,8 +1635,15 @@ class ModelPortfolioService:
                     current_price = float(df["close"].iloc[-1])
                     price_source = "close"
                 else:
-                    current_price = pos.entry_price
-                    price_source = "entry_fallback"
+                    # API Lambda doesn't load the pickle, so data_cache is
+                    # often empty here. Read the latest close from S3.
+                    s3_close = _fetch_latest_close_from_s3(pos.symbol)
+                    if s3_close is not None:
+                        current_price = s3_close
+                        price_source = "s3_close"
+                    else:
+                        current_price = pos.entry_price
+                        price_source = "entry_fallback"
             pnl_pct = ((current_price / pos.entry_price) - 1) * 100
             open_data.append({
                 "symbol": pos.symbol,
