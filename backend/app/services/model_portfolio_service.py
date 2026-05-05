@@ -1785,6 +1785,191 @@ class ModelPortfolioService:
             "missed": missed,
         }
 
+    async def backfill_str_resignals(
+        self,
+        db: AsyncSession,
+        start_date: str = "2026-04-15",
+        end_date: Optional[str] = None,
+        dry_run: bool = True,
+    ) -> dict:
+        """
+        Backfill historical STR rows for re-signal events the old dedup blocked.
+
+        Runs audit_str_resignals to find true misses, then for each: insert a
+        ModelPosition with entry_date = first_fresh_date, walk daily closes
+        forward, apply trailing stop (12% from HWM) and Panic-Crash regime
+        exit. If either fires before today, mark closed with the exit price
+        and reason; otherwise leave open.
+
+        State.current_cash is NOT updated and social content is NOT generated
+        for closed historical positions.
+
+        dry_run=True (default) returns the planned actions without writing.
+        Pass dry_run=False to commit.
+        """
+        from datetime import date as _date, timedelta as _td
+        import csv as _csv
+        import io as _io
+
+        audit = await self.audit_str_resignals(db, start_date, end_date)
+        missed = audit["missed"]
+        if not missed:
+            return {"dry_run": dry_run, "audit": audit, "actions": [], "inserted": 0}
+
+        s3 = _get_s3_client()
+        today = _date.today()
+
+        # Cache snapshots and price CSVs per call
+        _snapshot_cache: Dict[str, dict] = {}
+        _price_cache: Dict[str, list] = {}
+
+        def _load_snapshot(date_str: str) -> Optional[dict]:
+            if date_str in _snapshot_cache:
+                return _snapshot_cache[date_str]
+            try:
+                obj = s3.get_object(
+                    Bucket=S3_PRICE_BUCKET,
+                    Key=f"snapshots/{date_str}/dashboard.json",
+                )
+                snap = json.loads(obj["Body"].read())
+                _snapshot_cache[date_str] = snap
+                return snap
+            except Exception:
+                _snapshot_cache[date_str] = None
+                return None
+
+        def _load_prices(symbol: str) -> List[dict]:
+            """Return list of {date, close} dicts for the symbol."""
+            if symbol in _price_cache:
+                return _price_cache[symbol]
+            rows: List[dict] = []
+            try:
+                obj = s3.get_object(
+                    Bucket=S3_PRICE_BUCKET, Key=f"prices/{symbol}.csv"
+                )
+                body = obj["Body"].read().decode("utf-8", errors="replace")
+                reader = _csv.DictReader(_io.StringIO(body))
+                for row in reader:
+                    try:
+                        rows.append({
+                            "date": row["date"],
+                            "close": float(row["close"]),
+                        })
+                    except (KeyError, ValueError):
+                        continue
+            except Exception as e:
+                logger.warning(f"backfill: prices/{symbol}.csv load failed: {e}")
+            _price_cache[symbol] = rows
+            return rows
+
+        actions: List[dict] = []
+
+        for event in missed:
+            symbol = event["symbol"]
+            first_fresh = event["date"]  # YYYY-MM-DD
+            entry_price = float(event["price"])
+            shares = SIGNAL_TRACK_NOTIONAL / entry_price
+
+            entry_dt = datetime.fromisoformat(first_fresh)
+            highest_price = entry_price
+
+            # Look up the snapshot signal dict for signal_data_json (full context)
+            entry_snap = _load_snapshot(first_fresh) or {}
+            sig_full = next(
+                (s for s in entry_snap.get("buy_signals", [])
+                 if s.get("symbol") == symbol
+                 and s.get("ensemble_entry_date") == event["ensemble_entry_date"]),
+                event,
+            )
+
+            # Walk daily closes from the day AFTER first_fresh through today.
+            prices = _load_prices(symbol)
+            walk_rows = [r for r in prices if r["date"] > first_fresh]
+
+            exit_date_str: Optional[str] = None
+            exit_price: Optional[float] = None
+            exit_reason: Optional[str] = None
+            exit_pnl_pct: Optional[float] = None
+
+            for row in walk_rows:
+                close = row["close"]
+                day = row["date"]
+                if close > highest_price:
+                    highest_price = close
+
+                trailing_level = highest_price * (1 - TRAILING_STOP_PCT / 100)
+                day_exit_reason: Optional[str] = None
+
+                # Regime check (read that day's snapshot)
+                snap = _load_snapshot(day)
+                if snap:
+                    rec = (snap.get("regime_forecast") or {}).get(
+                        "recommended_action", "stay_invested"
+                    )
+                    if rec == "go_to_cash":
+                        day_exit_reason = "regime_exit"
+
+                # Trailing stop overrides
+                if close <= trailing_level:
+                    day_exit_reason = "trailing_stop"
+
+                if day_exit_reason:
+                    exit_date_str = day
+                    exit_price = close
+                    exit_reason = day_exit_reason
+                    exit_pnl_pct = ((close / entry_price) - 1) * 100
+                    break
+
+            action = {
+                "symbol": symbol,
+                "ensemble_entry_date": event["ensemble_entry_date"],
+                "entry_date": first_fresh,
+                "entry_price": entry_price,
+                "shares": round(shares, 4),
+                "highest_price": round(highest_price, 2),
+                "status": "closed" if exit_date_str else "open",
+                "exit_date": exit_date_str,
+                "exit_price": round(exit_price, 2) if exit_price else None,
+                "exit_reason": exit_reason,
+                "pnl_pct": round(exit_pnl_pct, 2) if exit_pnl_pct is not None else None,
+            }
+            actions.append(action)
+
+            if not dry_run:
+                pos = ModelPosition(
+                    portfolio_type=SIGNAL_TRACK_RECORD,
+                    symbol=symbol,
+                    entry_date=entry_dt,
+                    entry_price=entry_price,
+                    shares=shares,
+                    cost_basis=SIGNAL_TRACK_NOTIONAL,
+                    highest_price=highest_price,
+                    status=action["status"],
+                    signal_data_json=json.dumps(sig_full),
+                )
+                if exit_date_str:
+                    pos.exit_date = datetime.fromisoformat(exit_date_str)
+                    pos.exit_price = exit_price
+                    pos.exit_reason = exit_reason
+                    pos.pnl_pct = round(exit_pnl_pct, 2)
+                    pos.pnl_dollars = round(
+                        (exit_price - entry_price) * shares, 2
+                    )
+                db.add(pos)
+
+        if not dry_run and actions:
+            await db.commit()
+
+        return {
+            "dry_run": dry_run,
+            "audit": {
+                "missed_count": audit["missed_count"],
+                "captured_event_count": audit["captured_event_count"],
+            },
+            "actions": actions,
+            "inserted": 0 if dry_run else len(actions),
+        }
+
     async def backfill_signal_track_record(
         self,
         db: AsyncSession,

@@ -2868,6 +2868,14 @@ def handler(event, context):
                     end_date = config.get("end_date")
                     return await model_portfolio_service.audit_str_resignals(db, start_date, end_date)
 
+                elif action == "backfill_str_resignals":
+                    start_date = config.get("start_date", "2026-04-15")
+                    end_date = config.get("end_date")
+                    dry_run = config.get("dry_run", True)
+                    return await model_portfolio_service.backfill_str_resignals(
+                        db, start_date, end_date, dry_run
+                    )
+
                 elif action == "generate_autopsies":
                     from app.services.trade_autopsy_service import trade_autopsy_service
                     limit = config.get("limit", 20)
