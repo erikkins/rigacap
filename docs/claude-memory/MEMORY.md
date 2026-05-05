@@ -110,7 +110,6 @@
 - [Pickle → Parquet/DuckDB/TimescaleDB migration](project_storage_migration_roadmap.md) — triggers, options, sequencing. Stay on pickle through ~500 paid subs, then start with Parquet on S3.
 
 ## Active Tasks
-- **[STR re-signal audit pickup](project_str_resignal_audit_pickup.md)** — audit shipped (commit `cbedf67`); next: tighten to first-fresh-day per `(symbol, ensemble_entry_date)` + filter against existing rows' `signal_data_json`, then add backfill action. Also: `process_signal_track_entries` post-a4f0c41 dedups by calendar-day not ensemble_entry_date — same fix applies.
 - **[Intraday WF validation pickup (Apr 30 night → May 1)](project_intraday_validation_apr30.md)** — production-matched 5-min cadence simulator suggests WF overstates production by ~5 pp annualized (linear approx). Tomorrow: verify prod code → b-full re-run → cadence sweep. Material parity-gap signal.
 - **[CB live in production May 3 2026](project_cb_production_wiring.md)** — `CIRCUIT_BREAKER_ENABLED=true` on Worker Lambda; closes WF↔prod parity gap. State persists at `s3://rigacap-prod-price-data-149218244179/cb-state/<portfolio_type>.json`. Threshold default 3 same-day stops → 10-day pause. Smoke test passing (`scripts/test_circuit_breaker_smoke.py`, 35/35). Re-engagement tightening deferred to v2.
 - **[Production ticker-rename plumbing](project_ticker_rename_plumbing.md)** — same week. SQ/XYZ duplicate surfaced in 11y WF result. Switch to asset_id as primary key, verify Layer 2 catches ticker changes, backfill-cleanup utility for the pickle.
@@ -187,6 +186,7 @@
 - [Cascade Guard = Circuit Breaker](reference_naming_cascade_guard.md) — external/marketing name vs internal/code name; same mechanism
 
 ## Other
+- **[STR PK = (symbol, ensemble_entry_date)](project_str_resignal_audit_pickup.md)** — STR rows are one-per-signal-event, not one-per-fresh-day. Audit + backfill workflow + production dedup fix shipped May 4-5, 2026.
 - [No dated callouts in design docs](feedback_no_dated_callouts_in_docs.md) — don't sprinkle "(Apr 2026)" or "newly added" markers; keep docs evergreen, let git history carry the session-dated context
 - [Signal frequency = "3-4 per month"](feedback_signal_frequency_claim.md) — never "6-8 every 2 weeks" or "~15/month"; both are stale drift
 - [SVG attachments cause 400 loops](feedback_svg_attachments.md) — always pre-convert SVG→PNG before downstream use

@@ -1,30 +1,32 @@
 ---
-name: STR re-signal audit pickup (May 4 → next session)
-description: Mid-task state for tightening the audit_str_resignals worker action and backfilling missed re-signals
+name: STR re-signal audit + backfill (May 4-5, 2026 — completed)
+description: Audit + backfill of missed STR re-signal events; production entries dedup also fixed
 type: project
 originSessionId: c3d0833d-cb3f-474f-8dd8-e530f3300c60
 ---
-Pickup point for tightening the STR re-signal audit before backfill.
+Cleanup session that ran across May 4 evening → May 5 morning. Fully resolved.
 
-**Why:** a4f0c41 fixed the dedup bug (re-signals create new STR rows) but deployed at 8:19 PM ET on May 4 — too late for that day's 4:43 PM ET entry job. Older days (Apr 15→May 4) silently skipped re-signals under the old "any-open-symbol blocks" dedup. User wants those backfilled.
+**Root cause:** pre-`a4f0c41` `process_signal_track_entries` blocked any-already-open-symbol, silently dropping every re-signal of a held position. After Erik's "true start day" of 2026-04-15, several real signal events were dropped.
 
-**Status as of pause (May 4 ~9:30 PM CT):**
-- 0% P&L fix shipped (commit `69d0b51`) — S3 daily-close CSV fallback live.
-- Audit action shipped (commit `cbedf67`) — `aws lambda invoke ... '{"model_portfolio":{"action":"audit_str_resignals"}}'`.
-- First audit run found **22 raw missed rows / 15 unique (symbol, ensemble_entry_date) events** for window 2026-04-15 → 2026-05-05. Output saved at `/tmp/audit.json` on Erik's machine (may be gone).
-- The 22 over-counts because a single signal stays `is_fresh` for several days; each fresh-day produces a row.
+**Why STR's logical PK is (symbol, ensemble_entry_date):** a single signal stays `is_fresh=True` across multiple scan days. We want one STR row per unique signal *event*, not one per fresh-day. Erik's framing: "it should be on FIRST entry date".
 
-**How to apply:** Next session, do this:
+**What shipped:**
+- `9a967a9` — STR endpoint 500 fix (`dual_source_provider` → `market_data_provider`, hoisted to module level for deploy-time typo catch)
+- `cef0c8b` — reverted scanner_service hoist back to local import (preserved file's prevailing pattern)
+- `69d0b51` — STR 0% P&L fallback to `s3://...prices/{symbol}.csv` tail-read (close at column 5)
+- `cbedf67` — `audit_str_resignals` worker action (dry-run, raw fresh-day count)
+- `f362818` — audit tightened: dedup to (symbol, ensemble_entry_date), filter against existing STR rows' signal_data_json
+- `e430fad` — `backfill_str_resignals` worker action with daily walk-forward exit simulation (12% trailing stop + Panic-Crash regime exit, mirrors `process_signal_track_exits` exactly minus state.current_cash + social-content)
+- `6a9663c` — production `process_signal_track_entries` dedup matched to audit's PK; signals with null ensemble_entry_date are now skipped defensively
 
-1. **Tighten the audit** so it only returns the FIRST fresh day per `(symbol, ensemble_entry_date)`, AND filters out events already captured by existing STR rows (read `signal_data_json` from each STR row to extract its captured `ensemble_entry_date`). True missed re-signals only.
-   - Edit: `backend/app/services/model_portfolio_service.py` → `audit_str_resignals`
-   - Build `existing_eed_keys = set((p.symbol, json.loads(p.signal_data_json or "{}").get("ensemble_entry_date")) for p in existing if p.signal_data_json)`
-   - Skip dates seen earlier in the loop for the same `(symbol, ensemble_entry_date)` (only first fresh day kept)
-   - Skip events present in `existing_eed_keys`
-2. **Re-run the audit.** Expected true misses (from initial analysis): GOOG 4/30, GOOGL 4/30, possibly CRWV 4/13 / CIFR 4/14 / RIVN 4/22 / AMZN 4/13 if they're not in closed STR rows.
-3. **Add `backfill_str_resignals` worker action** that takes the audit output and inserts ModelPosition rows. `entry_date` = the first-fresh-day in the audit (the day STR *should* have entered). `entry_price` = signal's price on that day. `signal_data_json` = the snapshot signal dict.
-4. **Run backfill, then verify** the STR endpoint now shows GOOG / GOOGL twice (Apr 15 + Apr 30 / May 1 entries).
+**Backfill outcome (May 5 11:32 AM CT):**
+- 6 missed events inserted: RIOT, AMZN, AVGO (eed 4/13), NVDA (eed 4/16), GOOG, GOOGL (eed 4/30)
+- RIOT closed historically on 4/29 via trailing_stop at -8.27%
+- Other 5 still open as of 5/4 EOD; HWMs verified by hand-walking AMZN's full 11-day window
+- Re-audit after insert: existing_str_rows 13 → 19, captured_event_count 13 → 19, missed 0
 
-**Constraint:** STR's logical PK is `(symbol, ensemble_entry_date)`, not `(symbol, calendar day)`. The current production code in `process_signal_track_entries` (post-a4f0c41) dedups by same-calendar-day, which means a signal that stays fresh for 5 days will create 5 STR rows going forward. That's a bug too — should also dedup by ensemble_entry_date when entering. Defer that fix; flag for next session.
-
-**Audit window default:** `start_date=2026-04-15` (per Erik: "Apr 15 is our true start day with clean data and a reliable strategy"), `end_date=today`.
+**How to apply:** This work is done. Future-relevant patterns:
+- Worker actions for STR maintenance: `audit_str_resignals`, `backfill_str_resignals` (dry_run defaults true)
+- Snapshot archive lives at `s3://...snapshots/<YYYY-MM-DD>/dashboard.json` and is permanent
+- Per-symbol close history at `s3://...prices/<SYMBOL>.csv`, header `date,open,high,low,close,volume,atr,dwap,ma_50,ma_200,vol_avg,high_52w` (close at index 4)
+- API Lambda's scanner_service.data_cache is unreliable; the S3 close fallback added in `69d0b51` is the canonical "what was today's close" for any admin endpoint
