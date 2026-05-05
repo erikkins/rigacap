@@ -1398,25 +1398,38 @@ class ModelPortfolioService:
         if not fresh_signals:
             return {"entries": 0, "reason": "No fresh signals"}
 
-        # STR is a SIGNAL track record, not a portfolio: every fresh signal
-        # gets its own row, even if the same symbol is already open. The
-        # logical PK is (symbol, entry_date), not symbol alone — a re-signal
-        # on a later date is a meaningful event the system wants to record.
-        # Same-day duplicate guard remains: don't enter the SAME (symbol, today)
-        # twice if the scan somehow runs more than once on the same day.
-        from datetime import date as _date
-        today = _date.today()
-        open_positions = await self._get_open_positions(db, SIGNAL_TRACK_RECORD)
-        same_day_held = {
-            p.symbol for p in open_positions
-            if p.entry_date and p.entry_date.date() == today
-        }
+        # STR's logical PK is (symbol, ensemble_entry_date). One row per unique
+        # signal event — NOT per fresh-day. A signal that stays fresh for five
+        # days produces one row, on the FIRST fresh day. A re-signal (new
+        # ensemble_entry_date for the same symbol) produces a new row.
+        # Build the set of events already represented across ALL existing STR
+        # rows (open + closed) by reading signal_data_json's ensemble_entry_date.
+        all_str_result = await db.execute(
+            select(ModelPosition).where(
+                ModelPosition.portfolio_type == SIGNAL_TRACK_RECORD
+            )
+        )
+        captured_events = set()
+        for p in all_str_result.scalars().all():
+            if not p.signal_data_json:
+                continue
+            try:
+                cap = json.loads(p.signal_data_json)
+                eed = cap.get("ensemble_entry_date")
+                if eed:
+                    captured_events.add((p.symbol, eed))
+            except Exception:
+                pass
 
         entries = 0
         for sig in fresh_signals:
             symbol = sig["symbol"]
-            if symbol in same_day_held:
-                # Already opened a position for this symbol TODAY — don't double-enter
+            eed = sig.get("ensemble_entry_date")
+            if not eed:
+                # Defensive: skip signals with no ensemble_entry_date — there's
+                # no PK to dedup on, and these are vanishingly rare in practice.
+                continue
+            if (symbol, eed) in captured_events:
                 continue
 
             price = sig.get("price", 0)
@@ -1438,17 +1451,17 @@ class ModelPortfolioService:
             )
             db.add(pos)
             entries += 1
-            same_day_held.add(symbol)
+            captured_events.add((symbol, eed))
 
             logger.info(
                 f"[SIGNAL-TRACK] Entered {symbol} @ ${price:.2f} "
-                f"(${SIGNAL_TRACK_NOTIONAL:,.0f} notional)"
+                f"(${SIGNAL_TRACK_NOTIONAL:,.0f} notional, eed={eed})"
             )
 
         if entries:
             await db.commit()
 
-        return {"entries": entries, "open_today": len(same_day_held)}
+        return {"entries": entries, "captured_events": len(captured_events)}
 
     async def process_signal_track_exits(
         self,
