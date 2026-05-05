@@ -1753,6 +1753,9 @@ function Dashboard() {
   const [showCancelSurvey, setShowCancelSurvey] = useState(false);
   const [cancelSurveySubmitted, setCancelSurveySubmitted] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
+  const [showPortfolioSizeModal, setShowPortfolioSizeModal] = useState(false);
+  const [portfolioSizeInput, setPortfolioSizeInput] = useState('');
+  const [portfolioSizeSaving, setPortfolioSizeSaving] = useState(false);
   const [show2FASettings, setShow2FASettings] = useState(false);
   const [referralCopied, setReferralCopied] = useState(false);
   const [journeyData, setJourneyData] = useState(null);
@@ -2104,9 +2107,10 @@ function Dashboard() {
     const created = user?.created_at ? new Date(user.created_at) : null;
     if (!created || (Date.now() - created.getTime()) < 7 * 24 * 60 * 60 * 1000) return;
 
+    const portfolioSize = user?.portfolio_size || 10000;
     const fetchJourney = async () => {
       try {
-        const data = await api.get('/api/signals/what-if?capital=10000');
+        const data = await api.get(`/api/signals/what-if?capital=${portfolioSize}`);
         if (!data.error) setJourneyData(data);
       } catch (err) {
         console.log('Journey fetch failed:', err);
@@ -2114,6 +2118,22 @@ function Dashboard() {
     };
     fetchJourney();
   }, [isAuthenticated, user, dashboardData?.generated_at]);
+
+  // Fetch personalized portfolio banner — replaces the model-portfolio
+  // numbers in the top metric strip with the user's hypothetical state.
+  const [portfolioBanner, setPortfolioBanner] = useState(null);
+  useEffect(() => {
+    if (!isAuthenticated || !user?.subscription?.is_valid) return;
+    const fetchBanner = async () => {
+      try {
+        const data = await api.get('/api/signals/my-portfolio-banner');
+        if (!data.error) setPortfolioBanner(data);
+      } catch (err) {
+        console.log('Portfolio banner fetch failed:', err);
+      }
+    };
+    fetchBanner();
+  }, [isAuthenticated, user?.id, user?.portfolio_size, dashboardData?.generated_at]);
 
   // Merge live quotes into positions for display
   const positionsWithLiveQuotes = positions.map(p => {
@@ -2613,6 +2633,18 @@ function Dashboard() {
                       >
                         <Bell size={14} />
                         Email Preferences
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          setPortfolioSizeInput(String(Math.round(user?.portfolio_size || 10000)));
+                          setShowPortfolioSizeModal(true);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-ink hover:bg-paper-card flex items-center gap-2"
+                      >
+                        <Wallet size={14} />
+                        Portfolio Size
+                        <span className="ml-auto font-mono text-xs text-ink-light">${(user?.portfolio_size || 10000).toLocaleString(undefined, {maximumFractionDigits: 0})}</span>
                       </button>
                       <button
                         onClick={() => { setShowUserMenu(false); setShowReferralModal(true); }}
@@ -3230,17 +3262,53 @@ function Dashboard() {
               )
             )}
 
-            {/* Metric Cards */}
-            {/* Stats strip — always show all 5 */}
-            {(
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-t border-b border-ink py-4 mb-6">
-                <MetricCard title="Portfolio Value" value={`$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 0})}`} subtitle={`Cost basis $${totalCost.toLocaleString(undefined, {maximumFractionDigits: 0})}`} />
-                <MetricCard title="Open P&L" value={`${totalPnlPct >= 0 ? '+' : ''}${totalPnlPct.toFixed(1)}%`} trend={totalPnlPct >= 0 ? 'up' : 'down'} subtitle={`${totalPnlPct >= 0 ? '+' : ''}$${Math.abs(totalValue - totalCost).toLocaleString(undefined, {maximumFractionDigits: 0})} unrealized`} />
-                <MetricCard title="Positions" value={<>{positions.length}<span className="text-[0.95rem] text-ink-light">&thinsp;/&thinsp;6</span></>} subtitle={positions.length >= 6 ? 'Max filled' : `${6 - positions.length} open slots`} />
-                <MetricCard title="Buy Signals" value={dashboardData?.market_stats?.signal_count || signalsWithLiveQuotes.length} subtitle={`${dashboardData?.market_stats?.fresh_count || 0} fresh`} />
-                <MetricCard title="Win Rate" value={trades.length > 0 ? `${winRate.toFixed(0)}%` : '—'} subtitle={trades.length > 0 ? `${trades.length} trades` : '0 closed trades'} />
-              </div>
-            )}
+            {/* Metric Cards — personalized banner.
+                Reads /api/signals/my-portfolio-banner (per-user simulation
+                from signup forward at user.portfolio_size). Falls back to
+                the model-portfolio sum until the banner endpoint responds. */}
+            {(() => {
+              const b = portfolioBanner;
+              const pSize = b?.portfolio_size ?? user?.portfolio_size ?? 10000;
+              const pValue = b?.portfolio_value ?? totalValue;
+              const pPnlPct = b?.open_pnl_pct ?? totalPnlPct;
+              const pPnlDollars = b?.open_pnl_dollars ?? (totalValue - totalCost);
+              const pOpenCount = b?.open_positions_count ?? positions.length;
+              const pClosedCount = b?.closed_trades_count ?? trades.length;
+              const pWinningCount = b?.winning_trades_count;
+              const pWinRate = b
+                ? (b.win_rate != null ? b.win_rate : (b.closed_trades_count > 0 ? (pWinningCount / b.closed_trades_count) * 100 : 0))
+                : winRate;
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-t border-b border-ink py-4 mb-6">
+                  <MetricCard
+                    title="Portfolio Value"
+                    value={`$${pValue.toLocaleString(undefined, {maximumFractionDigits: 0})}`}
+                    subtitle={`Started with $${pSize.toLocaleString(undefined, {maximumFractionDigits: 0})}`}
+                  />
+                  <MetricCard
+                    title="Open P&L"
+                    value={`${pPnlPct >= 0 ? '+' : ''}${pPnlPct.toFixed(1)}%`}
+                    trend={pPnlPct >= 0 ? 'up' : 'down'}
+                    subtitle={`${pPnlDollars >= 0 ? '+' : '-'}$${Math.abs(pPnlDollars).toLocaleString(undefined, {maximumFractionDigits: 0})} unrealized`}
+                  />
+                  <MetricCard
+                    title="Positions"
+                    value={<>{pOpenCount}<span className="text-[0.95rem] text-ink-light">&thinsp;/&thinsp;6</span></>}
+                    subtitle={pOpenCount >= 6 ? 'Max filled' : `${6 - pOpenCount} open slots`}
+                  />
+                  <MetricCard
+                    title="Buy Signals"
+                    value={dashboardData?.market_stats?.signal_count || signalsWithLiveQuotes.length}
+                    subtitle={`${dashboardData?.market_stats?.fresh_count || 0} fresh`}
+                  />
+                  <MetricCard
+                    title="Win Rate"
+                    value={pClosedCount > 0 ? `${pWinRate.toFixed(0)}%` : '—'}
+                    subtitle={pClosedCount > 0 ? `${pClosedCount} trades` : '0 closed trades'}
+                  />
+                </div>
+              );
+            })()}
 
             {/* Last updated timestamp */}
             {dashboardData?.generated_at && (
@@ -4282,6 +4350,74 @@ function Dashboard() {
           <div className="bg-paper-card rounded shadow-xl max-w-sm w-full p-6 text-center">
             <p className="text-lg font-semibold text-ink mb-2">Thank you for your feedback</p>
             <p className="text-sm text-ink-mute">We'll use it to make RigaCap better. You're welcome back anytime.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Portfolio Size Modal */}
+      {showPortfolioSizeModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowPortfolioSizeModal(false)}>
+          <div className="bg-paper-card rounded shadow-xl max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b">
+              <h3 className="text-lg font-semibold text-ink flex items-center gap-2"><Wallet size={18} /> Portfolio Size</h3>
+              <button onClick={() => setShowPortfolioSizeModal(false)} className="text-ink-light hover:text-ink-mute"><X size={20} /></button>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-ink-mute mb-4 leading-relaxed">
+                Your dashboard's <span className="font-medium text-ink">Portfolio Value</span>, P&amp;L,
+                and win rate replay every signal since your signup as if you'd
+                allocated this much capital. The model uses 6 positions at 15%
+                each. Enter the dollar amount that reflects your actual buying power.
+              </p>
+              <label className="block text-sm font-medium text-ink mb-2">Hypothetical capital</label>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="font-mono text-ink-mute">$</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="100"
+                  max="10000000"
+                  value={portfolioSizeInput}
+                  onChange={e => setPortfolioSizeInput(e.target.value)}
+                  className="flex-1 px-3 py-2 text-sm bg-paper border border-rule rounded font-mono text-ink"
+                />
+              </div>
+              <p className="text-xs text-ink-light mb-5 italic">Allowed range: $100 – $10,000,000.</p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setShowPortfolioSizeModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-ink-mute hover:text-ink"
+                  disabled={portfolioSizeSaving}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    const size = parseFloat(portfolioSizeInput);
+                    if (!Number.isFinite(size) || size < 100 || size > 10000000) {
+                      alert('Please enter an amount between $100 and $10,000,000.');
+                      return;
+                    }
+                    setPortfolioSizeSaving(true);
+                    try {
+                      await api.patch('/api/auth/me/portfolio-size', { portfolio_size: size });
+                      // Refresh user (and trigger banner refetch via deps)
+                      await refreshUser();
+                      setShowPortfolioSizeModal(false);
+                    } catch (err) {
+                      console.error('Portfolio size update failed:', err);
+                      alert(err?.response?.data?.detail || 'Failed to update portfolio size.');
+                    } finally {
+                      setPortfolioSizeSaving(false);
+                    }
+                  }}
+                  disabled={portfolioSizeSaving}
+                  className="px-4 py-2 text-sm font-medium bg-ink text-white rounded hover:bg-claret disabled:opacity-60"
+                >
+                  {portfolioSizeSaving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
