@@ -1460,6 +1460,23 @@ async def _get_positions_with_guidance(db: AsyncSession, user, regime_forecast_d
         )
         open_positions = result.scalars().all()
 
+        # Load any missing position symbols from S3 CSVs. The API Lambda doesn't
+        # ship the pickle, so scanner_service.data_cache is populated lazily.
+        # Without this, the per-position loop below would default current_price
+        # to entry_price — and once HWM has grown, that can place current_price
+        # below the trailing stop, producing a false SELL signal. Mirrors the
+        # behavior of GET /api/portfolio/positions in main.py.
+        missing_symbols = [
+            p.symbol for p in open_positions
+            if p.symbol not in scanner_service.data_cache
+        ]
+        if missing_symbols:
+            try:
+                loaded = data_export_service.import_symbols(missing_symbols)
+                scanner_service.data_cache.update(loaded)
+            except Exception as e:
+                print(f"⚠️ guidance: failed to load position symbols from S3: {e}")
+
         pos_dicts = []
         for p in open_positions:
             current_price = p.entry_price
