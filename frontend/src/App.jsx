@@ -240,7 +240,7 @@ const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanc
   const [submitting, setSubmitting] = useState(false);
 
   const totalCost = shares * entryPrice;
-  const trailingStop = entryPrice * 0.85; // 15% trailing stop
+  const trailingStop = entryPrice * 0.88; // 12% trailing stop — matches strategy
 
   const handleBuy = async () => {
     setSubmitting(true);
@@ -300,7 +300,7 @@ const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanc
               <span className="font-mono text-[0.95rem] font-medium text-ink">${totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute">{viewMode === 'simple' ? '15% Safety Net' : 'Trailing Stop (15%)'}</span>
+              <span className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute">{viewMode === 'simple' ? '12% Safety Net' : 'Trailing Stop (12%)'}</span>
               <span className="font-mono text-[0.95rem] text-ink">${trailingStop.toFixed(2)}</span>
             </div>
             {viewMode !== 'simple' && (
@@ -1119,7 +1119,7 @@ const StockChartModal = ({ symbol, type, data, onClose, onAction, liveQuote, vie
                   </div>
                   <div className="text-center">
                     <p className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-1">Trailing Stop</p>
-                    <p className="font-mono text-lg text-ink">15%</p>
+                    <p className="font-mono text-lg text-ink">12%</p>
                   </div>
                   <div className="text-center">
                     <p className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-1">Target (+20%)</p>
