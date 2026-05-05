@@ -1548,8 +1548,11 @@ class ModelPortfolioService:
         )
         closed_positions = list(closed_result.scalars().all())
 
-        # Open positions, newest entry first
+        # Open positions: newest entry first, then symbol alpha within same date.
+        # Two-pass stable sort: alpha asc first, then entry_date desc — ties on
+        # entry_date keep the alpha order.
         open_positions = await self._get_open_positions(db, SIGNAL_TRACK_RECORD)
+        open_positions = sorted(open_positions, key=lambda p: p.symbol)
         open_positions = sorted(
             open_positions,
             key=lambda p: p.entry_date or datetime.min,
