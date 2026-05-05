@@ -433,6 +433,36 @@ class ModelPortfolioState(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class UserPortfolioState(Base):
+    """
+    Daily snapshot of each subscriber's hypothetical portfolio.
+
+    The "Your Journey" / portfolio banner replays every published signal
+    from the user's signup_date forward at their portfolio_size, applying
+    the same allocation rules as the model portfolio (max 6 × 15%, 12%
+    trailing stop, regime exits). Each subscriber gets one row per
+    trading day so the equity curve is queryable directly from this
+    table — never overwrite a prior day's snapshot.
+
+    Read pattern: latest row per user via (user_id, as_of_date DESC).
+    Write pattern: nightly recompute appends a new row keyed
+    (user_id, today).
+    """
+    __tablename__ = "user_portfolio_state"
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    as_of_date = Column(Date, primary_key=True)
+    portfolio_value = Column(Float, nullable=False, default=0.0)
+    cost_basis = Column(Float, nullable=False, default=0.0)
+    open_pnl_dollars = Column(Float, nullable=False, default=0.0)
+    open_pnl_pct = Column(Float, nullable=False, default=0.0)
+    open_positions_count = Column(Integer, nullable=False, default=0)
+    closed_trades_count = Column(Integer, nullable=False, default=0)
+    winning_trades_count = Column(Integer, nullable=False, default=0)
+    total_pnl_dollars = Column(Float, nullable=False, default=0.0)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+
 class RegimeForecastSnapshot(Base):
     """Daily regime forecast snapshots for historical tracking"""
     __tablename__ = "regime_forecast_snapshots"
@@ -541,6 +571,12 @@ class User(Base):
     # Stripe customer ID
     stripe_customer_id = Column(String(255), nullable=True, unique=True)
 
+    # Hypothetical portfolio size for personalized "what-if" banner.
+    # Default $10K; user can override via PATCH /api/auth/me. The signal
+    # service replays signals from signup_date forward at this notional
+    # to surface a personal portfolio_value / P&L / win rate.
+    portfolio_size = Column(Float, default=10000.0, nullable=False)
+
     # Email preferences: {"daily_digest": true, "sell_alerts": true, ...}
     email_preferences = Column(JSON, nullable=True)
 
@@ -601,6 +637,7 @@ class User(Base):
             "referral_code": self.referral_code,
             "referral_count": self.referral_count or 0,
             "totp_enabled": bool(self.totp_enabled),
+            "portfolio_size": float(self.portfolio_size) if self.portfolio_size is not None else 10000.0,
         }
         return result
 
