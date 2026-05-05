@@ -21,7 +21,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import ModelPosition, ModelPortfolioState, ModelPortfolioSnapshot
 from app.services.market_data_provider import market_data_provider
-from app.services.scanner import scanner_service
 
 logger = logging.getLogger(__name__)
 
@@ -1571,6 +1570,8 @@ class ModelPortfolioService:
         # latest close in scanner_service.data_cache. If the quote-fetch fails
         # for any reason, fall back to the latest close — never to entry_price
         # (which would render misleading 0% P&L).
+        from app.services.scanner import scanner_service
+
         # Detect "market open" — naive cutoff: 9:30 AM - 4:00 PM ET on weekdays.
         now_et = datetime.now(ZoneInfo("America/New_York"))
         is_weekday = now_et.weekday() < 5
