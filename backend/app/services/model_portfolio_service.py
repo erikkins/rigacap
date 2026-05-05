@@ -1548,8 +1548,13 @@ class ModelPortfolioService:
         )
         closed_positions = list(closed_result.scalars().all())
 
-        # Open positions
+        # Open positions, newest entry first
         open_positions = await self._get_open_positions(db, SIGNAL_TRACK_RECORD)
+        open_positions = sorted(
+            open_positions,
+            key=lambda p: p.entry_date or datetime.min,
+            reverse=True,
+        )
 
         total_picks = len(closed_positions) + len(open_positions)
         if not total_picks:
