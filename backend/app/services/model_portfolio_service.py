@@ -14,11 +14,14 @@ import logging
 import os
 from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import asc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import ModelPosition, ModelPortfolioState, ModelPortfolioSnapshot
+from app.services.market_data_provider import market_data_provider
+from app.services.scanner import scanner_service
 
 logger = logging.getLogger(__name__)
 
@@ -1568,13 +1571,8 @@ class ModelPortfolioService:
         # latest close in scanner_service.data_cache. If the quote-fetch fails
         # for any reason, fall back to the latest close — never to entry_price
         # (which would render misleading 0% P&L).
-        from app.services.scanner import scanner_service
-        from app.services.market_data_provider import dual_source_provider
-        from datetime import datetime as _dt
-        from zoneinfo import ZoneInfo
-
         # Detect "market open" — naive cutoff: 9:30 AM - 4:00 PM ET on weekdays.
-        now_et = _dt.now(ZoneInfo("America/New_York"))
+        now_et = datetime.now(ZoneInfo("America/New_York"))
         is_weekday = now_et.weekday() < 5
         market_minute = now_et.hour * 60 + now_et.minute
         is_market_hours = is_weekday and 570 <= market_minute < 960  # 9:30 - 16:00
@@ -1582,7 +1580,7 @@ class ModelPortfolioService:
         live_quotes: Dict[str, float] = {}
         if is_market_hours and open_positions:
             try:
-                quotes = await dual_source_provider.fetch_quotes(
+                quotes = await market_data_provider.fetch_quotes(
                     [p.symbol for p in open_positions]
                 )
                 live_quotes = {sym: q.price for sym, q in quotes.items() if q and q.price}
