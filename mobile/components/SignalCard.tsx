@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Colors, FontSize, Spacing } from '@/constants/theme';
+import { Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
 import { Signal } from '@/hooks/useSignals';
 
 interface SignalCardProps {
@@ -20,10 +20,13 @@ export default function SignalCard({ signal, onPress }: SignalCardProps) {
     if (score >= 61) return 'Moderate';
     return 'Weak';
   })();
-  const strengthColor = strengthLabel === 'Very Strong' ? Colors.green
-    : strengthLabel === 'Strong' ? '#86EFAC'
-    : strengthLabel === 'Moderate' ? Colors.yellow
-    : Colors.textMuted;
+  // Editorial palette: claret for strongest signals, ink-mute for the rest.
+  // Avoid loud green/yellow which fight the paper aesthetic.
+  const strengthColor =
+    strengthLabel === 'Very Strong' ? Palette.claret
+    : strengthLabel === 'Strong' ? Palette.claretLight
+    : strengthLabel === 'Moderate' ? Palette.inkMute
+    : Palette.inkLight;
 
   return (
     <Pressable
@@ -38,7 +41,7 @@ export default function SignalCard({ signal, onPress }: SignalCardProps) {
               <Text style={styles.freshText}>FRESH</Text>
             </View>
           )}
-          <View style={[styles.strengthBadge, { backgroundColor: strengthColor + '22' }]}>
+          <View style={[styles.strengthBadge, { borderColor: strengthColor }]}>
             <Text style={[styles.strengthText, { color: strengthColor }]}>{strengthLabel}</Text>
           </View>
         </View>
@@ -69,15 +72,15 @@ function StatItem({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.85,
   },
   header: {
     flexDirection: 'row',
@@ -91,34 +94,37 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   symbol: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.lg,
-    fontWeight: '700',
+    fontFamily: Fonts.display.semibold,
   },
   price: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.lg,
-    fontWeight: '600',
+    fontFamily: Fonts.mono.medium,
   },
   freshBadge: {
-    backgroundColor: Colors.green + '22',
-    borderRadius: 4,
+    borderRadius: Radii.sm,
     paddingHorizontal: 6,
     paddingVertical: 2,
+    backgroundColor: Palette.claret,
   },
   freshText: {
-    color: Colors.green,
+    color: Palette.paper,
     fontSize: FontSize.xs,
-    fontWeight: '700',
+    fontFamily: Fonts.body.semibold,
+    letterSpacing: 0.6,
   },
   strengthBadge: {
-    borderRadius: 4,
+    borderRadius: Radii.sm,
     paddingHorizontal: 6,
     paddingVertical: 2,
+    borderWidth: 1,
   },
   strengthText: {
     fontSize: FontSize.xs,
-    fontWeight: '700',
+    fontFamily: Fonts.body.medium,
+    letterSpacing: 0.4,
   },
   stats: {
     flexDirection: 'row',
@@ -126,13 +132,16 @@ const styles = StyleSheet.create({
   },
   statItem: {},
   statLabel: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
     marginBottom: 2,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   statValue: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontFamily: Fonts.mono.regular,
   },
 });

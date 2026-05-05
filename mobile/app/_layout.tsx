@@ -3,7 +3,7 @@
  * routing between auth and main app based on login state.
  */
 
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
@@ -11,8 +11,30 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import * as Updates from 'expo-updates';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import * as SplashScreen from 'expo-splash-screen';
+import {
+  useFonts as useFraunces,
+  Fraunces_300Light,
+  Fraunces_400Regular,
+  Fraunces_500Medium,
+  Fraunces_600SemiBold,
+  Fraunces_300Light_Italic,
+  Fraunces_400Regular_Italic,
+} from '@expo-google-fonts/fraunces';
+import {
+  IBMPlexSans_400Regular,
+  IBMPlexSans_500Medium,
+  IBMPlexSans_600SemiBold,
+  IBMPlexSans_400Regular_Italic,
+} from '@expo-google-fonts/ibm-plex-sans';
+import {
+  IBMPlexMono_400Regular,
+  IBMPlexMono_500Medium,
+} from '@expo-google-fonts/ibm-plex-mono';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
-import { Colors } from '@/constants/theme';
+import { Palette } from '@/constants/theme';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootNavigator() {
   const { user, isLoading, twoFactorRequired } = useAuth();
@@ -62,10 +84,10 @@ function RootNavigator() {
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: Colors.background,
+          backgroundColor: Palette.paper,
         }}
       >
-        <ActivityIndicator size="large" color={Colors.gold} />
+        <ActivityIndicator size="large" color={Palette.claret} />
       </View>
     );
   }
@@ -74,13 +96,31 @@ function RootNavigator() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: Colors.background },
+        contentStyle: { backgroundColor: Palette.paper },
       }}
     />
   );
 }
 
 export default function RootLayout() {
+  // Load editorial typography (Fraunces + IBM Plex Sans/Mono). The splash
+  // screen stays visible until every weight is registered — prevents the
+  // first-frame flash of system fonts.
+  const [fontsLoaded, fontError] = useFraunces({
+    Fraunces_300Light,
+    Fraunces_400Regular,
+    Fraunces_500Medium,
+    Fraunces_600SemiBold,
+    Fraunces_300Light_Italic,
+    Fraunces_400Regular_Italic,
+    IBMPlexSans_400Regular,
+    IBMPlexSans_500Medium,
+    IBMPlexSans_600SemiBold,
+    IBMPlexSans_400Regular_Italic,
+    IBMPlexMono_400Regular,
+    IBMPlexMono_500Medium,
+  });
+
   // Lock to portrait by default — signal detail unlocks landscape for chart
   useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
@@ -106,10 +146,20 @@ export default function RootLayout() {
     })();
   }, []);
 
+  const onReady = useCallback(async () => {
+    if (fontsLoaded || fontError) {
+      await SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider onLayout={onReady}>
       <AuthProvider>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <RootNavigator />
       </AuthProvider>
     </SafeAreaProvider>

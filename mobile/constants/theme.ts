@@ -1,43 +1,89 @@
 /**
- * RigaCap brand colors and theme constants.
- * Navy + gold palette matching the web dashboard.
+ * RigaCap brand tokens — paper-backed editorial publication aesthetic.
+ * Mirrors frontend/tailwind.config.js (post-Apr-27 rebrand).
+ *
+ * Prefer the new exports (Palette / Fonts / Regime / Radii) in fresh code.
+ * The legacy `Colors` export is a back-compat alias mapped to the closest
+ * new tokens so unmigrated screens still build during the staged rebrand —
+ * each screen drops the alias as it gets reskinned.
  */
 
-export const Colors = {
-  // Brand
-  navy: '#0A1628',
-  navyLight: '#1A2A4A',
-  navyMid: '#132038',
-  gold: '#C9A54E',
-  goldLight: '#D4B96A',
+// ──────────────────────────────────────────────────────────────
+// Typography
+// ──────────────────────────────────────────────────────────────
 
-  // Backgrounds
-  background: '#0A1628',
-  card: '#132038',
-  cardBorder: '#1E3455',
+export const Fonts = {
+  display: {
+    light: 'Fraunces_300Light',
+    regular: 'Fraunces_400Regular',
+    medium: 'Fraunces_500Medium',
+    semibold: 'Fraunces_600SemiBold',
+    italic: 'Fraunces_400Regular_Italic',
+    italicLight: 'Fraunces_300Light_Italic',
+  },
+  body: {
+    regular: 'IBMPlexSans_400Regular',
+    medium: 'IBMPlexSans_500Medium',
+    semibold: 'IBMPlexSans_600SemiBold',
+    italic: 'IBMPlexSans_400Regular_Italic',
+  },
+  mono: {
+    regular: 'IBMPlexMono_400Regular',
+    medium: 'IBMPlexMono_500Medium',
+  },
+} as const;
 
-  // Text
-  textPrimary: '#FFFFFF',
-  textSecondary: '#8899B0',
-  textMuted: '#5A6B80',
+// ──────────────────────────────────────────────────────────────
+// Palette
+// ──────────────────────────────────────────────────────────────
 
-  // Status
+export const Palette = {
+  // Paper backdrop
+  paper: '#F5F1E8',
+  paperDeep: '#EDE7D8',
+  paperCard: '#FAF7F0',
+
+  // Ink text
+  ink: '#141210',
+  inkMute: '#5A544E',
+  inkLight: '#8A8279',
+
+  // Claret accent
+  claret: '#7A2430',
+  claretLight: '#9A3444',
+
+  // Rules / dividers
+  rule: '#DDD5C7',
+  ruleDark: '#C9BFAC',
+
+  // Editorial green/red — softer than vivid Tailwind defaults
+  positive: '#2D5F3F',
+  negative: '#8F2D3D',
+
+  // Functional / status (kept for charts and warnings)
   green: '#22C55E',
   red: '#EF4444',
   yellow: '#F59E0B',
   blue: '#3B82F6',
+} as const;
 
-  // Regime colors
-  regime: {
-    strong_bull: '#22C55E',
-    weak_bull: '#86EFAC',
-    rotating_bull: '#BBF7D0',
-    range_bound: '#F59E0B',
-    weak_bear: '#FCA5A5',
-    panic_crash: '#EF4444',
-    recovery: '#3B82F6',
-  } as Record<string, string>,
+// ──────────────────────────────────────────────────────────────
+// Regime colors — functional, kept across rebrand
+// ──────────────────────────────────────────────────────────────
+
+export const Regime: Record<string, string> = {
+  strong_bull: '#22C55E',
+  weak_bull: '#86EFAC',
+  rotating_bull: '#BBF7D0',
+  range_bound: '#F59E0B',
+  weak_bear: '#FCA5A5',
+  panic_crash: '#EF4444',
+  recovery: '#3B82F6',
 };
+
+// ──────────────────────────────────────────────────────────────
+// Spacing / sizing
+// ──────────────────────────────────────────────────────────────
 
 export const Spacing = {
   xs: 4,
@@ -45,7 +91,8 @@ export const Spacing = {
   md: 16,
   lg: 24,
   xl: 32,
-};
+  xxl: 48,
+} as const;
 
 export const FontSize = {
   xs: 11,
@@ -54,4 +101,50 @@ export const FontSize = {
   lg: 18,
   xl: 22,
   xxl: 28,
-};
+  xxxl: 36,
+} as const;
+
+export const Radii = {
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
+  pill: 9999,
+} as const;
+
+// ──────────────────────────────────────────────────────────────
+// Back-compat: legacy Colors export
+// ──────────────────────────────────────────────────────────────
+//
+// Maps the old navy/gold keys to closest new palette equivalents so
+// existing screens keep building during the staged rebrand. They'll
+// look "different" until per-file rebrand lands — that visual delta
+// is intentional, signals where work remains.
+
+export const Colors = {
+  // Brand (legacy keys → new equivalents)
+  navy: Palette.ink,
+  navyLight: Palette.inkMute,
+  navyMid: Palette.inkLight,
+  gold: Palette.claret,
+  goldLight: Palette.claretLight,
+
+  // Surfaces
+  background: Palette.paper,
+  card: Palette.paperCard,
+  cardBorder: Palette.rule,
+
+  // Text
+  textPrimary: Palette.ink,
+  textSecondary: Palette.inkMute,
+  textMuted: Palette.inkLight,
+
+  // Status
+  green: Palette.positive,
+  red: Palette.negative,
+  yellow: Palette.yellow,
+  blue: Palette.blue,
+
+  // Regime (back-compat shape)
+  regime: Regime,
+} as const;

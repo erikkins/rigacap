@@ -41,8 +41,8 @@ function getVixLabel(vix: number | null | undefined): { label: string; color: st
   if (vix == null) return { label: 'N/A', color: Colors.textSecondary };
   if (vix < 15) return { label: 'Calm', color: Colors.green };
   if (vix < 20) return { label: 'Normal', color: Colors.textSecondary };
-  if (vix < 25) return { label: 'Elevated', color: Colors.amber ?? '#f59e0b' };
-  if (vix < 35) return { label: 'High Fear', color: Colors.orange ?? '#f97316' };
+  if (vix < 25) return { label: 'Elevated', color: '#F59E0B' };
+  if (vix < 35) return { label: 'High Fear', color: '#F97316' };
   return { label: 'Extreme Fear', color: Colors.red };
 }
 
