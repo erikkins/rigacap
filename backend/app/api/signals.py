@@ -11,7 +11,7 @@ from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
 
-from app.core.database import get_db, Signal, Position, User, EmailSubscriber
+from app.core.database import get_db, Signal, Position, User, UserPortfolioState, EmailSubscriber
 from app.core.security import get_current_user_optional, get_admin_user, require_valid_subscription
 from app.services.scanner import scanner_service, SignalData
 from app.services.stock_universe import stock_universe_service
@@ -39,6 +39,103 @@ async def subscriber_what_if(
 
     start_date = user.created_at.strftime("%Y-%m-%d")
     return await model_portfolio_service.calculate_what_if(db, start_date, capital)
+
+
+@router.get("/my-portfolio-banner")
+async def my_portfolio_banner(
+    user: User = Depends(require_valid_subscription),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Subscriber's personal hypothetical portfolio state — Portfolio Value,
+    Open P&L, Positions count, Win Rate. Powers the dashboard banner.
+
+    Reads from user_portfolio_state cache (latest row) when available;
+    falls back to live simulation if cache is missing or stale. The
+    daily-scan job appends a fresh row each night so cache hits dominate.
+    """
+    from datetime import date as _date
+    from app.services import user_portfolio_simulator as ups
+
+    if not user.created_at:
+        return {"error": "No signup date found"}
+
+    today = _date.today()
+    portfolio_size = float(user.portfolio_size or 10000.0)
+
+    # Try cached snapshot first.
+    cached_q = await db.execute(
+        select(UserPortfolioState)
+        .where(UserPortfolioState.user_id == user.id)
+        .order_by(desc(UserPortfolioState.as_of_date))
+        .limit(1)
+    )
+    cached = cached_q.scalar_one_or_none()
+    cache_fresh = cached is not None and cached.as_of_date == today
+
+    if cache_fresh:
+        return {
+            "as_of_date": cached.as_of_date.isoformat(),
+            "portfolio_size": portfolio_size,
+            "portfolio_value": cached.portfolio_value,
+            "cost_basis": cached.cost_basis,
+            "open_pnl_dollars": cached.open_pnl_dollars,
+            "open_pnl_pct": cached.open_pnl_pct,
+            "open_positions_count": cached.open_positions_count,
+            "closed_trades_count": cached.closed_trades_count,
+            "winning_trades_count": cached.winning_trades_count,
+            "win_rate": (
+                round(cached.winning_trades_count / cached.closed_trades_count * 100, 1)
+                if cached.closed_trades_count else 0.0
+            ),
+            "total_pnl_dollars": cached.total_pnl_dollars,
+            "signup_date": user.created_at.date().isoformat(),
+            "source": "cache",
+        }
+
+    # Live fallback: simulate now and persist today's snapshot.
+    signup_date = user.created_at.date()
+    sim = ups.simulate(signup_date, portfolio_size, today)
+
+    new_row = UserPortfolioState(
+        user_id=user.id,
+        as_of_date=today,
+        portfolio_value=sim.portfolio_value,
+        cost_basis=sim.cost_basis,
+        open_pnl_dollars=sim.open_pnl_dollars,
+        open_pnl_pct=sim.open_pnl_pct,
+        open_positions_count=sim.open_positions_count,
+        closed_trades_count=sim.closed_trades_count,
+        winning_trades_count=sim.winning_trades_count,
+        total_pnl_dollars=sim.total_pnl_dollars,
+        updated_at=datetime.utcnow(),
+    )
+    db.add(new_row)
+    try:
+        await db.commit()
+    except Exception:
+        # If a parallel request beat us to the insert, the PK collision is fine
+        # — the cached row from the other request is equivalent.
+        await db.rollback()
+
+    return {
+        "as_of_date": sim.as_of_date,
+        "portfolio_size": portfolio_size,
+        "portfolio_value": sim.portfolio_value,
+        "cost_basis": sim.cost_basis,
+        "open_pnl_dollars": sim.open_pnl_dollars,
+        "open_pnl_pct": sim.open_pnl_pct,
+        "open_positions_count": sim.open_positions_count,
+        "closed_trades_count": sim.closed_trades_count,
+        "winning_trades_count": sim.winning_trades_count,
+        "win_rate": (
+            round(sim.winning_trades_count / sim.closed_trades_count * 100, 1)
+            if sim.closed_trades_count else 0.0
+        ),
+        "total_pnl_dollars": sim.total_pnl_dollars,
+        "signup_date": user.created_at.date().isoformat(),
+        "source": "live",
+    }
 
 
 # ============================================================================

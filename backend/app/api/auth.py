@@ -776,6 +776,29 @@ async def update_email_preferences(
     return {"email_preferences": {**defaults, **merged}}
 
 
+@router.patch("/me/portfolio-size")
+async def update_portfolio_size(
+    payload: dict,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update the subscriber's hypothetical portfolio capital ($)."""
+    raw = payload.get("portfolio_size")
+    try:
+        size = float(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        size = None
+    if size is None or size < 100 or size > 10_000_000:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="portfolio_size must be a number between 100 and 10,000,000",
+        )
+    user.portfolio_size = size
+    await db.commit()
+    await db.refresh(user)
+    return {"portfolio_size": float(user.portfolio_size)}
+
+
 @router.get("/email-preferences")
 async def get_email_preferences_by_token(
     token: str,
