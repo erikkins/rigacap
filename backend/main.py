@@ -1750,6 +1750,22 @@ def handler(event, context):
                 print(f"⚠️ Failed to chain CSV export: {ce}")
             _log_step("CSV Export Chain", "ok", "async fire-and-forget")
 
+            # 11. Chain per-user portfolio recompute (async, separate Lambda)
+            # Replays signals from each active subscriber's signup forward to
+            # produce today's user_portfolio_state row. Powers the personalized
+            # dashboard banner.
+            try:
+                import boto3, json as _json
+                boto3.client('lambda', region_name='us-east-1').invoke(
+                    FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker'),
+                    InvocationType='Event',
+                    Payload=_json.dumps({"user_portfolio_recompute": True})
+                )
+                print("📊 Chained user portfolio recompute")
+            except Exception as ce:
+                print(f"⚠️ Failed to chain user portfolio recompute: {ce}")
+            _log_step("User Portfolio Recompute Chain", "ok", "async fire-and-forget")
+
             # Write structured pipeline log to S3
             _write_pipeline_log(
                 "success",
@@ -2014,6 +2030,97 @@ def handler(event, context):
             return {"status": "failed", "error": str(e)}
 
     # Handle CSV export (chained from pickle rebuild)
+    # Recompute per-user portfolio state for every active subscriber.
+    # Chained from the daily-scan as step 11 — fires after dashboard +
+    # snapshots are written so the simulator has fresh inputs.
+    if event.get("user_portfolio_recompute"):
+        from datetime import date as _date
+        print("📊 User portfolio recompute triggered")
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        async def _recompute_all_users():
+            from sqlalchemy.dialects.postgresql import insert as pg_insert
+            from app.core.database import (
+                async_session, User, Subscription, UserPortfolioState,
+            )
+            from app.services import user_portfolio_simulator as ups
+
+            today = _date.today()
+            results = {"computed": 0, "skipped": 0, "errors": []}
+
+            async with async_session() as db:
+                # Active subscriber filter: trial / active / comped — anyone
+                # whose subscription is still valid. Include admins so Erik
+                # can preview the banner end-to-end.
+                rows = await db.execute(
+                    select(User, Subscription)
+                    .join(Subscription, Subscription.user_id == User.id)
+                    .where(
+                        User.is_active == True,  # noqa: E712
+                        Subscription.status.in_(("trial", "active", "comped")),
+                    )
+                )
+                user_subs = list(rows.all())
+                print(f"📊 Recomputing for {len(user_subs)} active subscribers")
+
+                for user, sub in user_subs:
+                    if not user.created_at:
+                        results["skipped"] += 1
+                        continue
+                    try:
+                        signup = user.created_at.date()
+                        size = float(user.portfolio_size or 10000.0)
+                        sim = ups.simulate(signup, size, today)
+
+                        stmt = pg_insert(UserPortfolioState).values(
+                            user_id=user.id,
+                            as_of_date=today,
+                            portfolio_value=sim.portfolio_value,
+                            cost_basis=sim.cost_basis,
+                            open_pnl_dollars=sim.open_pnl_dollars,
+                            open_pnl_pct=sim.open_pnl_pct,
+                            open_positions_count=sim.open_positions_count,
+                            closed_trades_count=sim.closed_trades_count,
+                            winning_trades_count=sim.winning_trades_count,
+                            total_pnl_dollars=sim.total_pnl_dollars,
+                            updated_at=datetime.utcnow(),
+                        ).on_conflict_do_update(
+                            index_elements=["user_id", "as_of_date"],
+                            set_={
+                                "portfolio_value": sim.portfolio_value,
+                                "cost_basis": sim.cost_basis,
+                                "open_pnl_dollars": sim.open_pnl_dollars,
+                                "open_pnl_pct": sim.open_pnl_pct,
+                                "open_positions_count": sim.open_positions_count,
+                                "closed_trades_count": sim.closed_trades_count,
+                                "winning_trades_count": sim.winning_trades_count,
+                                "total_pnl_dollars": sim.total_pnl_dollars,
+                                "updated_at": datetime.utcnow(),
+                            },
+                        )
+                        await db.execute(stmt)
+                        results["computed"] += 1
+                    except Exception as e:
+                        results["errors"].append({"user_id": str(user.id), "error": str(e)[:200]})
+
+                await db.commit()
+
+            ups.clear_caches()
+            return results
+
+        try:
+            result = loop.run_until_complete(_recompute_all_users())
+            print(f"📊 User portfolio recompute done: {result}")
+            return {"statusCode": 200, "body": result}
+        except Exception as e:
+            import traceback
+            print(f"❌ User portfolio recompute failed: {e}")
+            traceback.print_exc()
+            return {"statusCode": 500, "body": {"error": str(e)}}
+
     if event.get("csv_export_from_scan"):
         print(f"📝 CSV export triggered - {len(scanner_service.data_cache)} symbols in cache")
         from app.services.data_export import data_export_service
