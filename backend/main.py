@@ -2863,6 +2863,11 @@ def handler(event, context):
                     force = config.get("force", False)
                     return await model_portfolio_service.backfill_signal_track_record(db, as_of_date, force)
 
+                elif action == "audit_str_resignals":
+                    start_date = config.get("start_date", "2026-04-15")
+                    end_date = config.get("end_date")
+                    return await model_portfolio_service.audit_str_resignals(db, start_date, end_date)
+
                 elif action == "generate_autopsies":
                     from app.services.trade_autopsy_service import trade_autopsy_service
                     limit = config.get("limit", 20)

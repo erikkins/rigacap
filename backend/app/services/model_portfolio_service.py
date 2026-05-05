@@ -1681,6 +1681,90 @@ class ModelPortfolioService:
             ],
         }
 
+    async def audit_str_resignals(
+        self,
+        db: AsyncSession,
+        start_date: str = "2026-04-15",
+        end_date: Optional[str] = None,
+    ) -> dict:
+        """
+        Audit (dry-run): find historical fresh signals that should have produced
+        STR rows but didn't, because the old (pre-a4f0c41) dedup blocked re-entry
+        for any symbol with an open position. Reads snapshots/<date>/dashboard.json
+        for each weekday in [start_date, end_date] and compares against existing
+        STR rows.
+
+        Returns: {checked_dates, existing_count, missed: [{symbol, date, price,
+        ensemble_entry_date}]}
+        """
+        from datetime import date as _date, timedelta as _td
+
+        if end_date is None:
+            end_date = _date.today().isoformat()
+
+        s3 = _get_s3_client()
+
+        # Load all STR rows (any status) into a (symbol, date_str) set
+        result = await db.execute(
+            select(ModelPosition).where(
+                ModelPosition.portfolio_type == SIGNAL_TRACK_RECORD
+            )
+        )
+        existing = result.scalars().all()
+        existing_keys = {
+            (p.symbol, p.entry_date.date().isoformat())
+            for p in existing
+            if p.entry_date
+        }
+
+        # Walk each weekday in the window, load that day's snapshot, find fresh
+        # signals that should have a matching STR row.
+        start_d = _date.fromisoformat(start_date)
+        end_d = _date.fromisoformat(end_date)
+        checked: List[str] = []
+        missed: List[dict] = []
+        no_snapshot: List[str] = []
+
+        cur = start_d
+        while cur <= end_d:
+            if cur.weekday() < 5:  # weekdays only
+                date_str = cur.isoformat()
+                try:
+                    obj = s3.get_object(
+                        Bucket=S3_PRICE_BUCKET,
+                        Key=f"snapshots/{date_str}/dashboard.json",
+                    )
+                    snap = json.loads(obj["Body"].read())
+                    checked.append(date_str)
+                    fresh = [s for s in snap.get("buy_signals", []) if s.get("is_fresh")]
+                    for sig in fresh:
+                        sym = sig.get("symbol")
+                        if not sym:
+                            continue
+                        if (sym, date_str) not in existing_keys:
+                            missed.append({
+                                "symbol": sym,
+                                "date": date_str,
+                                "price": sig.get("price"),
+                                "ensemble_entry_date": sig.get("ensemble_entry_date"),
+                            })
+                except s3.exceptions.NoSuchKey:
+                    no_snapshot.append(date_str)
+                except Exception as e:
+                    logger.warning(f"audit_str_resignals: snapshot {date_str} failed: {e}")
+                    no_snapshot.append(date_str)
+            cur += _td(days=1)
+
+        return {
+            "start_date": start_date,
+            "end_date": end_date,
+            "existing_str_rows": len(existing),
+            "checked_dates": checked,
+            "no_snapshot_dates": no_snapshot,
+            "missed_count": len(missed),
+            "missed": missed,
+        }
+
     async def backfill_signal_track_record(
         self,
         db: AsyncSession,
