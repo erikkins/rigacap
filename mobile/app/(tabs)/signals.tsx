@@ -1,5 +1,9 @@
 /**
  * Signals list — all buy signals with search/filter.
+ *
+ * Hidden from the tab bar (see (tabs)/_layout.tsx — href: null) because
+ * the dashboard's "Signals" sub-tab covers the same surface. Kept
+ * registered so deep links and notification-tap routes still resolve.
  */
 
 import React, { useMemo, useState } from 'react';
@@ -14,7 +18,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useDashboard } from '@/hooks/useSignals';
 import SignalCard from '@/components/SignalCard';
-import { Colors, FontSize, Spacing } from '@/constants/theme';
+import { Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
 
 export default function SignalsScreen() {
   const { data, isLoading, refresh } = useDashboard();
@@ -35,7 +39,7 @@ export default function SignalsScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Search by symbol..."
-          placeholderTextColor={Colors.textMuted}
+          placeholderTextColor={Palette.inkLight}
           value={search}
           onChangeText={setSearch}
           autoCapitalize="characters"
@@ -57,7 +61,7 @@ export default function SignalsScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={refresh}
-            tintColor={Colors.gold}
+            tintColor={Palette.claret}
           />
         }
         ListEmptyComponent={
@@ -75,20 +79,21 @@ export default function SignalsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Palette.paper,
   },
   searchBar: {
     padding: Spacing.md,
     paddingBottom: 0,
   },
   searchInput: {
-    backgroundColor: Colors.card,
-    borderRadius: 8,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
     padding: Spacing.md,
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.md,
+    fontFamily: Fonts.body.regular,
   },
   list: {
     padding: Spacing.md,
@@ -99,7 +104,8 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
   },
   emptyText: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.md,
+    fontFamily: Fonts.display.italic,
   },
 });

@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
-import { Colors, FontSize, Spacing } from '@/constants/theme';
+import { Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
 
 export default function SettingsScreen() {
   const { user, logout } = useAuth();
@@ -45,7 +45,7 @@ export default function SettingsScreen() {
         <Row
           label="Status"
           value={sub?.status?.toUpperCase() || 'NONE'}
-          valueColor={sub?.is_valid ? Colors.green : Colors.red}
+          valueColor={sub?.is_valid ? Palette.positive : Palette.negative}
         />
         {sub?.days_remaining != null && (
           <Row label="Days Remaining" value={`${sub.days_remaining}`} />
@@ -128,7 +128,7 @@ function Row({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Palette.paper,
   },
   content: {
     padding: Spacing.md,
@@ -136,19 +136,19 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   sectionTitle: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.sm,
-    fontWeight: '600',
+    color: Palette.inkLight,
+    fontSize: FontSize.xs,
+    fontFamily: Fonts.body.medium,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
   },
   card: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
     overflow: 'hidden',
   },
   row: {
@@ -157,16 +157,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.cardBorder,
+    borderBottomColor: Palette.rule,
   },
   rowLabel: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.md,
+    fontFamily: Fonts.body.regular,
   },
   rowValue: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.md,
-    fontWeight: '500',
+    fontFamily: Fonts.body.medium,
   },
   linkRow: {
     flexDirection: 'row',
@@ -174,50 +175,57 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.cardBorder,
+    borderBottomColor: Palette.rule,
   },
   linkText: {
-    color: Colors.gold,
+    color: Palette.claret,
     fontSize: FontSize.md,
+    fontFamily: Fonts.body.medium,
   },
   arrow: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.md,
   },
   disclaimerCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
+    backgroundColor: Palette.paperDeep,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
     padding: Spacing.md,
     marginTop: Spacing.md,
   },
   disclaimerTitle: {
-    color: Colors.textSecondary,
+    color: Palette.ink,
     fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontFamily: Fonts.display.semibold,
     marginBottom: Spacing.xs,
   },
   disclaimerText: {
-    color: Colors.textMuted,
+    color: Palette.inkMute,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
+    fontStyle: 'italic',
     lineHeight: 18,
   },
   logoutButton: {
-    backgroundColor: Colors.red + '22',
-    borderRadius: 8,
+    backgroundColor: 'transparent',
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    borderColor: Palette.negative,
     padding: Spacing.md,
     alignItems: 'center',
     marginTop: Spacing.lg,
   },
   logoutText: {
-    color: Colors.red,
+    color: Palette.negative,
     fontSize: FontSize.md,
-    fontWeight: '600',
+    fontFamily: Fonts.body.semibold,
+    letterSpacing: 0.4,
   },
   version: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
     textAlign: 'center',
     marginTop: Spacing.md,
   },

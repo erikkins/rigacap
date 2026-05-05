@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { Colors, FontSize, Spacing } from '@/constants/theme';
+import { Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
 
 export default function RegisterScreen() {
   const { register } = useAuth();
@@ -67,7 +67,7 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             placeholder="Full Name"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={Palette.inkLight}
             value={name}
             onChangeText={setName}
             textContentType="name"
@@ -75,7 +75,7 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={Palette.inkLight}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -85,7 +85,7 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             placeholder="Password (min 8 characters)"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={Palette.inkLight}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -129,7 +129,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Palette.paper,
   },
   scroll: {
     flexGrow: 1,
@@ -141,31 +141,33 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   logo: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: Colors.gold,
-    letterSpacing: 2,
+    fontSize: 44,
+    fontFamily: Fonts.display.semibold,
+    color: Palette.ink,
+    letterSpacing: -0.5,
   },
   tagline: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.md,
+    fontFamily: Fonts.display.italic,
     marginTop: Spacing.xs,
   },
   form: {
     gap: Spacing.md,
   },
   input: {
-    backgroundColor: Colors.card,
-    borderRadius: 8,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
     padding: Spacing.md,
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.md,
+    fontFamily: Fonts.body.regular,
   },
   button: {
-    backgroundColor: Colors.gold,
-    borderRadius: 8,
+    backgroundColor: Palette.ink,
+    borderRadius: Radii.md,
     padding: Spacing.md,
     alignItems: 'center',
   },
@@ -173,13 +175,15 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: Colors.navy,
+    color: Palette.paper,
     fontSize: FontSize.md,
-    fontWeight: '700',
+    fontFamily: Fonts.body.semibold,
+    letterSpacing: 0.4,
   },
   trialNote: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.display.italic,
     textAlign: 'center',
   },
   footer: {
@@ -188,17 +192,20 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
   footerText: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
+    fontFamily: Fonts.body.regular,
   },
   footerLink: {
-    color: Colors.gold,
+    color: Palette.claret,
     fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontFamily: Fonts.body.semibold,
+    letterSpacing: 0.3,
   },
   disclaimer: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.display.italic,
     textAlign: 'center',
     marginTop: Spacing.lg,
     lineHeight: 16,

@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/hooks/useAuth';
-import { Colors, FontSize, Spacing } from '@/constants/theme';
+import { Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
 
 export default function Verify2FAScreen() {
   const { verify2FA, cancel2FA } = useAuth();
@@ -65,7 +65,7 @@ export default function Verify2FAScreen() {
             value={code}
             onChangeText={setCode}
             placeholder={useBackupCode ? 'ABCD1234' : '000000'}
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={Palette.inkLight}
             maxLength={useBackupCode ? 8 : 6}
             keyboardType={useBackupCode ? 'default' : 'number-pad'}
             autoFocus
@@ -80,8 +80,8 @@ export default function Verify2FAScreen() {
             <Switch
               value={trustDevice}
               onValueChange={setTrustDevice}
-              trackColor={{ false: Colors.navyLight, true: Colors.gold }}
-              thumbColor="#fff"
+              trackColor={{ false: Palette.rule, true: Palette.claret }}
+              thumbColor={Palette.paper}
             />
           </View>
 
@@ -120,7 +120,7 @@ export default function Verify2FAScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Palette.paper,
   },
   inner: {
     flex: 1,
@@ -132,28 +132,30 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: FontSize.xxl,
-    fontWeight: '700',
-    color: Colors.textPrimary,
+    fontFamily: Fonts.display.semibold,
+    color: Palette.ink,
     marginBottom: Spacing.sm,
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: FontSize.md,
-    color: Colors.textSecondary,
+    fontFamily: Fonts.body.regular,
+    color: Palette.inkMute,
     lineHeight: 22,
   },
   form: {
     gap: Spacing.md,
   },
   codeInput: {
-    backgroundColor: Colors.card,
+    backgroundColor: Palette.paperCard,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    borderRadius: 12,
+    borderColor: Palette.rule,
+    borderRadius: Radii.md,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     fontSize: 28,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    color: Colors.textPrimary,
+    fontFamily: Fonts.mono.medium,
+    color: Palette.ink,
     letterSpacing: 8,
     textAlign: 'center',
   },
@@ -165,12 +167,13 @@ const styles = StyleSheet.create({
   },
   trustLabel: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontFamily: Fonts.body.regular,
+    color: Palette.inkMute,
   },
   button: {
-    backgroundColor: Colors.gold,
+    backgroundColor: Palette.ink,
     paddingVertical: Spacing.md,
-    borderRadius: 12,
+    borderRadius: Radii.md,
     alignItems: 'center',
   },
   buttonDisabled: {
@@ -178,8 +181,9 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: FontSize.lg,
-    fontWeight: '600',
-    color: Colors.navy,
+    fontFamily: Fonts.body.semibold,
+    color: Palette.paper,
+    letterSpacing: 0.4,
   },
   links: {
     flexDirection: 'row',
@@ -188,10 +192,12 @@ const styles = StyleSheet.create({
   },
   link: {
     fontSize: FontSize.sm,
-    color: Colors.gold,
+    fontFamily: Fonts.body.medium,
+    color: Palette.claret,
   },
   cancelLink: {
     fontSize: FontSize.sm,
-    color: Colors.textMuted,
+    fontFamily: Fonts.body.regular,
+    color: Palette.inkLight,
   },
 });

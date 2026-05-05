@@ -1,11 +1,6 @@
 /**
  * RigaCap brand tokens — paper-backed editorial publication aesthetic.
  * Mirrors frontend/tailwind.config.js (post-Apr-27 rebrand).
- *
- * Prefer the new exports (Palette / Fonts / Regime / Radii) in fresh code.
- * The legacy `Colors` export is a back-compat alias mapped to the closest
- * new tokens so unmigrated screens still build during the staged rebrand —
- * each screen drops the alias as it gets reskinned.
  */
 
 // ──────────────────────────────────────────────────────────────
@@ -119,39 +114,3 @@ export const Radii = {
   pill: 9999,
 } as const;
 
-// ──────────────────────────────────────────────────────────────
-// Back-compat: legacy Colors export
-// ──────────────────────────────────────────────────────────────
-//
-// Maps the old navy/gold keys to closest new palette equivalents so
-// existing screens keep building during the staged rebrand. They'll
-// look "different" until per-file rebrand lands — that visual delta
-// is intentional, signals where work remains.
-
-export const Colors = {
-  // Brand (legacy keys → new equivalents)
-  navy: Palette.ink,
-  navyLight: Palette.inkMute,
-  navyMid: Palette.inkLight,
-  gold: Palette.claret,
-  goldLight: Palette.claretLight,
-
-  // Surfaces
-  background: Palette.paper,
-  card: Palette.paperCard,
-  cardBorder: Palette.rule,
-
-  // Text
-  textPrimary: Palette.ink,
-  textSecondary: Palette.inkMute,
-  textMuted: Palette.inkLight,
-
-  // Status
-  green: Palette.positive,
-  red: Palette.negative,
-  yellow: Palette.yellow,
-  blue: Palette.blue,
-
-  // Regime (back-compat shape)
-  regime: Regime,
-} as const;

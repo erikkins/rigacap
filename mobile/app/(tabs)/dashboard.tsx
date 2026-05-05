@@ -30,7 +30,7 @@ import { useLiveQuotes } from '@/hooks/useLiveQuotes';
 import SignalCard from '@/components/SignalCard';
 import RegimeBadge from '@/components/RegimeBadge';
 import ConfirmModal from '@/components/ConfirmModal';
-import { Colors, Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
+import { Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
 
 type Tab = 'signals' | 'positions' | 'history' | 'missed';
 
@@ -235,8 +235,8 @@ export default function DashboardScreen() {
                     {
                       color:
                         (portfolio.total_return_pct ?? 0) >= 0
-                          ? Colors.green
-                          : Colors.red,
+                          ? Palette.positive
+                          : Palette.negative,
                     },
                   ]}
                 >
@@ -393,7 +393,7 @@ export default function DashboardScreen() {
             <Text
               style={[
                 styles.modalValue,
-                { color: (sellModal.position.pnl_pct ?? 0) >= 0 ? Colors.green : Colors.red },
+                { color: (sellModal.position.pnl_pct ?? 0) >= 0 ? Palette.positive : Palette.negative },
               ]}
             >
               {(sellModal.position.pnl_pct ?? 0) >= 0 ? '+' : ''}{(sellModal.position.pnl_pct ?? 0).toFixed(1)}%
@@ -466,7 +466,7 @@ function SignalsTab({
       {/* Fresh Signals */}
       <View style={styles.sectionHeader}>
         <View style={styles.sectionDot} />
-        <Text style={[styles.sectionTitle, { color: Colors.green }]}>
+        <Text style={[styles.sectionTitle, { color: Palette.positive }]}>
           Buy Signals ({freshSignals.length})
         </Text>
       </View>
@@ -504,9 +504,9 @@ function SignalsTab({
       {monitoringSignals.length > 0 && (
         <>
           <View style={styles.sectionHeader}>
-            <View style={[styles.sectionDot, { backgroundColor: Colors.textMuted }]} />
+            <View style={[styles.sectionDot, { backgroundColor: Palette.inkLight }]} />
             <View>
-              <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>
+              <Text style={[styles.sectionTitle, { color: Palette.inkMute }]}>
                 Monitoring ({monitoringSignals.length})
               </Text>
               <Text style={styles.sectionSubtitle}>
@@ -559,7 +559,7 @@ function PositionsTab({
             <Text
               style={[
                 styles.positionPnl,
-                { color: (pos.pnl_pct ?? 0) >= 0 ? Colors.green : Colors.red },
+                { color: (pos.pnl_pct ?? 0) >= 0 ? Palette.positive : Palette.negative },
               ]}
             >
               {(pos.pnl_pct ?? 0) >= 0 ? '+' : ''}{(pos.pnl_pct ?? 0).toFixed(1)}%
@@ -616,7 +616,7 @@ function HistoryTab({
   if (isLoading && trades.length === 0) {
     return (
       <View style={styles.emptyCard}>
-        <ActivityIndicator color={Colors.gold} />
+        <ActivityIndicator color={Palette.claret} />
       </View>
     );
   }
@@ -642,14 +642,14 @@ function HistoryTab({
           <Text style={styles.historyStatLabel}>Trades</Text>
         </View>
         <View style={styles.historyStat}>
-          <Text style={[styles.historyStatValue, { color: Colors.green }]}>{winRate}%</Text>
+          <Text style={[styles.historyStatValue, { color: Palette.positive }]}>{winRate}%</Text>
           <Text style={styles.historyStatLabel}>Win Rate</Text>
         </View>
         <View style={styles.historyStat}>
           <Text
             style={[
               styles.historyStatValue,
-              { color: Number(avgReturn) >= 0 ? Colors.green : Colors.red },
+              { color: Number(avgReturn) >= 0 ? Palette.positive : Palette.negative },
             ]}
           >
             {Number(avgReturn) >= 0 ? '+' : ''}{avgReturn}%
@@ -666,7 +666,7 @@ function HistoryTab({
             <Text
               style={[
                 styles.tradePnl,
-                { color: trade.pnl_pct >= 0 ? Colors.green : Colors.red },
+                { color: trade.pnl_pct >= 0 ? Palette.positive : Palette.negative },
               ]}
             >
               {trade.pnl_pct >= 0 ? '+' : ''}{trade.pnl_pct.toFixed(1)}%
@@ -694,7 +694,7 @@ function HistoryTab({
               <Text
                 style={[
                   styles.tradePnlDollar,
-                  { color: trade.pnl >= 0 ? Colors.green : Colors.red },
+                  { color: trade.pnl >= 0 ? Palette.positive : Palette.negative },
                 ]}
               >
                 {trade.pnl >= 0 ? '+' : ''}${Math.abs(trade.pnl).toFixed(0)}
@@ -734,7 +734,7 @@ function MissedTab({
         >
           <View style={styles.missedHeader}>
             <Text style={styles.missedSymbol}>{m.symbol}</Text>
-            <Text style={[styles.missedReturn, { color: Colors.green }]}>
+            <Text style={[styles.missedReturn, { color: Palette.positive }]}>
               +{m.would_be_return.toFixed(1)}%
             </Text>
           </View>
@@ -787,9 +787,9 @@ function StatBox({
   const valueColor =
     change != null
       ? change >= 0
-        ? Colors.green
-        : Colors.red
-      : Colors.textPrimary;
+        ? Palette.positive
+        : Palette.negative
+      : Palette.ink;
   return (
     <View style={styles.statBox}>
       <Text style={styles.statLabel}>{label}</Text>

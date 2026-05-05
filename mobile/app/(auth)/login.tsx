@@ -23,7 +23,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '@/hooks/useAuth';
-import { Colors, FontSize, Spacing } from '@/constants/theme';
+import { Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
 import { GOOGLE_WEB_CLIENT_ID, GOOGLE_IOS_CLIENT_ID } from '@/constants/config';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -161,7 +161,7 @@ export default function LoginScreen() {
         <View style={styles.brand}>
           <Text style={styles.logo}>RigaCap</Text>
           <Text style={styles.tagline}>
-            Algorithmic Trading Signals
+            Quantitative signals, weekly
           </Text>
         </View>
 
@@ -170,7 +170,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={Palette.inkLight}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -180,7 +180,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="Password"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={Palette.inkLight}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -219,9 +219,9 @@ export default function LoginScreen() {
                 AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
               }
               buttonStyle={
-                AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
               }
-              cornerRadius={8}
+              cornerRadius={Radii.md}
               style={styles.appleButton}
               onPress={handleAppleLogin}
             />
@@ -251,7 +251,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Palette.paper,
   },
   scroll: {
     flexGrow: 1,
@@ -263,31 +263,33 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   logo: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: Colors.gold,
-    letterSpacing: 2,
+    fontSize: 44,
+    fontFamily: Fonts.display.semibold,
+    color: Palette.ink,
+    letterSpacing: -0.5,
   },
   tagline: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
+    fontFamily: Fonts.display.italic,
     marginTop: Spacing.xs,
   },
   form: {
     gap: Spacing.md,
   },
   input: {
-    backgroundColor: Colors.card,
-    borderRadius: 8,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
     padding: Spacing.md,
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.md,
+    fontFamily: Fonts.body.regular,
   },
   button: {
-    backgroundColor: Colors.gold,
-    borderRadius: 8,
+    backgroundColor: Palette.ink,
+    borderRadius: Radii.md,
     padding: Spacing.md,
     alignItems: 'center',
   },
@@ -295,9 +297,10 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: Colors.navy,
+    color: Palette.paper,
     fontSize: FontSize.md,
-    fontWeight: '700',
+    fontFamily: Fonts.body.semibold,
+    letterSpacing: 0.4,
   },
   divider: {
     flexDirection: 'row',
@@ -307,29 +310,33 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.cardBorder,
+    backgroundColor: Palette.rule,
   },
   dividerText: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     marginHorizontal: Spacing.md,
     fontSize: FontSize.sm,
+    fontFamily: Fonts.display.italic,
   },
   social: {
     gap: Spacing.md,
   },
   googleButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    borderColor: Palette.rule,
     paddingVertical: 14,
     paddingHorizontal: Spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleText: {
-    color: '#1F1F1F',
+    color: Palette.ink,
     fontSize: FontSize.md,
-    fontWeight: '600',
+    fontFamily: Fonts.body.medium,
     lineHeight: 20,
+    letterSpacing: 0.3,
   },
   appleButton: {
     height: 48,
@@ -341,18 +348,22 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
   footerText: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
+    fontFamily: Fonts.body.regular,
   },
   footerLink: {
-    color: Colors.gold,
+    color: Palette.claret,
     fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontFamily: Fonts.body.semibold,
+    letterSpacing: 0.3,
   },
   disclaimer: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.display.italic,
     textAlign: 'center',
     marginTop: Spacing.lg,
+    lineHeight: 16,
   },
 });

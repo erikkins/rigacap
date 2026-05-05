@@ -22,7 +22,7 @@ import PriceChart from '@/components/PriceChart';
 import { useChartData } from '@/hooks/useChartData';
 import { useStockInfo } from '@/hooks/useStockInfo';
 import { useLiveQuotes } from '@/hooks/useLiveQuotes';
-import { Colors, FontSize, Spacing } from '@/constants/theme';
+import { Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
 
 type DataSource = 'signal' | 'position' | 'missed' | 'chart_only';
 
@@ -186,8 +186,8 @@ export default function SignalDetailScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <Stack.Screen options={{ title: symbol || 'Stock', headerShown: !isLandscape, headerBackTitle: 'Back', headerStyle: { backgroundColor: Colors.navy }, headerTintColor: Colors.textPrimary }} />
-        <ActivityIndicator size="large" color={Colors.gold} />
+        <Stack.Screen options={{ title: symbol || 'Stock', headerShown: !isLandscape, headerBackTitle: 'Back', headerStyle: { backgroundColor: Palette.paper }, headerTintColor: Palette.ink }} />
+        <ActivityIndicator size="large" color={Palette.claret} />
       </View>
     );
   }
@@ -218,7 +218,7 @@ export default function SignalDetailScreen() {
           ))}
         </View>
         {chartLoading ? (
-          <View style={styles.center}><ActivityIndicator color={Colors.gold} /></View>
+          <View style={styles.center}><ActivityIndicator color={Palette.claret} /></View>
         ) : (
           <PriceChart
             data={chartData}
@@ -238,8 +238,9 @@ export default function SignalDetailScreen() {
       <Stack.Screen
         options={{
           title: d.symbol,
-          headerStyle: { backgroundColor: Colors.navy },
-          headerTintColor: Colors.textPrimary,
+          headerStyle: { backgroundColor: Palette.paper },
+          headerTintColor: Palette.ink,
+          headerTitleStyle: { fontFamily: Fonts.display.semibold, color: Palette.ink },
           headerBackTitle: 'Back',
           headerShown: true,
         }}
@@ -262,7 +263,7 @@ export default function SignalDetailScreen() {
         </View>
         {chartLoading ? (
           <View style={[styles.chartPlaceholder]}>
-            <ActivityIndicator color={Colors.gold} />
+            <ActivityIndicator color={Palette.claret} />
           </View>
         ) : (
           <PriceChart
@@ -289,18 +290,18 @@ export default function SignalDetailScreen() {
               <View style={styles.strongBadge}><Text style={styles.strongText}>STRONG</Text></View>
             )}
             {d.source === 'position' && (
-              <View style={[styles.freshBadge, { backgroundColor: Colors.gold + '22' }]}>
-                <Text style={[styles.freshText, { color: Colors.gold }]}>POSITION</Text>
+              <View style={[styles.freshBadge, { backgroundColor: 'transparent', borderWidth: 1, borderColor: Palette.claret }]}>
+                <Text style={[styles.freshText, { color: Palette.claret }]}>POSITION</Text>
               </View>
             )}
             {d.source === 'position' && d.action === 'sell' && (
-              <View style={[styles.freshBadge, { backgroundColor: Colors.red + '22' }]}>
-                <Text style={[styles.freshText, { color: Colors.red }]}>SELL</Text>
+              <View style={[styles.freshBadge, { backgroundColor: 'transparent', borderWidth: 1, borderColor: Palette.negative }]}>
+                <Text style={[styles.freshText, { color: Palette.negative }]}>SELL</Text>
               </View>
             )}
             {d.source === 'position' && d.action === 'warning' && (
-              <View style={[styles.freshBadge, { backgroundColor: '#F59E0B22' }]}>
-                <Text style={[styles.freshText, { color: '#F59E0B' }]}>WARNING</Text>
+              <View style={[styles.freshBadge, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#B8860B' }]}>
+                <Text style={[styles.freshText, { color: '#B8860B' }]}>WARNING</Text>
               </View>
             )}
           </View>
@@ -335,13 +336,13 @@ export default function SignalDetailScreen() {
           if (s >= 61) return 'Moderate';
           return 'Weak';
         })();
-        const color = label === 'Very Strong' ? Colors.green
-          : label === 'Strong' ? '#86EFAC'
-          : label === 'Moderate' ? '#F59E0B'
-          : Colors.textMuted;
+        const color = label === 'Very Strong' ? Palette.claret
+          : label === 'Strong' ? Palette.claretLight
+          : label === 'Moderate' ? Palette.inkMute
+          : Palette.inkLight;
         return (
           <>
-            <View style={[styles.strengthCard, { borderColor: color + '33', backgroundColor: color + '15' }]}>
+            <View style={[styles.strengthCard, { borderColor: color, backgroundColor: 'transparent' }]}>
               <Text style={[styles.strengthCardLabel, { color }]}>Signal Strength</Text>
               <Text style={[styles.strengthCardValue, { color }]}>{label}</Text>
             </View>
@@ -362,9 +363,9 @@ export default function SignalDetailScreen() {
       {d.source === 'position' && (
         <>
           {d.pnl_pct != null && (
-            <View style={[styles.scoreCard, { borderColor: (d.pnl_pct >= 0 ? Colors.green : Colors.red) + '33', backgroundColor: (d.pnl_pct >= 0 ? Colors.green : Colors.red) + '15' }]}>
-              <Text style={[styles.scoreLabel, { color: d.pnl_pct >= 0 ? Colors.green : Colors.red }]}>P&L</Text>
-              <Text style={[styles.scoreValue, { color: d.pnl_pct >= 0 ? Colors.green : Colors.red }]}>
+            <View style={[styles.scoreCard, { borderColor: d.pnl_pct >= 0 ? Palette.positive : Palette.negative, backgroundColor: 'transparent' }]}>
+              <Text style={[styles.scoreLabel, { color: d.pnl_pct >= 0 ? Palette.positive : Palette.negative }]}>P&L</Text>
+              <Text style={[styles.scoreValue, { color: d.pnl_pct >= 0 ? Palette.positive : Palette.negative }]}>
                 {d.pnl_pct >= 0 ? '+' : ''}{d.pnl_pct.toFixed(1)}%
               </Text>
             </View>
@@ -378,8 +379,8 @@ export default function SignalDetailScreen() {
             <DetailRow label="Distance to Stop" value={d.distance_to_stop_pct != null ? `${d.distance_to_stop_pct.toFixed(1)}%` : '—'} />
           </View>
           {d.action_reason && (
-            <View style={[styles.scoreCard, { borderColor: Colors.cardBorder, backgroundColor: Colors.card }]}>
-              <Text style={[styles.scoreLabel, { color: Colors.textSecondary }]}>Guidance</Text>
+            <View style={[styles.scoreCard, { borderColor: Palette.rule, backgroundColor: Palette.paperCard }]}>
+              <Text style={[styles.scoreLabel, { color: Palette.inkMute }]}>Guidance</Text>
               <Text style={[styles.detailValue, { textAlign: 'center', lineHeight: 20 }]}>{d.action_reason}</Text>
             </View>
           )}
@@ -422,7 +423,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Palette.paper,
   },
   content: {
     padding: Spacing.md,
@@ -433,11 +434,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: Palette.paper,
   },
   emptyText: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.md,
+    fontFamily: Fonts.body.regular,
   },
   // Portrait chart
   periodRow: {
@@ -449,37 +451,42 @@ const styles = StyleSheet.create({
   periodButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: Colors.card,
+    borderRadius: Radii.sm,
+    backgroundColor: Palette.paperDeep,
   },
   periodActive: {
-    backgroundColor: Colors.gold + '33',
+    backgroundColor: Palette.ink,
   },
   periodText: {
-    color: Colors.textMuted,
+    color: Palette.inkMute,
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontFamily: Fonts.body.medium,
+    letterSpacing: 0.3,
   },
   periodTextActive: {
-    color: Colors.gold,
+    color: Palette.paper,
+    fontFamily: Fonts.body.semibold,
   },
   chartPlaceholder: {
     height: 220,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 12,
+    backgroundColor: Palette.paperCard,
+    borderWidth: 1,
+    borderColor: Palette.rule,
+    borderRadius: Radii.md,
   },
   rotateHint: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.display.italic,
     textAlign: 'center',
     marginTop: Spacing.xs,
   },
   // Landscape
   landscapeWrap: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Palette.paper,
   },
   landscapeHeader: {
     position: 'absolute',
@@ -491,14 +498,14 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   landscapeSymbol: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.lg,
-    fontWeight: '800',
+    fontFamily: Fonts.display.semibold,
   },
   landscapePrice: {
-    color: Colors.gold,
+    color: Palette.ink,
     fontSize: FontSize.md,
-    fontWeight: '600',
+    fontFamily: Fonts.mono.medium,
   },
   landscapePeriods: {
     position: 'absolute',
@@ -514,9 +521,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     textAlign: 'center',
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: 9,
-    opacity: 0.6,
+    fontFamily: Fonts.body.regular,
+    opacity: 0.7,
   },
   // Data card
   header: {
@@ -528,104 +536,118 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   symbol: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.xxl,
-    fontWeight: '800',
+    fontFamily: Fonts.display.semibold,
+    letterSpacing: -0.3,
   },
   badges: {
     flexDirection: 'row',
     gap: Spacing.sm,
   },
   freshBadge: {
-    backgroundColor: Colors.green + '22',
-    borderRadius: 4,
+    backgroundColor: Palette.claret,
+    borderRadius: Radii.sm,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   freshText: {
-    color: Colors.green,
+    color: Palette.paper,
     fontSize: FontSize.xs,
-    fontWeight: '700',
+    fontFamily: Fonts.body.semibold,
+    letterSpacing: 0.6,
   },
   strongBadge: {
-    backgroundColor: Colors.gold + '22',
-    borderRadius: 4,
+    backgroundColor: 'transparent',
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: Palette.ink,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   strongText: {
-    color: Colors.gold,
+    color: Palette.ink,
     fontSize: FontSize.xs,
-    fontWeight: '700',
+    fontFamily: Fonts.body.semibold,
+    letterSpacing: 0.6,
   },
   price: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.xxl,
-    fontWeight: '700',
+    fontFamily: Fonts.mono.medium,
   },
   companyName: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
+    fontFamily: Fonts.display.italic,
   },
   companySection: {
     gap: Spacing.sm,
   },
   industryBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#4338CA22',
-    borderRadius: 12,
-    paddingHorizontal: 10,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Palette.rule,
+    borderRadius: Radii.pill,
+    paddingHorizontal: 12,
     paddingVertical: 4,
   },
   industryText: {
-    color: '#818CF8',
+    color: Palette.inkMute,
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontFamily: Fonts.body.medium,
+    letterSpacing: 0.4,
   },
   companyDesc: {
-    color: Colors.textMuted,
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
-    lineHeight: 18,
+    fontFamily: Fonts.body.regular,
+    lineHeight: 22,
   },
   scoreCard: {
-    backgroundColor: Colors.gold + '15',
-    borderRadius: 12,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.gold + '33',
+    borderColor: Palette.rule,
     padding: Spacing.lg,
     alignItems: 'center',
   },
   scoreLabel: {
-    color: Colors.gold,
-    fontSize: FontSize.sm,
-    fontWeight: '600',
+    color: Palette.inkLight,
+    fontSize: FontSize.xs,
+    fontFamily: Fonts.body.medium,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
     marginBottom: Spacing.xs,
   },
   scoreValue: {
-    color: Colors.gold,
+    color: Palette.ink,
     fontSize: 48,
-    fontWeight: '800',
+    fontFamily: Fonts.mono.medium,
   },
   strengthCard: {
-    borderRadius: 12,
+    borderRadius: Radii.md,
     borderWidth: 1,
     padding: Spacing.lg,
     alignItems: 'center',
   },
   strengthCardLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontSize: FontSize.xs,
+    fontFamily: Fonts.body.medium,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
     marginBottom: Spacing.xs,
   },
   strengthCardValue: {
     fontSize: FontSize.xxl,
-    fontWeight: '800',
+    fontFamily: Fonts.display.semibold,
   },
   grid: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
     overflow: 'hidden',
   },
   detailRow: {
@@ -634,25 +656,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.cardBorder,
+    borderBottomColor: Palette.rule,
   },
   detailLabel: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.md,
+    fontFamily: Fonts.body.regular,
   },
   detailValue: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.md,
-    fontWeight: '600',
+    fontFamily: Fonts.mono.regular,
   },
   lastUpdated: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
     textAlign: 'center',
   },
   disclaimer: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.display.italic,
     textAlign: 'center',
     lineHeight: 18,
     marginTop: Spacing.md,
