@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     POSITION_SIZE_PCT: float = 20.0
     SHORT_MOMENTUM_DAYS: int = 5
     LONG_MOMENTUM_DAYS: int = 60
-    TRAILING_STOP_PCT: float = 14.0
+    TRAILING_STOP_PCT: float = 12.0
     MARKET_FILTER_ENABLED: bool = True
     MARKET_FILTER_PANIC_ONLY: bool = False
     REBALANCE_FREQUENCY: str = "biweekly"
