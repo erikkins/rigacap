@@ -1600,34 +1600,8 @@ class ModelPortfolioService:
                 holding_days.append((p.exit_date - p.entry_date).days)
         avg_holding = sum(holding_days) / len(holding_days) if holding_days else 0
 
-        # Best/worst picks
-        best = max(closed_positions, key=lambda p: p.pnl_pct or 0, default=None)
-        worst = min(closed_positions, key=lambda p: p.pnl_pct or 0, default=None)
-
-        def _pick_summary(p):
-            if not p:
-                return None
-            return {
-                "symbol": p.symbol,
-                "pnl_pct": round(p.pnl_pct, 2) if p.pnl_pct else 0,
-                "entry_date": p.entry_date.isoformat() if p.entry_date else None,
-                "exit_date": p.exit_date.isoformat() if p.exit_date else None,
-                "exit_reason": p.exit_reason,
-            }
-
-        # Recent closed (last 20)
-        recent = sorted(
-            closed_positions,
-            key=lambda p: p.exit_date or datetime.min,
-            reverse=True,
-        )[:20]
-
-        # Open positions with current unrealized P&L.
-        # During market hours, prefer LIVE quotes from the dual-source provider
-        # (Alpaca SIP + yfinance fallback). After hours, fall back to the
-        # latest close in scanner_service.data_cache. If the quote-fetch fails
-        # for any reason, fall back to the latest close — never to entry_price
-        # (which would render misleading 0% P&L).
+        # Resolve current price + unrealized P&L for each open position FIRST,
+        # so best/worst can include them alongside closed (realized) trades.
         from app.services.scanner import scanner_service
 
         # Detect "market open" — naive cutoff: 9:30 AM - 4:00 PM ET on weekdays.
@@ -1647,6 +1621,7 @@ class ModelPortfolioService:
                 logger.warning(f"STR live-quote fetch failed (falling back to close): {e}")
 
         open_data = []
+        open_pnl_by_id: Dict[int, float] = {}
         for pos in open_positions:
             current_price = live_quotes.get(pos.symbol)
             price_source = "live" if current_price is not None else None
@@ -1666,6 +1641,7 @@ class ModelPortfolioService:
                         current_price = pos.entry_price
                         price_source = "entry_fallback"
             pnl_pct = ((current_price / pos.entry_price) - 1) * 100
+            open_pnl_by_id[pos.id] = pnl_pct
             open_data.append({
                 "symbol": pos.symbol,
                 "entry_date": pos.entry_date.isoformat() if pos.entry_date else None,
@@ -1675,6 +1651,45 @@ class ModelPortfolioService:
                 "highest_price": pos.highest_price,
                 "price_source": price_source,
             })
+
+        # Best/worst across CLOSED (realized) + OPEN (unrealized). Otherwise,
+        # in periods where every closed pick is a loss the "Best" label
+        # paradoxically points at a smaller loss while obvious open winners
+        # are hidden.
+        candidates = []
+        for p in closed_positions:
+            if p.pnl_pct is not None:
+                candidates.append((p.pnl_pct, p, "closed"))
+        for p in open_positions:
+            pnl = open_pnl_by_id.get(p.id)
+            if pnl is not None:
+                candidates.append((pnl, p, "open"))
+
+        best_tuple = max(candidates, key=lambda c: c[0], default=None)
+        worst_tuple = min(candidates, key=lambda c: c[0], default=None)
+
+        def _pick_summary(t):
+            if not t:
+                return None
+            pnl, p, status = t
+            return {
+                "symbol": p.symbol,
+                "pnl_pct": round(pnl, 2),
+                "status": status,
+                "entry_date": p.entry_date.isoformat() if p.entry_date else None,
+                "exit_date": p.exit_date.isoformat() if p.exit_date else None,
+                "exit_reason": p.exit_reason,
+            }
+
+        best = best_tuple
+        worst = worst_tuple
+
+        # Recent closed (last 20)
+        recent = sorted(
+            closed_positions,
+            key=lambda p: p.exit_date or datetime.min,
+            reverse=True,
+        )[:20]
 
         return {
             "total_picks": total_picks,
