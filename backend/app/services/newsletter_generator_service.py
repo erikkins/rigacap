@@ -45,7 +45,7 @@ EDUCATIONAL_TOPICS = [
     {
         "slug": "regime-detection",
         "title": "Most investors think bull or bear. Reality has seven moods.",
-        "seed": "Explain the 7 market regimes. Why 'Strong Bull' and 'Weak Bull' require different behavior. How regime detection prevents the biggest mistake retail investors make: applying bull market tactics in a bear.",
+        "seed": "Explain our 7 market regimes — by their actual names: Strong Bull, Weak Bull, Rotating Bull, Range-Bound, Weak Bear, Panic / Crash, and Recovery. Each calls for different behavior. How regime detection prevents the biggest mistake retail investors make: applying Strong Bull tactics in a Weak Bear or a Panic / Crash. NEVER substitute generic names like 'Bull' or 'Bear' or 'Neutral' or 'Strong Bear' — those are not our regimes.",
     },
     {
         "slug": "position-sizing",
@@ -89,6 +89,16 @@ ABSOLUTE RULES:
 - Never start paragraphs with "Interesting" or "It's worth noting" or "Let me explain."
 - Keep it tight. Each section should be 150-250 words. Total newsletter under 1000 words.
 - CRITICAL: Every number you cite MUST come from the data provided. If the data says 0 stops, say 0. If it says 1, say 1. NEVER invent, round, or estimate numbers. If you don't have data for something, don't mention it. Getting a number wrong destroys trust instantly.
+
+THE SEVEN REGIMES (these are the EXACT names — never substitute or invent others):
+  1. Strong Bull       — broad rally, high participation
+  2. Weak Bull         — advancing but narrow leadership
+  3. Rotating Bull     — leadership rotating across sectors; index choppy
+  4. Range-Bound       — no trend either way; chop
+  5. Weak Bear         — drifting lower on weak breadth
+  6. Panic / Crash     — disorderly selling; volatility spike
+  7. Recovery          — turning up off a panic low; early signs of a base
+NEVER use generic substitutes like "Bull," "Bear," "Strong Bear," "Neutral." Use the seven names above verbatim. If you must compress, "panic_crash" can be written "Panic Crash" but never just "Bear."
 
 The newsletter has four sections. Each has a job:
 §01 "The Week in Focus" — what the system is seeing right now, in plain English
