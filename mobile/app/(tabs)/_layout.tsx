@@ -1,25 +1,47 @@
 /**
- * Tab navigator layout — Dashboard, Signals, Settings.
+ * Tab navigator layout — Dashboard, Settings.
+ *
+ * Signals tab is hidden (href: null) — signal list lives inside the
+ * Dashboard's "Signals" sub-tab. Kept registered so the route resolves.
  */
 
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
+import { Fonts, FontSize, Palette } from '@/constants/theme';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: Colors.navy },
-        headerTintColor: Colors.textPrimary,
-        headerTitleStyle: { fontWeight: '700' },
-        tabBarStyle: {
-          backgroundColor: Colors.navy,
-          borderTopColor: Colors.cardBorder,
+        headerStyle: {
+          backgroundColor: Palette.paper,
+          shadowOpacity: 0,
+          elevation: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: Palette.rule,
         },
-        tabBarActiveTintColor: Colors.gold,
-        tabBarInactiveTintColor: Colors.textMuted,
+        headerTintColor: Palette.ink,
+        headerTitleStyle: {
+          fontFamily: Fonts.display.semibold,
+          fontSize: FontSize.lg,
+          color: Palette.ink,
+        },
+        tabBarStyle: {
+          backgroundColor: Palette.paper,
+          borderTopColor: Palette.rule,
+          borderTopWidth: 1,
+          height: 64,
+          paddingTop: 6,
+          paddingBottom: 8,
+        },
+        tabBarActiveTintColor: Palette.claret,
+        tabBarInactiveTintColor: Palette.inkLight,
+        tabBarLabelStyle: {
+          fontFamily: Fonts.body.medium,
+          fontSize: FontSize.xs,
+          letterSpacing: 0.4,
+        },
       }}
     >
       <Tabs.Screen
@@ -34,7 +56,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="signals"
         options={{
-          href: null, // Accessed via dashboard signal cards, not tab bar
+          href: null,
         }}
       />
       <Tabs.Screen

@@ -30,7 +30,7 @@ import { useLiveQuotes } from '@/hooks/useLiveQuotes';
 import SignalCard from '@/components/SignalCard';
 import RegimeBadge from '@/components/RegimeBadge';
 import ConfirmModal from '@/components/ConfirmModal';
-import { Colors, FontSize, Spacing } from '@/constants/theme';
+import { Colors, Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
 
 type Tab = 'signals' | 'positions' | 'history' | 'missed';
 
@@ -155,7 +155,7 @@ export default function DashboardScreen() {
   if (isLoading && !data) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={Colors.gold} />
+        <ActivityIndicator size="large" color={Palette.claret} />
       </View>
     );
   }
@@ -186,7 +186,7 @@ export default function DashboardScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={() => { refresh(); refetch(); if (activeTab === 'history') refreshTrades(); }}
-            tintColor={Colors.gold}
+            tintColor={Palette.claret}
           />
         }
       >
@@ -804,7 +804,7 @@ function StatBox({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Palette.paper,
   },
   content: {
     padding: Spacing.md,
@@ -815,14 +815,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: Palette.paper,
   },
   errorText: {
-    color: Colors.red,
+    color: Palette.negative,
     fontSize: FontSize.md,
+    fontFamily: Fonts.body.regular,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.85,
   },
 
   // Stats row
@@ -832,38 +833,44 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    backgroundColor: Colors.card,
-    borderRadius: 8,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    borderColor: Palette.rule,
     padding: Spacing.md,
     alignItems: 'center',
   },
   statLabel: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
     marginBottom: 4,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   statValue: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.lg,
-    fontWeight: '700',
+    fontFamily: Fonts.mono.medium,
   },
   statChange: {
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontFamily: Fonts.mono.medium,
     marginTop: 2,
   },
   statSub: {
-    color: Colors.green,
+    color: Palette.positive,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
     marginTop: 2,
   },
 
   // Portfolio card
   portfolioCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
     padding: Spacing.md,
   },
   portfolioStats: {
@@ -872,76 +879,82 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   portfolioValue: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.xl,
-    fontWeight: '700',
+    fontFamily: Fonts.display.semibold,
     textAlign: 'center',
   },
   portfolioReturn: {
     fontSize: FontSize.xl,
-    fontWeight: '700',
+    fontFamily: Fonts.mono.medium,
     textAlign: 'center',
   },
   portfolioLabel: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
     textAlign: 'center',
     marginTop: 4,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
 
-  // Tab bar
+  // Tab pill row (in-page tabs: Signals / Positions / History / Missed)
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: Colors.card,
-    borderRadius: 10,
+    backgroundColor: Palette.paperDeep,
+    borderRadius: Radii.md,
     padding: 3,
     gap: 3,
   },
   tabPill: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: Radii.sm,
     alignItems: 'center',
   },
   tabPillActive: {
-    backgroundColor: Colors.gold,
+    backgroundColor: Palette.ink,
   },
   tabPillText: {
-    color: Colors.textMuted,
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontFamily: Fonts.body.medium,
+    letterSpacing: 0.3,
   },
   tabPillTextActive: {
-    color: Colors.navy,
-    fontWeight: '700',
+    color: Palette.paper,
+    fontFamily: Fonts.body.semibold,
   },
 
   // Sector filter
   filterToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 8,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    borderColor: Palette.rule,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
   },
   filterToggleText: {
-    color: Colors.textMuted,
+    color: Palette.inkMute,
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontFamily: Fonts.body.semibold,
     flex: 1,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   filterDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.blue,
+    backgroundColor: Palette.claret,
     marginRight: Spacing.sm,
   },
   filterChevron: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
   },
   sectorPillRow: {
@@ -951,44 +964,44 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   sectorPill: {
-    backgroundColor: Colors.blue + '22',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    backgroundColor: 'transparent',
+    borderRadius: Radii.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderWidth: 1,
-    borderColor: Colors.blue + '44',
+    borderColor: Palette.ink,
   },
   sectorPillExcluded: {
     backgroundColor: 'transparent',
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
   },
   sectorPillText: {
-    color: Colors.blue,
+    color: Palette.ink,
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontFamily: Fonts.body.medium,
   },
   sectorPillTextExcluded: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
   },
   sectorReset: {
-    color: Colors.blue,
+    color: Palette.claret,
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontFamily: Fonts.body.semibold,
     paddingVertical: 4,
     paddingHorizontal: 6,
   },
   filterDisclaimer: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: 10,
+    fontFamily: Fonts.display.italic,
     marginTop: Spacing.xs,
-    fontStyle: 'italic',
   },
 
   // Section headers
   sectionTitle: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.lg,
-    fontWeight: '700',
+    fontFamily: Fonts.display.semibold,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -999,52 +1012,58 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.green,
+    backgroundColor: Palette.claret,
   },
   sectionSubtitle: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
     marginTop: 2,
   },
 
   // Empty state
   emptyCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    borderColor: Palette.rule,
     padding: Spacing.lg,
     alignItems: 'center',
   },
   emptyText: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.md,
+    fontFamily: Fonts.body.regular,
   },
   emptySubtext: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.sm,
+    fontFamily: Fonts.body.regular,
     marginTop: Spacing.xs,
   },
 
-  // Track button
+  // Track button (primary call-to-action)
   trackButton: {
-    backgroundColor: Colors.gold,
-    borderRadius: 8,
-    paddingVertical: 10,
+    backgroundColor: Palette.ink,
+    borderRadius: Radii.md,
+    paddingVertical: 12,
     alignItems: 'center',
     marginTop: -4,
     marginBottom: Spacing.sm,
   },
   trackButtonText: {
-    color: Colors.navy,
+    color: Palette.paper,
     fontSize: FontSize.sm,
-    fontWeight: '700',
+    fontFamily: Fonts.body.semibold,
+    letterSpacing: 0.4,
   },
 
   // Position cards
   positionCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
     padding: Spacing.md,
   },
   positionHeader: {
@@ -1054,13 +1073,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   positionSymbol: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.lg,
-    fontWeight: '700',
+    fontFamily: Fonts.display.semibold,
   },
   positionPnl: {
     fontSize: FontSize.lg,
-    fontWeight: '700',
+    fontFamily: Fonts.mono.medium,
   },
   positionDetails: {
     flexDirection: 'row',
@@ -1068,44 +1087,52 @@ const styles = StyleSheet.create({
   },
   positionDetail: {},
   positionDetailLabel: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
     marginBottom: 2,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   positionDetailValue: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontFamily: Fonts.mono.regular,
   },
   guidanceRow: {
     marginTop: Spacing.sm,
     paddingTop: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: Colors.cardBorder,
+    borderTopColor: Palette.rule,
   },
   guidanceText: {
-    color: Colors.yellow,
+    color: Palette.claret,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.display.italic,
   },
 
   // Sell button
   sellButton: {
-    backgroundColor: Colors.red + '22',
-    borderRadius: 8,
+    backgroundColor: 'transparent',
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    borderColor: Palette.negative,
     paddingVertical: 10,
     alignItems: 'center',
     marginTop: Spacing.sm,
   },
   sellButtonText: {
-    color: Colors.red,
+    color: Palette.negative,
     fontSize: FontSize.sm,
-    fontWeight: '700',
+    fontFamily: Fonts.body.semibold,
+    letterSpacing: 0.4,
   },
 
   // Live quote timestamp
   lastUpdated: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
     textAlign: 'center',
   },
 
@@ -1116,28 +1143,33 @@ const styles = StyleSheet.create({
   },
   historyStat: {
     flex: 1,
-    backgroundColor: Colors.card,
-    borderRadius: 8,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    borderColor: Palette.rule,
     padding: Spacing.md,
     alignItems: 'center',
   },
   historyStatValue: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.lg,
-    fontWeight: '700',
+    fontFamily: Fonts.mono.medium,
   },
   historyStatLabel: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
     marginTop: 4,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
 
   // Trade cards
   tradeCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
     padding: Spacing.md,
   },
   tradeHeader: {
@@ -1147,13 +1179,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   tradeSymbol: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.lg,
-    fontWeight: '700',
+    fontFamily: Fonts.display.semibold,
   },
   tradePnl: {
     fontSize: FontSize.lg,
-    fontWeight: '700',
+    fontFamily: Fonts.mono.medium,
   },
   tradeDetails: {
     gap: Spacing.xs,
@@ -1163,13 +1195,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   tradeDetailLabel: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.sm,
+    fontFamily: Fonts.body.regular,
   },
   tradeDetailValue: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontFamily: Fonts.mono.regular,
   },
   tradeFooter: {
     flexDirection: 'row',
@@ -1178,22 +1211,23 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     paddingTop: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: Colors.cardBorder,
+    borderTopColor: Palette.rule,
   },
   exitBadge: {
-    backgroundColor: Colors.cardBorder,
-    borderRadius: 4,
+    backgroundColor: Palette.paperDeep,
+    borderRadius: Radii.sm,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   exitBadgeText: {
-    color: Colors.textMuted,
+    color: Palette.inkMute,
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontFamily: Fonts.body.medium,
+    letterSpacing: 0.3,
   },
   tradePnlDollar: {
     fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontFamily: Fonts.mono.regular,
   },
 
   // Modal rows
@@ -1202,24 +1236,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.cardBorder,
+    borderBottomColor: Palette.rule,
   },
   modalLabel: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.md,
+    fontFamily: Fonts.body.regular,
   },
   modalValue: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.md,
-    fontWeight: '600',
+    fontFamily: Fonts.mono.medium,
   },
 
   // Missed cards
   missedCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
+    backgroundColor: Palette.paperCard,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Palette.rule,
     padding: Spacing.md,
   },
   missedHeader: {
@@ -1229,13 +1264,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   missedSymbol: {
-    color: Colors.textPrimary,
+    color: Palette.ink,
     fontSize: FontSize.lg,
-    fontWeight: '700',
+    fontFamily: Fonts.display.semibold,
   },
   missedReturn: {
     fontSize: FontSize.lg,
-    fontWeight: '700',
+    fontFamily: Fonts.mono.medium,
   },
   missedDetails: {
     flexDirection: 'row',
@@ -1246,23 +1281,27 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   missedDetailLabel: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
     marginBottom: 2,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   missedDetailValue: {
-    color: Colors.textSecondary,
+    color: Palette.inkMute,
     fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontFamily: Fonts.mono.regular,
   },
   exitReasonRow: {
     marginTop: Spacing.sm,
     paddingTop: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: Colors.cardBorder,
+    borderTopColor: Palette.rule,
   },
   exitReasonText: {
-    color: Colors.textMuted,
+    color: Palette.inkLight,
     fontSize: FontSize.xs,
+    fontFamily: Fonts.body.regular,
   },
 });

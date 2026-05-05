@@ -5,13 +5,13 @@
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "scheme": "rigacap",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0A1628"
+      "backgroundColor": "#F5F1E8"
     },
     "ios": {
       "supportsTablet": false,
@@ -36,7 +36,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0A1628"
+        "backgroundColor": "#F5F1E8"
       },
       "package": "com.rigacap.app",
       "edgeToEdgeEnabled": true
@@ -49,7 +49,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#C9A54E"
+          "color": "#7A2430"
         }
       ],
       "expo-web-browser",
