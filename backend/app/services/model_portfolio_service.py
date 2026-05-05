@@ -1688,14 +1688,18 @@ class ModelPortfolioService:
         end_date: Optional[str] = None,
     ) -> dict:
         """
-        Audit (dry-run): find historical fresh signals that should have produced
+        Audit (dry-run): find historical signal events that should have produced
         STR rows but didn't, because the old (pre-a4f0c41) dedup blocked re-entry
-        for any symbol with an open position. Reads snapshots/<date>/dashboard.json
-        for each weekday in [start_date, end_date] and compares against existing
-        STR rows.
+        for any symbol with an open position.
 
-        Returns: {checked_dates, existing_count, missed: [{symbol, date, price,
-        ensemble_entry_date}]}
+        STR's logical PK is (symbol, ensemble_entry_date). For each weekday in
+        [start_date, end_date], read snapshots/<date>/dashboard.json, take fresh
+        signals, dedup to FIRST fresh day per (symbol, ensemble_entry_date), and
+        filter out events already captured by existing STR rows (matched via
+        signal_data_json's ensemble_entry_date).
+
+        Returns: {checked_dates, existing_count, captured_event_count, missed:
+        [{symbol, date, price, ensemble_entry_date}]}
         """
         from datetime import date as _date, timedelta as _td
 
@@ -1704,30 +1708,38 @@ class ModelPortfolioService:
 
         s3 = _get_s3_client()
 
-        # Load all STR rows (any status) into a (symbol, date_str) set
+        # Load all STR rows. Build the set of (symbol, ensemble_entry_date)
+        # ALREADY captured — the audit's job is to find events NOT in this set.
         result = await db.execute(
             select(ModelPosition).where(
                 ModelPosition.portfolio_type == SIGNAL_TRACK_RECORD
             )
         )
         existing = result.scalars().all()
-        existing_keys = {
-            (p.symbol, p.entry_date.date().isoformat())
-            for p in existing
-            if p.entry_date
-        }
+        captured_events = set()
+        for p in existing:
+            if not p.signal_data_json:
+                continue
+            try:
+                sig = json.loads(p.signal_data_json)
+                eed = sig.get("ensemble_entry_date")
+                if eed:
+                    captured_events.add((p.symbol, eed))
+            except Exception:
+                pass
 
-        # Walk each weekday in the window, load that day's snapshot, find fresh
-        # signals that should have a matching STR row.
+        # Walk each weekday in the window. For each fresh signal, key by
+        # (symbol, ensemble_entry_date) so a multi-day fresh window only
+        # produces ONE row (the first day we saw it).
         start_d = _date.fromisoformat(start_date)
         end_d = _date.fromisoformat(end_date)
         checked: List[str] = []
-        missed: List[dict] = []
         no_snapshot: List[str] = []
+        seen_in_walk: Dict[tuple, dict] = {}
 
         cur = start_d
         while cur <= end_d:
-            if cur.weekday() < 5:  # weekdays only
+            if cur.weekday() < 5:
                 date_str = cur.isoformat()
                 try:
                     obj = s3.get_object(
@@ -1739,15 +1751,20 @@ class ModelPortfolioService:
                     fresh = [s for s in snap.get("buy_signals", []) if s.get("is_fresh")]
                     for sig in fresh:
                         sym = sig.get("symbol")
-                        if not sym:
+                        eed = sig.get("ensemble_entry_date")
+                        if not sym or not eed:
                             continue
-                        if (sym, date_str) not in existing_keys:
-                            missed.append({
-                                "symbol": sym,
-                                "date": date_str,
-                                "price": sig.get("price"),
-                                "ensemble_entry_date": sig.get("ensemble_entry_date"),
-                            })
+                        key = (sym, eed)
+                        if key in seen_in_walk:
+                            continue  # already recorded earlier date for this signal event
+                        if key in captured_events:
+                            continue  # an existing STR row already represents this event
+                        seen_in_walk[key] = {
+                            "symbol": sym,
+                            "date": date_str,
+                            "price": sig.get("price"),
+                            "ensemble_entry_date": eed,
+                        }
                 except s3.exceptions.NoSuchKey:
                     no_snapshot.append(date_str)
                 except Exception as e:
@@ -1755,10 +1772,13 @@ class ModelPortfolioService:
                     no_snapshot.append(date_str)
             cur += _td(days=1)
 
+        missed = sorted(seen_in_walk.values(), key=lambda r: (r["date"], r["symbol"]))
+
         return {
             "start_date": start_date,
             "end_date": end_date,
             "existing_str_rows": len(existing),
+            "captured_event_count": len(captured_events),
             "checked_dates": checked,
             "no_snapshot_dates": no_snapshot,
             "missed_count": len(missed),
