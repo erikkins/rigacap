@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import {
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -11,34 +11,46 @@ import {
   Calendar, BarChart3, Wallet, LogIn, AlertCircle, Loader2, CreditCard, Lock,
   Briefcase, Mail, Gift, Copy, Check, Filter, Info
 } from 'lucide-react';
-import LandingPage from './LandingPage';
-import LandingPageV2 from './LandingPageV2';
-import MethodologyPageV2 from './MethodologyPageV2';
-import TrackRecordPageV2 from './TrackRecordPageV2';
-import AboutPage from './AboutPage';
-import TrackRecordPage from './TrackRecordPage';
-import TrackRecord10YPage from './TrackRecord10YPage';
-import MethodologyPage from './MethodologyPage';
-import MarketRegimePage from './MarketRegimePage';
-import Blog2022StoryPage from './Blog2022StoryPage';
-import BlogBacktestsPage from './BlogBacktestsPage';
-import BlogMarketCrashPage from './BlogMarketCrashPage';
-import BlogMarketRegimesPage from './BlogMarketRegimesPage';
-import BlogMarketRegimeGuidePage from './BlogMarketRegimeGuidePage';
-import BlogMomentumTradingPage from './BlogMomentumTradingPage';
-import BlogTrailingStopsPage from './BlogTrailingStopsPage';
-import BlogWalkForwardResultsPage from './BlogWalkForwardResultsPage';
-import BlogWeCalledItMRNAPage from './BlogWeCalledItMRNAPage';
-import BlogWeCalledItTGTXPage from './BlogWeCalledItTGTXPage';
-import BlogIndexPage from './BlogIndexPage';
-import NewsletterPage, { NewsletterIssuePage } from './NewsletterPage';
-import { PrivacyPage, TermsPage, ContactPage } from './LegalPages';
+
+// Route-level code splitting. Each page becomes its own JS chunk that's
+// only fetched when the user navigates to it. Drops the homepage initial
+// payload from ~1.3MB to roughly the router shell + LandingPageV2 +
+// shared deps. Wrapped in <Suspense> below.
+const LandingPage = lazy(() => import('./LandingPage'));
+const LandingPageV2 = lazy(() => import('./LandingPageV2'));
+const MethodologyPageV2 = lazy(() => import('./MethodologyPageV2'));
+const TrackRecordPageV2 = lazy(() => import('./TrackRecordPageV2'));
+const AboutPage = lazy(() => import('./AboutPage'));
+const TrackRecordPage = lazy(() => import('./TrackRecordPage'));
+const TrackRecord10YPage = lazy(() => import('./TrackRecord10YPage'));
+const MethodologyPage = lazy(() => import('./MethodologyPage'));
+const MarketRegimePage = lazy(() => import('./MarketRegimePage'));
+const Blog2022StoryPage = lazy(() => import('./Blog2022StoryPage'));
+const BlogBacktestsPage = lazy(() => import('./BlogBacktestsPage'));
+const BlogMarketCrashPage = lazy(() => import('./BlogMarketCrashPage'));
+const BlogMarketRegimesPage = lazy(() => import('./BlogMarketRegimesPage'));
+const BlogMarketRegimeGuidePage = lazy(() => import('./BlogMarketRegimeGuidePage'));
+const BlogMomentumTradingPage = lazy(() => import('./BlogMomentumTradingPage'));
+const BlogTrailingStopsPage = lazy(() => import('./BlogTrailingStopsPage'));
+const BlogWalkForwardResultsPage = lazy(() => import('./BlogWalkForwardResultsPage'));
+const BlogWeCalledItMRNAPage = lazy(() => import('./BlogWeCalledItMRNAPage'));
+const BlogWeCalledItTGTXPage = lazy(() => import('./BlogWeCalledItTGTXPage'));
+const BlogIndexPage = lazy(() => import('./BlogIndexPage'));
+const NewsletterPage = lazy(() => import('./NewsletterPage'));
+const NewsletterIssuePage = lazy(() => import('./NewsletterPage').then(m => ({ default: m.NewsletterIssuePage })));
+const PrivacyPage = lazy(() => import('./LegalPages').then(m => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import('./LegalPages').then(m => ({ default: m.TermsPage })));
+const ContactPage = lazy(() => import('./LegalPages').then(m => ({ default: m.ContactPage })));
+const ForgotPasswordPage = lazy(() => import('./components/PasswordReset').then(m => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import('./components/PasswordReset').then(m => ({ default: m.ResetPasswordPage })));
+// AdminDashboard is huge (chart-heavy). Lazy-load so non-admin users
+// never download it.
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginModal from './components/LoginModal';
 import { formatDate, formatChartDate } from './utils/formatDate';
-import AdminDashboard from './components/AdminDashboard';
 import SubscriptionBanner from './components/SubscriptionBanner';
-import { ForgotPasswordPage, ResetPasswordPage } from './components/PasswordReset';
 import CookieConsent from './components/CookieConsent';
 import TwoFactorSettings from './components/TwoFactorSettings';
 // DoubleSignals, MomentumRankings, ApproachingTrigger removed — absorbed into unified dashboard
@@ -2788,7 +2800,9 @@ function Dashboard() {
 
         {/* Admin Dashboard */}
         {activeTab === 'admin' && isAdmin && (
-          <AdminDashboard />
+          <Suspense fallback={<div className="py-12 text-center text-ink-mute">Loading admin…</div>}>
+            <AdminDashboard />
+          </Suspense>
         )}
 
         {/* No data warning banner */}
@@ -4452,10 +4466,20 @@ function ScrollToTop() {
   return null;
 }
 
+// Suspense fallback for lazy route loading. Minimal — paper background
+// flash without an explicit spinner, since chunks are typically <100KB
+// and arrive in <100ms on any reasonable connection. A spinner would
+// flicker more than help. Visible only on slow networks or first-time
+// chunk fetches.
+function RouteFallback() {
+  return <div className="min-h-screen bg-paper" aria-hidden />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <ScrollToTop />
+      <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path="/" element={<LandingPageV2 />} />
         <Route path="/v1" element={<LandingPage />} />
@@ -4505,6 +4529,7 @@ export default function App() {
         <Route path="/t" element={<Navigate to="/?utm_source=threads&utm_medium=social&utm_campaign=bio" replace />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </Suspense>
       <CookieConsent />
     </AuthProvider>
   );
