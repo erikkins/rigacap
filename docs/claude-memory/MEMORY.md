@@ -190,6 +190,7 @@
 - [No dated callouts in design docs](feedback_no_dated_callouts_in_docs.md) — don't sprinkle "(Apr 2026)" or "newly added" markers; keep docs evergreen, let git history carry the session-dated context
 - [Signal frequency = "3-4 per month"](feedback_signal_frequency_claim.md) — never "6-8 every 2 weeks" or "~15/month"; both are stale drift
 - [SVG attachments cause 400 loops](feedback_svg_attachments.md) — always pre-convert SVG→PNG before downstream use
+- **[Social card render — strip gallery-view body styling](feedback_social_card_render_gray_strip.md)** — the launch-cards source HTML has `body { background: #999; padding: 40px }` for gallery preview. Single-card screenshots leak gray strips top/bottom unless you inject `html, body { background: transparent !important; padding: 0 !important; margin: 0 !important; }` override before rendering.
 - [SLOW DOWN before Lambda jobs](feedback_slow_down_lambda.md) — think first, compute locally if possible, ONE job at a time
 - [Concurrency rules](feedback_concurrency_guardrail.md) — NEVER launch >3 WF jobs during market hours
 - [Signal consistency](feedback_signal_consistency.md) — all emails/alerts read from dashboard.json only
