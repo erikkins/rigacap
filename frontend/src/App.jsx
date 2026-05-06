@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import {
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, ComposedChart, Bar, ReferenceLine, ReferenceDot, Legend
@@ -2693,102 +2693,117 @@ function Dashboard() {
         )}
         {isAuthenticated && !checkoutSuccess && <SubscriptionBanner />}
 
-        {/* This Week — what the system did */}
+        {/* This Week — what the system did. Editorial masthead treatment. */}
         {thisWeek && activeTab === 'signals' && (
-          <div className="mb-6 border-t-2 border-b border-ink pt-5 pb-6">
-            {/* Header row: label + as-of date */}
-            <div className="flex items-baseline justify-between mb-5">
-              <div>
-                <div className="font-body text-[0.68rem] font-medium tracking-[0.22em] uppercase text-ink-mute mb-0.5">This Week</div>
-                <h2 className="font-display text-[1.4rem] font-medium tracking-tight" style={{ fontVariationSettings: '"opsz" 64' }}>
-                  What the system did
-                </h2>
-              </div>
-              <div className="font-mono text-[0.7rem] text-ink-light tracking-[0.1em] uppercase">
-                {new Date(thisWeek.as_of_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          <section className="mb-8">
+            {/* Masthead: double-rule top, label · date */}
+            <div className="border-t-[3px] border-ink pt-3">
+              <div className="flex items-baseline justify-between border-b border-ink pb-3">
+                <div className="font-body text-[0.78rem] font-semibold tracking-[0.32em] uppercase text-ink">This Week</div>
+                <div className="font-mono text-[0.72rem] text-ink-light tracking-[0.18em] uppercase">
+                  {new Date(thisWeek.as_of_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </div>
               </div>
             </div>
 
-            {/* Lead stat */}
-            {thisWeek.closed_count > 0 ? (
-              <div className="mb-5">
-                <div
-                  className={`font-display text-[3.5rem] leading-none tracking-tight font-normal ${thisWeek.average_pnl_pct >= 0 ? 'text-positive' : 'text-negative'}`}
-                  style={{ fontVariationSettings: '"opsz" 144' }}
-                >
-                  {thisWeek.average_pnl_pct >= 0 ? '+' : ''}{thisWeek.average_pnl_pct}%
-                </div>
-                <div className="border-t border-rule mt-2 pt-2 font-display italic text-ink-mute text-[0.95rem]">
-                  average across {thisWeek.closed_count} pick{thisWeek.closed_count === 1 ? '' : 's'} closed
-                  {thisWeek.winning_count > 0 && thisWeek.closed_count > 1 && (
-                    <span className="text-ink-light"> · {thisWeek.winning_count}W {thisWeek.closed_count - thisWeek.winning_count}L</span>
+            {/* Hero stat — center stage */}
+            <div className="text-center py-8 sm:py-12 border-b border-rule">
+              {thisWeek.closed_count > 0 ? (
+                <>
+                  <div
+                    className={`font-display leading-[0.9] tracking-[-0.04em] ${thisWeek.average_pnl_pct >= 0 ? 'text-positive' : 'text-negative'}`}
+                    style={{ fontVariationSettings: '"opsz" 144', fontSize: 'clamp(4rem, 12vw, 7.5rem)', fontWeight: 400 }}
+                  >
+                    {thisWeek.average_pnl_pct >= 0 ? '+' : ''}{thisWeek.average_pnl_pct}<span className="text-[0.55em] align-baseline ml-1">%</span>
+                  </div>
+                  <div className="mt-5 font-display italic text-ink-mute" style={{ fontVariationSettings: '"opsz" 96', fontSize: 'clamp(1rem, 2vw, 1.25rem)' }}>
+                    average return across {thisWeek.closed_count} pick{thisWeek.closed_count === 1 ? '' : 's'} closed this week
+                  </div>
+                  {thisWeek.closed_count > 1 && (
+                    <div className="mt-1.5 font-body text-[0.72rem] tracking-[0.25em] uppercase text-ink-light">
+                      {thisWeek.winning_count} {thisWeek.winning_count === 1 ? 'win' : 'wins'} · {thisWeek.closed_count - thisWeek.winning_count} {thisWeek.closed_count - thisWeek.winning_count === 1 ? 'loss' : 'losses'}
+                    </div>
                   )}
-                </div>
-              </div>
-            ) : (
-              <div className="mb-5">
-                <div className="font-display text-[2rem] leading-none tracking-tight font-normal text-ink-mute" style={{ fontVariationSettings: '"opsz" 96' }}>
-                  {thisWeek.still_running_count} {thisWeek.still_running_count === 1 ? 'pick' : 'picks'} running
-                </div>
-                <div className="border-t border-rule mt-2 pt-2 font-display italic text-ink-light text-[0.9rem]">
-                  No closes yet this week — the system is holding.
-                </div>
-              </div>
-            )}
+                </>
+              ) : (
+                <>
+                  <div
+                    className="font-display leading-[0.9] tracking-[-0.03em] text-ink"
+                    style={{ fontVariationSettings: '"opsz" 144', fontSize: 'clamp(3rem, 8vw, 5rem)', fontWeight: 400 }}
+                  >
+                    {thisWeek.still_running_count} {thisWeek.still_running_count === 1 ? 'pick' : 'picks'}
+                  </div>
+                  <div className="mt-3 font-display italic text-ink-mute" style={{ fontVariationSettings: '"opsz" 96', fontSize: 'clamp(0.95rem, 1.8vw, 1.15rem)' }}>
+                    running — the system is holding through this week
+                  </div>
+                </>
+              )}
+            </div>
 
-            {/* Closed list */}
+            {/* Closed picks — editorial table-of-contents leader style */}
             {thisWeek.closed_this_week && thisWeek.closed_this_week.length > 0 && (
-              <div className="mb-5 space-y-2">
-                {thisWeek.closed_this_week.map((c) => (
-                  <div key={`${c.symbol}-${c.exit_date}`} className="grid grid-cols-[5rem_5rem_1.2rem_1fr] gap-3 items-baseline border-b border-rule/60 pb-2 last:border-b-0 last:pb-0">
-                    <div className="font-display text-[1.1rem] font-medium text-ink tracking-tight">{c.symbol}</div>
-                    <div className={`font-mono text-[1rem] text-right ${c.pnl_pct >= 0 ? 'text-positive' : 'text-negative'}`}>
-                      {c.pnl_pct >= 0 ? '+' : ''}{c.pnl_pct}%
-                    </div>
-                    <div className={`font-mono ${c.pnl_pct >= 0 ? 'text-positive' : 'text-negative'}`}>{c.pnl_pct >= 0 ? '▲' : '▽'}</div>
-                    <div className="font-body text-[0.78rem] text-ink-light">
-                      {c.exit_reason ? c.exit_reason.replace(/_/g, ' ') : 'closed'}
-                      {c.exit_date && (
-                        <> · {new Date(c.exit_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</>
-                      )}
-                    </div>
+              <div className="py-7 px-1 sm:px-2 border-b border-rule">
+                {thisWeek.closed_this_week.map((c, idx) => (
+                  <div
+                    key={`${c.symbol}-${c.exit_date}`}
+                    className={`flex items-baseline gap-4 ${idx > 0 ? 'mt-5' : ''}`}
+                  >
+                    <span
+                      className="font-display text-ink shrink-0"
+                      style={{ fontVariationSettings: '"opsz" 72', fontSize: 'clamp(1.1rem, 2.2vw, 1.5rem)', letterSpacing: '0.18em', fontWeight: 500 }}
+                    >
+                      {c.symbol}
+                    </span>
+                    <span aria-hidden className="flex-1 self-end mb-[0.4em] border-b border-dotted border-ink/40" />
+                    <span
+                      className={`font-mono shrink-0 ${c.pnl_pct >= 0 ? 'text-positive' : 'text-negative'}`}
+                      style={{ fontSize: 'clamp(1.1rem, 2.4vw, 1.55rem)', fontWeight: 500 }}
+                    >
+                      {c.pnl_pct >= 0 ? '+' : ''}{c.pnl_pct}<span className="text-[0.7em]">%</span>
+                    </span>
                   </div>
                 ))}
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-8">
+                  {thisWeek.closed_this_week.map((c) => (
+                    <div key={`${c.symbol}-${c.exit_date}-detail`} className="font-display italic text-ink-light text-[0.82rem] flex items-baseline gap-2">
+                      <span className="font-body not-italic text-[0.66rem] tracking-[0.18em] uppercase text-ink-light w-12 shrink-0">{c.symbol}</span>
+                      <span>
+                        {(c.exit_reason || 'closed').replace(/_/g, ' ')}
+                        {c.exit_date && (
+                          <> · {new Date(c.exit_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
             {/* Still running roll-up */}
             {thisWeek.still_running && thisWeek.still_running.length > 0 && (
-              <div className="flex items-baseline gap-3 flex-wrap pt-2 border-t border-rule">
-                <div className="font-body text-[0.68rem] font-medium tracking-[0.2em] uppercase text-ink-mute">
+              <div className="py-5 px-1 sm:px-2 border-b border-rule">
+                <div className="font-body text-[0.68rem] font-semibold tracking-[0.28em] uppercase text-ink-mute mb-3">
                   {thisWeek.still_running_count} still running
                 </div>
-                <div className="font-mono text-[0.85rem] text-ink-light flex flex-wrap gap-x-4 gap-y-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-2">
                   {thisWeek.still_running.slice(0, 6).map((p) => (
-                    <span key={`${p.symbol}-${p.entry_date}`}>
-                      {p.symbol}{' '}
-                      <span className={p.pnl_pct >= 0 ? 'text-positive' : 'text-negative'}>
+                    <div key={`${p.symbol}-${p.entry_date}`} className="flex items-baseline justify-between border-b border-rule/60 pb-1">
+                      <span className="font-display text-ink text-[0.95rem]" style={{ letterSpacing: '0.08em', fontWeight: 500 }}>{p.symbol}</span>
+                      <span className={`font-mono text-[0.85rem] ${p.pnl_pct >= 0 ? 'text-positive' : 'text-negative'}`}>
                         {p.pnl_pct >= 0 ? '+' : ''}{p.pnl_pct}
                       </span>
-                    </span>
+                    </div>
                   ))}
-                  {thisWeek.still_running_count > 6 && (
-                    <span className="text-ink-light">+{thisWeek.still_running_count - 6} more</span>
-                  )}
                 </div>
+                {thisWeek.still_running_count > 6 && (
+                  <div className="mt-3 font-display italic text-ink-light text-[0.78rem]">
+                    +{thisWeek.still_running_count - 6} more open
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Full record link */}
-            <div className="flex justify-end mt-4 pt-3 border-t border-rule">
-              <Link
-                to="/track-record"
-                className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute hover:text-claret transition-colors"
-              >
-                Full Record →
-              </Link>
-            </div>
-          </div>
+          </section>
         )}
 
         {/* Admin Dashboard */}
