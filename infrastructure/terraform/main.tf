@@ -373,12 +373,14 @@ resource "aws_s3_bucket_policy" "frontend" {
 resource "aws_cloudfront_function" "www_redirect" {
   name    = "${local.prefix}-www-redirect"
   runtime = "cloudfront-js-2.0"
-  comment = "Redirect www.rigacap.com to rigacap.com (301)"
+  comment = "www→apex 301 + SPA index.html rewrite for prerendered routes"
   publish = true
   code    = <<-EOT
     function handler(event) {
       var request = event.request;
       var host = request.headers.host && request.headers.host.value;
+
+      // www → apex 301 (collapses host variants, see Search Console fix).
       if (host === 'www.${var.domain_name}') {
         var qs = '';
         var keys = Object.keys(request.querystring || {});
@@ -394,6 +396,19 @@ resource "aws_cloudfront_function" "www_redirect" {
             location: { value: 'https://${var.domain_name}' + request.uri + qs }
           }
         };
+      }
+
+      // SPA index-fallback: rewrite extensionless URIs to <uri>/index.html
+      // so S3 serves the prerendered route file we wrote at build time
+      // (see frontend/scripts/prerender-routes.mjs). Without this,
+      // /blog/2022-story misses S3 and falls back to the generic
+      // dist/index.html which has the wrong canonical, breaking SEO.
+      var uri = request.uri;
+      if (uri.endsWith('/')) {
+        request.uri = uri + 'index.html';
+      } else if (uri.lastIndexOf('.') < uri.lastIndexOf('/')) {
+        // No file extension after the last slash → treat as a route
+        request.uri = uri + '/index.html';
       }
       return request;
     }
