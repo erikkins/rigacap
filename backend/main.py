@@ -8053,6 +8053,13 @@ async def open_position(request: OpenPositionRequest, user: User = Depends(get_c
     )
 
     db.add(position)
+
+    # Remember the dollar amount for this BUY so the next BuyModal pre-fills
+    # the user's actual sizing pattern (a $5K user converges on $5K-shaped
+    # defaults, a $20K user on $20K). Falls back to $10K in the frontend if
+    # this is null (first ever BUY).
+    user.last_position_dollars = round(position.shares * price, 2)
+
     await db.commit()
     await db.refresh(position)
 

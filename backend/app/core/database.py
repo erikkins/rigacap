@@ -577,6 +577,12 @@ class User(Base):
     # to surface a personal portfolio_value / P&L / win rate.
     portfolio_size = Column(Float, default=10000.0, nullable=False)
 
+    # Last dollar amount the user logged on a BUY. Used to seed the
+    # BuyModal's share default for their next BUY (so $5K-per-position
+    # users converge on $5K, $20K-per-position users on $20K). Null
+    # until first BUY; falls back to $10K in the UI.
+    last_position_dollars = Column(Float, nullable=True)
+
     # Email preferences: {"daily_digest": true, "sell_alerts": true, ...}
     email_preferences = Column(JSON, nullable=True)
 
@@ -638,6 +644,7 @@ class User(Base):
             "referral_count": self.referral_count or 0,
             "totp_enabled": bool(self.totp_enabled),
             "portfolio_size": float(self.portfolio_size) if self.portfolio_size is not None else 10000.0,
+            "last_position_dollars": float(self.last_position_dollars) if self.last_position_dollars is not None else None,
         }
         return result
 

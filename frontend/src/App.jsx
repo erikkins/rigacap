@@ -230,11 +230,13 @@ const ErrorDisplay = ({ message, onRetry }) => (
 // LoginModal is now imported from ./components/LoginModal
 
 // Buy Modal Component
-const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanced', timeTravelDate = null }) => {
-  // Default to ~$10k position. Clamp to avoid 9999-share nonsense when `price`
-  // falls through its fallback chain to 0 or arrives as a near-$1 artifact.
+const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanced', timeTravelDate = null, lastPositionDollars = null }) => {
+  // Default the share count to the user's last BUY's dollar amount. New
+  // users (no prior BUY) get a $10K default. Clamp to avoid 9999-share
+  // nonsense when `price` falls through its fallback chain to 0.
+  const targetDollars = lastPositionDollars && lastPositionDollars > 0 ? lastPositionDollars : 10000;
   const [shares, setShares] = useState(
-    price > 1 ? Math.max(1, Math.floor(10000 / price)) : 100
+    price > 1 ? Math.max(1, Math.floor(targetDollars / price)) : 100
   );
   const [entryPrice, setEntryPrice] = useState(price);
   const [submitting, setSubmitting] = useState(false);
@@ -433,7 +435,7 @@ const SellModal = ({ symbol, position, currentPrice, stockInfo, onClose, onSell 
 };
 
 // Stock Chart Modal
-const StockChartModal = ({ symbol, type, data, onClose, onAction, liveQuote, viewMode = 'advanced', timeTravelDate = null }) => {
+const StockChartModal = ({ symbol, type, data, onClose, onAction, liveQuote, viewMode = 'advanced', timeTravelDate = null, lastPositionDollars = null }) => {
   const [timeRange, setTimeRange] = useState('1Y');
   const [priceData, setPriceData] = useState([]);
   const [stockInfo, setStockInfo] = useState(null);
@@ -1280,6 +1282,7 @@ const StockChartModal = ({ symbol, type, data, onClose, onAction, liveQuote, vie
           stockInfo={stockInfo}
           viewMode={viewMode}
           timeTravelDate={timeTravelDate}
+          lastPositionDollars={lastPositionDollars}
           onClose={() => setShowBuyModal(false)}
           onBuy={(positionData) => {
             onAction && onAction(positionData);
@@ -4134,7 +4137,7 @@ function Dashboard() {
       </main>
 
       {showLoginModal && <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />}
-      {chartModal && <StockChartModal {...chartModal} viewMode={viewMode} liveQuote={liveQuotes[chartModal.symbol]} timeTravelDate={timeTravelDate} onClose={() => setChartModal(null)} onAction={(positionData) => {
+      {chartModal && <StockChartModal {...chartModal} viewMode={viewMode} liveQuote={liveQuotes[chartModal.symbol]} timeTravelDate={timeTravelDate} lastPositionDollars={user?.last_position_dollars} onClose={() => setChartModal(null)} onAction={(positionData) => {
         setChartModal(null);
         if (positionData) {
           // BUY: Optimistic update — move signal to positions instantly
@@ -4169,6 +4172,9 @@ function Dashboard() {
         }
         // Full reload in background for accurate data
         reloadPositions();
+        // Pick up updated last_position_dollars so the next BuyModal pre-fills
+        // shares from this BUY's dollar amount.
+        if (positionData) refreshUser();
       }} />}
 
       {/* Email Preferences Modal */}
