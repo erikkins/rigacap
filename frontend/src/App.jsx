@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import {
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, ComposedChart, Bar, ReferenceLine, ReferenceDot, Legend
@@ -1758,8 +1758,6 @@ function Dashboard() {
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [show2FASettings, setShow2FASettings] = useState(false);
   const [referralCopied, setReferralCopied] = useState(false);
-  const [journeyData, setJourneyData] = useState(null);
-  const [journeyCopied, setJourneyCopied] = useState(false);
   const [emailPrefs, setEmailPrefs] = useState({ daily_digest: true, sell_alerts: true, double_signals: true, intraday_signals: true, market_measured: true });
   const [emailPrefsSaving, setEmailPrefsSaving] = useState(false);
   const [emailPrefsToast, setEmailPrefsToast] = useState(null); // null | 'saved' | 'unsubscribed'
@@ -2100,23 +2098,22 @@ function Dashboard() {
     });
   }, [timeTravelEmailPending, dashboardData, timeTravelDate]);
 
-  // Fetch "Your RigaCap Journey" data for subscribers
+  // Fetch "This Week" panel data — replaces the old Your Journey strip.
+  // Surfaces what the system has done this calendar week (Sun → Sat) so a
+  // brand new subscriber lands on real recent activity instead of zeros.
+  const [thisWeek, setThisWeek] = useState(null);
   useEffect(() => {
     if (!isAuthenticated || !user?.subscription?.is_valid) return;
-    // Only show after 7 days
-    const created = user?.created_at ? new Date(user.created_at) : null;
-    if (!created || (Date.now() - created.getTime()) < 7 * 24 * 60 * 60 * 1000) return;
-
-    const fetchJourney = async () => {
+    const fetchThisWeek = async () => {
       try {
-        const data = await api.get('/api/signals/what-if?capital=10000');
-        if (!data.error) setJourneyData(data);
+        const data = await api.get('/api/signals/this-week');
+        if (!data?.error) setThisWeek(data);
       } catch (err) {
-        console.log('Journey fetch failed:', err);
+        console.log('This-week fetch failed:', err);
       }
     };
-    fetchJourney();
-  }, [isAuthenticated, user, dashboardData?.generated_at]);
+    fetchThisWeek();
+  }, [isAuthenticated, user?.id, dashboardData?.generated_at]);
 
   // Merge live quotes into positions for display
   const positionsWithLiveQuotes = positions.map(p => {
@@ -2696,70 +2693,100 @@ function Dashboard() {
         )}
         {isAuthenticated && !checkoutSuccess && <SubscriptionBanner />}
 
-        {/* Your Journey — flat newspaper strip */}
-        {journeyData && !journeyData.error && activeTab === 'signals' && (
-          <div className="mb-6 border-t-2 border-b border-ink py-5 grid grid-cols-[1.3fr_1fr_1fr_1fr_auto] gap-0 items-end">
-            {/* Label */}
-            <div className="pr-7 border-r border-rule">
-              <h2 className="font-display text-[1.2rem] font-medium tracking-tight mb-1" style={{ fontVariationSettings: '"opsz" 48' }}>Your Journey</h2>
-              <div className="font-mono text-[0.7rem] text-ink-light tracking-[0.1em] uppercase">Since {journeyData.start_date}</div>
-            </div>
-
-            {/* vs SPY */}
-            <div className="px-7 border-r border-rule">
-              <div className="font-body text-[0.68rem] font-medium tracking-[0.2em] uppercase text-ink-mute mb-1">
-                {journeyData.alpha_pct != null && journeyData.alpha_pct < 0 ? 'vs SPY' : 'vs SPY'}
+        {/* This Week — what the system did */}
+        {thisWeek && activeTab === 'signals' && (
+          <div className="mb-6 border-t-2 border-b border-ink pt-5 pb-6">
+            {/* Header row: label + as-of date */}
+            <div className="flex items-baseline justify-between mb-5">
+              <div>
+                <div className="font-body text-[0.68rem] font-medium tracking-[0.22em] uppercase text-ink-mute mb-0.5">This Week</div>
+                <h2 className="font-display text-[1.4rem] font-medium tracking-tight" style={{ fontVariationSettings: '"opsz" 64' }}>
+                  What the system did
+                </h2>
               </div>
-              <div className={`font-display text-[1.9rem] font-normal leading-none tracking-tight ${journeyData.alpha_pct != null ? ((journeyData.alpha_pct >= 0) ? 'text-positive' : 'text-negative') : 'text-ink'}`} style={{ fontVariationSettings: '"opsz" 96' }}>
-                {journeyData.alpha_pct != null
-                  ? `${journeyData.alpha_pct >= 0 ? '+' : ''}${journeyData.alpha_pct}%`
-                  : `${journeyData.total_return_pct >= 0 ? '+' : ''}${journeyData.total_return_pct}%`}
-              </div>
-              <div className="font-mono text-[0.7rem] text-ink-light mt-1">{journeyData.days_invested} days tracked</div>
-            </div>
-
-            {/* Your Return */}
-            <div className="px-7 border-r border-rule">
-              <div className="font-body text-[0.68rem] font-medium tracking-[0.2em] uppercase text-ink-mute mb-1">Your Return</div>
-              <div className={`font-display text-[1.9rem] font-normal leading-none tracking-tight ${journeyData.total_return_pct >= 0 ? 'text-positive' : 'text-negative'}`} style={{ fontVariationSettings: '"opsz" 96' }}>
-                {journeyData.total_return_pct >= 0 ? '+' : ''}{journeyData.total_return_pct}%
-              </div>
-              {journeyData.inception_return_pct != null && journeyData.inception_date && (
-                <div className="font-mono text-[0.7rem] text-ink-light mt-1">Since {journeyData.inception_date.slice(0, 4)} +{journeyData.inception_return_pct}%</div>
-              )}
-            </div>
-
-            {/* $10K would be */}
-            <div className="px-7 border-r border-rule">
-              <div className="font-body text-[0.68rem] font-medium tracking-[0.2em] uppercase text-ink-mute mb-1">$10K would be</div>
-              <div className="font-display text-[1.9rem] font-normal leading-none tracking-tight text-ink" style={{ fontVariationSettings: '"opsz" 96' }}>
-                ${journeyData.current_value?.toLocaleString()}
-              </div>
-              <div className="font-mono text-[0.7rem] text-ink-light mt-1">
-                {journeyData.trades_since_signup > 0
-                  ? `${journeyData.wins_since_signup}W ${journeyData.trades_since_signup - journeyData.wins_since_signup}L`
-                  : '0 trades yet'}
+              <div className="font-mono text-[0.7rem] text-ink-light tracking-[0.1em] uppercase">
+                {new Date(thisWeek.as_of_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </div>
             </div>
 
-            {/* Share */}
-            <div className="pl-5">
-              <button
-                onClick={() => {
-                  let text = journeyData.alpha_pct != null
-                    ? `Following @RigaCap signals, I'm beating the S&P 500 by ${journeyData.alpha_pct >= 0 ? '+' : ''}${journeyData.alpha_pct}% since ${journeyData.start_date}.`
-                    : `Following @RigaCap signals: ${journeyData.total_return_pct >= 0 ? '+' : ''}${journeyData.total_return_pct}% since ${journeyData.start_date}.`;
-                  if (journeyData.best_trade) text += ` Best trade: ${journeyData.best_trade.symbol} +${journeyData.best_trade.pnl_pct}%.`;
-                  if (journeyData.inception_return_pct != null && journeyData.inception_date) text += ` Full track record: +${journeyData.inception_return_pct}% since ${journeyData.inception_date.slice(0, 4)}.`;
-                  text += ' rigacap.com/track-record';
-                  navigator.clipboard.writeText(text);
-                  setJourneyCopied(true);
-                  setTimeout(() => setJourneyCopied(false), 2000);
-                }}
-                className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase px-3 py-2 border border-rule-dark bg-paper-card text-ink-mute hover:border-ink hover:text-ink transition-colors"
+            {/* Lead stat */}
+            {thisWeek.closed_count > 0 ? (
+              <div className="mb-5">
+                <div
+                  className={`font-display text-[3.5rem] leading-none tracking-tight font-normal ${thisWeek.average_pnl_pct >= 0 ? 'text-positive' : 'text-negative'}`}
+                  style={{ fontVariationSettings: '"opsz" 144' }}
+                >
+                  {thisWeek.average_pnl_pct >= 0 ? '+' : ''}{thisWeek.average_pnl_pct}%
+                </div>
+                <div className="border-t border-rule mt-2 pt-2 font-display italic text-ink-mute text-[0.95rem]">
+                  average across {thisWeek.closed_count} pick{thisWeek.closed_count === 1 ? '' : 's'} closed
+                  {thisWeek.winning_count > 0 && thisWeek.closed_count > 1 && (
+                    <span className="text-ink-light"> · {thisWeek.winning_count}W {thisWeek.closed_count - thisWeek.winning_count}L</span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="mb-5">
+                <div className="font-display text-[2rem] leading-none tracking-tight font-normal text-ink-mute" style={{ fontVariationSettings: '"opsz" 96' }}>
+                  {thisWeek.still_running_count} {thisWeek.still_running_count === 1 ? 'pick' : 'picks'} running
+                </div>
+                <div className="border-t border-rule mt-2 pt-2 font-display italic text-ink-light text-[0.9rem]">
+                  No closes yet this week — the system is holding.
+                </div>
+              </div>
+            )}
+
+            {/* Closed list */}
+            {thisWeek.closed_this_week && thisWeek.closed_this_week.length > 0 && (
+              <div className="mb-5 space-y-2">
+                {thisWeek.closed_this_week.map((c) => (
+                  <div key={`${c.symbol}-${c.exit_date}`} className="grid grid-cols-[5rem_5rem_1.2rem_1fr] gap-3 items-baseline border-b border-rule/60 pb-2 last:border-b-0 last:pb-0">
+                    <div className="font-display text-[1.1rem] font-medium text-ink tracking-tight">{c.symbol}</div>
+                    <div className={`font-mono text-[1rem] text-right ${c.pnl_pct >= 0 ? 'text-positive' : 'text-negative'}`}>
+                      {c.pnl_pct >= 0 ? '+' : ''}{c.pnl_pct}%
+                    </div>
+                    <div className={`font-mono ${c.pnl_pct >= 0 ? 'text-positive' : 'text-negative'}`}>{c.pnl_pct >= 0 ? '▲' : '▽'}</div>
+                    <div className="font-body text-[0.78rem] text-ink-light">
+                      {c.exit_reason ? c.exit_reason.replace(/_/g, ' ') : 'closed'}
+                      {c.exit_date && (
+                        <> · {new Date(c.exit_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Still running roll-up */}
+            {thisWeek.still_running && thisWeek.still_running.length > 0 && (
+              <div className="flex items-baseline gap-3 flex-wrap pt-2 border-t border-rule">
+                <div className="font-body text-[0.68rem] font-medium tracking-[0.2em] uppercase text-ink-mute">
+                  {thisWeek.still_running_count} still running
+                </div>
+                <div className="font-mono text-[0.85rem] text-ink-light flex flex-wrap gap-x-4 gap-y-1">
+                  {thisWeek.still_running.slice(0, 6).map((p) => (
+                    <span key={`${p.symbol}-${p.entry_date}`}>
+                      {p.symbol}{' '}
+                      <span className={p.pnl_pct >= 0 ? 'text-positive' : 'text-negative'}>
+                        {p.pnl_pct >= 0 ? '+' : ''}{p.pnl_pct}
+                      </span>
+                    </span>
+                  ))}
+                  {thisWeek.still_running_count > 6 && (
+                    <span className="text-ink-light">+{thisWeek.still_running_count - 6} more</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Full record link */}
+            <div className="flex justify-end mt-4 pt-3 border-t border-rule">
+              <Link
+                to="/track-record"
+                className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute hover:text-claret transition-colors"
               >
-                {journeyCopied ? 'Copied' : 'Share'}
-              </button>
+                Full Record →
+              </Link>
             </div>
           </div>
         )}

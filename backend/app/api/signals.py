@@ -153,6 +153,99 @@ async def get_signal_track_record(
     return await model_portfolio_service.get_signal_track_stats(db)
 
 
+@router.get("/this-week")
+async def get_this_week(
+    user: User = Depends(require_valid_subscription),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Subscriber-facing "what the system did this week" — powers the
+    dashboard hero panel that replaces Your Journey.
+
+    Reads from the signal-track-record table and bucketed to "since most
+    recent Sunday" so the panel rolls weekly without depending on the
+    newsletter publish event.
+
+    Response shape:
+      {
+        as_of_date, week_start, week_label,
+        closed_this_week: [{symbol, pnl_pct, exit_date, exit_reason}, ...]  (max 5, sorted recent first)
+        closed_count, winning_count, average_pnl_pct,
+        still_running: [{symbol, pnl_pct, current_price, entry_date}, ...]
+        still_running_count
+      }
+    """
+    from datetime import date as _date, timedelta as _td
+    from app.core.database import ModelPosition
+    from app.services.model_portfolio_service import SIGNAL_TRACK_RECORD
+
+    today = _date.today()
+    # Most recent Sunday — Python: weekday() Mon=0..Sun=6.
+    days_since_sunday = (today.weekday() + 1) % 7
+    week_start = today - _td(days=days_since_sunday)
+
+    # Closed positions in this window
+    closed_q = await db.execute(
+        select(ModelPosition).where(
+            ModelPosition.portfolio_type == SIGNAL_TRACK_RECORD,
+            ModelPosition.status == "closed",
+            ModelPosition.exit_date >= datetime(week_start.year, week_start.month, week_start.day),
+        ).order_by(desc(ModelPosition.exit_date))
+    )
+    closed_rows = list(closed_q.scalars().all())
+
+    closed_this_week = [
+        {
+            "symbol": p.symbol,
+            "pnl_pct": round(p.pnl_pct, 1) if p.pnl_pct is not None else 0.0,
+            "exit_date": p.exit_date.date().isoformat() if p.exit_date else None,
+            "exit_reason": p.exit_reason,
+        }
+        for p in closed_rows[:5]
+    ]
+    closed_count = len(closed_rows)
+    winning_count = sum(1 for p in closed_rows if (p.pnl_pct or 0) > 0)
+    avg_pnl = (
+        round(sum((p.pnl_pct or 0) for p in closed_rows) / closed_count, 1)
+        if closed_count else None
+    )
+
+    # Open STR positions — "still running" roll-up
+    open_q = await db.execute(
+        select(ModelPosition).where(
+            ModelPosition.portfolio_type == SIGNAL_TRACK_RECORD,
+            ModelPosition.status == "open",
+        ).order_by(desc(ModelPosition.entry_date))
+    )
+    open_rows = list(open_q.scalars().all())
+
+    # For each open position compute live unrealized using S3 close
+    from app.services.model_portfolio_service import _fetch_latest_close_from_s3
+    still_running = []
+    for p in open_rows:
+        last_close = _fetch_latest_close_from_s3(p.symbol)
+        cur = last_close if last_close is not None else float(p.entry_price)
+        pnl_pct = ((cur / float(p.entry_price)) - 1) * 100 if p.entry_price else 0.0
+        still_running.append({
+            "symbol": p.symbol,
+            "pnl_pct": round(pnl_pct, 1),
+            "current_price": round(cur, 2),
+            "entry_date": p.entry_date.date().isoformat() if p.entry_date else None,
+        })
+
+    return {
+        "as_of_date": today.isoformat(),
+        "week_start": week_start.isoformat(),
+        "week_label": "This Week",
+        "closed_this_week": closed_this_week,
+        "closed_count": closed_count,
+        "winning_count": winning_count,
+        "average_pnl_pct": avg_pnl,
+        "still_running": still_running[:8],
+        "still_running_count": len(open_rows),
+    }
+
+
 # Pydantic models for API
 class SignalResponse(BaseModel):
     id: Optional[int] = None
