@@ -4402,6 +4402,31 @@ function ProtectedRoute({ children }) {
 }
 
 function NotFoundPage() {
+  // Tell Google not to index typo / nonexistent URLs (soft-404 signal). The
+  // server still returns 200 for these because the SPA shell needs to load
+  // for routing to work — but the rendered content + noindex meta is what
+  // Google's classifier reads to decide whether to drop it from the index.
+  // The canonical is also pointed back at the homepage so any link equity
+  // accumulated by a typo URL flows to / instead of the typo URL itself.
+  useEffect(() => {
+    const robots = document.createElement('meta');
+    robots.setAttribute('name', 'robots');
+    robots.setAttribute('content', 'noindex, nofollow');
+    document.head.appendChild(robots);
+
+    const canonical = document.querySelector('link[rel="canonical"]');
+    const prevCanonical = canonical?.getAttribute('href');
+    if (canonical) canonical.setAttribute('href', 'https://rigacap.com/');
+
+    document.title = '404 — Page not found · RigaCap';
+
+    return () => {
+      // Clean up so subsequent navigation doesn't inherit noindex
+      robots.remove();
+      if (canonical && prevCanonical) canonical.setAttribute('href', prevCanonical);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div className="text-center">
