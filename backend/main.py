@@ -7157,6 +7157,29 @@ async def root(admin: User = Depends(get_admin_user)):
     }
 
 
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    """Tell crawlers to leave the API subdomain alone.
+
+    The marketing site at rigacap.com has its own robots.txt that
+    points at the sitemap. api.rigacap.com is for authenticated app
+    traffic only — no public pages, no indexable content. Without
+    this, Google Search Console reports the subdomain as "Blocked
+    due to unauthorized request (401)" because the crawler hits
+    auth-required endpoints. Serving an explicit Disallow stops
+    the crawler before it tries.
+    """
+    from fastapi.responses import PlainTextResponse
+    body = "User-agent: *\nDisallow: /\n"
+    return PlainTextResponse(
+        body,
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "X-Robots-Tag": "noindex, nofollow",
+        },
+    )
+
+
 @app.get("/health")
 async def health(user: User = Depends(get_current_user)):
     from app.services.scheduler import scheduler_service
