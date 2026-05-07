@@ -1,54 +1,37 @@
 ---
-name: Close direct execute-api WAF bypass with shared-secret header
-description: After May 3 2026 CloudFront cutover, api.rigacap.com is WAF-protected, but the underlying execute-api URL is still publicly reachable. ~30 min hardening pass to inject a shared secret header at CloudFront and reject anything without it at FastAPI middleware.
+name: WAF bypass closed via CloudFront origin shared-secret header (DONE May 7 2026)
+description: Direct-execute-api WAF bypass closed. CloudFront injects X-Origin-Verify, FastAPI middleware rejects requests without it. Secret lives in Terraform state + CloudFront origin config + Lambda env var.
 type: project
 originSessionId: 1081317d-f863-470f-ab07-65ddc614e856
 ---
-**Why this exists:** May 3 2026 CloudFront cutover put WAF in front of `api.rigacap.com` (the new CloudFront distribution `E261YQC1EOD078` fronts API Gateway HTTP API v2). All subscriber-facing surfaces — frontend, mobile app, Stripe webhooks — go through `api.rigacap.com` and are WAF-protected.
+**STATUS: SHIPPED May 7 2026** in commit `8bd0305` + Terraform apply. Validated end-to-end:
 
-**The hole:** the underlying API Gateway execute-api URL (`https://0f8to4k21c.execute-api.us-east-1.amazonaws.com`) is publicly reachable. An attacker who discovers it can hit the API directly, bypassing CloudFront and WAF entirely. The URL is somewhat obscured (not advertised in any documentation) but findable in CloudFormation/Terraform outputs, DNS history, AWS console screenshots, etc.
+- `https://api.rigacap.com/api/market-data-status` → 200
+- `https://0f8to4k21c.execute-api.us-east-1.amazonaws.com/api/market-data-status` → **403 Forbidden**
 
-**The fix (~30 min):**
+## Implementation summary
 
-1. **Generate a shared secret** — random ~32-char string. Store in AWS Secrets Manager OR as a Terraform variable in the deploy pipeline.
-2. **CloudFront origin custom header** — add a custom header on the API distribution origin block:
-   ```hcl
-   origin {
-     ...
-     custom_header {
-       name  = "X-Origin-Verify"
-       value = var.cloudfront_origin_secret
-     }
-   }
-   ```
-3. **FastAPI middleware** — reject any request that doesn't carry the matching header. New file `backend/app/core/origin_guard.py`:
-   ```python
-   from fastapi import Request
-   from starlette.middleware.base import BaseHTTPMiddleware
-   from starlette.responses import PlainTextResponse
-   import os, hmac
+1. **`random_password.cloudfront_origin_secret`** in Terraform — 48-char alphanumeric, generated once. Lives in TF state (`infrastructure/terraform/terraform.tfstate`).
+2. **CloudFront API distribution origin** has a `custom_header` block named `X-Origin-Verify` with the secret as value.
+3. **API Lambda env var** `CLOUDFRONT_ORIGIN_SECRET` set to the same value via Terraform.
+4. **`backend/app/core/origin_guard.py`** — FastAPI middleware compares `X-Origin-Verify` header to env var via `hmac.compare_digest`. Exempts OPTIONS preflight + `/health`. No-ops if env var is empty (so local dev / partial deploys don't break).
 
-   class OriginVerifyMiddleware(BaseHTTPMiddleware):
-       async def dispatch(self, request, call_next):
-           # Allow OPTIONS preflight + health check unconditionally
-           if request.method == "OPTIONS" or request.url.path == "/health":
-               return await call_next(request)
-           expected = os.environ.get("CLOUDFRONT_ORIGIN_SECRET", "")
-           if not expected:  # not configured = guard disabled
-               return await call_next(request)
-           supplied = request.headers.get("X-Origin-Verify", "")
-           if not hmac.compare_digest(expected, supplied):
-               return PlainTextResponse("Forbidden", status_code=403)
-           return await call_next(request)
-   ```
-4. **Wire the env var** — add `CLOUDFRONT_ORIGIN_SECRET` to API Lambda env vars in Terraform (alongside `TRUST_FORWARDED_FOR`).
-5. **Deploy in lockstep** — Terraform apply must update CloudFront (origin header) AND API Lambda (env var) atomically. Otherwise either:
-   - CloudFront sends header but Lambda doesn't check → no harm
-   - CloudFront doesn't send header but Lambda checks → all traffic blocked. **Avoid this order.**
-6. **Validate** — after apply: `curl https://api.rigacap.com/api/market-data-status` should still 200 (header injected by CloudFront), `curl https://0f8to4k21c.execute-api.us-east-1.amazonaws.com/api/market-data-status` should now 403 (direct hit, no header).
+## Where the secret lives (3 copies)
 
-**Priority:** Low-medium. The execute-api URL isn't advertised; no known attack ongoing. But standard hardening practice and worth doing once before any external attention. Schedule alongside CB-in-production wiring or whenever a Terraform window opens.
+| Location | Authoritative? |
+|---|---|
+| `terraform.tfstate` (local file at `infrastructure/terraform/`, gitignored) | Yes — TF source of truth |
+| CloudFront distribution origin custom_header | Set by TF, drift-detectable |
+| API Lambda env var `CLOUDFRONT_ORIGIN_SECRET` | Set by TF, drift-detectable |
 
-**Connected:**
-- May 3 CloudFront cutover (this whole effort)
-- TRUST_FORWARDED_FOR plumbing — done; same env-var deploy pattern as the secret would use
+If TF state is intact, all three stay in sync via `terraform apply`. If any drift, TF will overwrite the stale copy.
+
+## DR / continuity caveats
+
+- **TF state is local-only on the operator's laptop**, no remote backend. If the laptop dies, state is gone. The CloudFront config and Lambda env var will still hold the working secret — production keeps running — but managing those resources via Terraform requires either re-importing them OR letting `terraform apply` generate a new secret and atomically update both surfaces (both the CloudFront origin and Lambda env var change in the same apply, so the service stays consistent).
+- **The secret itself is non-sensitive in a recovery sense** — losing it just means generating a new one. There's no data tied to it; rotation is one TF apply.
+- **Full us-east-1 outage:** everything is down (Lambda, RDS, S3, ECR, API GW are all single-region). The shared secret is the smallest of many DR concerns in that scenario.
+
+## Rotation
+
+`cd infrastructure/terraform && AWS_PROFILE=rigacap terraform taint random_password.cloudfront_origin_secret && terraform apply`. Atomic — both CloudFront origin and Lambda env var update in the same apply, no downtime window.
