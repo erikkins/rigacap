@@ -800,6 +800,22 @@ def handler(event, context):
     # plus the FastAPI /health endpoint which has its own inline import.
     # Keeping it out of module-level shaves ~235ms off API Lambda cold start.
     from app.services.scheduler import scheduler_service
+
+    # Persistent event loop helper for warm Lambda invocations.
+    # asyncio.run() closes its loop on return, which breaks asyncpg connection
+    # pools on the *next* invocation (the pool is bound to the closed loop).
+    # asyncio.get_event_loop() raises in Python 3.12+ when no current loop
+    # exists. This helper threads the needle: get the existing loop if it's
+    # alive, otherwise create + register a new one and reuse it. Never close.
+    def _run_async(coro):
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                raise RuntimeError("loop closed")
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        return loop.run_until_complete(coro)
     global _mangum_handler
 
     # Log every non-warmer event for debugging (EventBridge async invocations were failing silently)
@@ -860,7 +876,7 @@ def handler(event, context):
     if event.get("run_migration"):
         print("🔧 Running DB migrations via Lambda event")
         try:
-            async def _run_migrations():
+            async def _run_migrations():  # noqa: E306
                 from sqlalchemy import text
                 from app.core.database import async_session
                 results = []
@@ -885,7 +901,7 @@ def handler(event, context):
                     await db.commit()
                 return results
 
-            result = asyncio.run(_run_migrations())
+            result = _run_async(_run_migrations())
             print(f"🔧 Migration results: {result}")
             return {"statusCode": 200, "body": {"migrations": result}}
         except Exception as e:
@@ -3959,7 +3975,7 @@ def handler(event, context):
             }
 
         try:
-            result = asyncio.run(_schedule_launch())
+            result = _run_async(_schedule_launch())
             print(f"✅ schedule_launch_sequence: {result}")
             return result
         except Exception as e:
@@ -6241,7 +6257,7 @@ RigaCap Admin
     if event.get("publish_scheduled_posts"):
         print("📤 Publish scheduled posts triggered")
         try:
-            result = asyncio.run(scheduler_service._publish_scheduled_posts())
+            result = _run_async(scheduler_service._publish_scheduled_posts())
             return {"status": "success", "result": str(result)}
         except Exception as e:
             import traceback
