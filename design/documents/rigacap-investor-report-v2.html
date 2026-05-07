@@ -408,7 +408,7 @@
 <section class="cover">
   <div class="cover-rule">
     <span class="brand">RigaCap<span class="dot">.</span></span>
-    <span class="meta">Investor Report &middot; April 2026</span>
+    <span class="meta">Investor Report &middot; May 2026</span>
   </div>
 
   <div>
@@ -428,7 +428,7 @@
       </div>
       <div class="cover-stat">
         <div class="label">Annualized</div>
-        <div class="value pos">~21.5%</div>
+        <div class="value pos">21.5%</div>
         <div class="sub">Walk-forward</div>
       </div>
       <div class="cover-stat">
@@ -482,7 +482,7 @@
 
   <div class="callout">
     <p><strong>Core Result &middot; 5-Year Walk-Forward.</strong> Across multiple start dates from early 2021,
-    the strategy averaged <strong>+160% total return / ~21.5% annualized</strong>, with a <strong>20.4% average
+    the strategy averaged <strong>+160% total return / 21.5% annualized</strong>, with a <strong>20.4% average
     max drawdown</strong> &mdash; meaningfully tighter than the 32% the prior simulation had modeled.
     Worst-case start date returned <strong>+109%</strong>; best-case, +252%.</p>
   </div>
@@ -501,8 +501,9 @@
       trailing stops on the same day &mdash; signalling cascading market stress &mdash;
       the system pauses new entries for ten days. Validated against a no-Cascade-Guard
       counterfactual, the safeguard contributed approximately <strong>+37 percentage
-      points of return</strong> across the test period (~+3.7 pp annualized) by avoiding
-      forced re-entries during stress.
+      points of return</strong> across the test period (roughly +3.7 pp annualized) by
+      avoiding forced re-entries during stress. Live in the production scanner since
+      May 2026.
     </li>
     <li>
       <strong>Risk came in tighter than the model.</strong> Internal modeling targeted a
@@ -543,14 +544,14 @@
       <tr class="headline-row">
         <td>RigaCap walk-forward (avg.)</td>
         <td>+160%</td>
-        <td>~21.5%</td>
+        <td>21.5%</td>
         <td>0.92</td>
         <td>20.4%</td>
       </tr>
       <tr class="benchmark-row">
         <td>S&amp;P 500 (SPY, price-only)</td>
         <td>+93%</td>
-        <td>~13%</td>
+        <td>14%</td>
         <td>&mdash;</td>
         <td>&mdash;</td>
       </tr>
@@ -606,16 +607,16 @@
       </tr>
     </thead>
     <tbody>
-      <tr class="headline-row"><td>2022</td><td>+8%</td><td>+2%</td><td>&minus;18%</td><td>Bear-year proof</td></tr>
+      <tr class="headline-row"><td>2022</td><td>+8%</td><td>+2%</td><td>&minus;19%</td><td>Bear-year proof</td></tr>
       <tr><td>2023</td><td>+12%</td><td>+12%</td><td>+26%</td><td>Lagged the index</td></tr>
-      <tr><td>2024</td><td>+32%</td><td>+25%</td><td>+25%</td><td>Beat the index</td></tr>
+      <tr><td>2024</td><td>+32%</td><td>+25%</td><td>+24%</td><td>Beat the index</td></tr>
       <tr><td>2025</td><td>+50%</td><td>+41%</td><td>+18%</td><td>Beat the index</td></tr>
     </tbody>
   </table>
   <p class="table-caption">
     Every calendar year, every start date in the test ended in positive territory.
-    SPY benchmark is price-only (excludes dividends, ~1.5&ndash;2 percentage points
-    of annual understatement).
+    SPY benchmark is price-only (excludes dividends, roughly 1.5&ndash;2 percentage
+    points of annual understatement).
   </p>
 
   <div class="pullquote">
@@ -649,7 +650,7 @@
     Same fixed-parameter strategy, run from October 2015 through April 2026 &mdash;
     a window that covers the 2018 vol spikes, the COVID crash, the 2022 bear
     market, and the AI rally. The annualized return came in at <strong>~21.6%</strong>,
-    within rounding of our published <strong>~21.5%</strong> annualized. Two
+    within rounding of our published <strong>21.5%</strong> annualized. Two
     windows of different lengths and different start dates, the same compound
     growth rate.
   </p>
@@ -657,7 +658,7 @@
   <p>
     The longer window includes more bear cycles, so the 11-year max drawdown
     reads slightly higher (28% vs the 5-year's 20%). SPY over the same 11-year
-    window: +318% (about ~14% annualized) — alpha of approximately +357 percentage
+    window: +318% (about 14% annualized) — alpha of approximately +357 percentage
     points total, or roughly +7.6 pp annualized.
   </p>
 
@@ -776,7 +777,7 @@
 
   <p>
     Across the test period, Cascade Guard contributed approximately +37 percentage
-    points of return (~+3.7 pp annualized) and a Sharpe improvement of +0.14 &mdash;
+    points of return (+3.7 pp annualized) and a Sharpe improvement of +0.14 &mdash;
     by avoiding forced re-entries during cascade events. The strategy stays fully
     active over 97% of trading days; the safeguard only fires on rare cascade-stress
     events.
@@ -863,8 +864,8 @@
   <h3>Stack summary.</h3>
 
   <ul>
-    <li><strong>API tier.</strong> AWS Lambda + API Gateway + CloudFront. Stateless,
-    scales horizontally, no single point of failure.</li>
+    <li><strong>API tier.</strong> AWS Lambda + API Gateway behind CloudFront with
+    AWS WAF. Stateless, scales horizontally, no single point of failure.</li>
     <li><strong>Compute tier.</strong> Separate Worker Lambda for daily scans,
     walk-forward simulations, and email generation. Heavy memory footprint isolated
     from the user-facing path.</li>
@@ -873,7 +874,7 @@
     pipeline (Alpaca primary, yfinance fallback) with health monitoring and
     automatic failover.</li>
     <li><strong>Front end.</strong> React + Vite single-page app served via CloudFront.</li>
-    <li><strong>Operational cadence.</strong> Daily scan at 4:30 PM ET (post-settlement);
+    <li><strong>Operational cadence.</strong> Daily scan at 4:20 PM ET (post-settlement);
     daily digest emails at 6 PM ET; intraday alert monitoring during market hours;
     weekly editorial newsletter on Sundays.</li>
   </ul>
@@ -932,10 +933,15 @@
   <h3>Material disclosures.</h3>
 
   <p>
-    RigaCap delivers educational signals; it is <strong>not a registered investment
-    advisor</strong>. Subscribers execute their own trades through their own broker.
-    Past performance does not predict future results, and the strategy may
-    materially underperform any single benchmark in any given period.
+    RigaCap operates as a publisher under the publisher&rsquo;s exemption to the
+    Investment Advisers Act of 1940 (&sect;202(a)(11)(d)), as interpreted in
+    <em>Lowe v. SEC</em>. Three conditions are satisfied: the commentary is
+    impersonal (the same signals go to every subscriber, regardless of their
+    portfolio or financial situation); it is bona fide market analysis; and it
+    is published on a regular schedule. Subscribers execute their own trades
+    through their own broker. Past performance does not predict future results,
+    and the strategy may materially underperform any single benchmark in any
+    given period.
   </p>
 
   <p>
@@ -963,9 +969,10 @@
     <li><strong>Editorial cadence build-out.</strong> Sunday newsletter ("The Market,
     Measured") and Tuesday regime report establish the editorial publication
     posture. Topic backlog of ~20 educational pieces in pipeline.</li>
-    <li><strong>Production parity audit.</strong> Any backtest improvement
-    (Cascade Guard carry-on, regime-aware sizing) ports to the production scanner
-    in lockstep so subscribers can realize what we publish.</li>
+    <li><strong>Production parity discipline.</strong> Cascade Guard is now live
+    in the production scanner (May 2026), closing the final WF&harr;production
+    parity gap. Any future backtest improvement ports to production in lockstep
+    so subscribers can realize what we publish.</li>
   </ul>
 
   <h3>Medium-term (3&ndash;9 months).</h3>
@@ -1013,9 +1020,11 @@
       not guarantee future returns.
     </p>
     <p>
-      RigaCap is not a registered investment advisor. Subscribers receive educational
-      signals and execute their own trades through their own broker. RigaCap does
-      not have custody of subscriber capital.
+      RigaCap operates as a publisher under the publisher&rsquo;s exemption to the
+      Investment Advisers Act of 1940 (&sect;202(a)(11)(d)). Subscribers receive
+      impersonal, bona fide commentary published on a regular schedule and execute
+      their own trades through their own broker. RigaCap does not have custody of
+      subscriber capital.
     </p>
     <p>
       Source data: <code>docs/canonical_numbers.json</code> (vintage 2026-04-28,
