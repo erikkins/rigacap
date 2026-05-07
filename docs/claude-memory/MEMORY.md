@@ -206,3 +206,4 @@
 - [Newsletter has no signals](feedback_newsletter_no_signals.md) — purely editorial, same for free and paid, no tickers ever
 - [Never blast emails without target_emails check](feedback_never_blast_without_target.md) — verify handler supports filtering BEFORE invoking
 - [Newsletter cron MUST use locked draft](feedback_newsletter_cron_draft.md) — Apr 26 outage: cron sent wrong version to all subscribers
+- **[Meta token lifecycle (IG + Threads) — full punch list](project_meta_token_lifecycle.md)** — short-lived recovery works (May 6); long-lived exchange blocked on app secret; auto-refresh cron not built; IG API base bug fixed (`graph.facebook.com` not `graph.instagram.com`)
