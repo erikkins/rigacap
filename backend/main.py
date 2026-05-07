@@ -3788,6 +3788,134 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"status": "error", "error": str(e)}
 
+    # Schedule the launch announcement sequence — 5 cards × N platforms with
+    # specific publish dates. Idempotent: any existing draft/scheduled posts
+    # whose text matches a launch headline are deleted before re-inserting.
+    if event.get("schedule_launch_sequence"):
+        config = event["schedule_launch_sequence"]
+        print(f"🚀 Schedule launch sequence: {config}")
+
+        async def _schedule_launch():
+            from app.core.database import SocialPost
+            from sqlalchemy import delete as sa_delete
+
+            # Editorial copy mirrors frontend/src/components/SocialTab.jsx LAUNCH_POSTS
+            cards = [
+                {
+                    "id": "launch-1",
+                    "image_s3_key": "social/images/launch-1.png",
+                    "twitter": "RigaCap is live.\n\nA disciplined momentum strategy for the investor who already knows enough to follow signals — but doesn't have the time to build the system that generates them.\n\nStays in cash when it should. Exits before major drawdowns.\n\nrigacap.com",
+                    "instagram": "RigaCap is live.\n\nIt is built for the investor who already knows enough to follow signals. Trailing stops, regime awareness, position sizing — these are not novel ideas. The hard part is operating them with discipline, every day, without flinching.\n\nThat's what RigaCap does. The system stays in cash when conditions deteriorate. Exits before major drawdowns. Sends 3 to 4 signals a month, sometimes zero. Most months, that is the right answer.\n\nNo minimums. No performance fees. Same signals for everyone, whether you put in $5k or $500k.\n\nrigacap.com",
+                    "instagram_tags": "#investing #momentum #disciplinedtrading #rigacap",
+                    "threads": "RigaCap is live.\n\nBuilt for the investor who already knows enough to follow signals — but doesn't have time to build the system that generates them.\n\nStays in cash when it should. Exits before major drawdowns. 3 to 4 signals a month, sometimes zero.\n\nrigacap.com",
+                },
+                {
+                    "id": "launch-2",
+                    "image_s3_key": "social/images/launch-2.png",
+                    "twitter": "Most backtests cherry-pick the start date that flatters them. We published all of ours.\n\nWorst: +109%\nAverage: +160%\nBest: +252%\nMax drawdown: 20.4%\n\nFive years. Every start date positive — including the one that began before the 2022 bear.\n\nrigacap.com/track-record",
+                    "instagram": "Most backtests show you the result that flatters the strategy. A single start date, the one where the numbers work.\n\nWe published all of ours.\n\nFive-year walk-forward, multiple start dates, no cherry-picking:\n\nWorst: +109%\nAverage: +160%\nBest: +252%\nMax drawdown: 20.4%\n\nEvery start date positive. Including the one that began before the 2022 bear market — the year the S&P fell 20%.\n\nFull methodology published on the track record page, exactly as the strategy ran. No omissions.\n\nrigacap.com/track-record",
+                    "instagram_tags": "#investing #backtest #walkforward #trackrecord #rigacap",
+                    "threads": "Most backtests cherry-pick the start date that flatters the strategy.\n\nWe published all of ours.\n\nWorst: +109%\nAverage: +160%\nBest: +252%\nMax drawdown: 20.4%\n\nEvery start date positive — including the one that began before the 2022 bear.\n\nFull methodology published.\n\nrigacap.com/track-record",
+                },
+                {
+                    "id": "launch-3",
+                    "image_s3_key": "social/images/launch-3.png",
+                    "twitter": "Three things have to align before RigaCap signals a buy:\n\nI. Timing — DWAP cross with momentum confirmation\nII. Quality — top-ranked momentum, near 50-day high\nIII. Risk — regime permits exposure\n\nWhen they don't align, the system stays quiet. Most months, that is the right answer.",
+                    "instagram": "A signal is not a single indicator firing. It is a coincidence of three.\n\nI. TIMING. The price has crossed above its 200-day weighted average and is within 5% of a 50-day high. Volume is confirming.\n\nII. QUALITY. The stock ranks in the top decile of momentum across the universe. Trend, not noise.\n\nIII. RISK. The market regime — one of seven the system reads — permits new exposure. In a panic regime, no entries fire. In strong bull, full sizing.\n\nWhen all three align, RigaCap signals. When they don't, it does nothing.\n\nMost months, that is the right answer.\n\nrigacap.com",
+                    "instagram_tags": "#investing #ensemble #systematictrading #rigacap",
+                    "threads": "Three things have to align before RigaCap signals a buy.\n\nI. Timing — DWAP cross with momentum confirmation\nII. Quality — top-ranked momentum, near 50-day high\nIII. Risk — regime permits exposure\n\nWhen they don't align, the system stays quiet. Most months, that is the right answer.\n\nrigacap.com",
+                },
+                {
+                    "id": "launch-4",
+                    "image_s3_key": "social/images/launch-4.png",
+                    "twitter": "The market doesn't have one mode. It has seven.\n\nStrong Bull. Weak Bull. Rotating Bull.\nRange Bound. Weak Bear. Panic.\nRecovery.\n\nRigaCap reads which one you're in and adjusts position sizing, stops, and signal sensitivity automatically.\n\nCash is a position too.",
+                    "instagram": "The market does not have one mode. It has seven.\n\nStrong Bull — broad rally, full exposure.\nWeak Bull — advancing on narrow leadership.\nRotating Bull — sector rotation driving gains.\nRange Bound — sideways, low conviction.\nWeak Bear — declining with selling pressure.\nPanic / Crash — sharp selloff, system moves to cash.\nRecovery — rebounding from recent lows.\n\nThe system reads daily which regime is active. Position sizing, stop levels, and signal sensitivity adjust automatically. In panic, no new entries. In strong bull, full size.\n\nA strategy that performs in one regime and fails in another is not a strategy. It is luck.\n\nCash is a position too.\n\nrigacap.com",
+                    "instagram_tags": "#investing #marketregime #riskmanagement #rigacap",
+                    "threads": "The market does not have one mode. It has seven.\n\nStrong Bull. Weak Bull. Rotating Bull. Range Bound. Weak Bear. Panic. Recovery.\n\nRigaCap reads which one you're in and adjusts position sizing, stops, and signal sensitivity automatically.\n\nCash is a position too.\n\nrigacap.com",
+                },
+                {
+                    "id": "launch-5",
+                    "image_s3_key": "social/images/launch-5.png",
+                    "twitter": "You can find signals anywhere. Discipline is harder.\n\nSitting in cash when nothing's working. Honoring stops without second-guessing. Not doubling down on losers.\n\nRigaCap is an external discipline layer.\n\n$59/mo founding rate (first 100). 7-day trial.\n\nrigacap.com",
+                    "instagram": "You can find signals anywhere. The internet is full of them.\n\nWhat is harder to find is the discipline to follow them. To sit in cash when nothing is working. To honor a stop without second-guessing it. To not double down on a losing position because the chart looks oversold.\n\nRigaCap is an external discipline layer. The system tells you when to enter, when to exit, and — just as importantly — when to do nothing.\n\nFounding rate: $59 per month for the first 100 members.\nStandard: $129 per month.\nAnnual: $1,099 (three months free).\nTrial: 7 days, full access.\n\nrigacap.com",
+                    "instagram_tags": "#investing #disciplinedtrading #signals #rigacap",
+                    "threads": "You can find signals anywhere. Discipline is harder.\n\nSitting in cash when nothing's working. Honoring stops without second-guessing. Not doubling down on losers.\n\nRigaCap is an external discipline layer.\n\n$59/mo founding rate, first 100 members. 7-day trial.\n\nrigacap.com",
+                },
+            ]
+
+            # Caller passes ISO datetimes (UTC) for each card's publish time.
+            # Example: schedules = ["2026-05-06T20:00:00Z", "2026-05-07T13:00:00Z", ...]
+            schedules = config.get("schedules", [])
+            if len(schedules) != len(cards):
+                return {"status": "error", "error": f"Need {len(cards)} schedules, got {len(schedules)}"}
+
+            platforms = config.get("platforms", ["twitter", "instagram", "threads"])
+
+            from datetime import datetime as _dt
+            schedule_dts = [_dt.fromisoformat(s.replace("Z", "+00:00")).replace(tzinfo=None) for s in schedules]
+
+            async with async_session() as db:
+                # Idempotency: delete prior launch posts (any status that's
+                # not yet published) whose text starts with one of our
+                # canonical prefixes. Don't touch already-published posts.
+                prefixes = []
+                for card in cards:
+                    for plat in platforms:
+                        prefix = card[plat][:60].replace("'", "''")
+                        prefixes.append(prefix)
+
+                from sqlalchemy import or_ as sa_or
+                conds = [SocialPost.text_content.like(f"{p}%") for p in prefixes]
+                delete_result = await db.execute(
+                    sa_delete(SocialPost).where(
+                        SocialPost.status.in_(["draft", "approved", "scheduled"]),
+                        sa_or(*conds),
+                    )
+                )
+                deleted = delete_result.rowcount
+                await db.commit()
+
+                # Insert fresh rows
+                created = 0
+                for card, sched_dt in zip(cards, schedule_dts):
+                    for plat in platforms:
+                        text = card[plat]
+                        hashtags = card.get(f"{plat}_tags", "") if plat == "instagram" else ""
+                        # Threads doesn't accept image upload here; twitter/instagram do.
+                        image_key = card["image_s3_key"] if plat in ("twitter", "instagram") else None
+                        post = SocialPost(
+                            platform=plat,
+                            text_content=text,
+                            hashtags=hashtags or None,
+                            post_type="launch_announcement",
+                            status="scheduled",
+                            scheduled_for=sched_dt,
+                            image_s3_key=image_key,
+                            reviewed_by="schedule_launch_sequence",
+                            reviewed_at=_dt.utcnow(),
+                        )
+                        db.add(post)
+                        created += 1
+                await db.commit()
+
+            return {
+                "status": "success",
+                "deleted_prior": deleted,
+                "created": created,
+                "schedules": schedules,
+                "platforms": platforms,
+            }
+
+        try:
+            result = asyncio.run(_schedule_launch())
+            print(f"✅ schedule_launch_sequence: {result}")
+            return result
+        except Exception as e:
+            import traceback
+            print(f"❌ schedule_launch_sequence failed: {e}")
+            print(traceback.format_exc())
+            return {"status": "error", "error": str(e)}
+
     # Generate monthly recap social posts
     if event.get("monthly_recap"):
         config = event["monthly_recap"]
