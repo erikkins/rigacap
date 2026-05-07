@@ -16,7 +16,8 @@ originSessionId: 1081317d-f863-470f-ab07-65ddc614e856
 - In user-visible PROSE: use "long-term accumulation reference," "proprietary timing indicator," "long-term price benchmark," or similar generic terminology.
 - In CODE: field names like `signal.dwap`, `pct_above_dwap` are fine — they're internal API contracts. Email user-visible labels already say "Wtd Avg" rather than "DWAP" — leave those alone.
 - In ADMIN UI (Strategy Editor, FlexibleBacktest, WalkForwardSimulator, AdminDashboard, StrategyGenerator): "DWAP" is fine — admin-only, Erik's the only viewer.
-- In INTERNAL DOCS (memory notes, registry, technical-architecture-internal sections, dev-only design notes): "DWAP" is acceptable but prefer the public-safe phrasing for consistency.
+- In any DOC SHARED OUTSIDE THE BUILD (investor report, technical architecture, signal intelligence, beta-tester guides, marketing/editorial pipeline docs, anything in `design/documents/*.html`): **DWAP must not appear at all** — including schema column rendering, strategy-type enums, and quoted code paths. The user calls the indicator "deprecated" for external purposes; these docs render with public-safe substitutes (`accum_ref` for column names, "multi-factor entry gauntlet" / "timing reference" for prose). The actual database columns retain their legacy names — this is a presentation alias only.
+- In TRULY INTERNAL ARTIFACTS (memory notes here, registry files in `docs/claude-memory/`, my own working drafts): DWAP is acceptable for clarity — these never leave the dev environment.
 
 **Forbidden phrases:**
 - "DWAP timing"
@@ -31,10 +32,10 @@ originSessionId: 1081317d-f863-470f-ab07-65ddc614e856
 - "Long-term price benchmark with a tested breakout threshold"
 - "Our proprietary entry-timing signal"
 
-**Surfaces that need scrubbing (as of 2026-04-29):**
-- `design/documents/rigacap-investor-report-v2.html` — fixed in same session
-- `design/documents/rigacap-signal-intelligence.html` — 10+ mentions, full rewrite pending in redesign queue
-- `design/documents/rigacap-technical-architecture.html` — 3-4 mentions in schema descriptions
+**Status (May 7 2026):**
+- `design/documents/rigacap-investor-report-v2.html` — clean
+- `design/documents/rigacap-signal-intelligence.html` — clean
+- `design/documents/rigacap-technical-architecture.html` — clean (schema columns now render as `accum_ref`)
 - `frontend/src/MethodologyPage.jsx` — V1 archived at `/methodology-v1`; delete-or-update decision pending
 - `docs/beta-tester-update-apr2026.md` — 1 mention, fix or remove if obsolete
 - `docs/rigacap-editorial-pipeline.md` — 1 mention in a topic outline, soften
