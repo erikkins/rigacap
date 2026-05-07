@@ -589,7 +589,7 @@
   <p class="lead">
     RigaCap is a serverless, event-driven signal platform on AWS. The system ingests
     daily market data for ~4,000 US equities through a dual-source pipeline, generates
-    signals through an ensemble of momentum and DWAP filters, and delivers them to
+    signals through a multi-factor momentum ensemble, and delivers them to
     subscribers through a React dashboard, an automated email pipeline, a weekly
     newsletter, and a moderated social engine.
   </p>
@@ -868,7 +868,7 @@ EventBridge  <span class="arrow">&rarr;</span>  Worker Lambda  <span class="arro
       <div><span class="col-name">date</span> <span class="col-type">DATETIME IDX</span></div>
       <div><span class="col-name">open, high, low, close</span> <span class="col-type">FLOAT</span></div>
       <div><span class="col-name">volume</span> <span class="col-type">FLOAT</span></div>
-      <div><span class="col-name">dwap, ma_50, ma_200</span> <span class="col-type">FLOAT</span></div>
+      <div><span class="col-name">accum_ref, ma_50, ma_200</span> <span class="col-type">FLOAT</span></div>
     </div>
   </div>
 
@@ -879,7 +879,7 @@ EventBridge  <span class="arrow">&rarr;</span>  Worker Lambda  <span class="arro
       <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
       <div><span class="col-name">symbol</span> <span class="col-type">VARCHAR(10) IDX</span></div>
       <div><span class="col-name">signal_type</span> <span class="col-type">VARCHAR(10) BUY/SELL</span></div>
-      <div><span class="col-name">price, dwap, pct_above_dwap</span> <span class="col-type">FLOAT</span></div>
+      <div><span class="col-name">price, accum_ref, pct_above_ref</span> <span class="col-type">FLOAT</span></div>
       <div><span class="col-name">volume, volume_ratio</span> <span class="col-type">FLOAT</span></div>
       <div><span class="col-name">stop_loss, profit_target</span> <span class="col-type">FLOAT</span></div>
       <div><span class="col-name">is_strong</span> <span class="col-type">BOOLEAN</span></div>
@@ -976,7 +976,7 @@ EventBridge  <span class="arrow">&rarr;</span>  Worker Lambda  <span class="arro
 
   <div class="schema-card no-break">
     <div class="schema-title">strategy_definitions</div>
-    <p class="schema-note">Trading strategy configurations. Types: dwap, momentum, ensemble.</p>
+    <p class="schema-note">Trading strategy configurations. The production strategy is the multi-factor ensemble; legacy single-factor strategies are retained for historical comparison.</p>
     <div class="schema-cols">
       <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
       <div><span class="col-name">name</span> <span class="col-type">VARCHAR(100) UNIQUE</span></div>
@@ -1175,7 +1175,7 @@ EventBridge  <span class="arrow">&rarr;</span>  Worker Lambda  <span class="arro
       <div class="tech-card-title">Data integrity filters</div>
       <div class="tech-card-meta">scanner._is_data_quality_ok()</div>
       <div class="tech-card-desc">
-        Rejects symbols with price/DWAP ratios above 50&times; or below 0.02,
+        Rejects symbols with price-to-accumulation-reference ratios above 50&times; or below 0.02,
         single-day moves above 65% (log-return &gt; 0.5), and gaps above ten
         trading days &mdash; the ticker-reuse signature. Catches unadjusted
         splits, stitched histories, and delisting artifacts in real time.
@@ -1239,9 +1239,10 @@ EventBridge  <span class="arrow">&rarr;</span>  Worker Lambda  <span class="arro
   <h3>Production strategy</h3>
   <p>
     The deployed strategy is the clean-data Trial 37 ensemble: six positions at 15%
-    each, a 12% trailing stop, biweekly rebalancing, and a DWAP-plus-momentum entry
-    gauntlet filtered through the regime classifier. Performance figures live in
-    the investor report and the public track-record page; they are not duplicated here.
+    each, a 12% trailing stop, biweekly rebalancing, and a multi-factor entry gauntlet
+    (timing reference, momentum quality, breakout proximity, volume confirmation)
+    filtered through the regime classifier. Performance figures live in the investor
+    report and the public track-record page; they are not duplicated here.
   </p>
 
   <h3>Cascade Guard (circuit breaker)</h3>
