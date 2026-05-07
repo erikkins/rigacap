@@ -1429,6 +1429,37 @@ resource "aws_lambda_permission" "publish_posts" {
 }
 
 # ============================================================================
+# EventBridge - Meta Token Refresh (weekly Sunday 2 AM UTC)
+# ============================================================================
+# Re-exchanges the long-lived FB user token (resets the 60-day clock) and
+# refreshes the long-lived Threads token. Without this, both tokens silently
+# fall off after 60 days. Running weekly gives 8 refresh attempts before any
+# cliff — admin gets emailed on failures so we have plenty of warning.
+# Initial setup must be done via meta_token_setup before this cron has anything
+# to refresh.
+
+resource "aws_cloudwatch_event_rule" "meta_token_refresh" {
+  name                = "${local.prefix}-meta-token-refresh"
+  description         = "Weekly Meta (FB/IG/Threads) long-lived token refresh"
+  schedule_expression = "cron(0 2 ? * SUN *)" # Sunday 2 AM UTC
+}
+
+resource "aws_cloudwatch_event_target" "meta_token_refresh" {
+  rule      = aws_cloudwatch_event_rule.meta_token_refresh.name
+  target_id = "lambda-meta-token-refresh"
+  arn       = aws_lambda_function.worker.arn
+  input     = jsonencode({ meta_token_refresh = true })
+}
+
+resource "aws_lambda_permission" "meta_token_refresh" {
+  statement_id  = "AllowMetaTokenRefreshEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.worker.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.meta_token_refresh.arn
+}
+
+# ============================================================================
 # EventBridge - Post Notifications (every hour, all days)
 # ============================================================================
 
