@@ -1176,7 +1176,7 @@
     <li><strong>Trailing-stop hit</strong> &mdash; price at or below HWM x 0.88; closes the position.</li>
     <li><strong>Warning zone</strong> &mdash; within 3% of the stop level; triggers a subscriber alert, no automatic action.</li>
     <li><strong>Regime warning</strong> &mdash; SPY approaching its 200-day average; advisory only.</li>
-    <li><strong>Rebalance</strong> &mdash; biweekly period boundary in walk-forward; production carries qualifying positions across boundaries.</li>
+    <li><strong>Rebalance rotation</strong> &mdash; at the biweekly universe re-ranking, an existing position has dropped out of the top tier and a stronger candidate displaces it. The 14-day boundary itself is not an exit trigger; the rank change is.</li>
   </ol>
 
   <!-- Trailing stop staircase diagram -->
@@ -1411,11 +1411,15 @@
   </table>
 
   <div class="callout no-break">
-    <p><strong>Biweekly boundaries.</strong> Walk-forward periods are 14-day intervals anchored
-    to a fixed reference date (<code>WF_ANCHOR_DATE</code>). At each boundary, all open
-    walk-forward positions are evaluated and either carried forward or force-closed. Carry-on
-    semantics outperform force-close on the canonical clean-data run (+160% vs. +155% total,
-    Sharpe 0.92 vs. 0.88), so production uses carry-on between biweekly windows.</p>
+    <p><strong>Biweekly boundaries.</strong> &ldquo;Rebalance&rdquo; here means a universe
+    re-ranking, not a portfolio shuffle for the subscriber. Every two weeks the system
+    re-runs the entry gauntlet across the full universe of roughly 4,000 symbols, identifies
+    the current top-tier candidates, and checks whether existing held positions still
+    qualify. Positions that still rank carry forward; ones that have dropped out of the
+    top tier rotate out. Carry-on semantics outperform force-close on the canonical
+    clean-data run (+160% vs. +155% total, Sharpe 0.92 vs. 0.88), so the system carries
+    qualifying positions across biweekly windows rather than mechanically liquidating at
+    the 14-day mark.</p>
   </div>
 
   <!-- Position lifecycle diagram -->
@@ -1640,8 +1644,8 @@
   <h3>Methodology.</h3>
   <ul>
     <li><strong>Period length.</strong> Biweekly (14-day intervals, anchored to a fixed reference date).</li>
-    <li><strong>Optimisation.</strong> Uses only historical data up to each period boundary.</li>
-    <li><strong>Trading.</strong> Enters fresh ensemble signals; rebalance evaluation at period end.</li>
+    <li><strong>Optimization.</strong> Uses only historical data up to each period boundary.</li>
+    <li><strong>Trading.</strong> Enters fresh ensemble signals as they fire; at each biweekly boundary the universe is re-ranked and existing positions are checked against the refreshed top tier.</li>
     <li><strong>Position carry.</strong> Carry-on outperforms force-close on the canonical clean-data run (+160% vs. +155% total, Sharpe 0.92 vs. 0.88).</li>
     <li><strong>Universe size.</strong> 100 symbols per period for computational efficiency on the canonical run; the production scanner runs the full universe daily.</li>
     <li><strong>Strategy.</strong> The locked Trial 37 timing-and-momentum ensemble.</li>
