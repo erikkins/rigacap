@@ -828,11 +828,6 @@ def handler(event, context):
     if event.get("pipeline_health_report"):
         print("🩺 Pipeline health report triggered")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
             async def _run_health_report():
                 from app.services.health_monitor_service import health_monitor_service
                 from app.services.email_service import admin_email_service, ADMIN_EMAILS
@@ -864,7 +859,7 @@ def handler(event, context):
                     ],
                 }
 
-            result = loop.run_until_complete(_run_health_report())
+            result = _run_async(_run_health_report())
             return {"statusCode": 200, "body": result}
         except Exception as e:
             import traceback
@@ -915,11 +910,6 @@ def handler(event, context):
         print("🔄 Unwinding pre-universe-change model portfolio positions")
         try:
             cutoff_date = event.get("cutoff_date", "2026-03-09")
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
             async def _unwind():
                 from sqlalchemy import text
                 from datetime import date as _date
@@ -952,7 +942,7 @@ def handler(event, context):
                     await db.commit()
                     return {"closed": closed_count, "returned_capital": round(returned_capital, 2)}
 
-            result = loop.run_until_complete(_unwind())
+            result = _run_async(_unwind())
             print(f"🔄 Unwind result: {result}")
             return {"statusCode": 200, "body": result}
         except Exception as e:
@@ -996,17 +986,13 @@ def handler(event, context):
         import time as _time
         from app.services.intraday_cache import get_intraday_cache
         cache = get_intraday_cache()
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
         t0 = _time.time()
-        df = loop.run_until_complete(cache.get_or_fetch(symbol, date_str))
+        df = _run_async(cache.get_or_fetch(symbol, date_str))
         t_first = _time.time() - t0
         if df is None or df.empty:
             return {"status": "no_data", "symbol": symbol, "date": date_str, "first_fetch_seconds": round(t_first, 2)}
         t0 = _time.time()
-        df2 = loop.run_until_complete(cache.get_or_fetch(symbol, date_str))
+        df2 = _run_async(cache.get_or_fetch(symbol, date_str))
         t_second = _time.time() - t0
         # Diagnostic: compare in detail
         index_dtype_match = str(df.index.dtype) == str(df2.index.dtype)
@@ -1054,11 +1040,6 @@ def handler(event, context):
         # entire handler() function, breaking warmer + every other path that
         # reads scanner_service before this branch runs (UnboundLocalError).
 
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         # Daily bars come from the payload — caller pre-extracts them from the
         # local 11y pickle so the worker doesn't need to load any pickle or fetch
         # anything from Alpaca for daily data. Per the data-cache rule: never
@@ -1087,7 +1068,7 @@ def handler(event, context):
         def daily_lookup(symbol):
             return daily_lookup_dict.get(symbol)
 
-        result = loop.run_until_complete(
+        result = _run_async(
             validator.validate_trades(trades, daily_lookup, cache)
         )
 
@@ -1129,11 +1110,6 @@ def handler(event, context):
     # Refreshes data from yfinance, persists cache to S3, exports signals + dashboard + snapshot
     if event.get("daily_scan"):
         print(f"📡 Daily scan triggered - {len(scanner_service.data_cache)} symbols in cache")
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _run_daily_scan(lambda_context=None):
             from app.services.data_export import data_export_service
             from app.api.signals import compute_shared_dashboard_data
@@ -1826,7 +1802,7 @@ def handler(event, context):
             }
 
         try:
-            result = loop.run_until_complete(_run_daily_scan(lambda_context=context))
+            result = _run_async(_run_daily_scan(lambda_context=context))
             print(f"📡 Daily scan result: {result}")
             return result
         except Exception as e:
@@ -1860,11 +1836,6 @@ def handler(event, context):
     # Handle dashboard cache export
     if event.get("export_dashboard_cache"):
         print("📦 Dashboard cache export requested")
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _export_dashboard():
             from app.api.signals import compute_shared_dashboard_data
             from app.services.data_export import data_export_service
@@ -1966,7 +1937,7 @@ def handler(event, context):
             return result
 
         try:
-            result = loop.run_until_complete(_export_dashboard())
+            result = _run_async(_export_dashboard())
             print(f"📦 Dashboard cache export: {result}")
             return result
         except Exception as e:
@@ -1981,11 +1952,6 @@ def handler(event, context):
     #   Phase 2: export individual CSVs (chained as separate invocation)
     if event.get("pickle_rebuild_from_scan"):
         print(f"🔨 Deferred pickle rebuild - {len(scanner_service.data_cache)} symbols in cache")
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _deferred_pickle():
             import pickle, gzip, time as _time
             from app.services.data_export import data_export_service, S3_BUCKET
@@ -2031,7 +1997,7 @@ def handler(event, context):
             }
 
         try:
-            result = loop.run_until_complete(_deferred_pickle())
+            result = _run_async(_deferred_pickle())
             print(f"🔨 Deferred pickle result: {result}")
             return result
         except Exception as e:
@@ -2045,11 +2011,6 @@ def handler(event, context):
     if event.get("debug_user_portfolio_simulate"):
         from datetime import date as _date
         from app.services import user_portfolio_simulator as ups
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _debug_sim():
             from app.core.database import async_session, User
             email = event.get("email") or "erik@rigacap.com"
@@ -2080,7 +2041,7 @@ def handler(event, context):
                 }
 
         try:
-            return {"statusCode": 200, "body": loop.run_until_complete(_debug_sim())}
+            return {"statusCode": 200, "body": _run_async(_debug_sim())}
         except Exception as e:
             import traceback
             print(f"❌ debug sim failed: {e}")
@@ -2093,11 +2054,6 @@ def handler(event, context):
     if event.get("user_portfolio_recompute"):
         from datetime import date as _date
         print("📊 User portfolio recompute triggered")
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _recompute_all_users():
             from sqlalchemy.dialects.postgresql import insert as pg_insert
             from app.core.database import (
@@ -2169,7 +2125,7 @@ def handler(event, context):
             return results
 
         try:
-            result = loop.run_until_complete(_recompute_all_users())
+            result = _run_async(_recompute_all_users())
             print(f"📊 User portfolio recompute done: {result}")
             return {"statusCode": 200, "body": result}
         except Exception as e:
@@ -2200,11 +2156,6 @@ def handler(event, context):
     # Handle data-only pickle update (no signals, no dashboard, no portfolio)
     if event.get("data_fill"):
         print(f"📡 Data fill triggered - {len(scanner_service.data_cache)} symbols in cache")
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _data_fill():
             import pickle, gzip, time as _time
             from app.services.data_export import data_export_service, S3_BUCKET
@@ -2277,7 +2228,7 @@ def handler(event, context):
             }
 
         try:
-            result = loop.run_until_complete(_data_fill())
+            result = _run_async(_data_fill())
             print(f"📡 Data fill result: {result}")
             return result
         except Exception as e:
@@ -2289,11 +2240,6 @@ def handler(event, context):
     # Handle pickle rebuild (self-chaining catch-up queue for missing symbols)
     if event.get("pickle_rebuild"):
         print(f"🔨 Pickle rebuild triggered - {len(scanner_service.data_cache)} symbols in cache")
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _run_pickle_rebuild():
             from app.services.data_export import data_export_service
 
@@ -2359,7 +2305,7 @@ def handler(event, context):
             }
 
         try:
-            result = loop.run_until_complete(_run_pickle_rebuild())
+            result = _run_async(_run_pickle_rebuild())
             print(f"🔨 Pickle rebuild result: {result}")
             return result
         except Exception as e:
@@ -2371,18 +2317,13 @@ def handler(event, context):
     # Handle daily WF cache (chained from daily scan — refreshes simulated portfolio)
     if event.get("daily_wf_cache"):
         print(f"📊 Daily WF cache triggered - {len(scanner_service.data_cache)} symbols in cache")
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _run_daily_wf_cache():
             from app.services.scheduler import scheduler_service
             await scheduler_service._run_daily_walk_forward()
             return {"status": "success"}
 
         try:
-            result = loop.run_until_complete(_run_daily_wf_cache())
+            result = _run_async(_run_daily_wf_cache())
             print(f"📊 Daily WF cache result: {result}")
             return result
         except Exception as e:
@@ -2394,11 +2335,6 @@ def handler(event, context):
     # Handle regime forecast snapshot (writes to regime_forecast_snapshots table)
     if event.get("regime_forecast_snapshot"):
         print(f"📊 Regime forecast snapshot triggered - {len(scanner_service.data_cache)} symbols in cache")
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _take_regime_snapshot():
             from app.services.regime_forecast_service import regime_forecast_service
             from app.services.data_export import data_export_service as _dex
@@ -2415,7 +2351,7 @@ def handler(event, context):
                 return await regime_forecast_service.take_snapshot(db)
 
         try:
-            result = loop.run_until_complete(_take_regime_snapshot())
+            result = _run_async(_take_regime_snapshot())
             print(f"📊 Regime forecast snapshot result: {result}")
             return result
         except Exception as e:
@@ -2429,11 +2365,6 @@ def handler(event, context):
         params = event["regime_forecast_backfill"]
         days = params.get("days", 90)
         print(f"📊 Regime forecast backfill triggered for {days} days")
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _regime_backfill():
             import json
             import pandas as pd
@@ -2546,7 +2477,7 @@ def handler(event, context):
             }
 
         try:
-            result = loop.run_until_complete(_regime_backfill())
+            result = _run_async(_regime_backfill())
             print(f"📊 Regime backfill result: {result}")
             return result
         except Exception as e:
@@ -2559,11 +2490,6 @@ def handler(event, context):
     if event.get("backfill_regime_history"):
         print("📊 Regime history backfill triggered")
         config = event["backfill_regime_history"] if isinstance(event["backfill_regime_history"], dict) else {}
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _regime_history_backfill():
             from app.services.regime_forecast_service import regime_forecast_service
             from app.services.data_export import data_export_service as _dex
@@ -2635,7 +2561,7 @@ def handler(event, context):
                 return await regime_forecast_service.backfill_regime_history(db)
 
         try:
-            result = loop.run_until_complete(_regime_history_backfill())
+            result = _run_async(_regime_history_backfill())
             print(f"📊 Regime history backfill result: {result}")
             return result
         except Exception as e:
@@ -2647,11 +2573,6 @@ def handler(event, context):
     # Handle persist_signals (manual backfill or re-run)
     if event.get("persist_signals"):
         print("📝 Persist signals triggered")
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _persist_signals():
             from app.services.ensemble_signal_service import ensemble_signal_service
             from app.services.data_export import data_export_service
@@ -2678,7 +2599,7 @@ def handler(event, context):
                 }
 
         try:
-            result = loop.run_until_complete(_persist_signals())
+            result = _run_async(_persist_signals())
             print(f"📝 Persist signals result: {result}")
             return result
         except Exception as e:
@@ -2690,11 +2611,6 @@ def handler(event, context):
     # Handle intraday position monitor (manual trigger for testing)
     if event.get("intraday_monitor"):
         print(f"📡 Intraday position monitor requested - {len(scanner_service.data_cache)} symbols in cache")
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _run_intraday_monitor():
             from app.core.database import async_session as async_sess, Position as DBPosition, User as DBUser
             from app.services.email_service import email_service
@@ -2955,7 +2871,7 @@ def handler(event, context):
                 }
 
         try:
-            result = loop.run_until_complete(_run_intraday_monitor())
+            result = _run_async(_run_intraday_monitor())
             print(f"📡 Intraday monitor: {result}")
             return result
         except Exception as e:
@@ -2974,11 +2890,7 @@ def handler(event, context):
             async with async_session() as db:
                 return await walk_forward_service.get_simulation_details(db, job_id)
 
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(_wf_query())
+        result = _run_async(_wf_query())
         return result or {"error": f"Job {job_id} not found"}
 
     # Handle model portfolio operations
@@ -2986,11 +2898,6 @@ def handler(event, context):
         config = event["model_portfolio"]
         action = config.get("action", "summary")
         portfolio_type = config.get("portfolio_type")  # None = both
-
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
 
         async def _run_model_portfolio():
             from app.services.model_portfolio_service import model_portfolio_service
@@ -3048,7 +2955,7 @@ def handler(event, context):
                 else:
                     return {"error": f"Unknown action: {action}"}
 
-        result = loop.run_until_complete(_run_model_portfolio())
+        result = _run_async(_run_model_portfolio())
         return result
 
     # Handle async walk-forward jobs (supports self-chaining via wf_state_key)
@@ -3058,29 +2965,20 @@ def handler(event, context):
               f"SPY={'SPY' in scanner_service.data_cache}"
               + (f", continuation={wf_state_key}" if wf_state_key else ""))
         job_config = event["walk_forward_job"]
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(_run_walk_forward_job(job_config, wf_state_key=wf_state_key))
+        result = _run_async(_run_walk_forward_job(job_config, wf_state_key=wf_state_key))
         return result
 
     # Handle Step Functions walk-forward: init
     if event.get("wf_init"):
         print(f"📊 WF-INIT: Step Functions initialization")
         config = event["wf_init"]
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _run_wf_init():
             from app.services.walk_forward_service import walk_forward_service
             async with async_session() as db:
                 return await walk_forward_service.init_simulation(db, config)
 
         try:
-            result = loop.run_until_complete(_run_wf_init())
+            result = _run_async(_run_wf_init())
             return result
         except Exception as e:
             import traceback
@@ -3092,18 +2990,13 @@ def handler(event, context):
     if event.get("wf_period"):
         print(f"📊 WF-PERIOD: Processing period {event['wf_period'].get('period_index', '?')}")
         state = event["wf_period"]
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _run_wf_period():
             from app.services.walk_forward_service import walk_forward_service
             async with async_session() as db:
                 return await walk_forward_service.run_single_period(db, state)
 
         try:
-            result = loop.run_until_complete(_run_wf_period())
+            result = _run_async(_run_wf_period())
             return result
         except Exception as e:
             import traceback
@@ -3120,18 +3013,13 @@ def handler(event, context):
     if event.get("wf_finalize"):
         print(f"📊 WF-FINALIZE: Computing final metrics")
         state = event["wf_finalize"]
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _run_wf_finalize():
             from app.services.walk_forward_service import walk_forward_service
             async with async_session() as db:
                 return await walk_forward_service.finalize_simulation(db, state)
 
         try:
-            result = loop.run_until_complete(_run_wf_finalize())
+            result = _run_async(_run_wf_finalize())
             return result
         except Exception as e:
             import traceback
@@ -3144,18 +3032,13 @@ def handler(event, context):
         print(f"📊 WF-FAIL: Marking simulation as failed")
         state = event["wf_fail"]
         error_msg = state.get("error", "Unknown error in Step Functions execution")
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _run_wf_fail():
             from app.services.walk_forward_service import walk_forward_service
             async with async_session() as db:
                 return await walk_forward_service.mark_simulation_failed(db, state, error_msg)
 
         try:
-            result = loop.run_until_complete(_run_wf_fail())
+            result = _run_async(_run_wf_fail())
             return result
         except Exception as e:
             print(f"❌ WF-FAIL handler itself failed: {e}")
@@ -3165,11 +3048,6 @@ def handler(event, context):
     if "nightly_wf_job" in event:
         print(f"🌙 Nightly WF job received - {len(scanner_service.data_cache)} symbols in cache")
         config = event["nightly_wf_job"] or {}
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _run_nightly_wf():
             from datetime import timedelta
             from app.core.database import WalkForwardSimulation
@@ -3242,7 +3120,7 @@ def handler(event, context):
                 }
 
         try:
-            result = loop.run_until_complete(_run_nightly_wf())
+            result = _run_async(_run_nightly_wf())
             return result
         except Exception as e:
             import traceback
@@ -3293,11 +3171,7 @@ def handler(event, context):
     if event.get("walk_forward_history"):
         print("📊 Walk-forward history request received")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_get_walk_forward_history(event.get("limit", 10)))
+            result = _run_async(_get_walk_forward_history(event.get("limit", 10)))
             return result
         except Exception as e:
             import traceback
@@ -3310,11 +3184,7 @@ def handler(event, context):
         print("📊 Walk-forward trades request received")
         simulation_id = event.get("walk_forward_trades")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_get_walk_forward_trades(simulation_id))
+            result = _run_async(_get_walk_forward_trades(simulation_id))
             return result
         except Exception as e:
             import traceback
@@ -3333,11 +3203,6 @@ def handler(event, context):
         print(f"🔄 Refreshing last {replace_days} days of volume data from primary source")
         if target_symbols:
             print(f"🎯 Targeting specific symbols: {target_symbols}")
-
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
 
         async def _refresh_volume():
             import pandas as pd
@@ -3482,7 +3347,7 @@ def handler(event, context):
             }
 
         try:
-            result = loop.run_until_complete(_refresh_volume())
+            result = _run_async(_refresh_volume())
             print(f"✅ Volume refresh complete: {result}")
             return result
         except Exception as e:
@@ -3494,11 +3359,6 @@ def handler(event, context):
     if event.get("compare_data_sources"):
         print("🔍 Data source comparison test")
         config = event["compare_data_sources"]
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _compare_sources():
             from app.services.market_data_provider import AlpacaProvider, YfinanceProvider
             import json
@@ -3587,7 +3447,7 @@ def handler(event, context):
             }
 
         try:
-            result = loop.run_until_complete(_compare_sources())
+            result = _run_async(_compare_sources())
             print(f"🔍 Comparison result: {result['summary']}")
             return result
         except Exception as e:
@@ -3634,11 +3494,7 @@ def handler(event, context):
             }
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_test_ai_content())
+            result = _run_async(_test_ai_content())
             return result
         except Exception as e:
             import traceback
@@ -3681,11 +3537,7 @@ def handler(event, context):
             return {"error": f"Unknown action: {action}"}
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_heygen_video())
+            result = _run_async(_heygen_video())
             return result
         except Exception as e:
             import traceback
@@ -3787,11 +3639,7 @@ def handler(event, context):
                 }
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_generate_social_posts())
+            result = _run_async(_generate_social_posts())
             return result
         except Exception as e:
             import traceback
@@ -4230,11 +4078,7 @@ def handler(event, context):
                 }
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_monthly_recap())
+            result = _run_async(_monthly_recap())
             return result
         except Exception as e:
             import traceback
@@ -4274,11 +4118,7 @@ def handler(event, context):
                 return result
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_scan_replies())
+            result = _run_async(_scan_replies())
             return result
         except Exception as e:
             import traceback
@@ -4302,11 +4142,7 @@ def handler(event, context):
                 return result
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_scan_ig_comments())
+            result = _run_async(_scan_ig_comments())
             return result
         except Exception as e:
             import traceback
@@ -4548,11 +4384,7 @@ def handler(event, context):
             }
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            return loop.run_until_complete(_hygiene())
+            return _run_async(_hygiene())
         except Exception as e:
             import traceback
             return {"error": str(e), "trace": traceback.format_exc()[:800]}
@@ -4920,11 +4752,7 @@ def handler(event, context):
             return {"dates": by_date}
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            return loop.run_until_complete(_replay())
+            return _run_async(_replay())
         except Exception as e:
             import traceback
             print(traceback.format_exc())
@@ -5130,11 +4958,7 @@ def handler(event, context):
                 return {"status": "success", "created": len(created), "posts": created}
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_create_drafts())
+            result = _run_async(_create_drafts())
             return result
         except Exception as e:
             import traceback
@@ -5151,11 +4975,7 @@ def handler(event, context):
             return await social_posting_service.refresh_threads_token()
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_refresh_threads())
+            result = _run_async(_refresh_threads())
             return result
         except Exception as e:
             import traceback
@@ -5395,11 +5215,7 @@ def handler(event, context):
             return {"status": "success", "sent": sent_count, "total": len(results), "results": results, "to": to}
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_test_emails())
+            result = _run_async(_test_emails())
             return result
         except Exception as e:
             import traceback
@@ -5475,11 +5291,7 @@ def handler(event, context):
             }
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_regenerate_charts())
+            result = _run_async(_regenerate_charts())
             return result
         except Exception as e:
             import traceback
@@ -5581,11 +5393,7 @@ def handler(event, context):
             }
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_generate_track_record_chart())
+            result = _run_async(_generate_track_record_chart())
             print(f"📈 Track record chart: {result}")
             return result
         except Exception as e:
@@ -5631,11 +5439,7 @@ def handler(event, context):
                 await db.refresh(sim)
                 return {"id": sim.id, "return": sim.total_return_pct}
 
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(_save_wf())
+        result = _run_async(_save_wf())
         return {"status": "ok", "simulation": result}
 
     if event.get("generate_newsletter"):
@@ -5648,11 +5452,7 @@ def handler(event, context):
             try:
                 from app.services.email_service import AdminEmailService
                 admin_svc = AdminEmailService()
-                _loop = asyncio.get_event_loop()
-                if _loop.is_closed():
-                    _loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(_loop)
-                _loop.run_until_complete(admin_svc.send_admin_email(
+                _run_async(admin_svc.send_admin_email(
                     subject="ℹ️ Newsletter generate skipped — draft already locked",
                     body=f"The Saturday cron tried to generate this week's draft but it's already locked.\n\n{ve}\n\nNo action needed — your locked version will publish Sunday.",
                 ))
@@ -5664,11 +5464,7 @@ def handler(event, context):
         try:
             from app.services.email_service import AdminEmailService
             admin_svc = AdminEmailService()
-            _loop = asyncio.get_event_loop()
-            if _loop.is_closed():
-                _loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(_loop)
-            _loop.run_until_complete(admin_svc.send_admin_email(
+            _run_async(admin_svc.send_admin_email(
                 subject=f"📝 Newsletter draft ready for {draft.get('date_display', draft['date'])}",
                 body=f"""The Saturday cron generated this week's Market, Measured draft.
 
@@ -5723,7 +5519,7 @@ If you don't lock by Sunday 7 PM, the cron will skip the send and email you agai
                     if _loop.is_closed():
                         _loop = _aio.new_event_loop()
                         _aio.set_event_loop(_loop)
-                    _loop.run_until_complete(admin_svc.send_admin_email(
+                    _run_async(admin_svc.send_admin_email(
                         subject="⚠️ Sunday newsletter SKIPPED — no locked draft",
                         body=f"The Market, Measured cron fired but no locked draft was found for {today_str}. "
                              f"The newsletter was NOT sent. Lock a draft in the admin editor before next Sunday.",
@@ -5780,11 +5576,7 @@ If you don't lock by Sunday 7 PM, the cron will skip the send and email you agai
                             failed += 1
                     return {"status": "ok", "sent": sent, "failed": failed, "source": "locked_draft"}
 
-                loop = asyncio.get_event_loop()
-                if loop.is_closed():
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                return loop.run_until_complete(_send_from_draft())
+                return _run_async(_send_from_draft())
         except Exception as e:
             print(f"❌ Locked draft send failed: {e}")
             return {"status": "error", "error": str(e)}
@@ -5922,11 +5714,7 @@ If you don't lock by Sunday 7 PM, the cron will skip the send and email you agai
             }
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            return loop.run_until_complete(_send_market_measured())
+            return _run_async(_send_market_measured())
         except Exception as e:
             import traceback
             print(traceback.format_exc())
@@ -5940,11 +5728,6 @@ If you don't lock by Sunday 7 PM, the cron will skip the send and email you agai
     if event.get("biweekly_tpe"):
         print("🧠 Biweekly TPE optimization")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
             async def _run_biweekly_tpe():
                 import json as _json
                 from app.services.walk_forward_service import walk_forward_service
@@ -6088,7 +5871,7 @@ RigaCap Admin · Biweekly TPE
                     "adaptive_score": result.adaptive_score,
                 }
 
-            result = loop.run_until_complete(_run_biweekly_tpe())
+            result = _run_async(_run_biweekly_tpe())
             print(f"🧠 TPE result: {result}")
             return result
         except Exception as e:
@@ -6103,11 +5886,6 @@ RigaCap Admin · Biweekly TPE
     if event.get("engagement_opportunities"):
         print("🎯 Engagement opportunities scan")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
             async def _scan_engagement():
                 from app.services.engagement_service import engagement_service
                 from app.services.email_service import admin_email_service
@@ -6184,7 +5962,7 @@ RigaCap Admin &middot; Engagement Opportunities
                     "accounts_scanned": len([h for h, _, _ in __import__('app.services.engagement_service', fromlist=['MONITORED_ACCOUNTS']).MONITORED_ACCOUNTS]),
                 }
 
-            result = loop.run_until_complete(_scan_engagement())
+            result = _run_async(_scan_engagement())
             print(f"🎯 Engagement result: {result}")
             return result
         except Exception as e:
@@ -6351,11 +6129,7 @@ RigaCap Admin
             }
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            return loop.run_until_complete(_health_check())
+            return _run_async(_health_check())
         except Exception as e:
             import traceback
             print(traceback.format_exc())
@@ -6366,11 +6140,7 @@ RigaCap Admin
         target_emails = daily_config.get("target_emails")
         print(f"📧 Daily email digest triggered" + (f" for {target_emails}" if target_emails else ""))
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(scheduler_service.send_daily_emails(target_emails=target_emails))
+            result = _run_async(scheduler_service.send_daily_emails(target_emails=target_emails))
 
             # NOTE: previously this handler re-computed dashboard.json from
             # scratch after sending emails. That caused the dashboard to diverge
@@ -6390,11 +6160,7 @@ RigaCap Admin
     if event.get("double_signal_alerts"):
         print("🔔 Double signal alerts triggered")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(scheduler_service.check_double_signal_alerts())
+            result = _run_async(scheduler_service.check_double_signal_alerts())
             return {"status": "success", "result": str(result)}
         except Exception as e:
             import traceback
@@ -6449,11 +6215,7 @@ RigaCap Admin
                 return {"status": "ok", "new_users": len(new_users)}
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_check_new_users())
+            result = _run_async(_check_new_users())
             return result
         except Exception as e:
             import traceback
@@ -6465,11 +6227,7 @@ RigaCap Admin
     if event.get("ticker_health_check"):
         print("🩺 Ticker health check triggered")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(scheduler_service.check_ticker_health())
+            result = _run_async(scheduler_service.check_ticker_health())
             return {"status": "success", "result": str(result)}
         except Exception as e:
             import traceback
@@ -6493,11 +6251,7 @@ RigaCap Admin
     if event.get("post_notifications"):
         print("🔔 Post notifications triggered")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(scheduler_service._send_post_notifications())
+            result = _run_async(scheduler_service._send_post_notifications())
             return {"status": "success", "result": str(result)}
         except Exception as e:
             import traceback
@@ -6509,11 +6263,7 @@ RigaCap Admin
     if event.get("strategy_auto_analysis"):
         print("📊 Strategy auto-analysis triggered")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(scheduler_service._strategy_auto_analysis())
+            result = _run_async(scheduler_service._strategy_auto_analysis())
             return {"status": "success", "result": str(result)}
         except Exception as e:
             import traceback
@@ -6528,11 +6278,7 @@ RigaCap Admin
         target_emails = drip_config.get("target_emails")
         print(f"📧 Onboarding drip emails triggered" + (f" for {target_emails}" if target_emails else ""))
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(scheduler_service.send_onboarding_drip_emails(target_emails=target_emails))
+            result = _run_async(scheduler_service.send_onboarding_drip_emails(target_emails=target_emails))
             return {"status": "success", "result": result}
         except Exception as e:
             import traceback
@@ -6544,11 +6290,7 @@ RigaCap Admin
     if event.get("seed_strategies"):
         print("🌱 Seed strategies request received")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_seed_and_list_strategies())
+            result = _run_async(_seed_and_list_strategies())
             return result
         except Exception as e:
             import traceback
@@ -6560,11 +6302,7 @@ RigaCap Admin
     if event.get("list_strategies"):
         print("📋 List strategies request received")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_list_strategies())
+            result = _run_async(_list_strategies())
             return result
         except Exception as e:
             import traceback
@@ -6576,11 +6314,6 @@ RigaCap Admin
     if event.get("snapshot_backfill_job"):
         print(f"📸 Snapshot backfill job received - {len(scanner_service.data_cache)} symbols in cache")
         job_config = event["snapshot_backfill_job"]
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
         async def _run_snapshot_backfill():
             import pandas as pd
             from app.services.data_export import data_export_service
@@ -6645,7 +6378,7 @@ RigaCap Admin
             }
 
         try:
-            result = loop.run_until_complete(_run_snapshot_backfill())
+            result = _run_async(_run_snapshot_backfill())
             print(f"📸 Snapshot backfill: {result}")
             return result
         except Exception as e:
@@ -6778,11 +6511,6 @@ RigaCap Admin
         as_of_date = config.get("as_of_date")
         do_send_email = config.get("send_email", False)
         print(f"📡 Simulating intraday crossover for {as_of_date}")
-
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
 
         async def _run_simulation():
             import pandas as pd
@@ -6936,7 +6664,7 @@ RigaCap Admin
             }
 
         try:
-            result = loop.run_until_complete(_run_simulation())
+            result = _run_async(_run_simulation())
             print(f"📡 Simulation result: {result}")
             return result
         except Exception as e:
@@ -6950,11 +6678,6 @@ RigaCap Admin
         config = event["send_all_email_templates"]
         to_email = config.get("email", "erik@rigacap.com")
         print(f"📧 Sending all email templates to {to_email}")
-
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
 
         async def _send_all_templates():
             from app.services.email_service import email_service
@@ -7074,7 +6797,7 @@ RigaCap Admin
             return {"emails_sent_to": to_email, "results": results}
 
         try:
-            result = loop.run_until_complete(_send_all_templates())
+            result = _run_async(_send_all_templates())
             print(f"📧 All templates sent: {result}")
             return result
         except Exception as e:
@@ -7096,11 +6819,7 @@ RigaCap Admin
                 message=config.get("body", ""),
             )
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            ok = loop.run_until_complete(_send_email())
+            ok = _run_async(_send_email())
             return {"status": "sent" if ok else "failed"}
         except Exception as e:
             return {"status": "error", "error": str(e)}
@@ -7126,11 +6845,7 @@ RigaCap Admin
                 }
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            return loop.run_until_complete(_db_read())
+            return _run_async(_db_read())
         except Exception as e:
             return {"error": str(e)}
 
@@ -7300,11 +7015,7 @@ RigaCap Admin
                     return {"error": f"Unknown action: {action}"}
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_social_admin())
+            result = _run_async(_social_admin())
             return result
         except Exception as e:
             import traceback
@@ -7344,11 +7055,7 @@ RigaCap Admin
                 # Send admin alert
                 try:
                     from app.services.email_service import admin_email_service
-                    loop = asyncio.get_event_loop()
-                    if loop.is_closed():
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                    loop.run_until_complete(
+                    _run_async(
                         admin_email_service.send_admin_alert(
                             "Instagram Token Refresh Failed",
                             f"Token refresh failed. Error: {data}. "
@@ -7433,11 +7140,7 @@ RigaCap Admin
                 }
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(_test_push())
+            result = _run_async(_test_push())
             return result
         except Exception as e:
             import traceback
@@ -7450,11 +7153,6 @@ RigaCap Admin
         cfg = event.get("weekly_regime_report") or {}
         target_emails = cfg.get("target_emails") if isinstance(cfg, dict) else None
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
             async def _send_regime_report():
                 from app.core.database import async_session, EmailSubscriber, User, Subscription
                 from app.services.regime_forecast_service import regime_forecast_service
@@ -7532,7 +7230,7 @@ RigaCap Admin
 
                 return {"status": "ok", "sent": sent_count, "errors": error_count}
 
-            result = loop.run_until_complete(_send_regime_report())
+            result = _run_async(_send_regime_report())
             return result
         except Exception as e:
             import traceback
