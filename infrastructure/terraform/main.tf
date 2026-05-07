@@ -18,6 +18,19 @@ terraform {
     }
   }
   required_version = ">= 1.0"
+
+  # Remote state backend. Bucket + lock table created out-of-band (see
+  # project_dr_posture.md); never delete by `terraform destroy`. Eliminates
+  # laptop SPOF for IaC management — any operator with the rigacap profile
+  # can `terraform init` and pick up live state from S3.
+  backend "s3" {
+    bucket         = "rigacap-prod-terraform-state-149218244179"
+    key            = "infrastructure/main.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "rigacap-prod-terraform-locks"
+    encrypt        = true
+    profile        = "rigacap"
+  }
 }
 
 provider "aws" {
