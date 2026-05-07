@@ -1,54 +1,67 @@
 ---
-name: Meta (IG + Threads) access tokens — full lifecycle to solve
-description: Full picture of the IG/Threads token mess discovered May 6 2026 — short-lived recovery, long-lived exchange path, automated refresh need, and the API-base gotcha
+name: Meta (IG + Threads) access tokens — lifecycle infrastructure
+description: How long-lived Meta tokens are exchanged, refreshed, and persisted. Handlers + weekly cron exist; only blocker for new setup is a fresh short-lived token + valid app credentials.
 type: project
 originSessionId: c3d0833d-cb3f-474f-8dd8-e530f3300c60
 ---
-The launch sequence on May 6 2026 surfaced multiple compounding issues with Meta access tokens. The user explicitly deferred a real fix ("don't have any more energy tonight"). The full problem space, captured for the next sitting:
+After the May 6/7 2026 launch incident, the Meta token lifecycle is now fully wired. The only manual step is the initial **one-time setup** when an operator has fresh credentials in hand. Everything else runs on its own.
 
-**Why:** Without a proper token lifecycle, every ~60 days IG and Threads silently stop publishing. The cron handler swallows the OAuth 190 errors; the user only finds out when they look at platform analytics or notice posts going Twitter-only. Bandaid token swaps work for one launch but the cycle repeats.
+**Why:** Without this, every ~60 days IG and Threads silently fall off, the cron handler swallows OAuth 190 errors, and we discover during the next scheduled launch. Bandaid token swaps work for one launch but the cycle repeats.
 
-**How to apply:** When the user wants to revisit the social-publishing pipeline, walk through the punch list below. Don't conflate "I have a token now" with "the system is robust." Both must be solved.
+**How to apply:** When the user wants to (re-)establish long-lived Meta tokens, walk them through the setup section below. Once it runs successfully, no further manual work — the weekly cron keeps tokens alive indefinitely.
 
 ---
 
-## The four problems, in order
+## Initial setup (one-time, when credentials are in hand)
 
-### 1. Short-lived token recovery (DONE — bandaid)
-- Both `INSTAGRAM_ACCESS_TOKEN` and `THREADS_ACCESS_TOKEN` had been expired since late April. Cron swallowed the 190 errors, no alarm.
-- Recovery path used May 6: Graph API Explorer → grant scopes → debug_token to confirm app — token is short-lived (1-6 days). Pasted via `refresh_meta_tokens` Lambda handler (`backend/main.py`, accepts `instagram_access_token` and/or `threads_access_token`). Handler reads full env, mutates target var, writes whole env back — preserves DATABASE_URL etc.
-- Page token good for 6 days only. Will expire ~May 12.
+User needs:
+- **FB app:** App ID + App Secret from `developers.facebook.com → My Apps → [RigaCap app] → Settings → Basic`. App Secret is exactly 32 hex chars; click "Show" + auth challenge to reveal. Confirm same app whose ID issues your test token.
+- **FB short-lived token:** Graph API Explorer → select the same app → Generate User Access Token with scopes `instagram_basic`, `instagram_content_publish`, `pages_show_list`, `pages_read_engagement`, `business_management`. Copy the resulting token immediately — the page-token derivation has to happen while it's still alive.
+- **Threads app:** App ID + App Secret from the separate Threads app on `developers.facebook.com`.
+- **Threads short-lived token:** Either the Threads app's "Generate Token" tool, or the manual OAuth flow (`https://threads.net/oauth/authorize?client_id=...&redirect_uri=...&scope=threads_basic,threads_content_publish&response_type=code` then exchange the code).
 
-### 2. Long-lived token exchange (BLOCKED on app secret issue)
-- The proper exchange (`grant_type=fb_exchange_token` against graph.facebook.com) requires `client_id` + `client_secret` + the short-lived token. Returns a 60-day long-lived user token. Then `/me/accounts` returns Page tokens (don't expire while user token is valid).
-- User attempted this May 6, got `"Error validating client secret"` even after fixing whitespace and confirming 32-char hex length. Unresolved — possibly the app secret was reset by Meta, or a copy from "Show" dialog mangled a character that's hard to spot. Resetting the secret in Meta Developer console is the clean answer; just confirm no other production integration depends on the current secret first.
-- App ID confirmed via debug_token: **25180275888318086** (RigaCap app). Token type PAGE, profile_id 971214166079229, granular_scopes target IG account 17841480242857160.
+Run `meta_token_setup` (handler in `backend/main.py`) with payload:
+```json
+{"meta_token_setup": {
+  "fb_app_id": "...", "fb_app_secret": "...",
+  "fb_short_lived_token": "EAA...",
+  "fb_page_id": "971214166079229",
+  "threads_app_id": "...", "threads_app_secret": "...",
+  "threads_short_lived_token": "THA..."
+}}
+```
 
-### 3. Automated refresh (NOT BUILT)
-- There's a `refresh_threads_token` method in `social_posting_service.py` but it only extends a still-valid token. No equivalent for IG. Nothing runs on a schedule.
-- What's needed: an EventBridge cron (~weekly) that calls Meta's refresh endpoints, persists the new tokens to both Lambdas' env vars (using the safe full-env-readback pattern), and emails the admin if the refresh fails so we get warning before the 60-day cliff. Without this, every ~60 days both platforms silently fall off again.
+The handler:
+1. `fb_exchange_token` short→long-lived user token (60 days)
+2. `/me/accounts` → page access token + IG Business Account ID
+3. `th_exchange_token` short→long-lived Threads token (60 days)
+4. Persists `INSTAGRAM_ACCESS_TOKEN`, `META_LONG_LIVED_USER_TOKEN`, `META_FB_APP_ID`, `META_FB_APP_SECRET`, `META_FB_PAGE_ID`, `INSTAGRAM_BUSINESS_ACCOUNT_ID`, `THREADS_ACCESS_TOKEN`, `META_THREADS_APP_ID`, `META_THREADS_APP_SECRET` to BOTH Lambdas (api + worker), preserving every other env var via the safe full-readback pattern.
 
-### 4. The IG API-base gotcha (FIXED in commit `c442705` — May 6 2026)
-- `INSTAGRAM_API_BASE` was `https://graph.instagram.com/v24.0` — the **Instagram Login API** which only accepts IG User Access Tokens from Instagram's own OAuth flow.
-- A token from Facebook Graph API Explorer is a **Page token** that only works against `https://graph.facebook.com`. The two bases share zero auth even though the path shapes are identical (`/{ig_id}/media`, `/media_publish`, etc.).
-- This bug masked symptom #2: even with a valid token, posts failed with `"Cannot parse access token"`. Switched the base; future IG posting will work as long as the token + business-account-id pair are mutually consistent.
+Returns expiry days for both tokens + the FB Page details for confirmation.
 
-## Account ID confusion (May 6 2026)
+## Weekly refresh (automatic, no human input)
 
-- Old `INSTAGRAM_BUSINESS_ACCOUNT_ID`: 35213611594904500 — the user thinks this was the *business* IG account.
-- Token granted on May 6 had granular_scopes target_id: 17841480242857160 — the user thinks this might be the *personal* account.
-- 35213611594904500 returned `does not exist or no permissions` against the new Page token — either the token wasn't granted for it, or the IG-FB Page link no longer covers it.
-- Env var was changed to 17841480242857160 to match what the token grants. **If 35213611594904500 is actually the desired account**, the user needs to re-do Graph API Explorer with explicit selection of *that* account when granting permissions, then update the env var back.
+`aws_cloudwatch_event_rule.meta_token_refresh` (`infrastructure/terraform/main.tf`) fires `{"meta_token_refresh": true}` every Sunday 2 AM UTC. The handler:
+- Re-runs `fb_exchange_token` on the stored long-lived user token to reset the 60-day clock (FB has no separate "refresh" endpoint for user tokens, but exchanging a still-valid long-lived token for another long-lived one is supported and equivalent).
+- Re-fetches the page token using the refreshed user token.
+- Calls `/refresh_access_token` on the Threads token (Threads has a real refresh endpoint).
+- On any error, sends an admin email via `admin_email_service.send` so we get warning weeks before the 60-day cliff.
 
-## What "done right" looks like
+Manual refresh: `{"meta_token_refresh": true}` from the AWS CLI.
 
-1. App Secret confirmed working (reset if necessary) so long-lived exchange completes cleanly end-to-end.
-2. Helper script (or admin endpoint) that takes one short-lived token and: exchanges → fetches Page tokens → fetches IG account ID → updates Lambda env. One human step, no manual JSON edits.
-3. Weekly EventBridge cron that calls `/refresh_access_token` on both tokens (extends them while still valid, before they hit the 60-day wall). Email admin on any failure.
-4. Decide which IG account is canonical (business vs personal) and document it. Bake the ID into the env var refresh helper so it's never wrong again.
+## Manual escape hatch
 
-## Don't lose
+`refresh_meta_tokens` handler still exists for the case where an operator already has a long-lived token in hand and just wants to push it to the env without going through exchange logic. Prefer `meta_token_setup` for fresh setups.
 
-- `refresh_meta_tokens` handler pattern is good — keep it as the user-facing escape hatch even after #3 is built.
-- The full-env-readback pattern (read all env vars → modify one → write whole dict back) is what makes `update_function_configuration` safe. Documented as the only way to write env vars per the master memory rule.
-- Twitter posting is fully functional and uses a different token type (OAuth 1.0a consumer/access keys) that doesn't have this expiry problem. The lifecycle work is IG/Threads only.
+## API base gotcha (fixed in commit `c442705`)
+
+`INSTAGRAM_API_BASE` was `graph.instagram.com/v24.0` (Instagram Login API, requires IG-only OAuth). Switched to `graph.facebook.com/v19.0` which accepts FB Page tokens. Two different APIs that share zero auth — don't switch back without a new OAuth flow.
+
+## Account ID note
+
+Production currently uses IG Business Account `17841480242857160` (set May 7 to match the token's granular_scopes). Old value `35213611594904500` was stale or wrong. If a future setup grants for a different IG account, the meta_token_setup handler resolves the ID from `/me/accounts` instagram_business_account → automatically picks the right one.
+
+## What still might need attention
+
+- **App Secret validation issue.** May 6 attempt to exchange via curl URL failed with `"Error validating client secret"` even after fixing whitespace and confirming 32-char hex. May resolve itself when user retries via the new handler (handler does same exchange but with cleaner JSON-payload handling than browser URL-bar). If it still fails, reset the App Secret in Meta Developer console — but confirm no other service is using the current secret first.
+- **The `meta_token_setup` and `meta_token_refresh` handlers have not been live-tested end-to-end.** Code reviewed and syntactically clean, but real run depends on user providing credentials. If anything fails on first real run, fix-forward and update this note.
