@@ -3306,37 +3306,64 @@ def _strip_tags(s: str) -> str:
     return re.sub(r"<[^>]+>", "", s or "").strip()
 
 
-def _first_sentence(s: str, max_chars: int = 90) -> str:
-    """Trim to one sentence (or max_chars), respecting word boundaries."""
-    s = _strip_tags(s).replace("*", "")
+def _clean_first_sentence(body: str, max_chars: int = 140) -> str:
+    """Return the body's first complete clause/sentence if it fits within
+    max_chars. Breaks on sentence-ending punctuation OR on a colon/
+    em-dash when the prefix is already a meaningful phrase (≥30 chars) —
+    those reads as a tight pull-quote rather than a truncated thought.
+    Returns empty when no clean break exists below max_chars.
+    """
+    s = _strip_tags(body).replace("*", "")
     if not s:
         return ""
-    # Stop at first sentence-ending punctuation
-    for term in [". ", "? ", "! ", " — "]:
+    candidates = []
+    # Hard sentence terminators
+    for term in [". ", "? ", "! "]:
         idx = s.find(term)
-        if 0 < idx < max_chars + 30:
-            s = s[:idx + 1].strip()
-            break
-    if len(s) > max_chars:
-        cut = s.rfind(" ", 0, max_chars)
-        if cut > 0:
-            s = s[:cut].rstrip(",.;:") + "…"
-    return s.rstrip(".")  # drop trailing period — feeds into bullet styling
+        if 0 < idx < max_chars:
+            candidates.append(idx + 1)
+    # Soft breaks (colon / em-dash) — only if the prefix is substantive
+    for term in [": ", " — "]:
+        idx = s.find(term)
+        if 30 <= idx < max_chars:
+            candidates.append(idx)
+    if not candidates:
+        return ""
+    end = min(candidates)
+    sentence = s[:end].strip().rstrip(".:—– ")
+    if len(sentence) > max_chars or len(sentence) < 20:
+        return ""
+    return sentence
+
+
+def _is_founder_note(section: dict) -> bool:
+    """Detect Erik's personal coda — usually has no title and a label
+    like 'A Note From Erik'."""
+    label = (section.get("label") or "").lower()
+    title = _strip_tags(section.get("title"))
+    if "note from" in label or "from erik" in label:
+        return True
+    if not title and (section.get("body") or "").strip():
+        # Untitled body section ≈ a coda
+        return True
+    return False
 
 
 def _derive_newsletter_synopsis(meta: dict) -> dict:
     """Build a teaser bundle for the archive list: a lead headline plus
-    2-3 short breadcrumbs hinting at what's inside the issue.
+    optional 1-2 breadcrumbs hinting at what's inside.
 
-    Sections in our newsletter have a recurring shape:
-      sec0  "The Week in Focus"            — regime read
+    Newsletter sections follow a recurring shape:
+      sec0  "The Week in Focus"            — regime read for the week
       sec1  "One Idea, Explained"          — the unique editorial lead
       sec2  "What the System is Not Doing" — boilerplate framing
-      sec3  "A Note From Erik"             — personal coda
+      sec3  "A Note From Erik"             — personal coda (skipped)
 
-    The headline pulls from sec1.title (the unique angle). Breadcrumbs
-    pull short teasers from the bodies of the other sections to give a
-    table-of-contents preview that makes the click feel rewarded.
+    The headline is sec1.title (the unique angle). Breadcrumbs draw from
+    other section titles or — if a section's body opens with a clean
+    complete sentence under ~110 chars — that sentence. Erik's note is
+    intentionally excluded (feels disjointed alongside editorial copy).
+    Mid-sentence truncations are dropped rather than rendered with "…".
     """
     sections = meta.get("sections") or []
     if not sections:
@@ -3352,19 +3379,21 @@ def _derive_newsletter_synopsis(meta: dict) -> dict:
     if not headline:
         headline = _strip_tags(sections[0].get("title"))
 
-    # Breadcrumbs: short body teasers from other sections, plus the
-    # "Note from Erik" coda if it has body text.
     breadcrumbs = []
     for s in sections:
+        if _is_founder_note(s):
+            continue
         title = _strip_tags(s.get("title"))
-        body_teaser = _first_sentence(s.get("body") or "")
-        # Use body teaser when section has no title (Erik's note pattern)
-        # or when the title is recurring boilerplate.
+        # Prefer non-boilerplate titles other than the headline itself.
         if title and not title.lower().startswith("what the system") and title != headline:
             breadcrumbs.append(title.rstrip("."))
-        elif body_teaser and (not title or title.lower().startswith("what the system")):
-            breadcrumbs.append(body_teaser)
-        if len(breadcrumbs) >= 3:
+            continue
+        # For boilerplate or untitled sections, only use a body teaser if
+        # it forms a clean complete sentence — no mid-thought "…" cuts.
+        teaser = _clean_first_sentence(s.get("body") or "")
+        if teaser:
+            breadcrumbs.append(teaser)
+        if len(breadcrumbs) >= 2:
             break
 
     return {"headline": headline, "breadcrumbs": breadcrumbs}
