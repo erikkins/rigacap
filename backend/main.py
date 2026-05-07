@@ -3788,6 +3788,63 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"status": "error", "error": str(e)}
 
+    # Refresh expired Meta access tokens (Instagram + Threads). Once a token
+    # is past its expiry, Meta's refresh_access_token endpoint cannot extend
+    # it — a fresh OAuth grant is required. This handler accepts long-lived
+    # tokens that the operator has already exchanged via Meta's Graph API
+    # Explorer or developer console, and persists them to the Lambda env so
+    # subsequent publishes pick them up.
+    #
+    # Payload:
+    #   {"refresh_meta_tokens": {
+    #       "instagram_access_token": "EAAB...",   # optional
+    #       "threads_access_token": "THAA...",     # optional
+    #   }}
+    if event.get("refresh_meta_tokens"):
+        config = event["refresh_meta_tokens"]
+        print("🔑 Refresh Meta access tokens")
+        try:
+            import boto3 as _boto
+            function_name = os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+            if not function_name:
+                return {"status": "error", "error": "AWS_LAMBDA_FUNCTION_NAME not set"}
+            lambda_client = _boto.client("lambda", region_name="us-east-1")
+
+            # Update BOTH Lambdas (api + worker) so HTTP-triggered publishes
+            # and cron-triggered publishes both see the new tokens.
+            updated = []
+            errors = []
+            for fn in ["rigacap-prod-api", "rigacap-prod-worker"]:
+                try:
+                    cfg = lambda_client.get_function_configuration(FunctionName=fn)
+                    env_vars = cfg.get("Environment", {}).get("Variables", {})
+                    changed = []
+                    if config.get("instagram_access_token"):
+                        env_vars["INSTAGRAM_ACCESS_TOKEN"] = config["instagram_access_token"]
+                        changed.append("INSTAGRAM_ACCESS_TOKEN")
+                    if config.get("threads_access_token"):
+                        env_vars["THREADS_ACCESS_TOKEN"] = config["threads_access_token"]
+                        changed.append("THREADS_ACCESS_TOKEN")
+                    if not changed:
+                        continue
+                    # CRITICAL: pass the FULL env_vars dict (we read it via
+                    # get_function_configuration above so DATABASE_URL,
+                    # JWT secrets, etc. are preserved). Never call
+                    # update_function_configuration with a partial dict.
+                    lambda_client.update_function_configuration(
+                        FunctionName=fn,
+                        Environment={"Variables": env_vars},
+                    )
+                    updated.append({"function": fn, "vars": changed})
+                except Exception as ex:
+                    errors.append({"function": fn, "error": str(ex)})
+            return {"status": "success" if updated else "error", "updated": updated, "errors": errors}
+        except Exception as e:
+            import traceback
+            print(f"❌ refresh_meta_tokens failed: {e}")
+            print(traceback.format_exc())
+            return {"status": "error", "error": str(e)}
+
     # Schedule the launch announcement sequence — 5 cards × N platforms with
     # specific publish dates. Idempotent: any existing draft/scheduled posts
     # whose text matches a launch headline are deleted before re-inserting.
