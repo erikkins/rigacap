@@ -324,6 +324,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
+# Reject requests that didn't come through CloudFront. Disabled when the
+# env var is empty (so local dev doesn't need the header). See
+# app/core/origin_guard.py for full rationale.
+from app.core.origin_guard import OriginVerifyMiddleware
+app.add_middleware(OriginVerifyMiddleware)
+
 # Include API routers
 app.include_router(signals_router, prefix="/api/signals", tags=["signals"])
 app.include_router(email_router, prefix="/api/email", tags=["email"])

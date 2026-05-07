@@ -202,6 +202,16 @@ variable "circuit_breaker_enabled" {
 
 data "aws_caller_identity" "current" {}
 
+# Shared secret injected by CloudFront on every request to the API origin
+# and verified by the FastAPI OriginVerifyMiddleware. Closes the direct-
+# execute-api WAF bypass: requests that don't traverse CloudFront won't
+# carry this header and get rejected with 403. Generated once, persists
+# in Terraform state. Rotate via `terraform taint` if ever compromised.
+resource "random_password" "cloudfront_origin_secret" {
+  length  = 48
+  special = false
+}
+
 locals {
   prefix = "${var.project_name}-${var.environment}"
 }
@@ -632,9 +642,11 @@ resource "aws_cloudfront_distribution" "api" {
   aliases = ["api.${var.domain_name}"]
 
   origin {
-    # Direct execute-api endpoint (regional). Once cutover is verified, we
-    # can optionally lock this down with a shared-secret header so direct
-    # hits to the execute-api URL are rejected (closes the WAF bypass hole).
+    # Direct execute-api endpoint (regional). The custom_header below
+    # closes the WAF bypass — the API Lambda's OriginVerifyMiddleware
+    # rejects any request that doesn't carry this exact secret in
+    # X-Origin-Verify. Direct hits to the execute-api URL skip
+    # CloudFront, never get the header injected, and 403.
     domain_name = "${aws_apigatewayv2_api.main.id}.execute-api.${var.aws_region}.amazonaws.com"
     origin_id   = "APIGW-${aws_apigatewayv2_api.main.id}"
 
@@ -643,6 +655,11 @@ resource "aws_cloudfront_distribution" "api" {
       https_port             = 443
       origin_protocol_policy = "https-only"
       origin_ssl_protocols   = ["TLSv1.2"]
+    }
+
+    custom_header {
+      name  = "X-Origin-Verify"
+      value = random_password.cloudfront_origin_secret.result
     }
   }
 
@@ -921,6 +938,10 @@ resource "aws_lambda_function" "api" {
       # CloudFront edge). app/core/security.py.get_client_ip honors this
       # flag for rate-limit + Turnstile bot scoring fidelity.
       TRUST_FORWARDED_FOR = "true"
+      # OriginVerifyMiddleware reads this and rejects requests that don't
+      # carry a matching X-Origin-Verify header (injected by CloudFront).
+      # Closes the direct-execute-api WAF bypass.
+      CLOUDFRONT_ORIGIN_SECRET = random_password.cloudfront_origin_secret.result
     })
   }
 
