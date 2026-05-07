@@ -860,11 +860,6 @@ def handler(event, context):
     if event.get("run_migration"):
         print("🔧 Running DB migrations via Lambda event")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
             async def _run_migrations():
                 from sqlalchemy import text
                 from app.core.database import async_session
@@ -890,7 +885,7 @@ def handler(event, context):
                     await db.commit()
                 return results
 
-            result = loop.run_until_complete(_run_migrations())
+            result = asyncio.run(_run_migrations())
             print(f"🔧 Migration results: {result}")
             return {"statusCode": 200, "body": {"migrations": result}}
         except Exception as e:
