@@ -2712,29 +2712,78 @@ function Dashboard() {
           const w = thisWeek.winning_count;
           const o = thisWeek.still_running_count;
           const avg = thisWeek.average_pnl_pct;
-          const openAvg = thisWeek.still_running && thisWeek.still_running.length
-            ? thisWeek.still_running.reduce((s, p) => s + (p.pnl_pct || 0), 0) / thisWeek.still_running.length
-            : null;
+          // Backend computes leader/tail across the full open set
+          const openAvg = thisWeek.open_avg_pnl_pct;
+          const leader = thisWeek.leader;
+          const tail = thisWeek.tail;
+          const longestHold = thisWeek.longest_hold;
+          const allOpenPositive = leader && tail && tail.pnl_pct > 0;
 
-          // Build the headline as prose — varies by what kind of week it was.
-          const buildHeadline = () => {
-            if (c === 0) {
-              if (o === 0) return 'A quiet week — no closes, no open positions.';
-              return `A holding week — no closes, ${o} ${o === 1 ? 'pick' : 'picks'} still running.`;
+          const fmtPct = (v) => `${v >= 0 ? '+' : ''}${v}%`;
+          const heldClause = (days) => days != null ? ` (held ${days} ${days === 1 ? 'day' : 'days'})` : '';
+
+          // Build the headline + rotating accent line based on what kind of week it was.
+          // Priority order — first match wins:
+          //   1. Closes happened: lead with the closed picks (always honest)
+          //   2. All open positions positive: sweetener flex
+          //   3. Leader is up, tail is also up: show both with "still up" framing
+          //   4. Leader is up, tail is down: show both honestly
+          //   5. Leader is flat-or-negative: pivot to longest-hold discipline flex
+          //      (this is the "both red" failure mode — never read as defeat)
+          //   6. No open positions: quiet week
+          const buildHeadlineParts = () => {
+            // Closes this week — lead with what closed
+            if (c > 0) {
+              const pick = c === 1 ? 'one pick' : `${c} picks`;
+              const wlClause = c > 1
+                ? ` (${w} ${w === 1 ? 'win' : 'wins'}, ${c - w} ${c - w === 1 ? 'loss' : 'losses'})`
+                : '';
+              const avgClause = avg >= 0 ? `averaging +${avg}%` : `averaging ${avg}%`;
+              const openClause = o > 0 ? ` ${o} still ${o === 1 ? 'runs' : 'run'}.` : '';
+              return {
+                lead: `The system closed ${pick} this week${wlClause}, ${avgClause}.${openClause}`,
+                accent: null,
+              };
             }
-            const verb = avg >= 0 ? 'closed' : 'closed';
-            const pick = c === 1 ? 'one pick' : `${c} picks`;
-            const wlClause = c > 1
-              ? ` (${w} ${w === 1 ? 'win' : 'wins'}, ${c - w} ${c - w === 1 ? 'loss' : 'losses'})`
-              : '';
-            const avgClause = avg >= 0
-              ? `averaging +${avg}%`
-              : `averaging ${avg}%`;
-            const openClause = o > 0
-              ? ` ${o} ${o === 1 ? 'still runs' : 'still run'}.`
-              : '';
-            return `The system ${verb} ${pick} this week${wlClause}, ${avgClause}.${openClause}`;
+            // No open positions
+            if (o === 0) {
+              return { lead: 'A quiet week — no closes, no open positions.', accent: null };
+            }
+            // Open positions exist but no closes this week
+            const baseLead = `A holding week. ${o} ${o === 1 ? 'position' : 'positions'} running, no closes.`;
+            // Branch 2: all open positions positive
+            if (allOpenPositive && o >= 2) {
+              return {
+                lead: baseLead,
+                accent: `All ${o} positions positive. ${leader.symbol} leads at ${fmtPct(leader.pnl_pct)}, tail ${tail.symbol} at ${fmtPct(tail.pnl_pct)}, average ${fmtPct(openAvg)}.`,
+              };
+            }
+            // Branch 3: leader up, tail up (but not "all" — covers o=1 and edge cases)
+            if (leader && leader.pnl_pct > 0 && tail && tail.pnl_pct > 0) {
+              return {
+                lead: baseLead,
+                accent: `${leader.symbol} leads at ${fmtPct(leader.pnl_pct)}${heldClause(leader.days_held)}. Tail ${tail.symbol} still up at ${fmtPct(tail.pnl_pct)}.`,
+              };
+            }
+            // Branch 4: leader up, tail down — show honestly
+            if (leader && leader.pnl_pct > 0) {
+              return {
+                lead: baseLead,
+                accent: `${leader.symbol} leads at ${fmtPct(leader.pnl_pct)}${heldClause(leader.days_held)}. Tail: ${tail.symbol} ${fmtPct(tail.pnl_pct)}${heldClause(tail.days_held)}. Average ${fmtPct(openAvg)}.`,
+              };
+            }
+            // Branch 5: leader is flat/negative — pivot to discipline flex (longest hold)
+            if (longestHold && longestHold.days_held != null) {
+              return {
+                lead: baseLead,
+                accent: `Longest hold: ${longestHold.symbol}, ${longestHold.days_held} days. The system isn't trading — it's waiting.`,
+              };
+            }
+            // No leader/longest data at all
+            return { lead: baseLead, accent: null };
           };
+
+          const { lead: headlineLead, accent: headlineAccent } = buildHeadlineParts();
 
           return (
             <section className="mb-6 border-y border-rule py-5">
@@ -2750,25 +2799,21 @@ function Dashboard() {
                 </span>
               </div>
 
-              {/* Lead paragraph — the prose headline */}
+              {/* Lead paragraph + rotating accent line — branch chosen by buildHeadlineParts() above */}
               <p
-                className="font-display text-ink mb-4"
+                className="font-display text-ink mb-1"
                 style={{ fontVariationSettings: '"opsz" 24', fontSize: 'clamp(1rem, 1.6vw, 1.15rem)', lineHeight: 1.45, fontWeight: 400 }}
               >
-                {buildHeadline()}
-                {openAvg != null && o > 0 && (
-                  <>
-                    {' '}
-                    <span className="text-ink-mute">
-                      Open positions are {openAvg >= 0 ? 'up' : 'down'}{' '}
-                      <span className={openAvg >= 0 ? 'text-positive' : 'text-negative'}>
-                        {openAvg >= 0 ? '+' : ''}{openAvg.toFixed(1)}%
-                      </span>{' '}
-                      on average.
-                    </span>
-                  </>
-                )}
+                {headlineLead}
               </p>
+              {headlineAccent && (
+                <p
+                  className="font-display text-ink-mute mb-4"
+                  style={{ fontVariationSettings: '"opsz" 24', fontSize: 'clamp(0.95rem, 1.4vw, 1.05rem)', lineHeight: 1.55, fontWeight: 400 }}
+                >
+                  {headlineAccent}
+                </p>
+              )}
 
               {/* Closed picks — single-row tape with dotted leaders */}
               {thisWeek.closed_this_week && thisWeek.closed_this_week.length > 0 && (

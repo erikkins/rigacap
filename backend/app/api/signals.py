@@ -226,12 +226,42 @@ async def get_this_week(
         last_close = _fetch_latest_close_from_s3(p.symbol)
         cur = last_close if last_close is not None else float(p.entry_price)
         pnl_pct = ((cur / float(p.entry_price)) - 1) * 100 if p.entry_price else 0.0
+        days_held = (today - p.entry_date.date()).days if p.entry_date else None
         still_running.append({
             "symbol": p.symbol,
             "pnl_pct": round(pnl_pct, 1),
             "current_price": round(cur, 2),
             "entry_date": p.entry_date.date().isoformat() if p.entry_date else None,
+            "days_held": days_held,
         })
+
+    # Computed across the full open set (not the [:8] slice) so the banner is
+    # accurate even when the portfolio holds more than 8 positions. Frontend
+    # uses these for the rotating "This Week" headline — leader/tail when the
+    # leader is positive, longest_hold as a discipline-flex fallback when not.
+    open_avg_pnl = (
+        round(sum(p["pnl_pct"] for p in still_running) / len(still_running), 1)
+        if still_running else None
+    )
+    leader = None
+    tail = None
+    longest_hold = None
+    if still_running:
+        sorted_by_pnl = sorted(still_running, key=lambda p: p["pnl_pct"], reverse=True)
+        leader = {
+            "symbol": sorted_by_pnl[0]["symbol"],
+            "pnl_pct": sorted_by_pnl[0]["pnl_pct"],
+            "days_held": sorted_by_pnl[0]["days_held"],
+        }
+        tail = {
+            "symbol": sorted_by_pnl[-1]["symbol"],
+            "pnl_pct": sorted_by_pnl[-1]["pnl_pct"],
+            "days_held": sorted_by_pnl[-1]["days_held"],
+        }
+        with_days = [p for p in still_running if p.get("days_held") is not None]
+        if with_days:
+            lh = max(with_days, key=lambda p: p["days_held"])
+            longest_hold = {"symbol": lh["symbol"], "days_held": lh["days_held"]}
 
     return {
         "as_of_date": today.isoformat(),
@@ -243,6 +273,10 @@ async def get_this_week(
         "average_pnl_pct": avg_pnl,
         "still_running": still_running[:8],
         "still_running_count": len(open_rows),
+        "open_avg_pnl_pct": open_avg_pnl,
+        "leader": leader,
+        "tail": tail,
+        "longest_hold": longest_hold,
     }
 
 
