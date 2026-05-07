@@ -3,539 +3,704 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RigaCap — Technical Architecture Document</title>
+<title>RigaCap &mdash; Technical Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
+  /* --- Design tokens ------------------------------------------------- */
   :root {
-    --navy: #172554;
-    --navy-mid: #1e3a5f;
-    --navy-light: #1e40af;
-    --gold: #f59e0b;
-    --gold-light: #fbbf24;
-    --gold-pale: #fef3c7;
-    --green: #22c55e;
-    --green-light: #dcfce7;
-    --red: #ef4444;
-    --dark: #111827;
-    --gray: #64748b;
-    --light-gray: #f8fafc;
-    --border: #e2e8f0;
-    --code-bg: #0f172a;
+    --paper:        #F5F1E8;
+    --paper-card:   #FAF7F0;
+    --rule:         #DDD5C7;
+    --rule-dark:    #C9BFAC;
+    --ink:          #141210;
+    --ink-mute:     #5A544E;
+    --ink-light:    #8A8279;
+    --claret:       #7A2430;
+    --claret-light: #A23A47;
+    --positive:     #2D5F3F;
+
+    --serif:  'Fraunces', Georgia, 'Times New Roman', serif;
+    --sans:   'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono:   'IBM Plex Mono', 'Courier New', monospace;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: var(--dark);
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--paper);
     line-height: 1.6;
-    background: #fff;
+    font-size: 16px;
+    font-weight: 300;
   }
 
+  /* --- Print / PDF --------------------------------------------------- */
   @page {
     size: letter;
-    margin: 0.5in 0.6in;
+    margin: 0.6in 0.7in;
   }
-
   @media print {
-    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: var(--paper); }
     .page-break { page-break-before: always; }
     .no-break { page-break-inside: avoid; }
   }
 
-  /* Cover */
-  .cover {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    background: linear-gradient(145deg, #0c1a3a 0%, var(--navy) 40%, #0f2847 100%);
-    color: #fff;
-    padding: 4rem;
-    position: relative;
-    overflow: hidden;
+  /* --- Layout -------------------------------------------------------- */
+  .content {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
   }
 
-  /* Subtle grid pattern */
-  .cover::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image:
-      linear-gradient(rgba(245,158,11,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(245,158,11,0.04) 1px, transparent 1px);
-    background-size: 40px 40px;
+  /* --- Typography ---------------------------------------------------- */
+  h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-variation-settings: '"opsz" 144';
   }
-  .cover::after {
-    content: '';
-    position: absolute;
-    top: -30%; right: -20%;
-    width: 60%; height: 80%;
-    background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
-    border-radius: 50%;
-  }
-
-  .cover * { position: relative; z-index: 1; }
-
-  /* Gold corners */
-  .cover-corners { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; }
-  .cover-corners::before, .cover-corners::after {
-    content: ''; position: absolute;
-    width: 60px; height: 60px;
-    border-color: var(--gold); border-style: solid;
-  }
-  .cover-corners::before { top: 40px; left: 40px; border-width: 2px 0 0 2px; }
-  .cover-corners::after { top: 40px; right: 40px; border-width: 2px 2px 0 0; }
-  .cover-corners-bottom { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; }
-  .cover-corners-bottom::before, .cover-corners-bottom::after {
-    content: ''; position: absolute;
-    width: 60px; height: 60px;
-    border-color: var(--gold); border-style: solid;
-  }
-  .cover-corners-bottom::before { bottom: 40px; left: 40px; border-width: 0 0 2px 2px; }
-  .cover-corners-bottom::after { bottom: 40px; right: 40px; border-width: 0 2px 2px 0; }
-
-  .cover .doc-type {
-    font-size: 0.75rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: var(--gold);
-    font-weight: 600;
-    margin-bottom: 1rem;
-    padding: 4px 16px;
-    border: 1px solid rgba(245,158,11,0.3);
-    border-radius: 4px;
-  }
-  .cover .logo {
-    font-size: 1.1rem;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: rgba(255,255,255,0.6);
-    margin-bottom: 2rem;
-  }
-  .cover .logo .beacon {
-    display: inline-block;
-    width: 8px; height: 8px;
-    background: var(--gold);
-    border-radius: 50%;
-    margin-right: 8px;
-    vertical-align: middle;
-    box-shadow: 0 0 12px rgba(245,158,11,0.6);
-  }
-  .cover h1 {
-    font-size: 2.8rem;
-    font-weight: 800;
-    line-height: 1.15;
-    margin-bottom: 1.5rem;
-    color: #fff;
-  }
-  .cover .subtitle {
-    font-size: 1.15rem;
-    font-weight: 300;
-    color: rgba(255,255,255,0.65);
-    max-width: 560px;
-    margin-bottom: 3rem;
-  }
-  .cover .date { font-size: 0.85rem; color: rgba(255,255,255,0.35); }
-  .cover .version {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    color: var(--gold);
-    margin-top: 0.5rem;
-    opacity: 0.7;
-  }
-
-  /* Content */
-  .content { max-width: 820px; margin: 0 auto; padding: 2.5rem 2rem; }
-
   h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--navy);
-    margin-top: 2.5rem;
-    margin-bottom: 0.8rem;
-    padding-bottom: 0.4rem;
-    border-bottom: 2px solid var(--gold-pale);
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 2rem;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    font-variation-settings: '"opsz" 96';
+    margin-top: 3rem;
+    margin-bottom: 1.25rem;
+    color: var(--ink);
   }
-  h2:first-child { margin-top: 0; }
-
+  h2 em { color: var(--claret); font-style: italic; }
   h3 {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--dark);
-    margin-top: 1.5rem;
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.3rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  h4 {
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
     margin-bottom: 0.5rem;
   }
-
-  h4 {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--navy);
-    margin-top: 1rem;
-    margin-bottom: 0.3rem;
+  p {
+    font-size: 1rem;
+    line-height: 1.65;
+    margin-bottom: 1rem;
+    color: var(--ink);
+  }
+  p strong { font-weight: 500; }
+  em { font-style: italic; }
+  .lead {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: var(--ink-mute);
+    margin-bottom: 1.5rem;
+  }
+  .kicker {
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .kicker::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--claret);
   }
 
-  p { margin-bottom: 0.6rem; color: #374151; font-size: 0.88rem; }
-  strong { font-weight: 600; }
+  /* --- COVER PAGE ---------------------------------------------------- */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 4rem 3.5rem 3rem;
+    background: var(--paper);
+    position: relative;
+  }
+  .cover-rule {
+    border-top: 3px solid var(--ink);
+    padding-top: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cover-rule .brand {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .cover-rule .brand .dot { color: var(--claret); }
+  .cover-rule .meta {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .cover h1 {
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    margin-top: 4rem;
+    max-width: 14ch;
+  }
+  .cover h1 em { color: var(--claret); font-style: italic; }
+  .cover .cover-sub {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.5rem;
+    line-height: 1.45;
+    color: var(--ink-mute);
+    max-width: 38ch;
+    margin-top: 2rem;
+    margin-bottom: auto;
+  }
+  .cover-stats {
+    display: flex;
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 1.5rem 0;
+    margin-top: 3rem;
+  }
+  .cover-stat {
+    flex: 1;
+    padding: 0 1.5rem;
+    border-right: 1px solid var(--rule);
+  }
+  .cover-stat:first-child { padding-left: 0; }
+  .cover-stat:last-child { padding-right: 0; border-right: none; }
+  .cover-stat .label {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 0.4rem;
+  }
+  .cover-stat .value {
+    font-family: var(--serif);
+    font-size: 2.4rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .cover-stat .value.pos { color: var(--positive); }
+  .cover-stat .sub {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--ink-light);
+    margin-top: 0.4rem;
+    letter-spacing: 0.05em;
+  }
+  .cover-footer {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--ink-mute);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
 
-  /* Tables */
+  /* --- Tables -------------------------------------------------------- */
   table {
     width: 100%;
     border-collapse: collapse;
-    margin: 0.75rem 0;
-    font-size: 0.8rem;
+    margin: 1.5rem 0;
+    font-feature-settings: "tnum";
   }
   thead th {
-    background: var(--light-gray);
-    font-weight: 600;
-    text-align: left;
-    padding: 0.5rem 0.6rem;
-    border-bottom: 2px solid var(--border);
+    font-family: var(--sans);
     font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--gray);
+    color: var(--ink-mute);
+    border-bottom: 2px solid var(--rule-dark);
+    padding: 0.6rem 0.5rem;
+    text-align: left;
   }
   tbody td {
-    padding: 0.45rem 0.6rem;
-    border-bottom: 1px solid var(--border);
+    padding: 0.7rem 0.5rem;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.88rem;
     vertical-align: top;
   }
-  tbody tr:last-child td { border-bottom: none; }
-  .positive { color: var(--green); font-weight: 600; }
-
-  /* Code blocks */
-  code {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.78rem;
-    background: #f1f5f9;
-    padding: 1px 5px;
-    border-radius: 3px;
-    color: var(--navy);
+  tbody td:first-child {
+    font-family: var(--sans);
+    font-weight: 400;
   }
-  .code-block {
-    background: var(--code-bg);
-    border-radius: 8px;
-    padding: 1rem 1.25rem;
-    margin: 0.75rem 0;
-    overflow-x: auto;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
+  caption, .table-caption {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    color: var(--ink-light);
+    text-align: left;
+    margin-top: 0.5rem;
     line-height: 1.5;
-    color: #e2e8f0;
-  }
-  .code-block .comment { color: #64748b; }
-  .code-block .keyword { color: #c084fc; }
-  .code-block .string { color: #86efac; }
-  .code-block .arrow { color: var(--gold); }
-
-  /* Architecture boxes */
-  .arch-flow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    margin: 1.25rem 0;
-    flex-wrap: wrap;
-  }
-  .arch-box {
-    background: linear-gradient(135deg, #eff6ff, #dbeafe);
-    border: 1px solid #93c5fd;
-    border-radius: 8px;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--navy);
-    text-align: center;
-  }
-  .arch-box small { font-weight: 400; color: var(--gray); display: block; font-size: 0.65rem; }
-  .arch-arrow { color: var(--gold); font-size: 1.1rem; }
-
-  /* Callouts */
-  .callout {
-    background: linear-gradient(135deg, #eff6ff, #f0f9ff);
-    border-left: 4px solid var(--navy);
-    border-radius: 0 8px 8px 0;
-    padding: 1rem 1.25rem;
-    margin: 1.25rem 0;
-  }
-  .callout p { margin: 0; font-size: 0.85rem; }
-  .callout strong { color: var(--navy); }
-
-  .callout-gold {
-    background: linear-gradient(135deg, #fef3c7, #fffbeb);
-    border-left-color: var(--gold);
-  }
-  .callout-gold strong { color: #92400e; }
-
-  /* Feature grid */
-  .feature-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin: 1rem 0;
-  }
-  .feature-card {
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem;
-    border-left: 3px solid var(--navy);
-  }
-  .feature-card h4 {
-    font-size: 0.85rem;
-    font-weight: 700;
-    margin-bottom: 0.3rem;
-    margin-top: 0;
-    color: var(--dark);
-  }
-  .feature-card p {
-    font-size: 0.78rem;
-    margin-bottom: 0;
-    color: var(--gray);
+    font-style: italic;
   }
 
-  /* Two columns */
-  .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin: 0.75rem 0;
-  }
-
-  /* Stats row */
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.75rem;
-    margin: 1rem 0;
-  }
-  .stat-box {
-    background: var(--light-gray);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.75rem;
-    text-align: center;
-  }
-  .stat-box .value {
+  /* --- Pull-quote ---------------------------------------------------- */
+  .pullquote {
+    font-family: var(--serif);
+    font-style: italic;
     font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--navy);
+    line-height: 1.4;
+    color: var(--claret);
+    border-left: 3px solid var(--claret);
+    padding: 0.5rem 0 0.5rem 1.5rem;
+    margin: 2rem 0;
+    max-width: 40ch;
   }
-  .stat-box .value.gold { color: var(--gold); }
-  .stat-box .label {
-    font-size: 0.65rem;
+
+  /* --- Callout ------------------------------------------------------- */
+  .callout {
+    background: var(--paper-card);
+    border-left: 3px solid var(--claret);
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .callout p { margin-bottom: 0.5rem; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout p strong { color: var(--claret); font-weight: 500; }
+
+  /* --- Stat row ------------------------------------------------------ */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin: 1.5rem 0;
+  }
+  .stat-row .stat {
+    padding: 1rem 1.25rem;
+    border-right: 1px solid var(--rule);
+  }
+  .stat-row .stat:last-child { border-right: none; }
+  .stat-row .stat-num {
+    font-family: var(--serif);
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .stat-row .stat-num.pos { color: var(--positive); }
+  .stat-row .stat-label {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--gray);
-    margin-top: 0.2rem;
+    color: var(--ink-mute);
+    margin-top: 0.5rem;
   }
 
-  ul { padding-left: 1.2rem; margin-bottom: 0.6rem; }
-  li { font-size: 0.82rem; color: #374151; margin-bottom: 0.25rem; }
-
-  /* Schema diagram styling */
-  .schema-section {
-    background: var(--light-gray);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem;
-    margin: 0.75rem 0;
+  /* --- Section divider ---------------------------------------------- */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--rule-dark);
+    margin: 3rem 0;
   }
-  .schema-section h4 {
-    color: var(--navy);
-    font-size: 0.85rem;
-    margin-top: 0;
+
+  /* --- Lists --------------------------------------------------------- */
+  ul, ol {
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+  }
+  ul li, ol li {
     margin-bottom: 0.5rem;
-    padding-bottom: 0.3rem;
-    border-bottom: 1px solid var(--border);
+    line-height: 1.65;
+  }
+
+  /* --- Numbered components ------------------------------------------ */
+  .components { margin-top: 1.5rem; }
+  .component {
+    display: grid;
+    grid-template-columns: 4ch 1fr;
+    gap: 1.5rem;
+    padding: 1.25rem 0;
+    border-top: 1px solid var(--rule);
+  }
+  .component:last-child { border-bottom: 1px solid var(--rule); }
+  .component-num {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--claret);
+    letter-spacing: 0.15em;
+    padding-top: 0.3rem;
+  }
+  .component-title {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.01em;
+  }
+  .component-desc {
+    font-size: 0.95rem;
+    color: var(--ink-mute);
+    line-height: 1.6;
+  }
+
+  /* --- Code blocks --------------------------------------------------- */
+  .code-block {
+    font-family: var(--mono);
+    background: #1A1815;
+    color: #E8E0D0;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    border-left: 3px solid var(--claret);
+    white-space: pre;
+  }
+  .code-block .keyword { color: #C99A6F; }
+  .code-block .string  { color: #8FA876; }
+  .code-block .comment { color: #8A8279; }
+  .code-block .arrow   { color: var(--claret-light); }
+  code {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    background: var(--paper-card);
+    padding: 0.1rem 0.35rem;
+    border-radius: 2px;
+    color: var(--claret);
+  }
+
+  /* --- Tech component card grid ------------------------------------- */
+  .tech-card {
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--claret);
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+  }
+  .tech-card-title {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+  }
+  .tech-card-meta {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .tech-card-desc {
+    font-size: 0.92rem;
+    color: var(--ink-mute);
+    line-height: 1.6;
+  }
+  .tech-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+  }
+  @media (max-width: 700px) { .tech-grid { grid-template-columns: 1fr; } }
+
+  /* --- Schema card -------------------------------------------------- */
+  .schema-card {
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--claret);
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+  }
+  .schema-card .schema-title {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.05rem;
+    margin-bottom: 0.3rem;
+  }
+  .schema-card .schema-note {
+    font-size: 0.85rem;
+    color: var(--ink-mute);
+    margin-bottom: 0.6rem;
+    line-height: 1.55;
   }
   .schema-cols {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.25rem 1.5rem;
+    gap: 0.2rem 1.5rem;
+    font-family: var(--mono);
     font-size: 0.75rem;
-    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.55;
   }
-  .schema-cols .col-name { color: var(--dark); }
-  .schema-cols .col-type { color: var(--gray); font-size: 0.7rem; }
+  .schema-cols .col-name { color: var(--ink); }
+  .schema-cols .col-type { color: var(--ink-light); font-size: 0.72rem; }
+  @media (max-width: 600px) { .schema-cols { grid-template-columns: 1fr; } }
 
-  /* Footer */
-  .footer {
-    text-align: center;
-    padding: 1.5rem;
-    font-size: 0.68rem;
-    color: var(--gray);
-    border-top: 1px solid var(--border);
-    margin-top: 2rem;
-  }
-  .footer strong { color: var(--navy); }
-
-  /* TOC */
+  /* --- TOC ---------------------------------------------------------- */
   .toc { margin: 1.5rem 0; }
   .toc-item {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    padding: 0.3rem 0;
-    border-bottom: 1px dotted var(--border);
-    font-size: 0.88rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px dotted var(--rule);
+    font-size: 0.95rem;
   }
-  .toc-item .toc-title { font-weight: 500; color: var(--dark); }
-  .toc-item .toc-page { color: var(--gray); font-size: 0.8rem; }
-  .toc-section {
-    font-weight: 700;
-    color: var(--navy);
-    font-size: 0.9rem;
-    padding-top: 0.5rem;
-    border-bottom: none;
+  .toc-item .toc-title { color: var(--ink); }
+  .toc-item .toc-page { color: var(--ink-light); font-family: var(--mono); font-size: 0.78rem; }
+  .toc-item.toc-section {
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--claret);
+    border-bottom: 1px solid var(--rule-dark);
+    padding-top: 1rem;
   }
+
+  /* --- Disclosures footer ------------------------------------------ */
+  .disclosures {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.78rem;
+    color: var(--ink-light);
+    line-height: 1.55;
+  }
+  .disclosures p { font-size: 0.78rem; margin-bottom: 0.6rem; }
 </style>
 </head>
 <body>
 
-<!-- COVER -->
-<div class="cover">
-  <div class="cover-corners"></div>
-  <div class="cover-corners-bottom"></div>
-  <div class="doc-type">Technical Architecture Document</div>
-  <div class="logo" style="margin-bottom: 2.5rem;">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 60" width="220" height="51">
-      <circle cx="30" cy="30" r="28" fill="#ffffff"/>
-      <svg x="4" y="4" width="52" height="52" viewBox="0 0 1090 1090">
-        <path fill="#67B3E9" d="M 271.02 540.82 C 271.02 525.03 282.96 512.15 298.27 510.37 L 332.7 376.25 C 324.86 370.67 319.7 361.55 319.7 351.19 C 319.7 334.17 333.5 320.37 350.52 320.37 C 366.29 320.37 379.15 332.27 380.97 347.55 L 491.99 375.79 C 497.57 367.92 506.71 362.75 517.1 362.75 C 526.94 362.75 535.59 367.44 541.24 374.62 L 685.88 330.24 C 687.0 314.25 700.2 301.58 716.48 301.58 C 718.18 301.58 719.83 301.81 721.45 302.08 L 754.3 246.01 C 695.43 203.71 623.26 178.76 545.23 178.76 C 347.11 178.76 186.51 339.37 186.51 537.49 C 186.51 561.88 189.0 585.68 193.65 608.7 L 272.34 549.28 C 271.57 546.57 271.02 543.78 271.02 540.82 z"/>
-        <path fill="#3298E2" d="M 771.95 259.53 L 740.47 313.27 C 744.68 318.54 747.3 325.13 747.3 332.39 C 747.3 349.41 733.5 363.21 716.48 363.21 C 706.64 363.21 697.98 358.52 692.34 351.34 L 547.7 395.71 C 546.58 411.71 533.38 424.38 517.1 424.38 C 501.32 424.38 488.47 412.49 486.65 397.2 L 375.63 368.96 C 370.7 375.91 362.97 380.61 354.09 381.65 L 319.66 515.76 C 327.5 521.34 332.66 530.46 332.66 540.82 C 332.66 557.84 318.86 571.64 301.84 571.64 C 295.86 571.64 290.32 569.86 285.6 566.91 L 199.19 632.16 C 209.45 669.66 225.63 704.73 246.68 736.27 L 572.95 455.89 L 725.14 455.89 L 860.89 366.94 C 838.48 325.55 808.14 289.09 771.95 259.53 z"/>
-        <polygon fill="#172554" points="870.22,315.99 1083.92,256.77 947.01,442.81 936.83,357.53"/>
-        <path fill="#172554" d="M 464.89 930.55 C 451.12 927.74 437.63 924.2 424.41 920.01 L 424.41 675.65 L 312.7 771.66 L 312.7 864.06 C 210.74 791.25 144.07 672.05 144.07 537.49 C 144.07 477.96 157.21 421.48 180.57 370.62 L 124.6 370.62 C 104.03 422.3 92.59 478.57 92.59 537.49 C 92.59 787.07 295.65 990.12 545.23 990.12 C 555.79 990.12 566.22 989.63 576.6 988.91 L 576.6 544.87 L 464.89 640.87 L 464.89 930.55 z"/>
-        <path fill="#172554" d="M 996.65 506.04 L 945.04 506.04 C 945.85 516.43 946.39 526.89 946.39 537.49 C 946.39 618.34 922.3 693.63 880.98 756.67 L 880.98 437.3 L 769.26 510.51 L 769.26 869.88 C 756.28 878.65 742.79 886.7 728.79 893.93 L 728.79 525.76 L 617.07 525.76 L 617.07 984.36 C 832.63 949.83 997.87 762.62 997.87 537.49 C 997.87 526.9 997.37 516.44 996.65 506.04 z"/>
-        <path fill="#172554" d="M 545.22 119.08 C 683.67 119.08 806.61 186.69 882.81 290.61 L 902.09 285.27 C 822.83 173.45 692.41 100.33 545.22 100.33 C 371.42 100.33 220.99 202.29 150.58 349.53 L 171.48 349.53 C 240.44 212.96 382.07 119.08 545.22 119.08 z"/>
-      </svg>
-      <text x="68" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="30" font-weight="700" letter-spacing="-0.5" fill="#ffffff">RigaCap</text>
-    </svg>
+<!-- ============================================================
+     COVER
+     ============================================================ -->
+<section class="cover">
+  <div class="cover-rule">
+    <span class="brand">RigaCap<span class="dot">.</span></span>
+    <span class="meta">Technical Architecture &middot; May 2026</span>
   </div>
-  <h1>System Architecture<br>&amp; Technical Audit</h1>
-  <p class="subtitle">
-    Comprehensive technical documentation covering infrastructure, database schema,
-    API surface, security architecture, deployment pipeline, and operational characteristics.
-  </p>
-  <div class="date">Confidential &mdash; April 2026</div>
-  <div class="version">v3.0.0 &middot; 95 endpoints &middot; 18 tables &middot; 15K+ LOC</div>
-</div>
 
-<!-- TABLE OF CONTENTS -->
+  <div>
+    <h1>The platform, <em>measured.</em></h1>
+    <p class="cover-sub">
+      A technical reference for the RigaCap signal platform &mdash; infrastructure,
+      data pipeline, services, and the production discipline that holds them&nbsp;together.
+    </p>
+  </div>
+
+  <div>
+    <div class="cover-stats">
+      <div class="cover-stat">
+        <div class="label">Sections</div>
+        <div class="value">12</div>
+        <div class="sub">Full audit</div>
+      </div>
+      <div class="cover-stat">
+        <div class="label">Endpoints</div>
+        <div class="value">120+</div>
+        <div class="sub">FastAPI surface</div>
+      </div>
+      <div class="cover-stat">
+        <div class="label">Symbols Scanned</div>
+        <div class="value">~4,000</div>
+        <div class="sub">Daily, US equities</div>
+      </div>
+      <div class="cover-stat">
+        <div class="label">DB Tables</div>
+        <div class="value">18</div>
+        <div class="sub">PostgreSQL 15</div>
+      </div>
+    </div>
+
+    <div class="cover-footer">
+      <span>Confidential</span>
+      <span>rigacap.com</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TABLE OF CONTENTS
+     ============================================================ -->
 <div class="content page-break">
-  <h2 style="margin-top:0;">Table of Contents</h2>
+  <span class="kicker">Contents</span>
+  <h2>What this document <em>covers.</em></h2>
+
+  <p class="lead">
+    A complete technical audit of the RigaCap platform: the infrastructure it runs on,
+    the data it ingests, the services that turn that data into signals, and the
+    operational discipline that keeps the production code in lockstep with the
+    walk-forward backtest.
+  </p>
+
   <div class="toc">
-    <div class="toc-item toc-section"><span class="toc-title">Infrastructure</span></div>
-    <div class="toc-item"><span class="toc-title">1. System Overview &amp; Architecture</span><span class="toc-page">3</span></div>
-    <div class="toc-item"><span class="toc-title">2. AWS Infrastructure (Terraform)</span><span class="toc-page">3</span></div>
-    <div class="toc-item"><span class="toc-title">3. CDN, DNS &amp; SSL</span><span class="toc-page">4</span></div>
+    <div class="toc-item toc-section"><span>Infrastructure</span></div>
+    <div class="toc-item"><span class="toc-title">1. System Overview</span><span class="toc-page">03</span></div>
+    <div class="toc-item"><span class="toc-title">2. AWS Infrastructure</span><span class="toc-page">04</span></div>
+    <div class="toc-item"><span class="toc-title">3. CDN, DNS &amp; SSL</span><span class="toc-page">06</span></div>
 
-    <div class="toc-item toc-section"><span class="toc-title">Data Layer</span></div>
-    <div class="toc-item"><span class="toc-title">4. Database Schema (PostgreSQL 15)</span><span class="toc-page">5</span></div>
-    <div class="toc-item"><span class="toc-title">5. Data Pipeline &amp; Caching</span><span class="toc-page">7</span></div>
+    <div class="toc-item toc-section"><span>Data Layer</span></div>
+    <div class="toc-item"><span class="toc-title">4. Database Schema</span><span class="toc-page">07</span></div>
+    <div class="toc-item"><span class="toc-title">5. Data Pipeline &amp; Caching</span><span class="toc-page">10</span></div>
 
-    <div class="toc-item toc-section"><span class="toc-title">Application</span></div>
-    <div class="toc-item"><span class="toc-title">6. Backend Services (FastAPI)</span><span class="toc-page">8</span></div>
-    <div class="toc-item"><span class="toc-title">7. API Surface (95 Endpoints)</span><span class="toc-page">9</span></div>
-    <div class="toc-item"><span class="toc-title">8. Frontend Architecture (React)</span><span class="toc-page">11</span></div>
+    <div class="toc-item toc-section"><span>Application</span></div>
+    <div class="toc-item"><span class="toc-title">6. Backend Services</span><span class="toc-page">12</span></div>
+    <div class="toc-item"><span class="toc-title">7. API Surface (120+ endpoints)</span><span class="toc-page">14</span></div>
+    <div class="toc-item"><span class="toc-title">8. Frontend Architecture</span><span class="toc-page">16</span></div>
 
-    <div class="toc-item toc-section"><span class="toc-title">Operations</span></div>
-    <div class="toc-item"><span class="toc-title">9. Security Architecture</span><span class="toc-page">12</span></div>
-    <div class="toc-item"><span class="toc-title">10. CI/CD Pipeline</span><span class="toc-page">13</span></div>
-    <div class="toc-item"><span class="toc-title">11. Monitoring &amp; Performance</span><span class="toc-page">14</span></div>
-    <div class="toc-item"><span class="toc-title">12. Dependencies &amp; Versions</span><span class="toc-page">14</span></div>
-  </div>
-
-  <div class="stats-row" style="margin-top: 2rem;">
-    <div class="stat-box">
-      <div class="value gold">95</div>
-      <div class="label">API Endpoints</div>
-    </div>
-    <div class="stat-box">
-      <div class="value gold">18</div>
-      <div class="label">DB Tables</div>
-    </div>
-    <div class="stat-box">
-      <div class="value gold">22+</div>
-      <div class="label">Backend Services</div>
-    </div>
-    <div class="stat-box">
-      <div class="value gold">15K+</div>
-      <div class="label">Lines of Code</div>
-    </div>
+    <div class="toc-item toc-section"><span>Operations</span></div>
+    <div class="toc-item"><span class="toc-title">9. Security Architecture</span><span class="toc-page">17</span></div>
+    <div class="toc-item"><span class="toc-title">10. CI/CD Pipeline</span><span class="toc-page">18</span></div>
+    <div class="toc-item"><span class="toc-title">11. Monitoring &amp; Performance</span><span class="toc-page">19</span></div>
+    <div class="toc-item"><span class="toc-title">12. Dependencies</span><span class="toc-page">20</span></div>
   </div>
 </div>
 
-<!-- PAGE: SYSTEM OVERVIEW -->
+<!-- ============================================================
+     1. SYSTEM OVERVIEW
+     ============================================================ -->
 <div class="content page-break">
-  <h2>1. System Overview</h2>
-  <p>
-    RigaCap is a serverless, event-driven trading platform built on AWS. The system ingests market data from
-    4,000+ US equities via a dual-source pipeline (Alpaca SIP primary + yfinance fallback), generates AI-powered trading signals, and delivers them to subscribers via a
-    React dashboard and automated email pipeline. The backend runs on two specialized AWS Lambda functions
-    (API + Worker) from a single container image, using FastAPI + Mangum for ASGI compatibility.
+  <span class="kicker">01 &middot; System Overview</span>
+  <h2>A serverless platform with a <em>scheduled</em> heartbeat.</h2>
+
+  <p class="lead">
+    RigaCap is a serverless, event-driven signal platform on AWS. The system ingests
+    daily market data for ~4,000 US equities through a dual-source pipeline, generates
+    signals through an ensemble of momentum and DWAP filters, and delivers them to
+    subscribers through a React dashboard, an automated email pipeline, a weekly
+    newsletter, and a moderated social engine.
   </p>
 
-  <div class="arch-flow no-break">
-    <div class="arch-box">React 18 SPA<br><small>Vite + Tailwind</small></div>
-    <div class="arch-arrow">&rarr;</div>
-    <div class="arch-box">CloudFront<br><small>Edge CDN</small></div>
-    <div class="arch-arrow">&rarr;</div>
-    <div class="arch-box">API Gateway<br><small>HTTP/2</small></div>
-    <div class="arch-arrow">&rarr;</div>
-    <div class="arch-box">API Lambda<br><small>FastAPI 1GB</small></div>
-    <div class="arch-arrow">&rarr;</div>
-    <div class="arch-box">RDS + S3<br><small>Postgres + Parquet</small></div>
+  <p>
+    The backend runs on two specialized AWS Lambda functions &mdash; an API Lambda
+    for HTTP traffic and a Worker Lambda for scheduled and long-running jobs &mdash;
+    both built from a single container image and differentiated by an environment
+    variable. FastAPI sits on top of Mangum for ASGI compatibility. PostgreSQL 15
+    on RDS is the system of record; S3 holds the historical price cache and the
+    pre-computed dashboard JSON the CDN serves to subscribers.
+  </p>
+
+  <div class="callout">
+    <p><strong>Two-Lambda split.</strong> The API Lambda is small and fast (1 GB,
+    30s timeout) because subscribers expect dashboard loads under two seconds. The
+    Worker Lambda is large and patient (3 GB, 900s timeout) because daily scans,
+    walk-forward simulations, and email runs need both memory and time. They share
+    one image so deploys are atomic.</p>
   </div>
 
-  <div class="arch-flow no-break" style="margin-top: 0;">
-    <div class="arch-box">EventBridge<br><small>Cron triggers</small></div>
-    <div class="arch-arrow">&rarr;</div>
-    <div class="arch-box">Worker Lambda<br><small>3 GB / 15 min</small></div>
-    <div class="arch-arrow">&larr;</div>
-    <div class="arch-box">Step Functions<br><small>Walk-forward</small></div>
-    <div class="arch-arrow">&rarr;</div>
-    <div class="arch-box">Claude API<br><small>AI optimization</small></div>
-  </div>
+  <h3>Request and event flow</h3>
 
-  <h2>2. AWS Infrastructure</h2>
-  <p>All infrastructure is managed via Terraform (<code>infrastructure/terraform/main.tf</code>). Resources are deployed in <code>us-east-1</code>.</p>
+  <div class="code-block"><span class="comment"># Subscriber request path</span>
+React 18 SPA  <span class="arrow">&rarr;</span>  CloudFront  <span class="arrow">&rarr;</span>  WAF  <span class="arrow">&rarr;</span>  API Gateway  <span class="arrow">&rarr;</span>  API Lambda
+                                                              <span class="arrow">&rarr;</span>  RDS / S3 (read)
+
+<span class="comment"># Scheduled / event-driven path</span>
+EventBridge  <span class="arrow">&rarr;</span>  Worker Lambda  <span class="arrow">&rarr;</span>  RDS / S3 (read+write)
+                          <span class="arrow">&rarr;</span>  Step Functions (walk-forward fan-out)
+                          <span class="arrow">&rarr;</span>  Claude API (content, autopsies, optimization)
+                          <span class="arrow">&rarr;</span>  SES (email)
+                          <span class="arrow">&rarr;</span>  X / Threads / IG (social)</div>
+
+  <h3>What the platform produces</h3>
+  <ul>
+    <li><strong>Daily signals.</strong> Generated by the production scanner at the close, cached as JSON on S3, fronted by CloudFront for sub-second dashboard loads.</li>
+    <li><strong>Daily digest email.</strong> Subscriber-facing summary of signals, watchlist, regime context, and any sell alerts.</li>
+    <li><strong>Weekly newsletter.</strong> "The Market, Measured" &mdash; locked-draft on Saturday, published Sunday morning.</li>
+    <li><strong>Social posts.</strong> AI-drafted from real walk-forward and live trades, gated by admin approval, auto-published across X, Threads, and Instagram.</li>
+    <li><strong>Mobile push notifications.</strong> Sell alerts and high-conviction signal events through Expo.</li>
+  </ul>
+</div>
+
+<!-- ============================================================
+     2. AWS INFRASTRUCTURE
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">02 &middot; AWS Infrastructure</span>
+  <h2>Terraform, two Lambdas, and a <em>quiet</em> RDS.</h2>
+
+  <p>
+    All infrastructure is managed through Terraform (<code>infrastructure/terraform/main.tf</code>)
+    against AWS account <code>149218244179</code> in <code>us-east-1</code>. State lives in a remote
+    S3 backend with DynamoDB locking, so plans never collide between CI and the founder's laptop.
+  </p>
 
   <h3>Compute</h3>
   <table>
     <thead>
-      <tr><th>Resource</th><th>Type</th><th>Configuration</th></tr>
+      <tr><th>Resource</th><th>Identifier</th><th>Configuration</th></tr>
     </thead>
     <tbody>
       <tr>
         <td><strong>API Lambda</strong></td>
         <td><code>rigacap-prod-api</code></td>
-        <td>Container image (ECR), 1 GB RAM, 30s timeout, HTTP requests only</td>
+        <td>Container (ECR), 1024 MB, 30s timeout, <code>LAMBDA_ROLE=api</code>. HTTP requests only; skips pickle load entirely.</td>
       </tr>
       <tr>
         <td><strong>Worker Lambda</strong></td>
         <td><code>rigacap-prod-worker</code></td>
-        <td>Same image, 3 GB RAM, 900s timeout, EventBridge jobs + background tasks</td>
+        <td>Same image, 3008 MB, 900s timeout, <code>LAMBDA_ROLE=worker</code>. Loads the full price pickle on cold start.</td>
       </tr>
       <tr>
         <td><strong>API Gateway</strong></td>
         <td>HTTP API (v2)</td>
-        <td>Custom domain: <code>api.rigacap.com</code>, CORS configured, HTTP/2</td>
+        <td>Custom domain <code>api.rigacap.com</code>, behind CloudFront + WAF, HTTP/2, CORS allowlist.</td>
       </tr>
       <tr>
         <td><strong>ECR Repository</strong></td>
         <td><code>rigacap-prod-api</code></td>
-        <td>Mutable tags, scan-on-push, keep last 5 images</td>
+        <td>Mutable tags, scan-on-push, retains last five images.</td>
       </tr>
       <tr>
         <td><strong>Step Functions</strong></td>
         <td><code>rigacap-prod-walk-forward</code></td>
-        <td>Orchestrates Lambda for multi-period walk-forward simulations</td>
+        <td>Fans walk-forward periods out across the Worker Lambda for parallel simulation.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Edge &amp; protection</h3>
+  <table>
+    <thead>
+      <tr><th>Resource</th><th>Identifier</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>CloudFront (API)</strong></td>
+        <td><code>api.rigacap.com</code></td>
+        <td>Edge CDN in front of API Gateway. Injects the <code>X-Origin-Verify</code> custom header on every origin request so direct execute-api hits are rejected by the FastAPI middleware.</td>
+      </tr>
+      <tr>
+        <td><strong>CloudFront (web)</strong></td>
+        <td><code>rigacap.com</code> &middot; <code>www.rigacap.com</code></td>
+        <td>Static SPA distribution; SPA-routing 404 fallback to <code>/index.html</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>WAF Web ACL</strong></td>
+        <td><code>aws_wafv2_web_acl.cloudfront</code></td>
+        <td>Attached to the API CloudFront distribution. Standard managed rule sets plus rate-limit on auth endpoints.</td>
       </tr>
     </tbody>
   </table>
@@ -548,13 +713,18 @@
     <tbody>
       <tr>
         <td><code>rigacap-prod-frontend-*</code></td>
-        <td>Public (CloudFront origin)</td>
-        <td>React SPA static files (~1-2MB)</td>
+        <td>Public via CloudFront</td>
+        <td>React SPA static assets (1&ndash;2 MB total).</td>
       </tr>
       <tr>
         <td><code>rigacap-prod-price-data-*</code></td>
         <td>Private (Lambda IAM only)</td>
-        <td>Parquet price cache, chart cards, social images (50-100MB)</td>
+        <td>Price pickle, parquet shadow, dashboard JSON, chart cards, social images, circuit-breaker state.</td>
+      </tr>
+      <tr>
+        <td><code>rigacap-prod-terraform-state-*</code></td>
+        <td>Private (operator IAM)</td>
+        <td>Remote Terraform state with versioning enabled.</td>
       </tr>
     </tbody>
   </table>
@@ -567,46 +737,69 @@
     <tbody>
       <tr>
         <td><strong>RDS PostgreSQL 15</strong></td>
-        <td><code>db.t3.micro</code>, 20GB gp2, deletion protection enabled, asyncpg driver</td>
+        <td><code>db.t3.micro</code>, 20 GB gp2, deletion protection on, asyncpg driver.</td>
       </tr>
       <tr>
-        <td><strong>Connection Pool</strong></td>
-        <td>Pool size: 5, max overflow: 10, connect timeout: 3s, query timeout: 5s</td>
+        <td><strong>Connection pool</strong></td>
+        <td>Pool size 5, max overflow 10, connect timeout 3s, query timeout 5s. Lambda connects lazily on first request to stay inside the 10s init window.</td>
+      </tr>
+      <tr>
+        <td><strong>Endpoint</strong></td>
+        <td><code>rigacap-prod-db-v2.csfsa4i06rux.us-east-1.rds.amazonaws.com</code></td>
       </tr>
     </tbody>
   </table>
 
-  <h3>Scheduled Events (EventBridge) &mdash; 16 Rules</h3>
+  <h3>Scheduled events (EventBridge)</h3>
+  <p>
+    The platform's heartbeat is a set of EventBridge rules pointing at the Worker
+    Lambda. Each rule passes a payload that selects a handler. The list grows; the
+    table below covers the load-bearing rules.
+  </p>
+
   <table>
     <thead>
-      <tr><th>Rule</th><th>Schedule (UTC / ET)</th><th>Description</th></tr>
+      <tr><th>Rule</th><th>Schedule (UTC &middot; ET)</th><th>Description</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>Market Scanner</strong></td><td><code>cron(20 21 ? * MON-FRI *)</code> &mdash; 4:20 PM ET</td><td>Full scan + dashboard + signals (20 min post-close for Alpaca settlement)</td></tr>
-      <tr><td><strong>Double Signal Alerts</strong></td><td><code>cron(0 22 ? * MON-FRI *)</code> &mdash; 5:00 PM ET</td><td>Multi-confirmation signal email alerts</td></tr>
-      <tr><td><strong>Daily Email Digest</strong></td><td><code>cron(0 23 ? * MON-FRI *)</code> &mdash; 6:00 PM ET</td><td>Subscriber daily digest email</td></tr>
-      <tr><td><strong>Strategy Analysis</strong></td><td><code>cron(30 23 ? * FRI *)</code> &mdash; Fri 6:30 PM ET</td><td>Weekly strategy auto-analysis</td></tr>
-      <tr><td><strong>Nightly Walk-Forward</strong></td><td><code>cron(0 1 ? * TUE-SAT *)</code> &mdash; 8:00 PM ET</td><td>Walk-forward simulation + social post generation</td></tr>
-      <tr><td><strong>AI Social Content</strong></td><td><code>cron(0 2 ? * TUE-SAT *)</code> &mdash; 9:00 PM ET</td><td>Generate AI social posts from live portfolio trades</td></tr>
-      <tr><td><strong>Intraday Monitor</strong></td><td><code>cron(0/5 14-20 ? * MON-FRI *)</code> &mdash; every 5 min, market hours</td><td>Position monitoring + trailing stop checks</td></tr>
-      <tr><td><strong>Ticker Health</strong></td><td><code>cron(0 12 ? * MON-FRI *)</code> &mdash; 7:00 AM ET</td><td>Pre-market ticker health check</td></tr>
-      <tr><td><strong>Pipeline Health</strong></td><td><code>cron(30 12 * * ? *)</code> &mdash; 7:30 AM ET daily</td><td>17-check pipeline health report</td></tr>
-      <tr><td><strong>Onboarding Drip</strong></td><td><code>cron(0 15 * * ? *)</code> &mdash; 10:00 AM ET daily</td><td>5-step new subscriber drip sequence</td></tr>
-      <tr><td><strong>Publish Posts</strong></td><td><code>cron(0/15 * * * ? *)</code> &mdash; every 15 min</td><td>Auto-publish approved scheduled social posts</td></tr>
-      <tr><td><strong>Post Notifications</strong></td><td><code>cron(0 * * * ? *)</code> &mdash; hourly</td><td>T-24h/T-1h admin notifications for upcoming posts</td></tr>
-      <tr><td><strong>Pickle Rebuild</strong></td><td><code>cron(0 1 ? * SUN *)</code> &mdash; Sat 8:00 PM ET</td><td>Weekly full pickle rebuild (catches new universe symbols)</td></tr>
-      <tr><td><strong>Lambda Warmer</strong></td><td><code>rate(5 minutes)</code></td><td>Keep Worker Lambda warm</td></tr>
-      <tr><td><strong>Admin Morning Health</strong> <em>(Apr 2026)</em></td><td><code>cron(0 11 ? * MON-FRI *)</code> &mdash; 7:00 AM ET</td><td>Morning digest: indicator validity, signal counts, pipeline step status, regime. Alerts if any red flags.</td></tr>
-      <tr><td><strong>Nightly Data Hygiene</strong> <em>(Apr 2026)</em></td><td><code>cron(30 22 ? * MON-FRI *)</code> &mdash; 6:30 PM ET</td><td>Layer 2: asset-ID integrity check + Alpaca corp-actions poll → auto-refetch splits → diagnose + admin email</td></tr>
+      <tr><td><strong>Market scanner</strong></td><td><code>cron(20 20 ? * MON-FRI *)</code> &middot; 4:20 PM ET</td><td>Full daily scan, signal generation, dashboard JSON export. Runs 20 minutes after the close to give Alpaca SIP time to settle.</td></tr>
+      <tr><td><strong>Double-signal alerts</strong></td><td><code>cron(0 22 ? * MON-FRI *)</code> &middot; 5:00 PM ET</td><td>Multi-confirmation alert email.</td></tr>
+      <tr><td><strong>Daily digest</strong></td><td><code>cron(0 23 ? * MON-FRI *)</code> &middot; 6:00 PM ET</td><td>Subscriber-facing daily summary email.</td></tr>
+      <tr><td><strong>Strategy analysis</strong></td><td><code>cron(30 23 ? * FRI *)</code> &middot; Fri 6:30 PM ET</td><td>Weekly auto-analysis of strategy performance.</td></tr>
+      <tr><td><strong>Newsletter draft</strong></td><td><code>cron(0 14 ? * SAT *)</code> &middot; Sat 10:00 AM ET</td><td>Generates the locked draft of "The Market, Measured" for admin review.</td></tr>
+      <tr><td><strong>Newsletter publish</strong></td><td><code>cron(0 14 ? * SUN *)</code> &middot; Sun 10:00 AM ET</td><td>Publishes the approved newsletter to subscribers.</td></tr>
+      <tr><td><strong>Nightly walk-forward</strong></td><td><code>cron(0 1 ? * TUE-SAT *)</code> &middot; 8:00 PM ET</td><td>Walk-forward simulation; feeds the social-content draft queue.</td></tr>
+      <tr><td><strong>AI social content</strong></td><td><code>cron(0 2 ? * TUE-SAT *)</code> &middot; 9:00 PM ET</td><td>Generates social drafts from real trade events.</td></tr>
+      <tr><td><strong>Intraday monitor</strong></td><td><code>cron(0/5 14-20 ? * MON-FRI *)</code> &middot; every 5 min, market hours</td><td>HWM tracking, regime exits, sell-alert dispatch.</td></tr>
+      <tr><td><strong>Ticker health</strong></td><td><code>cron(0 12 ? * MON-FRI *)</code> &middot; 7:00 AM ET</td><td>Pre-market sanity sweep over the universe.</td></tr>
+      <tr><td><strong>Pipeline health</strong></td><td><code>cron(30 12 * * ? *)</code> &middot; 7:30 AM ET</td><td>Full pipeline-health digest with admin email.</td></tr>
+      <tr><td><strong>Onboarding drip</strong></td><td><code>cron(0 14 * * ? *)</code> &middot; 10:00 AM ET</td><td>Five-step new-subscriber sequence over eight days.</td></tr>
+      <tr><td><strong>Publish posts</strong></td><td><code>cron(0/15 * * * ? *)</code> &middot; every 15 min</td><td>Auto-publishes approved social posts whose <code>scheduled_for</code> has passed.</td></tr>
+      <tr><td><strong>Post notifications</strong></td><td><code>cron(0 * * * ? *)</code> &middot; hourly</td><td>T-24h and T-1h admin notifications for upcoming posts.</td></tr>
+      <tr><td><strong>Pickle rebuild</strong></td><td><code>cron(0 1 ? * SUN *)</code> &middot; Sat 8:00 PM ET</td><td>Weekly full pickle rebuild &mdash; catches new universe symbols.</td></tr>
+      <tr><td><strong>Lambda warmer</strong></td><td><code>rate(5 minutes)</code></td><td>Keeps the Worker Lambda warm.</td></tr>
+      <tr><td><strong>Admin morning health</strong></td><td><code>cron(0 11 ? * MON-FRI *)</code> &middot; 7:00 AM ET</td><td>Operator digest: indicator validity, signal counts, pipeline status, regime.</td></tr>
+      <tr><td><strong>Nightly data hygiene</strong></td><td><code>cron(30 22 ? * MON-FRI *)</code> &middot; 6:30 PM ET</td><td>Asset-ID integrity, Alpaca corp-actions poll, split auto-refetch.</td></tr>
+      <tr><td><strong>Meta token refresh</strong></td><td><code>cron(0 2 ? * SUN *)</code> &middot; Sun 02:00 UTC</td><td>Weekly long-lived token refresh for IG and Threads; admin email on failure.</td></tr>
     </tbody>
   </table>
 </div>
 
-<!-- PAGE: CDN & DNS -->
+<!-- ============================================================
+     3. CDN, DNS & SSL
+     ============================================================ -->
 <div class="content page-break">
-  <h2>3. CDN, DNS &amp; SSL</h2>
+  <span class="kicker">03 &middot; CDN, DNS &amp; SSL</span>
+  <h2>Edge in front of <em>everything</em>.</h2>
 
-  <h3>CloudFront Distribution</h3>
+  <p>
+    Both the static SPA and the API live behind CloudFront. The web distribution
+    handles SPA routing; the API distribution attaches the WAF and injects the
+    origin-verify header that closes the direct-execute-api bypass. ACM provides
+    the certificates; Route53 provides the DNS.
+  </p>
+
+  <h3>CloudFront &mdash; web distribution</h3>
   <table>
     <thead>
       <tr><th>Setting</th><th>Value</th></tr>
@@ -615,10 +808,24 @@
       <tr><td>Domains</td><td><code>rigacap.com</code>, <code>www.rigacap.com</code></td></tr>
       <tr><td>Origin</td><td>S3 website endpoint (HTTP-only)</td></tr>
       <tr><td>Protocol</td><td>Redirect HTTP &rarr; HTTPS</td></tr>
-      <tr><td>Price Class</td><td>PriceClass_100 (US, Canada, Europe)</td></tr>
-      <tr><td>Default TTL</td><td>1 hour (max 1 day)</td></tr>
-      <tr><td>SPA Routing</td><td>Custom error: 404 &rarr; <code>/index.html</code> (200)</td></tr>
-      <tr><td>SSL Certificate</td><td>ACM: <code>rigacap.com</code> + <code>*.rigacap.com</code> (DNS validated)</td></tr>
+      <tr><td>Price class</td><td>PriceClass_100 (US, Canada, Europe)</td></tr>
+      <tr><td>Default TTL</td><td>1 hour, max 1 day</td></tr>
+      <tr><td>SPA routing</td><td>Custom error: 404 &rarr; <code>/index.html</code> (200)</td></tr>
+      <tr><td>SSL certificate</td><td>ACM: <code>rigacap.com</code> + <code>*.rigacap.com</code> (DNS-validated)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>CloudFront &mdash; API distribution</h3>
+  <table>
+    <thead>
+      <tr><th>Setting</th><th>Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Domain</td><td><code>api.rigacap.com</code></td></tr>
+      <tr><td>Origin</td><td>API Gateway HTTP API</td></tr>
+      <tr><td>WAF</td><td><code>aws_wafv2_web_acl.cloudfront</code> attached</td></tr>
+      <tr><td>Origin custom header</td><td><code>X-Origin-Verify: &lt;secret&gt;</code> &mdash; validated by FastAPI middleware</td></tr>
+      <tr><td>Caching</td><td>Disabled for authenticated routes; bypass on Authorization header</td></tr>
     </tbody>
   </table>
 
@@ -628,20 +835,33 @@
       <tr><th>Record</th><th>Type</th><th>Target</th></tr>
     </thead>
     <tbody>
-      <tr><td><code>rigacap.com</code></td><td>A (alias)</td><td>CloudFront distribution</td></tr>
-      <tr><td><code>www.rigacap.com</code></td><td>A (alias)</td><td>CloudFront distribution</td></tr>
-      <tr><td><code>api.rigacap.com</code></td><td>A (alias)</td><td>API Gateway custom domain</td></tr>
+      <tr><td><code>rigacap.com</code></td><td>A (alias)</td><td>Web CloudFront distribution</td></tr>
+      <tr><td><code>www.rigacap.com</code></td><td>A (alias)</td><td>Web CloudFront distribution</td></tr>
+      <tr><td><code>api.rigacap.com</code></td><td>A (alias)</td><td>API CloudFront distribution</td></tr>
     </tbody>
   </table>
+</div>
 
-  <h2>4. Database Schema</h2>
-  <p>PostgreSQL 15 with async driver (<code>asyncpg</code>) via SQLAlchemy 2.0 async sessions. All tables use auto-increment integer primary keys except <code>users</code> and <code>subscriptions</code> (UUID).</p>
+<!-- ============================================================
+     4. DATABASE SCHEMA
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">04 &middot; Database Schema</span>
+  <h2>PostgreSQL 15, async, <em>conservative.</em></h2>
 
-  <h3>Core Data Tables</h3>
+  <p>
+    The application talks to PostgreSQL 15 over the async <code>asyncpg</code> driver
+    via SQLAlchemy 2.0 async sessions. Most tables use auto-increment integer primary
+    keys; the user identity tables use UUIDs. Schema migrations run through a
+    dedicated <code>run_migration</code> Lambda event so the migration can land
+    before any model code that depends on it.
+  </p>
 
-  <div class="schema-section no-break">
-    <h4>stock_data</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Daily OHLCV price data with computed indicators. One row per symbol per trading day.</p>
+  <h3>Core market data</h3>
+
+  <div class="schema-card no-break">
+    <div class="schema-title">stock_data</div>
+    <p class="schema-note">Daily OHLCV with computed indicators. One row per symbol per trading day.</p>
     <div class="schema-cols">
       <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
       <div><span class="col-name">symbol</span> <span class="col-type">VARCHAR(10) IDX</span></div>
@@ -652,9 +872,9 @@
     </div>
   </div>
 
-  <div class="schema-section no-break">
-    <h4>signals</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Trading signals generated by the scanner. Status lifecycle: active &rarr; executed/expired.</p>
+  <div class="schema-card no-break">
+    <div class="schema-title">signals</div>
+    <p class="schema-note">Trading signals from the scanner. Lifecycle: active &rarr; executed / expired.</p>
     <div class="schema-cols">
       <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
       <div><span class="col-name">symbol</span> <span class="col-type">VARCHAR(10) IDX</span></div>
@@ -668,9 +888,9 @@
     </div>
   </div>
 
-  <div class="schema-section no-break">
-    <h4>positions</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Open/closed portfolio positions with trailing stop tracking.</p>
+  <div class="schema-card no-break">
+    <div class="schema-title">positions</div>
+    <p class="schema-note">Open and closed portfolio positions with trailing-stop state.</p>
     <div class="schema-cols">
       <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
       <div><span class="col-name">user_id</span> <span class="col-type">UUID FK&rarr;users</span></div>
@@ -683,9 +903,9 @@
     </div>
   </div>
 
-  <div class="schema-section no-break">
-    <h4>trades</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Completed trade records with P&amp;L tracking.</p>
+  <div class="schema-card no-break">
+    <div class="schema-title">trades</div>
+    <p class="schema-note">Closed trade records with realized P&amp;L.</p>
     <div class="schema-cols">
       <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
       <div><span class="col-name">user_id</span> <span class="col-type">UUID FK&rarr;users</span></div>
@@ -699,13 +919,18 @@
   </div>
 </div>
 
-<!-- PAGE: MORE SCHEMA -->
+<!-- ============================================================
+     4. SCHEMA continued
+     ============================================================ -->
 <div class="content page-break">
-  <h3>Authentication &amp; Subscriptions</h3>
+  <span class="kicker">04 &middot; Database Schema (cont.)</span>
+  <h2>Identity, strategy, and <em>simulation.</em></h2>
 
-  <div class="schema-section no-break">
-    <h4>users</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">User accounts with multi-provider OAuth support. UUID primary keys.</p>
+  <h3>Authentication and subscriptions</h3>
+
+  <div class="schema-card no-break">
+    <div class="schema-title">users</div>
+    <p class="schema-note">Multi-provider OAuth-aware accounts. UUID primary keys.</p>
     <div class="schema-cols">
       <div><span class="col-name">id</span> <span class="col-type">UUID PK</span></div>
       <div><span class="col-name">email</span> <span class="col-type">VARCHAR(255) UNIQUE IDX</span></div>
@@ -719,9 +944,9 @@
     </div>
   </div>
 
-  <div class="schema-section no-break">
-    <h4>subscriptions</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Stripe-managed subscription state. Status: trial/active/canceled/expired/past_due.</p>
+  <div class="schema-card no-break">
+    <div class="schema-title">subscriptions</div>
+    <p class="schema-note">Stripe-managed subscription state. Status: trial / active / canceled / expired / past_due.</p>
     <div class="schema-cols">
       <div><span class="col-name">id</span> <span class="col-type">UUID PK</span></div>
       <div><span class="col-name">user_id</span> <span class="col-type">UUID FK&rarr;users UNIQUE</span></div>
@@ -734,11 +959,24 @@
     </div>
   </div>
 
-  <h3>Strategy Management</h3>
+  <div class="schema-card no-break">
+    <div class="schema-title">referrals</div>
+    <p class="schema-note">Stripe-coupon-backed give-month / get-month referral program. Eight-character codes.</p>
+    <div class="schema-cols">
+      <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
+      <div><span class="col-name">referrer_user_id</span> <span class="col-type">UUID FK&rarr;users</span></div>
+      <div><span class="col-name">code</span> <span class="col-type">CHAR(8) UNIQUE IDX</span></div>
+      <div><span class="col-name">stripe_coupon_id</span> <span class="col-type">VARCHAR(50)</span></div>
+      <div><span class="col-name">redeemed_user_id</span> <span class="col-type">UUID FK&rarr;users NULLABLE</span></div>
+      <div><span class="col-name">redeemed_at, rewarded_at</span> <span class="col-type">DATETIME</span></div>
+    </div>
+  </div>
 
-  <div class="schema-section no-break">
-    <h4>strategy_definitions</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Trading strategy configurations. Types: dwap, momentum, ensemble.</p>
+  <h3>Strategy management</h3>
+
+  <div class="schema-card no-break">
+    <div class="schema-title">strategy_definitions</div>
+    <p class="schema-note">Trading strategy configurations. Types: dwap, momentum, ensemble.</p>
     <div class="schema-cols">
       <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
       <div><span class="col-name">name</span> <span class="col-type">VARCHAR(100) UNIQUE</span></div>
@@ -750,75 +988,43 @@
     </div>
   </div>
 
-  <div class="two-col">
-    <div class="schema-section no-break">
-      <h4>strategy_evaluations</h4>
-      <p style="font-size:0.7rem; color: var(--gray); margin-bottom: 0.3rem;">Performance evaluations for strategies</p>
-      <div class="schema-cols" style="grid-template-columns: 1fr;">
-        <div><span class="col-name">strategy_id</span> <span class="col-type">FK&rarr;strategy_definitions</span></div>
-        <div><span class="col-name">total_return_pct, sharpe_ratio</span> <span class="col-type">FLOAT</span></div>
-        <div><span class="col-name">max_drawdown_pct, win_rate</span> <span class="col-type">FLOAT</span></div>
-        <div><span class="col-name">recommendation_score</span> <span class="col-type">FLOAT 0-100</span></div>
-      </div>
-    </div>
-    <div class="schema-section no-break">
-      <h4>strategy_switch_history</h4>
-      <p style="font-size:0.7rem; color: var(--gray); margin-bottom: 0.3rem;">Audit trail for strategy switches</p>
-      <div class="schema-cols" style="grid-template-columns: 1fr;">
-        <div><span class="col-name">from/to_strategy_id</span> <span class="col-type">FK&rarr;strategy_definitions</span></div>
-        <div><span class="col-name">trigger</span> <span class="col-type">manual/auto_scheduled</span></div>
-        <div><span class="col-name">score_before, score_after</span> <span class="col-type">FLOAT</span></div>
-        <div><span class="col-name">reason</span> <span class="col-type">TEXT</span></div>
-      </div>
+  <div class="schema-card no-break">
+    <div class="schema-title">strategy_evaluations &middot; strategy_switch_history</div>
+    <p class="schema-note">Strategy scoring and an audit trail of every switch with before/after scores and trigger.</p>
+    <div class="schema-cols">
+      <div><span class="col-name">strategy_id</span> <span class="col-type">FK&rarr;strategy_definitions</span></div>
+      <div><span class="col-name">total_return_pct</span> <span class="col-type">FLOAT</span></div>
+      <div><span class="col-name">sharpe_ratio</span> <span class="col-type">FLOAT</span></div>
+      <div><span class="col-name">max_drawdown_pct</span> <span class="col-type">FLOAT</span></div>
+      <div><span class="col-name">recommendation_score</span> <span class="col-type">FLOAT 0&ndash;100</span></div>
+      <div><span class="col-name">trigger</span> <span class="col-type">manual / auto_scheduled</span></div>
+      <div><span class="col-name">score_before / after</span> <span class="col-type">FLOAT</span></div>
+      <div><span class="col-name">reason</span> <span class="col-type">TEXT</span></div>
     </div>
   </div>
 
-  <h3>Simulation &amp; Backtesting</h3>
+  <h3>Simulation, intelligence, and social</h3>
 
-  <div class="schema-section no-break">
-    <h4>walk_forward_simulations</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Walk-forward simulation runs with aggregate results. Trades stored as JSON to avoid 256KB Step Functions state limit.</p>
+  <div class="schema-card no-break">
+    <div class="schema-title">walk_forward_simulations</div>
+    <p class="schema-note">Walk-forward runs with aggregate results. Trades stored as JSON to fit inside the Step Functions state limit.</p>
     <div class="schema-cols">
       <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
       <div><span class="col-name">start_date, end_date</span> <span class="col-type">DATETIME</span></div>
       <div><span class="col-name">reoptimization_frequency</span> <span class="col-type">VARCHAR(20)</span></div>
-      <div><span class="col-name">total_return_pct, sharpe_ratio</span> <span class="col-type">FLOAT</span></div>
+      <div><span class="col-name">total_return_pct</span> <span class="col-type">FLOAT</span></div>
+      <div><span class="col-name">sharpe_ratio</span> <span class="col-type">FLOAT</span></div>
       <div><span class="col-name">max_drawdown_pct</span> <span class="col-type">FLOAT</span></div>
-      <div><span class="col-name">trades_json</span> <span class="col-type">TEXT (JSON array)</span></div>
+      <div><span class="col-name">trades_json</span> <span class="col-type">TEXT (JSON)</span></div>
       <div><span class="col-name">equity_curve_json</span> <span class="col-type">TEXT (JSON)</span></div>
       <div><span class="col-name">status</span> <span class="col-type">pending/completed/failed</span></div>
       <div><span class="col-name">is_daily_cache</span> <span class="col-type">BOOLEAN IDX</span></div>
     </div>
   </div>
 
-  <div class="schema-section no-break">
-    <h4>social_posts</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">AI-generated social content with approval workflow. Status: draft &rarr; approved &rarr; scheduled &rarr; posted/canceled.</p>
-    <div class="schema-cols">
-      <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
-      <div><span class="col-name">post_type</span> <span class="col-type">trade_result/missed_opp/recap/contextual_reply/instagram_comment_reply</span></div>
-      <div><span class="col-name">platform</span> <span class="col-type">twitter/instagram/threads</span></div>
-      <div><span class="col-name">status</span> <span class="col-type">VARCHAR(20)</span></div>
-      <div><span class="col-name">text_content, hashtags</span> <span class="col-type">TEXT</span></div>
-      <div><span class="col-name">image_s3_key</span> <span class="col-type">VARCHAR(500)</span></div>
-      <div><span class="col-name">scheduled_for, posted_at</span> <span class="col-type">DATETIME</span></div>
-      <div><span class="col-name">ai_generated</span> <span class="col-type">BOOLEAN</span></div>
-      <div><span class="col-name">ai_model, ai_prompt_hash</span> <span class="col-type">VARCHAR</span></div>
-      <div><span class="col-name">news_context_json</span> <span class="col-type">TEXT</span></div>
-      <div><span class="col-name">source_trade_json</span> <span class="col-type">TEXT</span></div>
-      <div><span class="col-name">reply_to_tweet_id</span> <span class="col-type">VARCHAR(50)</span></div>
-      <div><span class="col-name">reply_to_thread_id</span> <span class="col-type">VARCHAR(50)</span></div>
-      <div><span class="col-name">reply_to_instagram_comment_id</span> <span class="col-type">VARCHAR(50)</span></div>
-      <div><span class="col-name">reply_to_instagram_media_id</span> <span class="col-type">VARCHAR(50)</span></div>
-      <div><span class="col-name">reply_to_username</span> <span class="col-type">VARCHAR(100)</span></div>
-    </div>
-  </div>
-
-  <h3>Model Portfolio &amp; Intelligence Tables</h3>
-
-  <div class="schema-section no-break">
-    <h4>model_positions</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Model portfolio positions (live, walkforward, ghost variants). Tracks entry/exit with signal replay data.</p>
+  <div class="schema-card no-break">
+    <div class="schema-title">model_positions</div>
+    <p class="schema-note">Live, walk-forward, and ghost portfolio positions. Tracks signal replay and AI autopsy.</p>
     <div class="schema-cols">
       <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
       <div><span class="col-name">portfolio_type</span> <span class="col-type">VARCHAR(20) IDX</span></div>
@@ -828,460 +1034,708 @@
       <div><span class="col-name">highest_price, exit_price</span> <span class="col-type">FLOAT</span></div>
       <div><span class="col-name">exit_reason, status</span> <span class="col-type">VARCHAR</span></div>
       <div><span class="col-name">signal_data_json</span> <span class="col-type">TEXT (JSON)</span></div>
-      <div><span class="col-name">autopsy_json</span> <span class="col-type">TEXT (JSON) &mdash; AI trade post-mortem</span></div>
+      <div><span class="col-name">autopsy_json</span> <span class="col-type">TEXT (JSON)</span></div>
     </div>
   </div>
 
-  <div class="schema-section no-break">
-    <h4>regime_forecast_snapshots</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Daily regime forecast persistence for historical accuracy tracking and heatmap visualization.</p>
+  <div class="schema-card no-break">
+    <div class="schema-title">regime_forecast_snapshots &middot; regime_history</div>
+    <p class="schema-note">Daily regime forecast with the seven-regime probability vector, plus weekly regime classifications used for chart band overlays.</p>
     <div class="schema-cols">
-      <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
       <div><span class="col-name">snapshot_date</span> <span class="col-type">DATETIME UNIQUE IDX</span></div>
       <div><span class="col-name">current_regime</span> <span class="col-type">VARCHAR(30)</span></div>
-      <div><span class="col-name">probabilities_json</span> <span class="col-type">TEXT (JSON) &mdash; 7 regime probabilities</span></div>
+      <div><span class="col-name">probabilities_json</span> <span class="col-type">TEXT (JSON)</span></div>
       <div><span class="col-name">outlook</span> <span class="col-type">stable/deteriorating/improving</span></div>
       <div><span class="col-name">recommended_action</span> <span class="col-type">VARCHAR(30)</span></div>
       <div><span class="col-name">spy_close, vix_close</span> <span class="col-type">FLOAT</span></div>
+      <div><span class="col-name">week_start</span> <span class="col-type">DATE UNIQUE IDX</span></div>
+      <div><span class="col-name">regime</span> <span class="col-type">VARCHAR(30)</span></div>
     </div>
   </div>
 
-  <div class="schema-section no-break">
-    <h4>push_tokens</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Mobile app push notification tokens for Expo push service.</p>
+  <div class="schema-card no-break">
+    <div class="schema-title">social_posts</div>
+    <p class="schema-note">AI-drafted social content with admin approval workflow. Status: draft &rarr; approved &rarr; scheduled &rarr; posted / canceled.</p>
     <div class="schema-cols">
       <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
-      <div><span class="col-name">user_id</span> <span class="col-type">INTEGER FK &rarr; users</span></div>
+      <div><span class="col-name">post_type</span> <span class="col-type">trade_result / missed_opp / recap / contextual_reply</span></div>
+      <div><span class="col-name">platform</span> <span class="col-type">twitter / instagram / threads</span></div>
+      <div><span class="col-name">status, text_content</span> <span class="col-type">VARCHAR, TEXT</span></div>
+      <div><span class="col-name">image_s3_key</span> <span class="col-type">VARCHAR(500)</span></div>
+      <div><span class="col-name">scheduled_for, posted_at</span> <span class="col-type">DATETIME</span></div>
+      <div><span class="col-name">ai_generated, ai_model</span> <span class="col-type">BOOLEAN, VARCHAR</span></div>
+      <div><span class="col-name">ai_prompt_hash</span> <span class="col-type">VARCHAR</span></div>
+      <div><span class="col-name">news_context_json</span> <span class="col-type">TEXT (JSON)</span></div>
+      <div><span class="col-name">source_trade_json</span> <span class="col-type">TEXT (JSON)</span></div>
+      <div><span class="col-name">reply_to_*</span> <span class="col-type">VARCHAR (platform-specific reply IDs)</span></div>
+    </div>
+  </div>
+
+  <div class="schema-card no-break">
+    <div class="schema-title">symbol_metadata &middot; symbol_metadata_events</div>
+    <p class="schema-note">Layer-2 data hygiene: one row per symbol with Alpaca asset UUID and status, plus an audit log of every corporate action detected.</p>
+    <div class="schema-cols">
+      <div><span class="col-name">symbol</span> <span class="col-type">VARCHAR(10) UNIQUE IDX</span></div>
+      <div><span class="col-name">asset_id</span> <span class="col-type">UUID</span></div>
+      <div><span class="col-name">status</span> <span class="col-type">active / inactive / quarantined</span></div>
+      <div><span class="col-name">event_type</span> <span class="col-type">split / merger / delisting / reuse</span></div>
+      <div><span class="col-name">handler_result</span> <span class="col-type">VARCHAR</span></div>
+      <div><span class="col-name">detected_at</span> <span class="col-type">DATETIME</span></div>
+    </div>
+  </div>
+
+  <div class="schema-card no-break">
+    <div class="schema-title">push_tokens</div>
+    <p class="schema-note">Mobile push notification tokens for Expo.</p>
+    <div class="schema-cols">
+      <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
+      <div><span class="col-name">user_id</span> <span class="col-type">UUID FK &rarr; users</span></div>
       <div><span class="col-name">token</span> <span class="col-type">VARCHAR UNIQUE</span></div>
-      <div><span class="col-name">platform</span> <span class="col-type">VARCHAR (ios/android)</span></div>
+      <div><span class="col-name">platform</span> <span class="col-type">ios / android</span></div>
       <div><span class="col-name">created_at</span> <span class="col-type">DATETIME</span></div>
     </div>
   </div>
-
-  <div class="schema-section no-break">
-    <h4>regime_history</h4>
-    <p style="font-size:0.75rem; color: var(--gray); margin-bottom: 0.4rem;">Weekly regime classifications for chart band overlays on equity curves.</p>
-    <div class="schema-cols">
-      <div><span class="col-name">id</span> <span class="col-type">INTEGER PK</span></div>
-      <div><span class="col-name">week_start</span> <span class="col-type">DATE UNIQUE IDX</span></div>
-      <div><span class="col-name">regime</span> <span class="col-type">VARCHAR(30)</span></div>
-      <div><span class="col-name">spy_close, vix_close</span> <span class="col-type">FLOAT</span></div>
-    </div>
-  </div>
 </div>
 
-<!-- PAGE: BACKEND SERVICES -->
+<!-- ============================================================
+     5. DATA PIPELINE
+     ============================================================ -->
 <div class="content page-break">
-  <h2>5. Data Pipeline &amp; Caching</h2>
+  <span class="kicker">05 &middot; Data Pipeline &amp; Caching</span>
+  <h2>Two sources, two stores, one <em>truth.</em></h2>
 
-  <div class="feature-grid no-break">
-    <div class="feature-card" style="border-left-color: var(--gold);">
-      <h4>Dual-Source Ingestion</h4>
-      <p>Alpaca SIP (primary, <code>Adjustment.SPLIT</code>) + yfinance (fallback). Daily download of 252-day rolling OHLCV for 4,500+ symbols. Auto-failover. Split-adjustment made permanent Apr 2026 to prevent unadjusted-split artifacts (NVDA/GOOG/AMZN class of bugs).</p>
+  <p class="lead">
+    The platform ingests daily market data from two providers, stores it in two
+    formats during the parquet migration, and exposes a single read interface
+    everywhere downstream so the production scanner and the walk-forward simulator
+    see exactly the same bars.
+  </p>
+
+  <h3>Dual-source ingestion</h3>
+  <table>
+    <thead>
+      <tr><th>Use case</th><th>Primary</th><th>Fallback</th><th>Reason</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Daily EOD bars</td><td>Alpaca SIP</td><td>yfinance</td><td>Alpaca is faster and more reliable for bulk historical pulls.</td></tr>
+      <tr><td>Live intraday quotes</td><td>yfinance</td><td>Alpaca</td><td>Alpaca free tier is IEX-only; yfinance covers all exchanges.</td></tr>
+      <tr><td>Index data (^VIX, ^GSPC)</td><td>yfinance</td><td>&mdash;</td><td>Alpaca does not serve index symbols.</td></tr>
+      <tr><td>Sector ETFs</td><td>Alpaca SIP</td><td>yfinance</td><td>Normal tickers, Alpaca-compatible.</td></tr>
+    </tbody>
+  </table>
+  <p>
+    Symbol normalization handles the hyphen/dot mismatch between providers
+    (<code>BRK-B</code> &harr; <code>BRK.B</code>). Splits are pulled with
+    <code>Adjustment.SPLIT</code> on every ingest so the cached history is always
+    split-adjusted &mdash; preventing the unadjusted-split artifacts that surface
+    after large stock splits.
+  </p>
+
+  <h3>Storage layers</h3>
+
+  <div class="tech-grid">
+    <div class="tech-card">
+      <div class="tech-card-title">S3 pickle (current primary)</div>
+      <div class="tech-card-meta">prices/all_data.pkl.gz</div>
+      <div class="tech-card-desc">
+        Gzipped pickle: <strong>269 MB compressed, 4,360 symbols, seven-year window.</strong>
+        Worker Lambda loads on cold start; API Lambda never touches it. Rebuilt on
+        every daily scan and nightly hygiene run, with a weekly full rebuild on
+        Saturday night to incorporate new universe symbols.
+      </div>
     </div>
-    <div class="feature-card" style="border-left-color: var(--green);">
-      <h4>S3 Pickle Cache (primary read)</h4>
-      <p><code>prices/all_data.pkl.gz</code> — gzipped pickle, ~275 MB compressed, 4,500+ symbols. Worker Lambda loads on cold start. Rebuilt on every daily scan and nightly hygiene run.</p>
+    <div class="tech-card">
+      <div class="tech-card-title">S3 parquet shadow</div>
+      <div class="tech-card-meta">prices/all_data.parquet</div>
+      <div class="tech-card-desc">
+        Columnar zstd-compressed parquet, schema-enforced via pyarrow. Written on
+        every scan in lockstep with the pickle. Enables partial reads (one symbol
+        without loading the full blob) and DuckDB SQL queries.
+      </div>
     </div>
-    <div class="feature-card" style="border-left-color: #c9a94e;">
-      <h4>S3 Parquet Shadow (added Apr 2026)</h4>
-      <p>Parallel write to <code>prices/all_data.parquet</code> on every scan and hygiene run. Columnar zstd compression, schema-enforced via pyarrow. Enables partial reads (one symbol without loading the full blob) and DuckDB SQL queries. Staged migration path: parquet will replace pickle post-AL2023 Lambda upgrade.</p>
+    <div class="tech-card">
+      <div class="tech-card-title">In-memory cache</div>
+      <div class="tech-card-meta">ScannerService.data_cache</div>
+      <div class="tech-card-desc">
+        <code>Dict[str, DataFrame]</code> on the Worker Lambda. ~1.5&ndash;2 GB
+        footprint when fully loaded; comfortably inside the 3008 MB ceiling.
+      </div>
     </div>
-    <div class="feature-card" style="border-left-color: var(--navy);">
-      <h4>In-Memory Cache</h4>
-      <p><code>ScannerService.data_cache: Dict[str, DataFrame]</code>. 1.5-2 GB footprint on Worker Lambda (4 GB configured).</p>
+    <div class="tech-card">
+      <div class="tech-card-title">CDN dashboard JSON</div>
+      <div class="tech-card-meta">dashboard/latest.json</div>
+      <div class="tech-card-desc">
+        Pre-computed at scan time and fronted by CloudFront with a one-hour TTL.
+        The dashboard, the daily digest, the sell-alert dispatcher, and the
+        intraday monitor all read from this single JSON to keep emails and the UI
+        in lockstep.
+      </div>
     </div>
-    <div class="feature-card" style="border-left-color: #8b5cf6;">
-      <h4>CDN Pre-computation</h4>
-      <p>Dashboard JSON exported to S3 daily. CloudFront serves with 1-hour TTL for zero-latency dashboard loads.</p>
+    <div class="tech-card">
+      <div class="tech-card-title">Data integrity filters</div>
+      <div class="tech-card-meta">scanner._is_data_quality_ok()</div>
+      <div class="tech-card-desc">
+        Rejects symbols with price/DWAP ratios above 50&times; or below 0.02,
+        single-day moves above 65% (log-return &gt; 0.5), and gaps above ten
+        trading days &mdash; the ticker-reuse signature. Catches unadjusted
+        splits, stitched histories, and delisting artifacts in real time.
+      </div>
     </div>
-    <div class="feature-card" style="border-left-color: #ef4444;">
-      <h4>Data Integrity Filters (Apr 2026)</h4>
-      <p>Scanner + backtester enforce <code>_is_data_quality_ok()</code> before a symbol enters candidates: rejects price/DWAP ratios &gt; 50× or &lt; 0.02, abrupt single-day moves &gt; 65% (log-return &gt; 0.5), and &gt;10-day gaps between bars (ticker-reuse signature). Catches unadjusted splits, stitched histories, and delisting artifacts in real time.</p>
-    </div>
-    <div class="feature-card" style="border-left-color: #0ea5e9;">
-      <h4>DuckDB SQL Layer (Apr 2026)</h4>
-      <p>Ad-hoc SQL queries over the S3 parquet via <code>data_export_service.query_parquet()</code>. Lambda-compatible (downloads parquet to <code>/tmp</code> due to AL2 glibc; AL2023 upgrade will enable native httpfs). Powers the <code>parquet_diagnose</code> handler for universe-wide corruption scans in seconds.</p>
+    <div class="tech-card">
+      <div class="tech-card-title">DuckDB ad-hoc layer</div>
+      <div class="tech-card-meta">data_export_service.query_parquet()</div>
+      <div class="tech-card-desc">
+        Lambda-compatible SQL over the parquet shadow. Powers the
+        <code>parquet_diagnose</code> handler for universe-wide corruption scans
+        in seconds.
+      </div>
     </div>
   </div>
 
-  <h3>Layer 2 Data Hygiene — Nightly Pipeline (added Apr 15 2026)</h3>
-  <p>Automated protection against silent data drift from corporate actions. Runs every weekday at 6:30 PM ET via <code>nightly_data_hygiene</code> EventBridge rule:</p>
-  <ol style="font-size: 0.88rem; line-height: 1.7;">
-    <li><strong>Asset-ID verification</strong> — compares each symbol's stored Alpaca asset UUID to the current value. Any change signals ticker reuse → auto-quarantine + admin alert.</li>
-    <li><strong>Corp-actions poll</strong> — queries Alpaca corporate-actions API for splits, dividends, spinoffs, mergers, delistings in the last 36h. 600+ events typical per day.</li>
-    <li><strong>Split auto-refetch</strong> — for each detected split, fetches clean split-adjusted history with <code>Adjustment.SPLIT</code>, overwrites in cache.</li>
-    <li><strong>Dual-store re-export</strong> — updated cache written to both S3 pickle AND parquet (keeps stores in lockstep).</li>
-    <li><strong>Post-actions diagnose</strong> — DuckDB corruption scan over the fresh parquet; flags anomalies above thresholds.</li>
-    <li><strong>Admin digest email</strong> — tiered status (Healthy vs Attention Needed). Auto-remediated items (splits fixed, new symbols seen) appear as INFO; only true anomalies (ticker reuse, threshold breaches) escalate to Attention Needed.</li>
-  </ol>
-  <p>Supporting schema: <code>symbol_metadata</code> (one row per symbol with <code>asset_id</code> + <code>status</code>: active/inactive/quarantined) and <code>symbol_metadata_events</code> (audit log of every corp action detected, with handler result).</p>
-  <p>Scanner consumes the quarantine list via <code>symbol_metadata_service.get_excluded_symbols()</code> at the start of each scan — quarantined symbols are silently excluded from signal generation with zero latency impact.</p>
-
-  <h2>6. Backend Services</h2>
+  <h3>Layer-2 data hygiene</h3>
   <p>
-    29 singleton service classes comprising 20,000+ lines of Python. All services are instantiated at module level
-    and imported globally. The Lambda function uses Mangum for ASGI-to-Lambda translation.
+    Every weekday at 6:30 PM ET the <code>nightly_data_hygiene</code> rule fires
+    a six-step protection pass against silent data drift:
+  </p>
+  <ol>
+    <li><strong>Asset-ID verification.</strong> Compares each symbol's stored Alpaca asset UUID to the current value. Any change is treated as a ticker-reuse event &mdash; auto-quarantine plus admin alert.</li>
+    <li><strong>Corp-actions poll.</strong> Queries the Alpaca corporate-actions API for splits, dividends, spin-offs, mergers, and delistings in the last 36 hours. Hundreds of events per day is typical.</li>
+    <li><strong>Split auto-refetch.</strong> For each detected split, fetches a clean split-adjusted history with <code>Adjustment.SPLIT</code> and overwrites the cache.</li>
+    <li><strong>Dual-store re-export.</strong> The updated cache is written to both pickle and parquet so the two stores never diverge.</li>
+    <li><strong>Post-actions diagnose.</strong> A DuckDB scan over the fresh parquet flags anomalies above threshold.</li>
+    <li><strong>Admin digest email.</strong> Tiered status &mdash; auto-remediated items appear as INFO; only true anomalies escalate.</li>
+  </ol>
+  <p>
+    The scanner consumes the quarantine list via
+    <code>symbol_metadata_service.get_excluded_symbols()</code> at the start of
+    each run, with no measurable latency cost.
   </p>
 
+  <h3>Parquet migration status</h3>
+  <p>
+    The pickle is durable through current scale; the parquet migration follows
+    the four-stage plan tracked in <code>project_storage_migration_roadmap.md</code>.
+    Stage 1 (shadow write) and Stage 2 (Amazon Linux 2023 base image) are deployed.
+    Stage 3 is in progress &mdash; a parallel-read diff harness validates parquet
+    against pickle for an observation window before any consumer cuts over. The
+    end state retires the pickle entirely.
+  </p>
+</div>
+
+<!-- ============================================================
+     6. BACKEND SERVICES
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">06 &middot; Backend Services</span>
+  <h2>Singletons, schedulers, and a <em>circuit</em> breaker.</h2>
+
+  <p>
+    The backend is a set of singleton service classes instantiated at module load
+    and imported across handlers. Mangum translates ASGI calls into Lambda invocations
+    on the API path; the Worker Lambda dispatches EventBridge payloads through a
+    handler map.
+  </p>
+
+  <h3>Production strategy</h3>
+  <p>
+    The deployed strategy is the clean-data Trial 37 ensemble: six positions at 15%
+    each, a 12% trailing stop, biweekly rebalancing, and a DWAP-plus-momentum entry
+    gauntlet filtered through the regime classifier. Performance figures live in
+    the investor report and the public track-record page; they are not duplicated here.
+  </p>
+
+  <h3>Cascade Guard (circuit breaker)</h3>
+  <div class="tech-card">
+    <div class="tech-card-title">CircuitBreakerService</div>
+    <div class="tech-card-meta">CIRCUIT_BREAKER_ENABLED=true &middot; cb-state/&lt;portfolio_type&gt;.json</div>
+    <div class="tech-card-desc">
+      Live in the production scanner. When multiple positions hit their trailing
+      stops on the same day &mdash; the cascading-stress signature &mdash; the
+      service pauses new entries for ten days. State persists to S3 at
+      <code>s3://rigacap-prod-price-data-149218244179/cb-state/&lt;portfolio_type&gt;.json</code>
+      so the breaker survives Lambda cold starts. Externally, this is "Cascade Guard";
+      internally, it is the circuit breaker. Smoke-tested via
+      <code>scripts/test_circuit_breaker_smoke.py</code>.
+    </div>
+  </div>
+
+  <h3>Seven-regime market classifier</h3>
+  <div class="tech-card">
+    <div class="tech-card-title">MarketRegimeService</div>
+    <div class="tech-card-meta">strong_bull / weak_bull / rotating_bull / range_bound / weak_bear / panic_crash / recovery</div>
+    <div class="tech-card-desc">
+      Daily classification using SPY indicator stack (200-day MA, breadth, VIX, term-structure
+      proxies). Each regime modulates entry filters, position sizing, and exit
+      thresholds. Snapshots persist to <code>regime_forecast_snapshots</code> for
+      heatmap visualization and accuracy tracking.
+    </div>
+  </div>
+
+  <h3>Service inventory</h3>
   <table>
     <thead>
-      <tr><th>Service</th><th>LOC</th><th>Responsibility</th></tr>
+      <tr><th>Service</th><th>Responsibility</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>ScannerService</strong></td><td>940</td><td>Market scan, signal generation, data cache management</td></tr>
-      <tr><td><strong>BacktesterService</strong></td><td>1,255</td><td>Historical backtesting, portfolio simulation, performance metrics</td></tr>
-      <tr><td><strong>WalkForwardService</strong></td><td>1,907</td><td>Step Functions orchestration, period-by-period evaluation, AI optimization</td></tr>
-      <tr><td><strong>EmailService</strong></td><td>2,358</td><td>Subscriber emails: welcome, daily digest, sell alerts, password reset</td></tr>
-      <tr><td><strong>SchedulerService</strong></td><td>1,454</td><td>EventBridge-triggered background jobs, nightly digest, social post scheduling</td></tr>
-      <tr><td><strong>ModelPortfolioService</strong></td><td>1,200</td><td>Dual live/WF portfolio tracking, ghost portfolios, what-if calculator</td></tr>
-      <tr><td><strong>MarketRegimeService</strong></td><td>882</td><td>7-regime market classification using SPY indicators</td></tr>
-      <tr><td><strong>DataExportService</strong></td><td>827</td><td>S3 data export/import, CDN pre-computation, parquet persistence</td></tr>
-      <tr><td><strong>SocialContentService</strong></td><td>759</td><td>Template-based post generation (fallback for AI service)</td></tr>
-      <tr><td><strong>AutoSwitchService</strong></td><td>683</td><td>Automated strategy switching with scoring and cooldown</td></tr>
-      <tr><td><strong>StockUniverseService</strong></td><td>461</td><td>Stock universe management, sector classification, ETF filtering</td></tr>
-      <tr><td><strong>StrategyAnalyzerService</strong></td><td>437</td><td>Multi-strategy comparison and performance attribution</td></tr>
-      <tr><td><strong>StrategyGeneratorService</strong></td><td>434</td><td>Optuna-based parameter optimization, AI strategy generation</td></tr>
-      <tr><td><strong>ChartCardGenerator</strong></td><td>346</td><td>1080&times;1350 (4:5) matplotlib chart cards with brand styling</td></tr>
-      <tr><td><strong>PostSchedulerService</strong></td><td>292</td><td>Post scheduling, notification pipeline, cancel mechanism</td></tr>
-      <tr><td><strong>AIContentService</strong></td><td>287</td><td>Claude API integration for AI-powered content generation</td></tr>
-      <tr><td><strong>SocialPostingService</strong></td><td>420</td><td>Twitter API v2 + Instagram Graph API + Threads API publishing</td></tr>
-      <tr><td><strong>ReplyScannerService</strong></td><td>650</td><td>Multi-platform contextual reply scanner (Twitter + Threads)</td></tr>
-      <tr><td><strong>InstagramCommentService</strong></td><td>200</td><td>Instagram comment monitoring + Claude-powered reply generation</td></tr>
-      <tr><td><strong>TradeAutopsyService</strong></td><td>175</td><td>Claude-powered forensic post-mortem analysis for closed trades</td></tr>
-      <tr><td><strong>RegimeForecastService</strong></td><td>185</td><td>Daily regime forecast storage, accuracy tracking, heatmap data</td></tr>
-      <tr><td><strong>HealthMonitorService</strong></td><td>920</td><td>Pipeline health checks (S3 freshness, CW metrics, DB counts), daily report emails</td></tr>
-      <tr><td><strong>PushNotificationService</strong></td><td>150</td><td>Expo push notifications for mobile app (sell alerts, signals)</td></tr>
-      <tr><td><strong>EnsembleSignalService</strong></td><td>200</td><td>Persist ensemble signals to DB for audit trail + email consistency</td></tr>
-      <tr><td><strong>DualSourceProvider</strong></td><td>500</td><td>Alpaca SIP (primary) + yfinance (fallback) with auto-failover and health tracking</td></tr>
+      <tr><td><strong>ScannerService</strong></td><td>Daily market scan, signal generation, in-memory cache management.</td></tr>
+      <tr><td><strong>BacktesterService</strong></td><td>Historical backtesting, portfolio simulation, performance metrics.</td></tr>
+      <tr><td><strong>WalkForwardService</strong></td><td>Step Functions orchestration, period-by-period evaluation, AI optimization.</td></tr>
+      <tr><td><strong>EnsembleSignalService</strong></td><td>Persists ensemble signals for audit trail and email-UI consistency.</td></tr>
+      <tr><td><strong>MarketRegimeService</strong></td><td>Seven-regime classification with daily snapshot persistence.</td></tr>
+      <tr><td><strong>CircuitBreakerService</strong></td><td>Cascade Guard implementation with S3-persisted state.</td></tr>
+      <tr><td><strong>EmailService</strong></td><td>Subscriber emails: welcome, daily digest, sell alerts, password reset, onboarding drip.</td></tr>
+      <tr><td><strong>NewsletterService</strong></td><td>"The Market, Measured" weekly newsletter: locked Saturday draft, Sunday publish, archive teaser generation.</td></tr>
+      <tr><td><strong>SchedulerService</strong></td><td>EventBridge dispatch, nightly digest, social-post scheduling.</td></tr>
+      <tr><td><strong>ModelPortfolioService</strong></td><td>Live, walk-forward, and ghost portfolio tracking; what-if calculator.</td></tr>
+      <tr><td><strong>DataExportService</strong></td><td>S3 export and import, CDN pre-computation, parquet persistence, DuckDB queries.</td></tr>
+      <tr><td><strong>SymbolMetadataService</strong></td><td>Layer-2 hygiene: asset-ID checks, corp-actions handling, quarantine list.</td></tr>
+      <tr><td><strong>AIContentService</strong></td><td>Claude API client (<code>claude-sonnet-4-5</code>) for social drafts, autopsies, and editorial copy. Template fallback if the API is unavailable.</td></tr>
+      <tr><td><strong>SocialContentService</strong></td><td>Template-based post generation; safety net for the AI service.</td></tr>
+      <tr><td><strong>PostSchedulerService</strong></td><td>Spreads drafts across optimal posting windows; T-24h and T-1h admin notifications; one-click cancel.</td></tr>
+      <tr><td><strong>SocialPostingService</strong></td><td>Multi-platform publish: X (Twitter API v2), Threads (graph.threads.net), Instagram-with-Instagram-Login (graph.instagram.com) using IG-native long-lived tokens (60-day TTL, <code>IGAA*</code> prefix).</td></tr>
+      <tr><td><strong>ReplyScannerService</strong></td><td>Multi-platform contextual reply scanner across X and Threads.</td></tr>
+      <tr><td><strong>InstagramCommentService</strong></td><td>Comment monitoring with Claude-drafted replies under admin approval.</td></tr>
+      <tr><td><strong>ChartCardGenerator</strong></td><td>1080&times;1350 (4:5) matplotlib chart cards in editorial brand styling.</td></tr>
+      <tr><td><strong>TradeAutopsyService</strong></td><td>Claude-powered post-mortem analysis on closed trades.</td></tr>
+      <tr><td><strong>RegimeForecastService</strong></td><td>Daily regime forecast storage and accuracy tracking.</td></tr>
+      <tr><td><strong>StockUniverseService</strong></td><td>Universe management, sector classification, ETF filtering.</td></tr>
+      <tr><td><strong>StrategyAnalyzerService</strong></td><td>Multi-strategy comparison and performance attribution.</td></tr>
+      <tr><td><strong>StrategyGeneratorService</strong></td><td>Optuna-based parameter optimization and AI strategy generation.</td></tr>
+      <tr><td><strong>AutoSwitchService</strong></td><td>Automated strategy switching with scoring and cooldown.</td></tr>
+      <tr><td><strong>HealthMonitorService</strong></td><td>Pipeline health checks across data freshness, worker performance, database, signals, and infrastructure.</td></tr>
+      <tr><td><strong>PushNotificationService</strong></td><td>Expo push notifications for the mobile app.</td></tr>
+      <tr><td><strong>DualSourceProvider</strong></td><td>Alpaca SIP primary + yfinance fallback with health tracking and auto-failover.</td></tr>
+      <tr><td><strong>ReferralService</strong></td><td>Stripe-coupon-backed give-month / get-month program with one-click code redemption.</td></tr>
+      <tr><td><strong>ThisWeekService</strong></td><td>Computes the dashboard "This Week" rotating banner from the open position set &mdash; leader, tail, and longest-hold templates.</td></tr>
     </tbody>
   </table>
 
-  <div class="callout-gold callout">
-    <p><strong>Lambda Cold Start Mitigation:</strong> Database connections are initialized lazily on first request
-    (Lambda init has a 10-second timeout). An EventBridge rule pings <code>/health</code> every 5 minutes to keep
-    the Lambda warm. Post-deploy, <code>/api/warmup</code> preloads S3 data into memory.</p>
+  <div class="callout">
+    <p><strong>Lambda cold-start mitigation.</strong> Database connections are
+    initialized lazily on first request because the Lambda init phase has a
+    ten-second hard ceiling. An EventBridge rule pings <code>/health</code>
+    every five minutes to keep the Lambda warm; post-deploy,
+    <code>/api/warmup</code> preloads S3 data into memory.</p>
   </div>
 </div>
 
-<!-- PAGE: API ENDPOINTS -->
+<!-- ============================================================
+     7. API SURFACE
+     ============================================================ -->
 <div class="content page-break">
-  <h2>7. API Surface (120+ Endpoints)</h2>
+  <span class="kicker">07 &middot; API Surface</span>
+  <h2>120+ endpoints, <em>auth-first.</em></h2>
 
-  <h3>Authentication (<code>/auth</code> + <code>/auth/2fa</code>) &mdash; 19 endpoints</h3>
+  <p>
+    The FastAPI surface exceeds 120 endpoints across authentication, signals,
+    billing, dashboard, social, admin, and public marketing routes. Counts below
+    are approximate; treat the relevant router file as the source of truth.
+    Anything that returns signal or portfolio data sits behind
+    <code>require_valid_subscription</code> or the admin guard.
+  </p>
+
+  <h3>Authentication &mdash; <code>/auth</code> + <code>/auth/2fa</code></h3>
   <table>
     <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
     <tbody>
-      <tr><td><code>POST</code></td><td>/auth/register</td><td>Email/password signup with Turnstile verification</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/login</td><td>Email/password login, returns JWT access + refresh tokens</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/refresh</td><td>Refresh access token using refresh token</td></tr>
-      <tr><td><code>GET</code></td><td>/auth/me</td><td>Current user profile</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/google</td><td>Google OAuth signup/login</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/apple</td><td>Apple Sign In signup/login</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/forgot-password</td><td>Send password reset email</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/reset-password</td><td>Reset password with secure token</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/logout</td><td>Invalidate current tokens</td></tr>
-      <tr><td><code>PATCH</code></td><td>/auth/me/email-preferences</td><td>Update email notification preferences</td></tr>
-      <tr><td><code>GET</code></td><td>/auth/email-preferences</td><td>Get current email preferences</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/unsubscribe</td><td>One-click email unsubscribe (RFC 8058)</td></tr>
-      <tr><td><code>GET</code></td><td>/auth/referral</td><td>Get/create referral code and stats</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/2fa/setup</td><td>Generate TOTP secret + QR code</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/2fa/confirm-setup</td><td>Confirm TOTP setup with verification code</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/2fa/verify</td><td>Verify 2FA code during login</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/2fa/disable</td><td>Disable 2FA for account</td></tr>
-      <tr><td><code>GET</code></td><td>/auth/2fa/status</td><td>Check if 2FA is enabled</td></tr>
-      <tr><td><code>POST</code></td><td>/auth/2fa/regenerate-backup-codes</td><td>Generate new backup codes</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/register</td><td>Email/password signup with Turnstile verification.</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/login</td><td>Email/password login; returns JWT access + refresh tokens.</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/refresh</td><td>Refresh access token.</td></tr>
+      <tr><td><code>GET</code></td><td>/auth/me</td><td>Current user profile.</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/google</td><td>Google OAuth signup / login.</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/apple</td><td>Apple Sign In signup / login.</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/forgot-password</td><td>Send password reset email.</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/reset-password</td><td>Reset password with secure token.</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/logout</td><td>Invalidate current tokens.</td></tr>
+      <tr><td><code>PATCH</code></td><td>/auth/me/email-preferences</td><td>Update notification preferences.</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/unsubscribe</td><td>One-click email unsubscribe (RFC 8058).</td></tr>
+      <tr><td><code>GET</code></td><td>/auth/referral</td><td>Get / create referral code and stats.</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/2fa/setup</td><td>Generate TOTP secret + QR code.</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/2fa/verify</td><td>Verify 2FA code at login.</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/2fa/disable</td><td>Disable 2FA.</td></tr>
+      <tr><td><code>POST</code></td><td>/auth/2fa/regenerate-backup-codes</td><td>Generate new backup codes.</td></tr>
     </tbody>
   </table>
 
-  <h3>Signals (<code>/signals</code>) &mdash; 14 endpoints</h3>
+  <h3>Signals &mdash; <code>/signals</code></h3>
   <table>
     <thead><tr><th>Method</th><th>Path</th><th>Auth</th></tr></thead>
     <tbody>
-      <tr><td><code>GET</code></td><td>/signals/scan</td><td>Subscriber (runs full market scan)</td></tr>
-      <tr><td><code>GET</code></td><td>/signals/latest</td><td>Subscriber</td></tr>
-      <tr><td><code>GET</code></td><td>/signals/dashboard</td><td>Subscriber (comprehensive data)</td></tr>
-      <tr><td><code>GET</code></td><td>/signals/momentum-rankings</td><td>Subscriber</td></tr>
-      <tr><td><code>GET</code></td><td>/signals/missed</td><td>Subscriber (missed opportunities)</td></tr>
-      <tr><td><code>GET</code></td><td>/signals/double-signals</td><td>Subscriber (multi-confirmation)</td></tr>
-      <tr><td><code>GET</code></td><td>/signals/watchlist</td><td>Subscriber</td></tr>
-      <tr><td><code>GET</code></td><td>/signals/approaching-trigger</td><td>Subscriber</td></tr>
-      <tr><td><code>GET</code></td><td>/signals/symbol/{symbol}</td><td>Subscriber</td></tr>
-      <tr><td><code>GET</code></td><td>/signals/info/{symbol}</td><td>Subscriber</td></tr>
-      <tr><td><code>GET</code></td><td>/signals/cdn-url</td><td>Subscriber</td></tr>
-      <tr><td><code>GET</code></td><td>/signals/memory-scan</td><td>Subscriber</td></tr>
-      <tr><td><code>POST</code></td><td>/signals/backfill</td><td>Admin</td></tr>
-      <tr><td><code>GET</code></td><td>/signals/simulate-intraday-crossover</td><td>Admin</td></tr>
+      <tr><td><code>GET</code></td><td>/signals/scan</td><td>Subscriber &mdash; runs full market scan.</td></tr>
+      <tr><td><code>GET</code></td><td>/signals/latest</td><td>Subscriber.</td></tr>
+      <tr><td><code>GET</code></td><td>/signals/dashboard</td><td>Subscriber &mdash; comprehensive dashboard data.</td></tr>
+      <tr><td><code>GET</code></td><td>/signals/momentum-rankings</td><td>Subscriber.</td></tr>
+      <tr><td><code>GET</code></td><td>/signals/missed</td><td>Subscriber &mdash; missed opportunities.</td></tr>
+      <tr><td><code>GET</code></td><td>/signals/double-signals</td><td>Subscriber &mdash; multi-confirmation.</td></tr>
+      <tr><td><code>GET</code></td><td>/signals/watchlist</td><td>Subscriber.</td></tr>
+      <tr><td><code>GET</code></td><td>/signals/approaching-trigger</td><td>Subscriber.</td></tr>
+      <tr><td><code>GET</code></td><td>/signals/symbol/{symbol}</td><td>Subscriber.</td></tr>
+      <tr><td><code>GET</code></td><td>/signals/cdn-url</td><td>Subscriber &mdash; signed CDN URL.</td></tr>
+      <tr><td><code>POST</code></td><td>/signals/backfill</td><td>Admin.</td></tr>
     </tbody>
   </table>
 
-  <h3>Billing (<code>/billing</code>) &mdash; 5 endpoints</h3>
+  <h3>Billing &mdash; <code>/billing</code></h3>
   <table>
     <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
     <tbody>
-      <tr><td><code>POST</code></td><td>/billing/create-checkout</td><td>Create Stripe Checkout session (7-day trial, CC required)</td></tr>
-      <tr><td><code>POST</code></td><td>/billing/portal</td><td>Create Stripe Customer Portal session</td></tr>
-      <tr><td><code>GET</code></td><td>/billing/subscription</td><td>Get current subscription status</td></tr>
-      <tr><td><code>POST</code></td><td>/billing/sync</td><td>Sync subscription state from Stripe</td></tr>
-      <tr><td><code>POST</code></td><td>/billing/webhook</td><td>Stripe webhook receiver (signature verified)</td></tr>
+      <tr><td><code>POST</code></td><td>/billing/create-checkout</td><td>Stripe Checkout session, trial with credit card required.</td></tr>
+      <tr><td><code>POST</code></td><td>/billing/portal</td><td>Stripe Customer Portal session.</td></tr>
+      <tr><td><code>GET</code></td><td>/billing/subscription</td><td>Current subscription status.</td></tr>
+      <tr><td><code>POST</code></td><td>/billing/sync</td><td>Sync subscription state from Stripe.</td></tr>
+      <tr><td><code>POST</code></td><td>/billing/webhook</td><td>Stripe webhook receiver, signature-verified.</td></tr>
     </tbody>
   </table>
 
-  <h3>Social (<code>/social</code>) &mdash; 17 endpoints</h3>
+  <h3>Dashboard editorial &mdash; <code>/api</code></h3>
   <table>
     <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
     <tbody>
-      <tr><td><code>GET</code></td><td>/social/posts</td><td>List posts (filter by status, type, platform)</td></tr>
-      <tr><td><code>GET</code></td><td>/social/posts/{id}</td><td>Get single post details</td></tr>
-      <tr><td><code>POST</code></td><td>/social/posts/compose</td><td>Create new draft post</td></tr>
-      <tr><td><code>POST</code></td><td>/social/posts/{id}/approve</td><td>Approve for publishing</td></tr>
-      <tr><td><code>POST</code></td><td>/social/posts/{id}/reject</td><td>Reject with reason</td></tr>
-      <tr><td><code>GET</code></td><td>/social/posts/{id}/preview</td><td>Preview rendered post</td></tr>
-      <tr><td><code>POST</code></td><td>/social/posts/{id}/publish</td><td>Publish immediately</td></tr>
-      <tr><td><code>POST</code></td><td>/social/posts/{id}/schedule</td><td>Schedule for future date</td></tr>
-      <tr><td><code>POST</code></td><td>/social/posts/{id}/cancel</td><td>Cancel scheduled post</td></tr>
-      <tr><td><code>POST</code></td><td>/social/posts/{id}/regenerate</td><td>Re-generate post content</td></tr>
-      <tr><td><code>POST</code></td><td>/social/posts/{id}/regenerate-ai</td><td>Re-generate via Claude API</td></tr>
-      <tr><td><code>POST</code></td><td>/social/posts/{id}/edit</td><td>Edit draft content</td></tr>
-      <tr><td><code>DELETE</code></td><td>/social/posts/{id}</td><td>Delete draft</td></tr>
-      <tr><td><code>GET</code></td><td>/social/posts/{id}/cancel-email</td><td>One-click cancel via JWT link</td></tr>
-      <tr><td><code>GET</code></td><td>/social/posts/{id}/approve-email</td><td>One-click approve via JWT link</td></tr>
-      <tr><td><code>POST</code></td><td>/social/generate-chart/{id}</td><td>Generate chart card image</td></tr>
-      <tr><td><code>GET</code></td><td>/social/stats</td><td>Publishing statistics</td></tr>
+      <tr><td><code>GET</code></td><td>/api/this-week</td><td>Computes the rotating "This Week" banner data &mdash; leader, tail, and longest-hold &mdash; from the open position set, pivoting templates so the banner never reads as a defeat when the leader is flat or negative.</td></tr>
+      <tr><td><code>GET</code></td><td>/api/market-data-status</td><td>Public freshness signal for the dashboard staleness banner.</td></tr>
+      <tr><td><code>GET</code></td><td>/api/warmup</td><td>Post-deploy warm-up route &mdash; preloads dashboard JSON.</td></tr>
+      <tr><td><code>GET</code></td><td>/api/track-record</td><td>Public: walk-forward and live track-record data backing the <code>/track-record</code> page.</td></tr>
+      <tr><td><code>GET</code></td><td>/api/newsletter/archive</td><td>Public: archive of past "Market, Measured" issues with headline plus two- to three-line breadcrumbs.</td></tr>
     </tbody>
   </table>
 
-  <h3>Admin (<code>/admin</code>) &mdash; 50+ endpoints</h3>
-  <p>All admin endpoints require <code>role=admin</code> AND email in <code>ADMIN_EMAILS</code> allowlist. Categories include: strategy management (20+), user management (6), market regime analysis (4), walk-forward simulation (8), backtesting (2), data debugging (2), model portfolio (10), trade autopsies (2), ghost comparison (1), regime forecast (3), what-if calculator (1).</p>
+  <h3>Social &mdash; <code>/social</code></h3>
+  <table>
+    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET</code></td><td>/social/posts</td><td>List posts &mdash; filter by status, type, platform.</td></tr>
+      <tr><td><code>GET</code></td><td>/social/posts/{id}</td><td>Get single post details.</td></tr>
+      <tr><td><code>POST</code></td><td>/social/posts/compose</td><td>Create new draft post.</td></tr>
+      <tr><td><code>POST</code></td><td>/social/posts/{id}/approve</td><td>Approve for publishing.</td></tr>
+      <tr><td><code>POST</code></td><td>/social/posts/{id}/reject</td><td>Reject with reason.</td></tr>
+      <tr><td><code>POST</code></td><td>/social/posts/{id}/publish</td><td>Publish immediately.</td></tr>
+      <tr><td><code>POST</code></td><td>/social/posts/{id}/schedule</td><td>Schedule for a future date.</td></tr>
+      <tr><td><code>POST</code></td><td>/social/posts/{id}/cancel</td><td>Cancel a scheduled post.</td></tr>
+      <tr><td><code>POST</code></td><td>/social/posts/{id}/regenerate-ai</td><td>Re-generate via Claude API.</td></tr>
+      <tr><td><code>GET</code></td><td>/social/posts/{id}/cancel-email</td><td>One-click cancel via JWT-signed link.</td></tr>
+      <tr><td><code>GET</code></td><td>/social/posts/{id}/approve-email</td><td>One-click approve via JWT-signed link.</td></tr>
+      <tr><td><code>POST</code></td><td>/social/generate-chart/{id}</td><td>Generate the chart-card image.</td></tr>
+      <tr><td><code>GET</code></td><td>/social/stats</td><td>Publishing statistics.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Admin &mdash; <code>/admin</code></h3>
+  <p>
+    Admin endpoints require both <code>role=admin</code> and an
+    <code>ADMIN_EMAILS</code> allowlist match &mdash; double enforcement so a
+    promoted-by-mistake user cannot reach operator surfaces. Categories include
+    strategy management, user management, regime analysis, walk-forward simulation,
+    backtesting, data debugging, model portfolio, trade autopsies, ghost comparison,
+    regime forecast, and the what-if calculator.
+  </p>
 </div>
 
-<!-- PAGE: FRONTEND -->
+<!-- ============================================================
+     8. FRONTEND
+     ============================================================ -->
 <div class="content page-break">
-  <h2>8. Frontend Architecture</h2>
+  <span class="kicker">08 &middot; Frontend Architecture</span>
+  <h2>React, Vite, Tailwind &mdash; <em>editorial</em> register.</h2>
 
-  <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
-    <div class="stat-box">
-      <div class="value" style="color: var(--navy);">React 18</div>
-      <div class="label">UI Framework</div>
-    </div>
-    <div class="stat-box">
-      <div class="value" style="color: var(--navy);">Vite 5</div>
-      <div class="label">Build Tool</div>
-    </div>
-    <div class="stat-box">
-      <div class="value" style="color: var(--navy);">Tailwind 3</div>
-      <div class="label">CSS Framework</div>
-    </div>
-  </div>
+  <p>
+    The web client is a single-page React 18 application built with Vite, styled
+    with Tailwind CSS configured in the editorial brand palette (paper, ink, and
+    claret). The mobile app is a separate Expo project that consumes the same API
+    surface for sell alerts and signal events.
+  </p>
 
-  <h3>Component Architecture</h3>
+  <h3>Component inventory</h3>
   <table>
     <thead>
       <tr><th>Component</th><th>Size</th><th>Responsibility</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>App.jsx</strong></td><td>171 KB</td><td>Main dashboard: portfolio, signals, charts, auth, time-travel (admin)</td></tr>
-      <tr><td><strong>WalkForwardSimulator.jsx</strong></td><td>67 KB</td><td>Configure/run simulations, equity curves, trade analysis</td></tr>
-      <tr><td><strong>SocialTab.jsx</strong></td><td>55 KB</td><td>Post queue, AI generation, scheduling, chart cards, publishing</td></tr>
-      <tr><td><strong>FlexibleBacktest.jsx</strong></td><td>39 KB</td><td>Backtest config, strategy comparison, exit testing</td></tr>
-      <tr><td><strong>AdminDashboard.jsx</strong></td><td>42 KB</td><td>Strategy/user management, model portfolio, ghost comparison, regime forecast, what-if calculator, trade autopsies</td></tr>
-      <tr><td><strong>LandingPage.jsx</strong></td><td>30 KB</td><td>Marketing: hero, features, pricing, FAQ, social proof</td></tr>
-      <tr><td><strong>StrategyEditor.jsx</strong></td><td>16 KB</td><td>Custom strategy creation and editing</td></tr>
-      <tr><td><strong>AutoSwitchConfig.jsx</strong></td><td>15 KB</td><td>Auto-switch rule configuration</td></tr>
-      <tr><td><strong>LoginModal.jsx</strong></td><td>14 KB</td><td>Multi-provider auth: email, Google, Apple, Turnstile</td></tr>
-      <tr><td><strong>StrategyGenerator.jsx</strong></td><td>12 KB</td><td>AI strategy generation interface</td></tr>
-      <tr><td><strong>LegalPages.jsx</strong></td><td>11 KB</td><td>Terms, Privacy Policy, Financial Disclaimer</td></tr>
-      <tr><td><strong>PasswordReset.jsx</strong></td><td>9 KB</td><td>Forgot/reset password flow</td></tr>
-      <tr><td><strong>SubscriptionBanner.jsx</strong></td><td>9 KB</td><td>Trial countdown, upgrade CTA</td></tr>
-      <tr><td><strong>TrackRecordChart.jsx</strong></td><td>8 KB</td><td>Walk-forward equity curve with regime overlays</td></tr>
-      <tr><td><strong>TwoFactorSettings.jsx</strong></td><td>7 KB</td><td>TOTP 2FA setup, backup codes, enable/disable</td></tr>
-      <tr><td><strong>CookieConsent.jsx</strong></td><td>3 KB</td><td>GDPR cookie consent banner for GA4</td></tr>
+      <tr><td><strong>App.jsx</strong></td><td>~170 KB</td><td>Main dashboard: portfolio, signals, charts, auth, admin time-travel.</td></tr>
+      <tr><td><strong>WalkForwardSimulator.jsx</strong></td><td>~67 KB</td><td>Configure and run simulations, equity curves, trade analysis.</td></tr>
+      <tr><td><strong>SocialTab.jsx</strong></td><td>~55 KB</td><td>Post queue, AI generation, scheduling, chart cards, publishing.</td></tr>
+      <tr><td><strong>AdminDashboard.jsx</strong></td><td>~42 KB</td><td>Strategy and user management, model portfolio, ghost comparison, regime forecast, what-if calculator, trade autopsies.</td></tr>
+      <tr><td><strong>FlexibleBacktest.jsx</strong></td><td>~39 KB</td><td>Backtest configuration, strategy comparison, exit testing.</td></tr>
+      <tr><td><strong>LandingPage.jsx</strong></td><td>~30 KB</td><td>Marketing surface: hero, features, pricing, FAQ, social proof.</td></tr>
+      <tr><td><strong>TrackRecordPage.jsx</strong></td><td>~16 KB</td><td>Public <code>/track-record</code>: five-year multi-start and ten-year-plus single-start side by side.</td></tr>
+      <tr><td><strong>NewsletterArchive.jsx</strong></td><td>~12 KB</td><td>Newsletter archive teasers with headline and breadcrumb lines.</td></tr>
+      <tr><td><strong>StrategyEditor.jsx</strong></td><td>~16 KB</td><td>Custom strategy creation and editing.</td></tr>
+      <tr><td><strong>AutoSwitchConfig.jsx</strong></td><td>~15 KB</td><td>Auto-switch rule configuration.</td></tr>
+      <tr><td><strong>LoginModal.jsx</strong></td><td>~14 KB</td><td>Multi-provider auth with Turnstile.</td></tr>
+      <tr><td><strong>StrategyGenerator.jsx</strong></td><td>~12 KB</td><td>AI strategy generation interface.</td></tr>
+      <tr><td><strong>LegalPages.jsx</strong></td><td>~11 KB</td><td>Terms, Privacy Policy, Financial Disclaimer.</td></tr>
+      <tr><td><strong>PasswordReset.jsx</strong></td><td>~9 KB</td><td>Forgot / reset flow.</td></tr>
+      <tr><td><strong>SubscriptionBanner.jsx</strong></td><td>~9 KB</td><td>Trial countdown, upgrade CTA.</td></tr>
+      <tr><td><strong>ThisWeekBanner.jsx</strong></td><td>~8 KB</td><td>Rotating dashboard banner with five editorial templates pivoting on portfolio state.</td></tr>
+      <tr><td><strong>TrackRecordChart.jsx</strong></td><td>~8 KB</td><td>Walk-forward equity curve with regime overlays.</td></tr>
+      <tr><td><strong>TwoFactorSettings.jsx</strong></td><td>~7 KB</td><td>TOTP 2FA setup, backup codes.</td></tr>
+      <tr><td><strong>CookieConsent.jsx</strong></td><td>~3 KB</td><td>GDPR cookie consent for GA4.</td></tr>
     </tbody>
   </table>
 
-  <h3>Key Frontend Libraries</h3>
-  <div class="two-col">
-    <div>
-      <ul>
-        <li><strong>Recharts</strong> &mdash; Dashboard charts, equity curves</li>
-        <li><strong>Axios</strong> &mdash; HTTP client with JWT interceptor</li>
-        <li><strong>React Router v6</strong> &mdash; SPA routing</li>
-        <li><strong>Lucide React</strong> &mdash; SVG icon library</li>
-      </ul>
-    </div>
-    <div>
-      <ul>
-        <li><strong>react-hot-toast</strong> &mdash; Notification system</li>
-        <li><strong>date-fns</strong> &mdash; Date formatting/manipulation</li>
-        <li><strong>clsx</strong> &mdash; Conditional classname utility</li>
-        <li><strong>Puppeteer</strong> &mdash; Headless browser (chart rendering)</li>
-      </ul>
-    </div>
-  </div>
+  <h3>Frontend libraries</h3>
+  <ul>
+    <li><strong>React 18</strong> with hooks; functional components throughout.</li>
+    <li><strong>Vite 5</strong> build tool; fast HMR in dev, single-bundle production output.</li>
+    <li><strong>Tailwind CSS 3</strong> styling; brand palette tokens in <code>tailwind.config.js</code>.</li>
+    <li><strong>Recharts</strong> for the dashboard charts and equity curves.</li>
+    <li><strong>Axios</strong> HTTP client with a JWT request interceptor and a 401 retry hook.</li>
+    <li><strong>React Router v6</strong> for SPA routing.</li>
+    <li><strong>Lucide React</strong> SVG icon library.</li>
+    <li><strong>react-hot-toast</strong>, <strong>date-fns</strong>, <strong>clsx</strong> for UX plumbing.</li>
+    <li><strong>Puppeteer</strong> for headless chart rendering at the build step.</li>
+  </ul>
+</div>
 
-  <h2>9. Security Architecture</h2>
+<!-- ============================================================
+     9. SECURITY
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">09 &middot; Security Architecture</span>
+  <h2>Defense in <em>depth</em>, not in marketing.</h2>
 
-  <h3>Authentication Flow</h3>
-  <div class="arch-flow no-break">
-    <div class="arch-box">Login<br><small>Email/Google/Apple</small></div>
-    <div class="arch-arrow">&rarr;</div>
-    <div class="arch-box">Turnstile<br><small>Bot protection</small></div>
-    <div class="arch-arrow">&rarr;</div>
-    <div class="arch-box">JWT Issue<br><small>HS256, 15min</small></div>
-    <div class="arch-arrow">&rarr;</div>
-    <div class="arch-box">Bearer Token<br><small>Auth header</small></div>
-    <div class="arch-arrow">&rarr;</div>
-    <div class="arch-box">Role Check<br><small>admin/user</small></div>
-  </div>
+  <p class="lead">
+    Every signal endpoint sits behind a subscription guard. Every admin endpoint
+    sits behind two guards. The price-data S3 bucket has all public access blocked.
+    The execute-api URL is no longer reachable directly. None of this is novel; all
+    of it is enforced.
+  </p>
 
+  <h3>Authentication flow</h3>
+  <div class="code-block"><span class="comment"># Subscriber login</span>
+Email / Google / Apple  <span class="arrow">&rarr;</span>  Turnstile (bot guard)
+                        <span class="arrow">&rarr;</span>  JWT issue (HS256, 15 min access)
+                        <span class="arrow">&rarr;</span>  Bearer header on every request
+                        <span class="arrow">&rarr;</span>  Role check: admin / user
+                        <span class="arrow">&rarr;</span>  Subscription check: trial / active</div>
+
+  <h3>Controls</h3>
   <table>
     <thead>
       <tr><th>Layer</th><th>Implementation</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>Password Hashing</strong></td><td>bcrypt via passlib (auto-configured cost factor)</td></tr>
-      <tr><td><strong>JWT Tokens</strong></td><td>HS256, 15-min access / 7-day refresh, python-jose library</td></tr>
-      <tr><td><strong>OAuth Validation</strong></td><td>Google: ID token sig via public keys. Apple: JWKS with 1hr cache</td></tr>
-      <tr><td><strong>Bot Protection</strong></td><td>Cloudflare Turnstile on registration endpoint</td></tr>
-      <tr><td><strong>CORS</strong></td><td>Whitelist: rigacap.com, www.rigacap.com, localhost dev ports</td></tr>
-      <tr><td><strong>Admin Guard</strong></td><td>Role check + ADMIN_EMAILS allowlist (double enforcement)</td></tr>
-      <tr><td><strong>Subscription Gate</strong></td><td><code>require_valid_subscription</code> dependency on signal endpoints</td></tr>
-      <tr><td><strong>Payment Security</strong></td><td>Stripe Checkout (PCI DSS), webhook signature verification</td></tr>
-      <tr><td><strong>S3 Access</strong></td><td>Price data bucket: all public access blocked, IAM-only</td></tr>
-      <tr><td><strong>HTTPS</strong></td><td>ACM certificates, CloudFront redirect HTTP&rarr;HTTPS</td></tr>
-      <tr><td><strong>Email Cancel Links</strong></td><td>JWT-signed one-click cancel URLs for social post management</td></tr>
+      <tr><td><strong>Password hashing</strong></td><td>bcrypt via passlib with auto-tuned cost factor.</td></tr>
+      <tr><td><strong>JWT tokens</strong></td><td>HS256, 15-minute access / seven-day refresh, python-jose.</td></tr>
+      <tr><td><strong>OAuth validation</strong></td><td>Google: ID token signature against published keys. Apple: JWKS with one-hour cache.</td></tr>
+      <tr><td><strong>Bot protection</strong></td><td>Cloudflare Turnstile on registration.</td></tr>
+      <tr><td><strong>CORS</strong></td><td>Allowlist: <code>rigacap.com</code>, <code>www.rigacap.com</code>, plus localhost dev.</td></tr>
+      <tr><td><strong>Admin guard</strong></td><td>Role plus <code>ADMIN_EMAILS</code> allowlist &mdash; double enforcement.</td></tr>
+      <tr><td><strong>Subscription gate</strong></td><td><code>require_valid_subscription</code> on every signal and portfolio endpoint.</td></tr>
+      <tr><td><strong>Payment security</strong></td><td>Stripe Checkout (PCI DSS-validated) with webhook signature verification.</td></tr>
+      <tr><td><strong>S3 access</strong></td><td>Price-data bucket: all public access blocked, IAM-only.</td></tr>
+      <tr><td><strong>HTTPS</strong></td><td>ACM certificates everywhere; CloudFront redirects HTTP &rarr; HTTPS.</td></tr>
+      <tr><td><strong>WAF</strong></td><td>Web ACL on the API CloudFront distribution with managed rule sets and rate limits on auth.</td></tr>
+      <tr><td><strong>Origin verify</strong></td><td>CloudFront injects <code>X-Origin-Verify</code> on every API origin request. <code>backend/app/core/origin_guard.OriginVerifyMiddleware</code> compares the inbound header with <code>hmac.compare_digest</code>; direct hits to the raw execute-api URL return 403. Closes the bypass that previously made the WAF optional.</td></tr>
+      <tr><td><strong>Email cancel links</strong></td><td>JWT-signed one-click cancel and approve URLs scoped to a single post ID.</td></tr>
     </tbody>
   </table>
+
+  <h3>Review cadence</h3>
+  <p>
+    A security audit runs every two to three weeks. The reviewer verifies that
+    every signal, dashboard, and portfolio endpoint requires auth; that the
+    price-data bucket remains private; that no signal data leaks through the CDN
+    or a public S3 path; that the CORS allowlist matches only the production
+    origins plus dev; and that any new endpoints since the last review have
+    proper guards in place.
+  </p>
 </div>
 
-<!-- PAGE: CI/CD & MONITORING -->
+<!-- ============================================================
+     10. CI/CD
+     ============================================================ -->
 <div class="content page-break">
-  <h2>10. CI/CD Pipeline</h2>
-  <p>Fully automated deployment via GitHub Actions on push to <code>main</code>. Zero-downtime updates via Lambda container image swaps.</p>
+  <span class="kicker">10 &middot; CI/CD Pipeline</span>
+  <h2>Push to main, the rest is <em>plumbing.</em></h2>
 
-  <div class="code-block">
-    <span class="comment"># Trigger: push to main OR pull request to main</span><br>
-    <br>
-    <span class="keyword">Stage 1: Test</span><br>
-    &nbsp;&nbsp;Backend: Python 3.11 <span class="arrow">&rarr;</span> pip install <span class="arrow">&rarr;</span> <span class="string">pytest -v</span><br>
-    &nbsp;&nbsp;Frontend: Node 18 <span class="arrow">&rarr;</span> npm ci <span class="arrow">&rarr;</span> <span class="string">npm run lint</span> <span class="arrow">&rarr;</span> <span class="string">npm test</span><br>
-    <br>
-    <span class="keyword">Stage 2: Deploy</span> <span class="comment">(only on main push)</span><br>
-    &nbsp;&nbsp;1. npm run build <span class="arrow">&rarr;</span> S3 sync <span class="arrow">&rarr;</span> CloudFront invalidation<br>
-    &nbsp;&nbsp;2. Pre-deploy: export price data to S3<br>
-    &nbsp;&nbsp;3. Docker build (linux/amd64, --provenance=false) <span class="arrow">&rarr;</span> ECR push<br>
-    &nbsp;&nbsp;4. Lambda update-function-code <span class="arrow">&rarr;</span> API + Worker (same image)<br>
-    &nbsp;&nbsp;5. Post-deploy: /api/warmup (verify cold start healthy)<br>
-  </div>
+  <p>
+    Every change ships through GitHub Actions on push to <code>main</code>. The
+    pipeline builds the frontend, builds the Lambda container image, deploys to
+    ECR, updates both Lambdas to the same image, and warms the API. Manual
+    deploys are reserved for CI outages.
+  </p>
+
+  <div class="code-block"><span class="comment"># Trigger: push to main OR pull request to main</span>
+
+<span class="keyword">Stage 1: Test</span>
+  Backend  <span class="arrow">&rarr;</span> Python 3.11 <span class="arrow">&rarr;</span> pip install <span class="arrow">&rarr;</span> <span class="string">pytest -v</span>
+  Frontend <span class="arrow">&rarr;</span> Node 18     <span class="arrow">&rarr;</span> npm ci      <span class="arrow">&rarr;</span> <span class="string">npm run lint &amp;&amp; npm test</span>
+
+<span class="keyword">Stage 2: Deploy</span>  <span class="comment">(only on main push)</span>
+  1. npm run build <span class="arrow">&rarr;</span> S3 sync <span class="arrow">&rarr;</span> CloudFront invalidation
+  2. Pre-deploy: export price data to S3 (pickle + parquet)
+  3. Docker buildx --platform linux/amd64 --provenance=false --sbom=false
+  4. ECR push <span class="arrow">&rarr;</span> Lambda update-function-code on API + Worker
+  5. Post-deploy: GET /api/warmup (verify cold start healthy)</div>
 
   <div class="callout">
-    <p><strong>Critical Lambda Build Requirement:</strong> Docker BuildKit creates multi-platform manifests with attestations
-    that Lambda rejects. All builds use <code>--provenance=false --sbom=false</code> flags for compatibility.</p>
+    <p><strong>Lambda build requirement.</strong> Docker BuildKit creates
+    multi-platform manifests with attestations that Lambda rejects. All builds
+    use <code>--provenance=false --sbom=false</code> for compatibility.</p>
   </div>
 
-  <h2>11. Monitoring &amp; Performance</h2>
+  <h3>Base image</h3>
+  <p>
+    The Lambda base image is <code>public.ecr.aws/lambda/python:3.11</code> on
+    Amazon Linux 2023. The AL2023 upgrade unlocked DuckDB native httpfs (no more
+    <code>/tmp</code> staging) and is a prerequisite for the parquet migration's
+    consumer-cutover stage.
+  </p>
 
-  <h3>Current Monitoring</h3>
+  <h3>Terraform</h3>
+  <p>
+    Infrastructure changes flow through Terraform with a remote backend &mdash;
+    state in <code>s3://rigacap-prod-terraform-state-149218244179</code> and
+    locks in DynamoDB <code>rigacap-prod-terraform-locks</code>. Plans are run
+    with <code>AWS_PROFILE=rigacap</code> against account
+    <code>149218244179</code>; the default profile points at a different account
+    and is explicitly never used for production work.
+  </p>
+
+  <h3>Migration discipline</h3>
+  <p>
+    SQLAlchemy auto-includes every model column in SELECT queries. A column in
+    the model that does not yet exist in the database breaks every query against
+    that table &mdash; including auth. The platform follows a migration-first
+    pattern: deploy the migration SQL first via the <code>run_migration</code>
+    Lambda event, verify the columns exist, then deploy the model change in a
+    second commit. Schema changes never ship during business hours.
+  </p>
+</div>
+
+<!-- ============================================================
+     11. MONITORING
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">11 &middot; Monitoring &amp; Performance</span>
+  <h2>Boring numbers, <em>watched.</em></h2>
+
+  <h3>Current monitoring</h3>
   <table>
     <thead><tr><th>Component</th><th>Method</th><th>Details</th></tr></thead>
     <tbody>
-      <tr><td>Lambda Logs</td><td>CloudWatch Logs</td><td>Python logging, 30-day retention</td></tr>
-      <tr><td>API Gateway</td><td>CloudWatch Metrics</td><td>4xx, 5xx error rates</td></tr>
-      <tr><td>CloudWatch Alarms (10)</td><td>SNS &rarr; Email</td><td>Lambda errors/throttles/duration, API 5xx/4xx, RDS CPU/storage/connections, Worker errors/duration</td></tr>
-      <tr><td>Pipeline Health Monitor</td><td>HealthMonitorService</td><td>17 checks across 5 categories: Data Freshness, Worker Performance, Database, Signals, Infrastructure</td></tr>
-      <tr><td>Data Fetch Tracking</td><td>S3 metadata (JSON)</td><td>Source used (Alpaca/yfinance), settlement result, fetch duration, fallback status</td></tr>
-      <tr><td>Database</td><td>RDS console metrics</td><td>CPU, storage, connections</td></tr>
+      <tr><td>Lambda logs</td><td>CloudWatch Logs</td><td>Python logging, 30-day retention.</td></tr>
+      <tr><td>API Gateway</td><td>CloudWatch metrics</td><td>4xx and 5xx error rates per route.</td></tr>
+      <tr><td>CloudWatch alarms</td><td>SNS &rarr; email</td><td>Lambda errors / throttles / duration; API 5xx and 4xx; RDS CPU / storage / connections; Worker errors and duration.</td></tr>
+      <tr><td>Pipeline health monitor</td><td>HealthMonitorService</td><td>Multi-category checks across data freshness, worker performance, database, signals, and infrastructure.</td></tr>
+      <tr><td>Data fetch tracking</td><td>S3 metadata JSON</td><td>Source used (Alpaca / yfinance), settlement result, fetch duration, fallback status.</td></tr>
+      <tr><td>Database</td><td>RDS console metrics</td><td>CPU, storage, connection counts.</td></tr>
     </tbody>
   </table>
 
-  <h3>Performance Characteristics</h3>
+  <h3>Performance characteristics</h3>
   <table>
     <thead><tr><th>Operation</th><th>Latency</th><th>Resource</th></tr></thead>
     <tbody>
-      <tr><td>Dashboard load</td><td>&lt;2 seconds</td><td>Pre-computed JSON from CDN</td></tr>
-      <tr><td>Signal scan (7,381 symbols)</td><td>30&ndash;45 seconds</td><td>Alpaca SIP download + calculation</td></tr>
-      <tr><td>Single backtest (90d, 100 symbols)</td><td>20&ndash;40 seconds</td><td>Worker Lambda 3GB memory</td></tr>
-      <tr><td>Walk-forward (5yr, 26 periods)</td><td>10&ndash;30 minutes</td><td>Step Functions &rarr; Lambda</td></tr>
-      <tr><td>AI content generation</td><td>2&ndash;5 seconds</td><td>Claude API (Sonnet 4.5)</td></tr>
-      <tr><td>Chart card generation</td><td>1&ndash;3 seconds</td><td>matplotlib (Worker Lambda)</td></tr>
+      <tr><td>Dashboard load</td><td>&lt; 2 seconds</td><td>Pre-computed JSON from CloudFront.</td></tr>
+      <tr><td>Daily signal scan</td><td>30&ndash;45 seconds</td><td>Worker Lambda, ~4,000 symbols, Alpaca SIP.</td></tr>
+      <tr><td>Single backtest (90d, 100 symbols)</td><td>20&ndash;40 seconds</td><td>Worker Lambda, 3 GB.</td></tr>
+      <tr><td>Walk-forward (5y, biweekly)</td><td>10&ndash;30 minutes</td><td>Step Functions fan-out across the Worker Lambda.</td></tr>
+      <tr><td>AI content generation</td><td>2&ndash;5 seconds</td><td>Claude API (Sonnet 4.5).</td></tr>
+      <tr><td>Chart card generation</td><td>1&ndash;3 seconds</td><td>matplotlib on the Worker Lambda.</td></tr>
     </tbody>
   </table>
 
-  <h3>Resource Utilization</h3>
-  <div class="stats-row">
-    <div class="stat-box">
-      <div class="value gold">1 + 3 GB</div>
-      <div class="label">API + Worker Memory</div>
+  <h3>Resource utilization</h3>
+  <div class="stat-row">
+    <div class="stat">
+      <div class="stat-num">1 + 3 GB</div>
+      <div class="stat-label">API + Worker memory</div>
     </div>
-    <div class="stat-box">
-      <div class="value gold">~800 MB</div>
-      <div class="label">Typical Usage</div>
+    <div class="stat">
+      <div class="stat-num">269 MB</div>
+      <div class="stat-label">S3 pickle (gzip)</div>
     </div>
-    <div class="stat-box">
-      <div class="value gold">20 GB</div>
-      <div class="label">RDS Storage</div>
-    </div>
-    <div class="stat-box">
-      <div class="value gold">~179 MB</div>
-      <div class="label">S3 Pickle (gzip)</div>
+    <div class="stat">
+      <div class="stat-num">20 GB</div>
+      <div class="stat-label">RDS storage</div>
     </div>
   </div>
 
-  <h2>12. Dependencies</h2>
-  <div class="two-col">
-    <div>
-      <h3>Backend (Python 3.11)</h3>
-      <ul>
-        <li><strong>FastAPI</strong> 0.109.0 + Uvicorn 0.27.0</li>
-        <li><strong>SQLAlchemy</strong> 2.0.25 + asyncpg 0.29.0</li>
-        <li><strong>Pydantic</strong> 2.5.0</li>
-        <li><strong>pandas</strong> 2.1.4 + numpy 1.26.3</li>
-        <li><strong>alpaca-py</strong> &ge;0.30.0 (SIP market data)</li>
-        <li><strong>yfinance</strong> &ge;1.1.0 (fallback + index data)</li>
-        <li><strong>Optuna</strong> &ge;3.5.0</li>
-        <li><strong>matplotlib</strong> &ge;3.8.0</li>
-        <li><strong>boto3</strong> 1.34.0 + Mangum 0.17.0</li>
-        <li><strong>Stripe</strong> 7.10.0</li>
-        <li><strong>python-jose</strong> 3.3.0 + passlib 1.7.4</li>
-        <li><strong>APScheduler</strong> 3.10.4 (local dev; EventBridge in prod)</li>
-        <li><strong>httpx</strong> 0.26.0 (Claude API client)</li>
-      </ul>
-    </div>
-    <div>
-      <h3>Frontend (Node 18)</h3>
-      <ul>
-        <li><strong>React</strong> 18.2.0</li>
-        <li><strong>Vite</strong> 5.0.0</li>
-        <li><strong>TailwindCSS</strong> 3.3.5</li>
-        <li><strong>React Router</strong> 6.20.0</li>
-        <li><strong>Recharts</strong> 2.10.0</li>
-        <li><strong>Axios</strong> 1.6.0</li>
-        <li><strong>Lucide React</strong> 0.292.0</li>
-        <li><strong>Puppeteer</strong> 24.37.3</li>
-        <li><strong>ESLint</strong> 8.53.0</li>
-        <li><strong>Vitest</strong> 0.34.6</li>
-      </ul>
-    </div>
-  </div>
+  <h3>Concurrency</h3>
+  <p>
+    Account-level Lambda concurrency: 1,000 total. Reserved concurrency: 50 on
+    the API Lambda, 200 on the Worker Lambda. The Worker reservation was raised
+    from ten after a self-throttling incident demonstrated that scheduled
+    fan-out workloads can collide with on-demand admin invocations. Manual
+    Lambda invocations always target the Worker so the API surface stays
+    available for subscribers.
+  </p>
+</div>
 
-  <div class="footer">
-    <div style="margin-bottom: 0.75rem;">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 60" width="130" height="30">
-        <circle cx="30" cy="30" r="28" fill="#ffffff"/>
-        <svg x="4" y="4" width="52" height="52" viewBox="0 0 1090 1090">
-          <path fill="#67B3E9" d="M 271.02 540.82 C 271.02 525.03 282.96 512.15 298.27 510.37 L 332.7 376.25 C 324.86 370.67 319.7 361.55 319.7 351.19 C 319.7 334.17 333.5 320.37 350.52 320.37 C 366.29 320.37 379.15 332.27 380.97 347.55 L 491.99 375.79 C 497.57 367.92 506.71 362.75 517.1 362.75 C 526.94 362.75 535.59 367.44 541.24 374.62 L 685.88 330.24 C 687.0 314.25 700.2 301.58 716.48 301.58 C 718.18 301.58 719.83 301.81 721.45 302.08 L 754.3 246.01 C 695.43 203.71 623.26 178.76 545.23 178.76 C 347.11 178.76 186.51 339.37 186.51 537.49 C 186.51 561.88 189.0 585.68 193.65 608.7 L 272.34 549.28 C 271.57 546.57 271.02 543.78 271.02 540.82 z"/>
-          <path fill="#3298E2" d="M 771.95 259.53 L 740.47 313.27 C 744.68 318.54 747.3 325.13 747.3 332.39 C 747.3 349.41 733.5 363.21 716.48 363.21 C 706.64 363.21 697.98 358.52 692.34 351.34 L 547.7 395.71 C 546.58 411.71 533.38 424.38 517.1 424.38 C 501.32 424.38 488.47 412.49 486.65 397.2 L 375.63 368.96 C 370.7 375.91 362.97 380.61 354.09 381.65 L 319.66 515.76 C 327.5 521.34 332.66 530.46 332.66 540.82 C 332.66 557.84 318.86 571.64 301.84 571.64 C 295.86 571.64 290.32 569.86 285.6 566.91 L 199.19 632.16 C 209.45 669.66 225.63 704.73 246.68 736.27 L 572.95 455.89 L 725.14 455.89 L 860.89 366.94 C 838.48 325.55 808.14 289.09 771.95 259.53 z"/>
-          <polygon fill="#172554" points="870.22,315.99 1083.92,256.77 947.01,442.81 936.83,357.53"/>
-          <path fill="#172554" d="M 464.89 930.55 C 451.12 927.74 437.63 924.2 424.41 920.01 L 424.41 675.65 L 312.7 771.66 L 312.7 864.06 C 210.74 791.25 144.07 672.05 144.07 537.49 C 144.07 477.96 157.21 421.48 180.57 370.62 L 124.6 370.62 C 104.03 422.3 92.59 478.57 92.59 537.49 C 92.59 787.07 295.65 990.12 545.23 990.12 C 555.79 990.12 566.22 989.63 576.6 988.91 L 576.6 544.87 L 464.89 640.87 L 464.89 930.55 z"/>
-          <path fill="#172554" d="M 996.65 506.04 L 945.04 506.04 C 945.85 516.43 946.39 526.89 946.39 537.49 C 946.39 618.34 922.3 693.63 880.98 756.67 L 880.98 437.3 L 769.26 510.51 L 769.26 869.88 C 756.28 878.65 742.79 886.7 728.79 893.93 L 728.79 525.76 L 617.07 525.76 L 617.07 984.36 C 832.63 949.83 997.87 762.62 997.87 537.49 C 997.87 526.9 997.37 516.44 996.65 506.04 z"/>
-          <path fill="#172554" d="M 545.22 119.08 C 683.67 119.08 806.61 186.69 882.81 290.61 L 902.09 285.27 C 822.83 173.45 692.41 100.33 545.22 100.33 C 371.42 100.33 220.99 202.29 150.58 349.53 L 171.48 349.53 C 240.44 212.96 382.07 119.08 545.22 119.08 z"/>
-        </svg>
-        <text x="68" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="30" font-weight="700" letter-spacing="-0.5" fill="#0f172a">RigaCap</text>
-      </svg>
-    </div>
-    <p>Technical Architecture Document &mdash; v3.0.0 &mdash; April 2026</p>
-    <p style="margin-top: 0.5rem;">This document is confidential and intended solely for authorized technical reviewers.
-    Infrastructure details should not be shared outside the organization.</p>
+<!-- ============================================================
+     12. DEPENDENCIES
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">12 &middot; Dependencies</span>
+  <h2>What the platform <em>imports.</em></h2>
+
+  <h3>Backend &mdash; Python 3.11 on Amazon Linux 2023</h3>
+  <ul>
+    <li><strong>FastAPI</strong> 0.109.0 with Uvicorn 0.27.0 for local dev.</li>
+    <li><strong>Mangum</strong> 0.17.0 &mdash; ASGI to Lambda adapter.</li>
+    <li><strong>SQLAlchemy</strong> 2.0.25 with <strong>asyncpg</strong> 0.29.0.</li>
+    <li><strong>Pydantic</strong> 2.5.0 for request and response models.</li>
+    <li><strong>pandas</strong> 2.1.4 with <strong>numpy</strong> 1.26.3 (numpy 2.x is incompatible with the pickled DataFrames).</li>
+    <li><strong>pyarrow</strong> + <strong>duckdb</strong> for the parquet shadow and ad-hoc SQL.</li>
+    <li><strong>alpaca-py</strong> &ge; 0.30.0 for SIP market data.</li>
+    <li><strong>yfinance</strong> &ge; 1.1.0 for fallback bars and index symbols.</li>
+    <li><strong>Optuna</strong> &ge; 3.5.0 for parameter optimization.</li>
+    <li><strong>matplotlib</strong> &ge; 3.8.0 for chart card rendering.</li>
+    <li><strong>boto3</strong> 1.34.0 &mdash; AWS SDK.</li>
+    <li><strong>Stripe</strong> 7.10.0 &mdash; payments.</li>
+    <li><strong>python-jose</strong> 3.3.0 with <strong>passlib</strong> 1.7.4 for JWT and bcrypt.</li>
+    <li><strong>httpx</strong> 0.26.0 &mdash; async HTTP client used for the Claude API and platform graph APIs.</li>
+    <li><strong>APScheduler</strong> 3.10.4 &mdash; local-dev scheduler; production uses EventBridge.</li>
+  </ul>
+
+  <h3>Frontend &mdash; Node 18</h3>
+  <ul>
+    <li><strong>React</strong> 18.2.0 &middot; <strong>Vite</strong> 5.0.0 &middot; <strong>TailwindCSS</strong> 3.3.5</li>
+    <li><strong>React Router</strong> 6.20.0 &middot; <strong>Recharts</strong> 2.10.0</li>
+    <li><strong>Axios</strong> 1.6.0 &middot; <strong>Lucide React</strong> 0.292.0</li>
+    <li><strong>Puppeteer</strong> 24.37.3 &middot; <strong>ESLint</strong> 8.53.0 &middot; <strong>Vitest</strong> 0.34.6</li>
+  </ul>
+
+  <h3>Mobile &mdash; Expo</h3>
+  <ul>
+    <li>React Native via Expo SDK; OTA updates published to the <code>preview</code> channel.</li>
+    <li>Expo push notifications service for sell alerts and high-conviction signal events.</li>
+  </ul>
+
+  <h3>External APIs</h3>
+  <ul>
+    <li><strong>Anthropic Claude</strong> &mdash; <code>claude-sonnet-4-5</code> for social drafts, trade autopsies, and editorial copy. Direct httpx POST; the official SDK is intentionally not vendored on Lambda.</li>
+    <li><strong>X (Twitter API v2)</strong> &mdash; tweet publish, contextual reply scanning.</li>
+    <li><strong>Threads</strong> &mdash; <code>graph.threads.net</code> publish and reply.</li>
+    <li><strong>Instagram-with-Instagram-Login</strong> &mdash; <code>graph.instagram.com</code> publish and comment moderation, IG-native long-lived tokens.</li>
+    <li><strong>Stripe</strong> &mdash; subscriptions, customer portal, coupon-backed referrals.</li>
+    <li><strong>Cloudflare Turnstile</strong> &mdash; bot protection at registration.</li>
+    <li><strong>Google &amp; Apple OAuth</strong> &mdash; identity providers.</li>
+    <li><strong>HeyGen</strong> &mdash; AI avatar video pipeline (in development).</li>
+    <li><strong>Expo Push</strong> &mdash; mobile notification delivery.</li>
+  </ul>
+
+  <!-- ============================================================
+       DISCLOSURES
+       ============================================================ -->
+  <div class="disclosures">
+    <p>
+      <strong>This document is confidential.</strong> Infrastructure details should not be shared outside the organization.
+      Code-level identifiers are accurate as of the document date and may evolve through normal deployment activity.
+    </p>
+    <p>
+      RigaCap operates as a publisher under the publisher&rsquo;s exemption to the
+      Investment Advisers Act of 1940 (&sect;202(a)(11)(d)), as interpreted in
+      <em>Lowe v. SEC</em>. Three conditions are satisfied: the commentary is
+      impersonal (the same signals reach every subscriber regardless of their
+      portfolio or financial situation); it is bona fide market analysis; and it
+      is published on a regular schedule. Subscribers execute their own trades
+      through their own broker. Past performance does not predict future results.
+    </p>
+    <p style="margin-top: 1.5rem; font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.7rem; color: var(--ink-mute);">
+      RigaCap &middot; May 2026 &middot; Technical Architecture &middot; rigacap.com
+    </p>
   </div>
 </div>
 
