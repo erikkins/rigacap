@@ -3301,6 +3301,75 @@ async def public_unsubscribe(
     )
 
 
+def _strip_tags(s: str) -> str:
+    import re
+    return re.sub(r"<[^>]+>", "", s or "").strip()
+
+
+def _first_sentence(s: str, max_chars: int = 90) -> str:
+    """Trim to one sentence (or max_chars), respecting word boundaries."""
+    s = _strip_tags(s).replace("*", "")
+    if not s:
+        return ""
+    # Stop at first sentence-ending punctuation
+    for term in [". ", "? ", "! ", " — "]:
+        idx = s.find(term)
+        if 0 < idx < max_chars + 30:
+            s = s[:idx + 1].strip()
+            break
+    if len(s) > max_chars:
+        cut = s.rfind(" ", 0, max_chars)
+        if cut > 0:
+            s = s[:cut].rstrip(",.;:") + "…"
+    return s.rstrip(".")  # drop trailing period — feeds into bullet styling
+
+
+def _derive_newsletter_synopsis(meta: dict) -> dict:
+    """Build a teaser bundle for the archive list: a lead headline plus
+    2-3 short breadcrumbs hinting at what's inside the issue.
+
+    Sections in our newsletter have a recurring shape:
+      sec0  "The Week in Focus"            — regime read
+      sec1  "One Idea, Explained"          — the unique editorial lead
+      sec2  "What the System is Not Doing" — boilerplate framing
+      sec3  "A Note From Erik"             — personal coda
+
+    The headline pulls from sec1.title (the unique angle). Breadcrumbs
+    pull short teasers from the bodies of the other sections to give a
+    table-of-contents preview that makes the click feel rewarded.
+    """
+    sections = meta.get("sections") or []
+    if not sections:
+        return {"headline": "", "breadcrumbs": []}
+
+    # Headline: first non-boilerplate title.
+    headline = ""
+    for s in sections:
+        t = _strip_tags(s.get("title"))
+        if t and not t.lower().startswith("what the system"):
+            headline = t
+            break
+    if not headline:
+        headline = _strip_tags(sections[0].get("title"))
+
+    # Breadcrumbs: short body teasers from other sections, plus the
+    # "Note from Erik" coda if it has body text.
+    breadcrumbs = []
+    for s in sections:
+        title = _strip_tags(s.get("title"))
+        body_teaser = _first_sentence(s.get("body") or "")
+        # Use body teaser when section has no title (Erik's note pattern)
+        # or when the title is recurring boilerplate.
+        if title and not title.lower().startswith("what the system") and title != headline:
+            breadcrumbs.append(title.rstrip("."))
+        elif body_teaser and (not title or title.lower().startswith("what the system")):
+            breadcrumbs.append(body_teaser)
+        if len(breadcrumbs) >= 3:
+            break
+
+    return {"headline": headline, "breadcrumbs": breadcrumbs}
+
+
 @public_router.get("/newsletter/archive")
 async def newsletter_archive():
     """List all archived Market Measured newsletter issues."""
@@ -3320,9 +3389,12 @@ async def newsletter_archive():
             try:
                 body = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
                 meta = _json.loads(body)
+                synopsis = _derive_newsletter_synopsis(meta)
                 issues.append({
                     "date": date_str,
-                    "subject": meta.get("subject", ""),
+                    "subject": meta.get("subject") or "",
+                    "headline": synopsis["headline"],
+                    "breadcrumbs": synopsis["breadcrumbs"],
                     "regime": meta.get("regime", ""),
                     "spy_price": meta.get("spy_price"),
                     "spy_change": meta.get("spy_change"),
@@ -3330,7 +3402,7 @@ async def newsletter_archive():
                     "watchlist_count": meta.get("watchlist_count", 0),
                 })
             except Exception:
-                issues.append({"date": date_str, "subject": f"Market, Measured — {date_str}"})
+                issues.append({"date": date_str, "subject": f"Market, Measured — {date_str}", "headline": "", "breadcrumbs": []})
         issues.sort(key=lambda x: x["date"], reverse=True)
         return {"issues": issues}
     except Exception as e:

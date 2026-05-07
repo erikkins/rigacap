@@ -280,9 +280,21 @@ export default function NewsletterPage() {
                   onClick={() => navigate(`/newsletter/${latest.date}`)}
                   className="w-full text-left group"
                 >
-                  <h2 className="font-display text-[1.5rem] text-ink group-hover:text-claret transition-colors mb-2" style={{ fontVariationSettings: '"opsz" 48' }}>
-                    {latest.subject}
-                  </h2>
+                  <h2
+                    className="font-display text-[1.5rem] text-ink group-hover:text-claret transition-colors mb-2 leading-[1.2]"
+                    style={{ fontVariationSettings: '"opsz" 48' }}
+                    dangerouslySetInnerHTML={{ __html: latest.subject || latest.headline || `Issue of ${formatDate(latest.date)}` }}
+                  />
+                  {latest.breadcrumbs && latest.breadcrumbs.length > 0 && (
+                    <p className="font-display italic text-ink-mute text-[0.98rem] mb-3 leading-[1.45]" style={{ fontVariationSettings: '"opsz" 24' }}>
+                      {latest.breadcrumbs.slice(0, 3).map((b, i) => (
+                        <span key={i}>
+                          {i > 0 && <span className="text-rule-dark px-2">·</span>}
+                          {b}
+                        </span>
+                      ))}
+                    </p>
+                  )}
                   <div className="flex items-center gap-4 text-[0.85rem] text-ink-mute">
                     <span className="flex items-center gap-1.5">
                       <Calendar size={14} />
@@ -317,19 +329,29 @@ export default function NewsletterPage() {
                     <button
                       key={issue.date}
                       onClick={() => navigate(`/newsletter/${issue.date}`)}
-                      className="w-full text-left flex items-center justify-between py-4 border-b border-rule group hover:bg-paper-card transition-colors -mx-3 px-3"
+                      className="w-full text-left flex items-start justify-between py-4 border-b border-rule group hover:bg-paper-card transition-colors -mx-3 px-3"
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono text-[0.8rem] text-ink-light w-16 shrink-0">{formatDateShort(issue.date)}</span>
-                          <span className="font-display text-[1rem] text-ink group-hover:text-claret transition-colors truncate" style={{ fontVariationSettings: '"opsz" 24' }}>
-                            {issue.subject}
-                          </span>
-                        </div>
+                      <div className="flex-1 min-w-0 pr-3">
+                        <div className="font-mono text-[0.78rem] text-ink-light mb-1">{formatDateShort(issue.date)}</div>
+                        <div
+                          className="font-display text-[1.02rem] text-ink group-hover:text-claret transition-colors leading-[1.3]"
+                          style={{ fontVariationSettings: '"opsz" 24' }}
+                          dangerouslySetInnerHTML={{ __html: issue.subject || issue.headline || `Issue of ${formatDateShort(issue.date)}` }}
+                        />
+                        {issue.breadcrumbs && issue.breadcrumbs.length > 0 && (
+                          <p className="font-display italic text-ink-mute text-[0.85rem] mt-1.5 leading-[1.4]" style={{ fontVariationSettings: '"opsz" 18' }}>
+                            {issue.breadcrumbs.slice(0, 3).map((b, i) => (
+                              <span key={i}>
+                                {i > 0 && <span className="text-rule-dark px-1.5">·</span>}
+                                {b}
+                              </span>
+                            ))}
+                          </p>
+                        )}
                       </div>
-                      <div className="flex items-center gap-3 ml-4 shrink-0">
+                      <div className="flex items-center gap-3 ml-2 shrink-0 mt-[2px]">
                         {issue.regime && (
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: REGIME_COLORS[issue.regime] || '#8A8279' }} />
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: REGIME_COLORS[issue.regime] || '#8A8279' }} title={issue.regime} />
                         )}
                         {issue.fresh_count > 0 && (
                           <span className="font-mono text-[0.75rem] text-positive">{issue.fresh_count} sig</span>

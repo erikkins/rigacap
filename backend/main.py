@@ -6189,11 +6189,7 @@ RigaCap Admin
     if event.get("publish_scheduled_posts"):
         print("📤 Publish scheduled posts triggered")
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(scheduler_service._publish_scheduled_posts())
+            result = asyncio.run(scheduler_service._publish_scheduled_posts())
             return {"status": "success", "result": str(result)}
         except Exception as e:
             import traceback
