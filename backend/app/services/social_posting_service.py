@@ -33,12 +33,13 @@ class SocialPostingService:
     TWITTER_MEDIA_UPLOAD_URL = "https://upload.twitter.com/1.1/media/upload.json"
 
     # Instagram Graph API
-    # Use the Facebook Graph API path for Instagram Business Accounts that are
-    # linked to a Facebook Page. This accepts FB Page access tokens (what
-    # Graph API Explorer hands out via the standard FB OAuth flow).
-    # graph.instagram.com is the *Instagram Login* API which expects a
-    # separate IG-only token from a different OAuth flow — not what we have.
-    INSTAGRAM_API_BASE = "https://graph.facebook.com/v19.0"
+    # Instagram-with-Instagram-Login flow: tokens come from the Meta
+    # Developer console's "Manage messaging and content on Instagram" use
+    # case (token starts with IGAA...). The token is already long-lived
+    # (60 days) and refreshes via /refresh_access_token?grant_type=ig_refresh_token.
+    # Use graph.instagram.com — graph.facebook.com only accepts FB Page
+    # tokens from the older FB-linked-IG flow, which we no longer use.
+    INSTAGRAM_API_BASE = "https://graph.instagram.com/v21.0"
 
     # Threads API
     THREADS_API_BASE = "https://graph.threads.net/v1.0"

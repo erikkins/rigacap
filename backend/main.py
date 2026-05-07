@@ -3950,51 +3950,29 @@ def handler(event, context):
             results = {}
             updates = {}
 
-            fb_long = os.environ.get("META_LONG_LIVED_USER_TOKEN")
-            fb_app_id = os.environ.get("META_FB_APP_ID")
-            fb_app_secret = os.environ.get("META_FB_APP_SECRET")
-            fb_page_id = os.environ.get("META_FB_PAGE_ID")
-            if fb_long and fb_app_id and fb_app_secret:
-                # Re-exchange the existing long-lived for a new long-lived
-                # (resets the 60-day clock). FB doesn't have a true refresh
-                # endpoint for user tokens — fb_exchange_token works on a
-                # still-valid long-lived too, returning a fresh 60d token.
+            ig_token = os.environ.get("INSTAGRAM_ACCESS_TOKEN")
+            if ig_token and ig_token.startswith("IGAA"):
+                # Instagram-with-Instagram-Login flow: refresh via
+                # /refresh_access_token?grant_type=ig_refresh_token. The
+                # endpoint accepts a still-valid long-lived token and
+                # returns a fresh 60-day token. No app secret needed for
+                # the refresh — it's authenticated by the token itself.
                 with httpx.Client(timeout=15) as client:
                     r = client.get(
-                        "https://graph.facebook.com/v19.0/oauth/access_token",
-                        params={
-                            "grant_type": "fb_exchange_token",
-                            "client_id": fb_app_id,
-                            "client_secret": fb_app_secret,
-                            "fb_exchange_token": fb_long,
-                        },
+                        "https://graph.instagram.com/refresh_access_token",
+                        params={"grant_type": "ig_refresh_token", "access_token": ig_token},
                     )
                 if r.status_code != 200:
-                    results["fb"] = {"status": "error", "detail": r.text}
+                    results["instagram"] = {"status": "error", "detail": r.text}
                 else:
-                    new_user = r.json().get("access_token")
-                    if new_user:
-                        updates["META_LONG_LIVED_USER_TOKEN"] = new_user
-                        # Re-fetch page token using the refreshed user token
-                        with httpx.Client(timeout=15) as client:
-                            accts = client.get(
-                                "https://graph.facebook.com/v19.0/me/accounts",
-                                params={"access_token": new_user, "fields": "id,access_token"},
-                            )
-                        if accts.status_code == 200:
-                            pages = accts.json().get("data", [])
-                            page = next((p for p in pages if p.get("id") == fb_page_id), None) if fb_page_id else (pages[0] if pages else None)
-                            if page and page.get("access_token"):
-                                updates["INSTAGRAM_ACCESS_TOKEN"] = page["access_token"]
-                                results["fb"] = {"status": "success", "expires_in_days": r.json().get("expires_in", 0) // 86400}
-                            else:
-                                results["fb"] = {"status": "error", "detail": "page not found in /me/accounts response"}
-                        else:
-                            results["fb"] = {"status": "error", "detail": f"me/accounts: {accts.text}"}
+                    new_ig = r.json().get("access_token")
+                    if new_ig:
+                        updates["INSTAGRAM_ACCESS_TOKEN"] = new_ig
+                        results["instagram"] = {"status": "success", "expires_in_days": r.json().get("expires_in", 0) // 86400}
                     else:
-                        results["fb"] = {"status": "error", "detail": "no access_token in refresh response"}
+                        results["instagram"] = {"status": "error", "detail": "no access_token in refresh response"}
             else:
-                results["fb"] = {"status": "skipped", "detail": "missing META_LONG_LIVED_USER_TOKEN/APP_ID/APP_SECRET — run meta_token_setup first"}
+                results["instagram"] = {"status": "skipped", "detail": "INSTAGRAM_ACCESS_TOKEN missing or not an IG-native (IGAA…) token"}
 
             th_token = os.environ.get("THREADS_ACCESS_TOKEN")
             if th_token:
