@@ -3799,12 +3799,259 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"status": "error", "error": str(e)}
 
-    # Refresh expired Meta access tokens (Instagram + Threads). Once a token
-    # is past its expiry, Meta's refresh_access_token endpoint cannot extend
-    # it — a fresh OAuth grant is required. This handler accepts long-lived
-    # tokens that the operator has already exchanged via Meta's Graph API
-    # Explorer or developer console, and persists them to the Lambda env so
-    # subsequent publishes pick them up.
+    # One-time setup of long-lived Meta tokens. Replaces the manual chain
+    # of curl URLs we had to walk through in the May 6 incident — feed it
+    # short-lived tokens straight from Graph API Explorer plus the app
+    # credentials, and it does the full exchange end-to-end in one call:
+    #   1. fb_exchange_token: short-lived USER → long-lived USER (60 days)
+    #   2. /me/accounts: long-lived USER → PAGE access token (effectively
+    #      permanent while the user token is alive)
+    #   3. Resolves the Instagram Business Account ID from the page's
+    #      instagram_business_account field
+    #   4. (Threads) th_exchange_token: short-lived → long-lived (60 days)
+    #   5. Persists EVERYTHING needed to refresh later: page tokens, the
+    #      long-lived user token, app credentials. Both Lambdas updated.
+    #
+    # After this runs once, the weekly meta_token_refresh cron keeps the
+    # tokens alive indefinitely without any further OAuth.
+    #
+    # Payload (all fields optional except app credentials per platform):
+    #   {"meta_token_setup": {
+    #       "fb_app_id": "...", "fb_app_secret": "...",
+    #       "fb_short_lived_token": "EAA...",        # from Graph API Explorer
+    #       "fb_page_id": "971214166079229",         # which page to use (optional, picks first if absent)
+    #       "threads_app_id": "...", "threads_app_secret": "...",
+    #       "threads_short_lived_token": "THA..."   # from Threads OAuth flow
+    #   }}
+    if event.get("meta_token_setup"):
+        config = event["meta_token_setup"]
+        print("🔐 Meta token setup (long-lived exchange)")
+        try:
+            import httpx, boto3 as _boto
+            updates = {}    # env_var_name -> new_value
+            results = {}    # operator-facing summary
+
+            # ─ Facebook / Instagram ────────────────────────────────
+            fb_short = config.get("fb_short_lived_token")
+            fb_app_id = config.get("fb_app_id")
+            fb_app_secret = config.get("fb_app_secret")
+            if fb_short and fb_app_id and fb_app_secret:
+                # Step 1: short-lived → long-lived USER token
+                with httpx.Client(timeout=15) as client:
+                    exch = client.get(
+                        "https://graph.facebook.com/v19.0/oauth/access_token",
+                        params={
+                            "grant_type": "fb_exchange_token",
+                            "client_id": fb_app_id,
+                            "client_secret": fb_app_secret,
+                            "fb_exchange_token": fb_short,
+                        },
+                    )
+                if exch.status_code != 200:
+                    return {"status": "error", "stage": "fb_exchange_token", "detail": exch.text}
+                exch_data = exch.json()
+                long_user = exch_data.get("access_token")
+                long_expiry = exch_data.get("expires_in", 0)
+                if not long_user:
+                    return {"status": "error", "stage": "fb_exchange_token", "detail": "no access_token in response"}
+                results["fb_long_lived_expires_in_days"] = long_expiry // 86400
+
+                # Step 2: long-lived USER → PAGE access token
+                with httpx.Client(timeout=15) as client:
+                    accts = client.get(
+                        "https://graph.facebook.com/v19.0/me/accounts",
+                        params={
+                            "access_token": long_user,
+                            "fields": "id,name,access_token,instagram_business_account",
+                        },
+                    )
+                if accts.status_code != 200:
+                    return {"status": "error", "stage": "me/accounts", "detail": accts.text}
+                pages = accts.json().get("data", [])
+                if not pages:
+                    return {"status": "error", "stage": "me/accounts", "detail": "no pages returned — user may not admin any FB Page"}
+                # Pick the page: explicit fb_page_id if provided, else first
+                preferred = config.get("fb_page_id")
+                page = None
+                if preferred:
+                    page = next((p for p in pages if p.get("id") == preferred), None)
+                page = page or pages[0]
+                page_token = page.get("access_token")
+                ig_account = (page.get("instagram_business_account") or {}).get("id")
+                results["fb_page"] = {"id": page.get("id"), "name": page.get("name"), "ig_business_account_id": ig_account}
+
+                updates["INSTAGRAM_ACCESS_TOKEN"] = page_token
+                updates["META_LONG_LIVED_USER_TOKEN"] = long_user
+                updates["META_FB_APP_ID"] = fb_app_id
+                updates["META_FB_APP_SECRET"] = fb_app_secret
+                updates["META_FB_PAGE_ID"] = page.get("id")
+                if ig_account:
+                    updates["INSTAGRAM_BUSINESS_ACCOUNT_ID"] = ig_account
+
+            # ─ Threads ─────────────────────────────────────────────
+            th_short = config.get("threads_short_lived_token")
+            th_app_id = config.get("threads_app_id")
+            th_app_secret = config.get("threads_app_secret")
+            if th_short and th_app_secret:
+                with httpx.Client(timeout=15) as client:
+                    th_exch = client.get(
+                        "https://graph.threads.net/access_token",
+                        params={
+                            "grant_type": "th_exchange_token",
+                            "client_secret": th_app_secret,
+                            "access_token": th_short,
+                        },
+                    )
+                if th_exch.status_code != 200:
+                    return {"status": "error", "stage": "th_exchange_token", "detail": th_exch.text}
+                th_data = th_exch.json()
+                long_th = th_data.get("access_token")
+                if not long_th:
+                    return {"status": "error", "stage": "th_exchange_token", "detail": "no access_token in response"}
+                results["threads_long_lived_expires_in_days"] = th_data.get("expires_in", 0) // 86400
+                updates["THREADS_ACCESS_TOKEN"] = long_th
+                if th_app_id:
+                    updates["META_THREADS_APP_ID"] = th_app_id
+                updates["META_THREADS_APP_SECRET"] = th_app_secret
+
+            if not updates:
+                return {"status": "error", "detail": "no exchange performed — provide fb_short_lived_token+credentials and/or threads_short_lived_token+credentials"}
+
+            # Persist to BOTH Lambdas (api + worker). Read current env each
+            # time, modify only the keys we own, write back the full dict.
+            lambda_client = _boto.client("lambda", region_name="us-east-1")
+            persisted = []
+            for fn in ["rigacap-prod-api", "rigacap-prod-worker"]:
+                cfg = lambda_client.get_function_configuration(FunctionName=fn)
+                env = cfg.get("Environment", {}).get("Variables", {})
+                env.update(updates)
+                lambda_client.update_function_configuration(
+                    FunctionName=fn, Environment={"Variables": env},
+                )
+                persisted.append({"function": fn, "wrote": list(updates.keys())})
+
+            return {"status": "success", "results": results, "persisted": persisted}
+        except Exception as e:
+            import traceback
+            print(f"❌ meta_token_setup failed: {e}")
+            print(traceback.format_exc())
+            return {"status": "error", "error": str(e)}
+
+    # Weekly refresh of long-lived Meta tokens. Extends both the FB user
+    # token (which keeps the IG Page token alive) and the Threads long-lived
+    # token, calling Meta's refresh endpoints. Idempotent — safe to run any
+    # time; failure on either side falls through to admin alert.
+    #
+    # Triggered by EventBridge cron weekly. Manual: {"meta_token_refresh": true}
+    if event.get("meta_token_refresh"):
+        print("🔁 Meta token refresh (weekly lifecycle)")
+        try:
+            import httpx, boto3 as _boto
+            results = {}
+            updates = {}
+
+            fb_long = os.environ.get("META_LONG_LIVED_USER_TOKEN")
+            fb_app_id = os.environ.get("META_FB_APP_ID")
+            fb_app_secret = os.environ.get("META_FB_APP_SECRET")
+            fb_page_id = os.environ.get("META_FB_PAGE_ID")
+            if fb_long and fb_app_id and fb_app_secret:
+                # Re-exchange the existing long-lived for a new long-lived
+                # (resets the 60-day clock). FB doesn't have a true refresh
+                # endpoint for user tokens — fb_exchange_token works on a
+                # still-valid long-lived too, returning a fresh 60d token.
+                with httpx.Client(timeout=15) as client:
+                    r = client.get(
+                        "https://graph.facebook.com/v19.0/oauth/access_token",
+                        params={
+                            "grant_type": "fb_exchange_token",
+                            "client_id": fb_app_id,
+                            "client_secret": fb_app_secret,
+                            "fb_exchange_token": fb_long,
+                        },
+                    )
+                if r.status_code != 200:
+                    results["fb"] = {"status": "error", "detail": r.text}
+                else:
+                    new_user = r.json().get("access_token")
+                    if new_user:
+                        updates["META_LONG_LIVED_USER_TOKEN"] = new_user
+                        # Re-fetch page token using the refreshed user token
+                        with httpx.Client(timeout=15) as client:
+                            accts = client.get(
+                                "https://graph.facebook.com/v19.0/me/accounts",
+                                params={"access_token": new_user, "fields": "id,access_token"},
+                            )
+                        if accts.status_code == 200:
+                            pages = accts.json().get("data", [])
+                            page = next((p for p in pages if p.get("id") == fb_page_id), None) if fb_page_id else (pages[0] if pages else None)
+                            if page and page.get("access_token"):
+                                updates["INSTAGRAM_ACCESS_TOKEN"] = page["access_token"]
+                                results["fb"] = {"status": "success", "expires_in_days": r.json().get("expires_in", 0) // 86400}
+                            else:
+                                results["fb"] = {"status": "error", "detail": "page not found in /me/accounts response"}
+                        else:
+                            results["fb"] = {"status": "error", "detail": f"me/accounts: {accts.text}"}
+                    else:
+                        results["fb"] = {"status": "error", "detail": "no access_token in refresh response"}
+            else:
+                results["fb"] = {"status": "skipped", "detail": "missing META_LONG_LIVED_USER_TOKEN/APP_ID/APP_SECRET — run meta_token_setup first"}
+
+            th_token = os.environ.get("THREADS_ACCESS_TOKEN")
+            if th_token:
+                with httpx.Client(timeout=15) as client:
+                    r = client.get(
+                        "https://graph.threads.net/refresh_access_token",
+                        params={"grant_type": "th_refresh_token", "access_token": th_token},
+                    )
+                if r.status_code != 200:
+                    results["threads"] = {"status": "error", "detail": r.text}
+                else:
+                    new_th = r.json().get("access_token")
+                    if new_th:
+                        updates["THREADS_ACCESS_TOKEN"] = new_th
+                        results["threads"] = {"status": "success", "expires_in_days": r.json().get("expires_in", 0) // 86400}
+                    else:
+                        results["threads"] = {"status": "error", "detail": "no access_token in refresh response"}
+            else:
+                results["threads"] = {"status": "skipped", "detail": "no THREADS_ACCESS_TOKEN configured"}
+
+            # Persist any updates
+            if updates:
+                lambda_client = _boto.client("lambda", region_name="us-east-1")
+                for fn in ["rigacap-prod-api", "rigacap-prod-worker"]:
+                    cfg = lambda_client.get_function_configuration(FunctionName=fn)
+                    env = cfg.get("Environment", {}).get("Variables", {})
+                    env.update(updates)
+                    lambda_client.update_function_configuration(
+                        FunctionName=fn, Environment={"Variables": env},
+                    )
+
+            # Email admin on any errors so we get warning before the cliff
+            errored_platforms = [k for k, v in results.items() if v.get("status") == "error"]
+            if errored_platforms:
+                try:
+                    from app.services.admin_email_service import admin_email_service
+                    body_lines = ["Meta token refresh ran with errors — manual recovery may be needed:\n"]
+                    for k, v in results.items():
+                        body_lines.append(f"  {k}: {v}")
+                    _run_async(admin_email_service.send(
+                        subject="[RigaCap] Meta token refresh failure",
+                        body="\n".join(body_lines),
+                    ))
+                except Exception as ee:
+                    print(f"Admin alert send also failed: {ee}")
+
+            return {"status": "success" if not errored_platforms else "partial", "results": results, "persisted": list(updates.keys())}
+        except Exception as e:
+            import traceback
+            print(f"❌ meta_token_refresh failed: {e}")
+            print(traceback.format_exc())
+            return {"status": "error", "error": str(e)}
+
+    # Quick set-only of Meta tokens (no exchange / no refresh logic).
+    # Used as the manual escape hatch when the operator already has a
+    # long-lived token in hand and just needs to push it to the env.
+    # Kept for emergencies — prefer meta_token_setup for new tokens.
     #
     # Payload:
     #   {"refresh_meta_tokens": {
@@ -3949,8 +4196,7 @@ def handler(event, context):
                     for plat in platforms:
                         text = card[plat]
                         hashtags = card.get(f"{plat}_tags", "") if plat == "instagram" else ""
-                        # Threads doesn't accept image upload here; twitter/instagram do.
-                        image_key = card["image_s3_key"] if plat in ("twitter", "instagram") else None
+                        image_key = card["image_s3_key"]
                         post = SocialPost(
                             platform=plat,
                             text_content=text,

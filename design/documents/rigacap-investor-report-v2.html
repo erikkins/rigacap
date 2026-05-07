@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap — Investor Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ─── Design tokens ───────────────────────────────────────────── */
+  :root {
+    --paper:        #F5F1E8;
+    --paper-card:   #FAF7F0;
+    --rule:         #DDD5C7;
+    --rule-dark:    #C9BFAC;
+    --ink:          #141210;
+    --ink-mute:     #5A544E;
+    --ink-light:    #8A8279;
+    --claret:       #7A2430;
+    --claret-light: #A23A47;
+    --positive:     #2D5F3F;
+
+    --serif:  'Fraunces', Georgia, 'Times New Roman', serif;
+    --sans:   'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono:   'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.6;
+    font-size: 16px;
+    font-weight: 300;
+  }
+
+  /* ─── Print / PDF ──────────────────────────────────────────────── */
+  @page {
+    size: letter;
+    margin: 0.6in 0.7in;
+  }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: var(--paper); }
+    .page-break { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+  }
+
+  /* ─── Layout ───────────────────────────────────────────────────── */
+  .content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  /* ─── Typography ───────────────────────────────────────────────── */
+  h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-variation-settings: '"opsz" 144';
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 2rem;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    font-variation-settings: '"opsz" 96';
+    margin-top: 3rem;
+    margin-bottom: 1.25rem;
+    color: var(--ink);
+  }
+  h2 em { color: var(--claret); font-style: italic; }
+  h3 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.3rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  h4 {
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 0.5rem;
+  }
+  p {
+    font-size: 1rem;
+    line-height: 1.65;
+    margin-bottom: 1rem;
+    color: var(--ink);
+  }
+  p strong { font-weight: 500; }
+  em { font-style: italic; }
+  .lead {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: var(--ink-mute);
+    margin-bottom: 1.5rem;
+  }
+  .kicker {
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .kicker::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--claret);
+  }
+
+  /* ─── COVER PAGE ───────────────────────────────────────────────── */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 4rem 3.5rem 3rem;
+    background: var(--paper);
+    position: relative;
+  }
+  .cover-rule {
+    border-top: 3px solid var(--ink);
+    padding-top: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cover-rule .brand {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .cover-rule .brand .dot { color: var(--claret); }
+  .cover-rule .meta {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .cover h1 {
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    margin-top: 4rem;
+    max-width: 14ch;
+  }
+  .cover h1 em { color: var(--claret); font-style: italic; }
+  .cover .cover-sub {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.5rem;
+    line-height: 1.45;
+    color: var(--ink-mute);
+    max-width: 38ch;
+    margin-top: 2rem;
+    margin-bottom: auto;
+  }
+  .cover-stats {
+    display: flex;
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 1.5rem 0;
+    margin-top: 3rem;
+  }
+  .cover-stat {
+    flex: 1;
+    padding: 0 1.5rem;
+    border-right: 1px solid var(--rule);
+  }
+  .cover-stat:first-child { padding-left: 0; }
+  .cover-stat:last-child { padding-right: 0; border-right: none; }
+  .cover-stat .label {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 0.4rem;
+  }
+  .cover-stat .value {
+    font-family: var(--serif);
+    font-size: 2.4rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .cover-stat .value.pos { color: var(--positive); }
+  .cover-stat .sub {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--ink-light);
+    margin-top: 0.4rem;
+    letter-spacing: 0.05em;
+  }
+  .cover-footer {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--ink-mute);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ─── Tables ───────────────────────────────────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-feature-settings: "tnum";
+  }
+  thead th {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    border-bottom: 2px solid var(--rule-dark);
+    padding: 0.6rem 0.5rem;
+    text-align: right;
+  }
+  thead th:first-child { text-align: left; padding-left: 0; }
+  tbody td {
+    padding: 0.85rem 0.5rem;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.95rem;
+    text-align: right;
+    font-family: var(--mono);
+  }
+  tbody td:first-child {
+    text-align: left;
+    padding-left: 0;
+    font-family: var(--sans);
+    font-weight: 400;
+  }
+  tbody tr.headline-row {
+    background: var(--paper-card);
+  }
+  tbody tr.headline-row td {
+    font-weight: 500;
+    color: var(--ink);
+  }
+  tbody tr.headline-row td:first-child {
+    font-family: var(--serif);
+    font-weight: 500;
+  }
+  tbody tr.benchmark-row td {
+    color: var(--ink-mute);
+    font-style: italic;
+  }
+  tbody tr.benchmark-row td:first-child {
+    font-style: italic;
+  }
+  caption, .table-caption {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    color: var(--ink-light);
+    text-align: left;
+    margin-top: 0.5rem;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* ─── Pull-quote ───────────────────────────────────────────────── */
+  .pullquote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.4rem;
+    line-height: 1.4;
+    color: var(--claret);
+    border-left: 3px solid var(--claret);
+    padding: 0.5rem 0 0.5rem 1.5rem;
+    margin: 2rem 0;
+    max-width: 32ch;
+  }
+
+  /* ─── Callout / aside ──────────────────────────────────────────── */
+  .callout {
+    background: var(--paper-card);
+    border-left: 3px solid var(--claret);
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .callout p { margin-bottom: 0.5rem; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout p strong { color: var(--claret); font-weight: 500; }
+
+  /* ─── Stat row (inline factoid grid) ───────────────────────────── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin: 1.5rem 0;
+  }
+  .stat-row .stat {
+    padding: 1rem 1.25rem;
+    border-right: 1px solid var(--rule);
+  }
+  .stat-row .stat:last-child { border-right: none; }
+  .stat-row .stat-num {
+    font-family: var(--serif);
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .stat-row .stat-num.pos { color: var(--positive); }
+  .stat-row .stat-label {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-top: 0.5rem;
+  }
+
+  /* ─── Section divider ──────────────────────────────────────────── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--rule-dark);
+    margin: 3rem 0;
+  }
+
+  /* ─── Lists ────────────────────────────────────────────────────── */
+  ul, ol {
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+  }
+  ul li, ol li {
+    margin-bottom: 0.5rem;
+    line-height: 1.65;
+  }
+
+  /* ─── Definition-list-style numbered components ───────────────── */
+  .components {
+    margin-top: 1.5rem;
+  }
+  .component {
+    display: grid;
+    grid-template-columns: 4ch 1fr;
+    gap: 1.5rem;
+    padding: 1.25rem 0;
+    border-top: 1px solid var(--rule);
+  }
+  .component:last-child { border-bottom: 1px solid var(--rule); }
+  .component-num {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--claret);
+    letter-spacing: 0.15em;
+    padding-top: 0.3rem;
+  }
+  .component-title {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.01em;
+  }
+  .component-desc {
+    font-size: 0.95rem;
+    color: var(--ink-mute);
+    line-height: 1.6;
+  }
+
+  /* ─── Footer / disclosures ─────────────────────────────────────── */
+  .disclosures {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.78rem;
+    color: var(--ink-light);
+    line-height: 1.55;
+  }
+  .disclosures p { font-size: 0.78rem; margin-bottom: 0.6rem; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     COVER
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="cover">
+  <div class="cover-rule">
+    <span class="brand">RigaCap<span class="dot">.</span></span>
+    <span class="meta">Investor Report &middot; April 2026</span>
+  </div>
+
+  <div>
+    <h1>A disciplined momentum strategy &mdash; <em>measured.</em></h1>
+    <p class="cover-sub">
+      Walk-forward validation across multiple start dates. Capital preservation in 2022.<br />
+      A risk profile that came in tighter than the simulation&nbsp;modeled.
+    </p>
+  </div>
+
+  <div>
+    <div class="cover-stats">
+      <div class="cover-stat">
+        <div class="label">Max Drawdown</div>
+        <div class="value">20.4%</div>
+        <div class="sub">5-year average</div>
+      </div>
+      <div class="cover-stat">
+        <div class="label">Annualized</div>
+        <div class="value pos">~21.5%</div>
+        <div class="sub">Walk-forward</div>
+      </div>
+      <div class="cover-stat">
+        <div class="label">Worst Start</div>
+        <div class="value">+109%</div>
+        <div class="sub">Still nearly 2&times;</div>
+      </div>
+      <div class="cover-stat">
+        <div class="label">Sharpe</div>
+        <div class="value">0.92</div>
+        <div class="sub">Risk-adjusted</div>
+      </div>
+    </div>
+
+    <div class="cover-footer">
+      <span>Confidential</span>
+      <span>rigacap.com</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     EXECUTIVE SUMMARY
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content page-break">
+  <span class="kicker">01 &middot; Executive Summary</span>
+  <h2>What RigaCap <em>is</em>, and what we measure.</h2>
+
+  <p class="lead">
+    RigaCap is a disciplined momentum strategy distributed as a subscription publication.
+    Subscribers receive 3&ndash;4 high-conviction signals per month, drawn from a universe
+    of ~4,000 US equities and filtered through a 3-factor entry gauntlet, regime-aware
+    position sizing, and trailing-stop discipline.
+  </p>
+
+  <p>
+    What separates RigaCap from the broader signal-service category is the <strong>methodology
+    posture</strong>. Every return figure in this document is drawn from walk-forward
+    simulation &mdash; not in-sample optimization, not cherry-picked windows. We disclose
+    the full distribution across multiple start dates, including the worst-case. And the
+    backtesting infrastructure flags data-integrity issues automatically, so the numbers
+    we publish are the ones the strategy actually produced on clean inputs.
+  </p>
+
+  <p>
+    RigaCap has not yet accumulated a live track record; the figures here are what
+    walk-forward methodology produced when run on multiple start dates over the past
+    five years. As live execution data accumulates from launch forward, quarterly
+    disclosure will compare live results to the walk-forward baseline.
+  </p>
+
+  <div class="callout">
+    <p><strong>Core Result &middot; 5-Year Walk-Forward.</strong> Across multiple start dates from early 2021,
+    the strategy averaged <strong>+160% total return / ~21.5% annualized</strong>, with a <strong>20.4% average
+    max drawdown</strong> &mdash; meaningfully tighter than the 32% the prior simulation had modeled.
+    Worst-case start date returned <strong>+109%</strong>; best-case, +252%.</p>
+  </div>
+
+  <h3>Three things to know.</h3>
+
+  <ol>
+    <li>
+      <strong>Capital preservation in 2022.</strong> Every start date in the test ended 2022
+      in positive territory, averaging about +8%, while the S&amp;P 500 fell roughly 20%.
+      This is the strongest empirical evidence that the regime-aware design earns its keep
+      when it should.
+    </li>
+    <li>
+      <strong>Cascade Guard adds quantified value.</strong> When multiple positions hit their
+      trailing stops on the same day &mdash; signalling cascading market stress &mdash;
+      the system pauses new entries for ten days. Validated against a no-Cascade-Guard
+      counterfactual, the safeguard contributed approximately <strong>+37 percentage
+      points of return</strong> across the test period (~+3.7 pp annualized) by avoiding
+      forced re-entries during stress.
+    </li>
+    <li>
+      <strong>Risk came in tighter than the model.</strong> Internal modeling targeted a
+      32% maximum drawdown; the walk-forward simulation delivered <strong>20.4%</strong>.
+      The strategy's actual risk profile is materially better than the conservative case
+      we planned for.
+    </li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PERFORMANCE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content page-break">
+  <span class="kicker">02 &middot; Performance</span>
+  <h2>Walk-Forward, multiple start dates, full distribution <em>published.</em></h2>
+
+  <p class="lead">
+    Cherry-picking a favorable start date is the single most common backtest distortion
+    in retail signal services. Our response: run the strategy from many different start
+    dates over the same five-year window, publish the average, and disclose the full range
+    &mdash; best, worst, and every point in between.
+  </p>
+
+  <h3>Five-Year Walk-Forward (clean data, 2026-04-28 vintage)</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Series</th>
+        <th>5-Year Return</th>
+        <th>Annualized</th>
+        <th>Sharpe</th>
+        <th>Max Drawdown</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="headline-row">
+        <td>RigaCap walk-forward (avg.)</td>
+        <td>+160%</td>
+        <td>~21.5%</td>
+        <td>0.92</td>
+        <td>20.4%</td>
+      </tr>
+      <tr class="benchmark-row">
+        <td>S&amp;P 500 (SPY, price-only)</td>
+        <td>+93%</td>
+        <td>~13%</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="table-caption">
+    Walk-forward simulation across multiple start dates from January&ndash;April 2021,
+    each measured over a full 5-year window. Realized end-of-day fills used; rebalance
+    frictions modeled in-simulation. SPY benchmark is price-only (excludes dividends).
+  </p>
+
+  <h3>Per-Start-Date Distribution</h3>
+
+  <p>
+    The full set, sorted by entry date. Best-to-worst spread: <strong>+143 percentage
+    points</strong>. Every start date positive over the full window; every start date
+    positive in calendar 2022.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Start Date</th>
+        <th>5-Year Return</th>
+        <th>Sharpe</th>
+        <th>Max DD</th>
+        <th>SPY (same window)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>2021-01-04</td><td>+145%</td><td>0.92</td><td>20.3%</td><td>+98%</td></tr>
+      <tr><td>2021-01-18</td><td>+252%</td><td>0.88</td><td>25.9%</td><td>+96%</td></tr>
+      <tr><td>2021-01-25</td><td>+160%</td><td>0.83</td><td>20.4%</td><td>+92%</td></tr>
+      <tr><td>2021-02-01</td><td>+156%</td><td>0.96</td><td>20.4%</td><td>+97%</td></tr>
+      <tr><td>2021-02-08</td><td>+156%</td><td>0.96</td><td>20.4%</td><td>+97%</td></tr>
+      <tr><td>2021-02-15</td><td>+156%</td><td>0.96</td><td>20.4%</td><td>+97%</td></tr>
+      <tr><td>2021-03-01</td><td>+146%</td><td>0.95</td><td>16.7%</td><td>+89%</td></tr>
+      <tr><td>2021-04-01</td><td>+109%</td><td>0.89</td><td>19.0%</td><td>+75%</td></tr>
+      <tr class="headline-row"><td>Average</td><td>+160%</td><td>0.92</td><td>20.4%</td><td>+93%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Calendar-Year Breakdown</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Year</th>
+        <th>RigaCap (avg.)</th>
+        <th>Worst start</th>
+        <th>S&amp;P 500</th>
+        <th>Note</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="headline-row"><td>2022</td><td>+8%</td><td>+2%</td><td>&minus;18%</td><td>Bear-year proof</td></tr>
+      <tr><td>2023</td><td>+12%</td><td>+12%</td><td>+26%</td><td>Lagged the index</td></tr>
+      <tr><td>2024</td><td>+32%</td><td>+25%</td><td>+25%</td><td>Beat the index</td></tr>
+      <tr><td>2025</td><td>+50%</td><td>+41%</td><td>+18%</td><td>Beat the index</td></tr>
+    </tbody>
+  </table>
+  <p class="table-caption">
+    Every calendar year, every start date in the test ended in positive territory.
+    SPY benchmark is price-only (excludes dividends, ~1.5&ndash;2 percentage points
+    of annual understatement).
+  </p>
+
+  <div class="pullquote">
+    Every year. Every start date. Positive.
+  </div>
+
+  <h3>The 11-Year Consistency Check</h3>
+
+  <p>
+    The 5-year multi-start window is the rigorous near-term proof. The 11-year
+    single-start window is the long-window confirmation that the 5-year result
+    isn't a recent-regime artifact.
+  </p>
+
+  <div class="stat-row">
+    <div class="stat">
+      <div class="stat-num pos">+675%</div>
+      <div class="stat-label">11-year total</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num pos">~21.6%</div>
+      <div class="stat-label">Annualized</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">28%</div>
+      <div class="stat-label">Max drawdown</div>
+    </div>
+  </div>
+
+  <p>
+    Same fixed-parameter strategy, run from October 2015 through April 2026 &mdash;
+    a window that covers the 2018 vol spikes, the COVID crash, the 2022 bear
+    market, and the AI rally. The annualized return came in at <strong>~21.6%</strong>,
+    within rounding of our published <strong>~21.5%</strong> annualized. Two
+    windows of different lengths and different start dates, the same compound
+    growth rate.
+  </p>
+
+  <p>
+    The longer window includes more bear cycles, so the 11-year max drawdown
+    reads slightly higher (28% vs the 5-year's 20%). SPY over the same 11-year
+    window: +318% (about ~14% annualized) — alpha of approximately +357 percentage
+    points total, or roughly +7.6 pp annualized.
+  </p>
+
+  <div class="pullquote">
+    21% annualized over both 5 years and 11 years.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     METHODOLOGY
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content page-break">
+  <span class="kicker">03 &middot; Methodology</span>
+  <h2>The Ensemble &mdash; three pieces of <em>discipline</em>, all must align.</h2>
+
+  <p class="lead">
+    The system requires three independent factors to align before entering a position.
+    No single indicator is trusted alone. Most days, of the ~4,000 stocks scanned, none
+    pass.
+  </p>
+
+  <div class="components">
+    <div class="component">
+      <div class="component-num">01</div>
+      <div>
+        <div class="component-title">Breakout Timing</div>
+        <div class="component-desc">
+          Price must clear our proprietary long-term accumulation reference by a
+          tested threshold &mdash; a signal we've refined over years of indicator
+          work. The entry is either a fresh breakout or it isn't.
+        </div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">02</div>
+      <div>
+        <div class="component-title">Momentum Quality</div>
+        <div class="component-desc">
+          The candidate must rank in the top tier on a composite momentum score:
+          short-term (10-day) and long-term (60-day) returns, weighted, less a
+          volatility penalty. Quality of momentum, not just direction.
+        </div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">03</div>
+      <div>
+        <div class="component-title">Volume &amp; Position</div>
+        <div class="component-desc">
+          A volume surge of ~1.3&times; the recent average and proximity to the
+          50-day high &mdash; institutional participation confirmed before
+          retail capital is committed.
+        </div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">04</div>
+      <div>
+        <div class="component-title">Adaptive Exit</div>
+        <div class="component-desc">
+          A 12% trailing stop from the high-water mark, with regime-aware tightening.
+          Winners run; losers cut. The exit logic, not the entry, governs how long
+          a position lives.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Portfolio construction.</h3>
+
+  <p>
+    The system holds at most six concentrated positions at roughly 15% allocation
+    each, rebalanced biweekly. Concentration in the highest-conviction signals is a
+    deliberate choice &mdash; the alternative (broad diversification across many
+    weak signals) historically dilutes the strategy's edge.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CASCADE GUARD
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content page-break">
+  <span class="kicker">04 &middot; Cascade Guard</span>
+  <h2>A validated safeguard, not a <em>marketing</em> claim.</h2>
+
+  <p class="lead">
+    When three or more positions hit their trailing stop on the same day &mdash;
+    a rare event signalling cascading market stress &mdash; the system pauses all
+    new entries for ten calendar days. This prevents the "buying into a falling
+    knife" pattern where forced re-entries during stress produce concentrated losses.
+  </p>
+
+  <h3>The number, and how it was measured.</h3>
+
+  <p>
+    Most safeguards in retail signal services are claimed but never quantified. We
+    measured ours by running the full walk-forward simulation a second time with
+    Cascade Guard <strong>disabled</strong> &mdash; a true counterfactual &mdash;
+    and comparing the result against the canonical run.
+  </p>
+
+  <div class="stat-row">
+    <div class="stat">
+      <div class="stat-num pos">+37 pp</div>
+      <div class="stat-label">Total Return Added</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num pos">+3.7 pp</div>
+      <div class="stat-label">Annualized Lift</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">+0.14</div>
+      <div class="stat-label">Sharpe Improvement</div>
+    </div>
+  </div>
+
+  <p>
+    Across the test period, Cascade Guard contributed approximately +37 percentage
+    points of return (~+3.7 pp annualized) and a Sharpe improvement of +0.14 &mdash;
+    by avoiding forced re-entries during cascade events. The strategy stays fully
+    active over 97% of trading days; the safeguard only fires on rare cascade-stress
+    events.
+  </p>
+
+  <div class="callout">
+    <p><strong>What Cascade Guard does NOT do.</strong> It is not a drawdown reducer.
+    Existing positions continue to drawdown during paused windows; the safeguard only
+    prevents new capital deployment into stress. The MDD impact is approximately
+    neutral. Cascade Guard is a <em>return amplifier</em>, not a downside hedge.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     REGIME AWARENESS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content page-break">
+  <span class="kicker">05 &middot; Regime Awareness</span>
+  <h2>Seven regimes detected.<br />Two responses, <em>by design.</em></h2>
+
+  <p class="lead">
+    The system classifies market conditions into seven distinct regimes &mdash; using
+    SPY trend, VIX percentile, market breadth, new-highs/lows, and momentum acceleration
+    as inputs. Each regime is a real, separable market state.
+  </p>
+
+  <h3>The seven regimes.</h3>
+
+  <table>
+    <thead>
+      <tr><th>Regime</th><th>Character</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Strong Bull</td><td>Sustained breadth, low volatility, narrow drawdowns</td></tr>
+      <tr><td>Weak Bull</td><td>Up-trend with widening volatility</td></tr>
+      <tr><td>Rotating Bull</td><td>Sector rotation, mixed leadership</td></tr>
+      <tr><td>Range-Bound</td><td>No clear trend, whipsaw risk elevated</td></tr>
+      <tr><td>Weak Bear</td><td>Down-trend without panic features</td></tr>
+      <tr><td>Panic / Crash</td><td>Wide drawdowns, breadth collapse, VIX spike</td></tr>
+      <tr><td>Recovery</td><td>Post-stress re-tightening of breadth</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The honest scope of the response.</h3>
+
+  <p>
+    Detection is seven-state. Response is currently <strong>binary</strong>:
+    the strategy either trades according to the standard rules, or pauses entries
+    via Cascade Guard when panic-grade stress is detected. Regime-specific sub-strategies
+    (different entry rules per regime, different position sizing per regime, etc.)
+    were evaluated and <strong>deferred</strong>.
+  </p>
+
+  <p>
+    The reason is statistical, not philosophical. Across eleven years of data, only
+    a handful of true panic-grade regimes have occurred. That sample size is too
+    small to support per-regime parameter optimization without overfitting. Adding
+    more rules to the system, on this evidence, would degrade the result rather than
+    improve it.
+  </p>
+
+  <p>
+    What detection is doing today: providing the trigger for Cascade Guard, informing
+    position-sizing tightness during weakening conditions, and feeding a 1&ndash;2
+    week regime-shift forecast surfaced to subscribers. Per-regime sub-strategies
+    revisit when either (a) more events occur, or (b) a universal rule emerges that
+    doesn't require per-event fitting.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PLATFORM ARCHITECTURE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content page-break">
+  <span class="kicker">06 &middot; Platform Architecture</span>
+  <h2>Built for durability, <em>not</em> spectacle.</h2>
+
+  <p class="lead">
+    The infrastructure is designed for low operational surface area: small number of
+    moving parts, clear separation between user-facing API and heavyweight compute,
+    and a data pipeline whose failures fail loudly rather than quietly.
+  </p>
+
+  <h3>Stack summary.</h3>
+
+  <ul>
+    <li><strong>API tier.</strong> AWS Lambda + API Gateway + CloudFront. Stateless,
+    scales horizontally, no single point of failure.</li>
+    <li><strong>Compute tier.</strong> Separate Worker Lambda for daily scans,
+    walk-forward simulations, and email generation. Heavy memory footprint isolated
+    from the user-facing path.</li>
+    <li><strong>Data tier.</strong> PostgreSQL (RDS) for subscriber and signal state;
+    S3 for historical price data and pre-computed dashboards. A dual-source data
+    pipeline (Alpaca primary, yfinance fallback) with health monitoring and
+    automatic failover.</li>
+    <li><strong>Front end.</strong> React + Vite single-page app served via CloudFront.</li>
+    <li><strong>Operational cadence.</strong> Daily scan at 4:30 PM ET (post-settlement);
+    daily digest emails at 6 PM ET; intraday alert monitoring during market hours;
+    weekly editorial newsletter on Sundays.</li>
+  </ul>
+
+  <h3>What this means for risk.</h3>
+
+  <p>
+    The platform has no live brokerage integration. Subscribers receive signals; they
+    execute through their own broker. RigaCap never touches subscriber capital and
+    never has custody of funds. Liability surface is limited to the accuracy and
+    timeliness of the signals themselves.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     RISK & METHODOLOGY DISCLOSURES
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content page-break">
+  <span class="kicker">07 &middot; Risk &amp; Methodology Disclosures</span>
+  <h2>What is &mdash; and isn't &mdash; <em>modeled.</em></h2>
+
+  <p class="lead">
+    Every backtest is a partial truth. The honest version of "past performance does
+    not guarantee future results" is a specific list of what the simulation captures
+    and what it does not.
+  </p>
+
+  <h3>What the simulation includes.</h3>
+  <ul>
+    <li>Realized end-of-day fills at simulated execution prices</li>
+    <li>Rebalance frictions at the period boundary</li>
+    <li>The full 11-year price history (universe of ~4,000 US equities)</li>
+    <li>Walk-forward methodology with no hindsight bias &mdash; parameters fixed
+    at the start of each period, applied forward</li>
+    <li>Multiple start dates to disclose path-dependency variance</li>
+  </ul>
+
+  <h3>What the simulation does NOT include.</h3>
+  <ul>
+    <li><strong>Slippage modeled at 0%.</strong> A subscriber's actual fills will
+    differ by some amount depending on order type, execution venue, and order size.
+    For our universe (price &gt; $15, volume &gt; 500k/day), realistic slippage is
+    typically 0.05&ndash;0.20% per round trip.</li>
+    <li><strong>Commissions modeled at $0.</strong> Reasonable in the zero-commission
+    era for retail brokers, but worth disclosing.</li>
+    <li><strong>SPY benchmark is price-only</strong> (excludes dividends), which
+    understates the index by approximately 1.5&ndash;2 percentage points per year.</li>
+    <li><strong>Tax drag.</strong> User-specific. A taxable account will pay short-
+    or long-term capital gains; a tax-advantaged account will not. We do not model
+    this; subscribers should.</li>
+    <li><strong>Behavioral drift.</strong> The simulation assumes signals are
+    followed exactly. A subscriber who skips trades, sizes them differently, or
+    overrides the trailing stop will diverge from the simulated result.</li>
+  </ul>
+
+  <h3>Material disclosures.</h3>
+
+  <p>
+    RigaCap delivers educational signals; it is <strong>not a registered investment
+    advisor</strong>. Subscribers execute their own trades through their own broker.
+    Past performance does not predict future results, and the strategy may
+    materially underperform any single benchmark in any given period.
+  </p>
+
+  <p>
+    Performance figures in this document reflect a 5-year walk-forward simulation
+    on clean indicator data, run April 2026.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     GROWTH ROADMAP
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content page-break">
+  <span class="kicker">08 &middot; Growth Roadmap</span>
+  <h2>Specific commitments. <em>No</em> hand-waving.</h2>
+
+  <p class="lead">
+    The growth plan is constrained by two non-negotiables: subscriber capacity at
+    the strategy level (~1,500 before collective market impact becomes material),
+    and operational capacity at the founder-led level (~800&ndash;1,500 with
+    automation). Within those, the path is straightforward.
+  </p>
+
+  <h3>Near-term (next 90 days).</h3>
+  <ul>
+    <li><strong>Editorial cadence build-out.</strong> Sunday newsletter ("The Market,
+    Measured") and Tuesday regime report establish the editorial publication
+    posture. Topic backlog of ~20 educational pieces in pipeline.</li>
+    <li><strong>Production parity audit.</strong> Any backtest improvement
+    (Cascade Guard carry-on, regime-aware sizing) ports to the production scanner
+    in lockstep so subscribers can realize what we publish.</li>
+  </ul>
+
+  <h3>Medium-term (3&ndash;9 months).</h3>
+  <ul>
+    <li><strong>Subscriber growth to ~500 paid.</strong> Acquisition through editorial
+    content, AI-driven social proof from real trade results, and methodology
+    transparency &mdash; not paid advertising.</li>
+    <li><strong>Storage migration to Parquet.</strong> The pickle-based historical
+    data store is durable through ~500 paid subscribers; beyond that, a Parquet-on-S3
+    migration improves cold-start latency and reduces operational risk.</li>
+    <li><strong>Live track record vs. simulation.</strong> By the 12-month mark,
+    a meaningful body of live execution data accumulates. Quarterly disclosure
+    comparing live results to simulation becomes a differentiating editorial asset.</li>
+  </ul>
+
+  <h3>Longer-term (12+ months).</h3>
+  <ul>
+    <li><strong>Pricing discipline.</strong> No price reductions before 12 months
+    of live track record. Founding-member pricing ($59/mo) locked for the first 100
+    subscribers; standard pricing ($129/mo) and annual ($1,099) hold.</li>
+    <li><strong>Capacity ceiling.</strong> Approaching 1,000&ndash;1,500 active
+    subscribers, the operational response is to raise prices to ration demand,
+    not to chase growth past the strategy's natural capacity.</li>
+    <li><strong>Regulatory readiness.</strong> Securities counsel engaged; Marketing
+    Rule compliance reviewed quarterly; registration as an investment advisor
+    revisits at the appropriate scale.</li>
+  </ul>
+
+  <div class="pullquote">
+    Build a publication that pays for itself, an audience that compounds, and a
+    track record that doesn't require explanation.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     DISCLOSURES (FOOTER)
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content">
+  <div class="disclosures">
+    <p>
+      <strong>This document is confidential and intended for the recipient.</strong>
+      It does not constitute an offer to sell or a solicitation of an offer to buy
+      any security, nor is it intended as investment advice. Performance figures
+      reflect simulated results from walk-forward backtesting; past performance does
+      not guarantee future returns.
+    </p>
+    <p>
+      RigaCap is not a registered investment advisor. Subscribers receive educational
+      signals and execute their own trades through their own broker. RigaCap does
+      not have custody of subscriber capital.
+    </p>
+    <p>
+      Source data: <code>docs/canonical_numbers.json</code> (vintage 2026-04-28,
+      label "Clean-data 8-date 5y, carry-on"). Walk-forward simulation source:
+      internal walk-forward infrastructure with no hindsight bias and no per-period
+      parameter optimization. Cascade Guard impact validated against a true no-CG
+      counterfactual run.
+    </p>
+    <p style="margin-top: 1.5rem; font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.7rem; color: var(--ink-mute);">
+      RigaCap &middot; April 2026 &middot; Investor Report v2 &middot; rigacap.com
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

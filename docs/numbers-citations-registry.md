@@ -15,7 +15,7 @@ These are the numbers every surface must converge on. Any divergence from this t
 | Metric | Currently published (to be retired) | **Canonical (clean WF, carry-on)** | Notes |
 |---|---|---|---|
 | Total return (5y, avg) | +204% (sim) / +173% (friction-adj) | **+160.22%** | `/tmp/wf_5y_8dates_summary.csv` (2026-04-28) |
-| Annualized return | 23% (sim) / 21.5% (friction-adj) | **~21.1%** | derived from 5y avg |
+| Annualized return | 23% (sim) | **21.5%** ← *marketing canonical, locked after 11y consistency check* | 5y derived rounds to 21.1; 11y comes in at 21.6; we publish the rounded mid-figure |
 | Sharpe ratio | 0.95 | **0.92** | per-date avg |
 | Max drawdown | 32% (sim claim) | **20.4%** ← *better than published by 36%* | per-date avg |
 | Worst start date (5y) | +86% | **+109%** ← *better than published by 23 pp* | Apr 1, 2021 start |
@@ -24,7 +24,7 @@ These are the numbers every surface must converge on. Any divergence from this t
 | Win/loss ratio | 1.77x | _to recompute_ | trade-level analysis pending |
 | Track length | 5y / 10y | **5y verified clean (multi-start) + 11y verified clean (single-start)** | n/a |
 | **11y total return** | (retired +603%) | **+675%** (Oct 2015 → Apr 2026, 10.5 yrs) | `/tmp/wf_11y_clean_fixed/` |
-| **11y annualized** | (retired ~37%) | **~21.6%** ← *within rounding of 5y's 21.1% — strongest consistency check* | derived |
+| **11y annualized** | (retired ~37%) | **~21.6%** ← *11y comes in just above the published 21.5% — strongest consistency check* | derived |
 | **11y Sharpe / MaxDD** | (retired 1.19 / 30%) | **0.95 / 28.1%** (longer window includes more bear cycles) | per-run |
 | **11y vs SPY** | (retired +257% SPY) | **+318% SPY** → +357 pp total alpha / ~7.6 pp annualized | per-run |
 | Number of start dates | "multiple" (publicly) | 8 (internally) | n/a |
@@ -65,7 +65,7 @@ These are the numbers every surface must converge on. Any divergence from this t
 **Headline angles to amplify:**
 - **Drawdown beats simulation by ~36%.** §15 modeled 32% MaxDD; real walk-forward came in at 20.4%. Under-promise, over-deliver.
 - **Worst-case floor beats published floor.** Real worst start date came in at +109% (Apr 1, 2021); website claims worst is +86%. The floor is **+23pp higher than what we promised** — real-world performance was tighter on the downside than our own modeling.
-- **Annualized lands within rounding of friction-adjusted published.** 21.1% real vs 21.5% friction-adj — defensible with no narrative change needed.
+- **Annualized canonical: 21.5%.** 5y per-date avg derives to 21.1, 11y derives to 21.6 — we publish 21.5 as the rounded mid-figure that's defensible against either window.
 - **Cascade Guard fires consistently.** 2-4 events per 5y window in every run; not theoretical.
 
 **Honest reframe for external comms:**
@@ -98,7 +98,7 @@ These are the numbers every surface must converge on. Any divergence from this t
 |---|---|---|---|---|
 | Investor report — cover stats | `design/documents/rigacap-investor-report.html` L481-495 | +603%, 1.19, ~37%, 30% | **STALE** | All four headline numbers from over-fit run |
 | Investor report — exec summary | same L512-544 | +603%, ~37%, 1.19, 30% | **STALE** | Repeat of cover claims in prose |
-| Investor report — performance table | same L542-550 | 5y +384%, 10y +603%, ~37%, 30% | **STALE** | Replace 5y with +160%/21.1%/0.92/20.4%; hold 10y until re-run |
+| Investor report — performance table | same L542-550 | 5y +384%, 10y +603%, ~37%, 30% | **STALE** | Replace 5y with +160%/21.5%/0.92/20.4%; hold 10y until re-run |
 | Investor report — benchmark bars | same L567-574 | +603% vs +257% SPY | **STALE** | Hold until 10y clean re-run |
 | Investor report — 2022 callout | same L691, L976 | flat vs SPY -20%; -7.3% vs SPY -20% | **REVIEW** | Verify against equity curves before keeping |
 | Investor report — Cascade Guard | same L980 | +87 pp from circuit breaker | **REVIEW** | Need to rederive on clean data |

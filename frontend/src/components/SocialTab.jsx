@@ -752,7 +752,7 @@ function LaunchQueueSection({ fetchWithAuth, onQueued, posts = [] }) {
               hashtags: content.hashtags || '',
               post_type: 'manual',
               status: 'draft',
-              image_s3_key: platform !== 'threads' && lp.imageUrl ? `social/images/${lp.imageUrl.split('/').pop()}` : undefined,
+              image_s3_key: lp.imageUrl ? `social/images/${lp.imageUrl.split('/').pop()}` : undefined,
             }),
           });
           if (res.ok) success++;

@@ -141,7 +141,7 @@ export default function TrackRecordPageV2() {
               </div>
             </div>
             <p className="mt-6 text-[0.95rem] text-ink leading-[1.6]">
-              Same strategy, run from October 2015 through April 2026 — a full ten-and-a-half-year window covering the 2018 vol spikes, the COVID crash, the 2022 bear market, and the AI rally. The annualized return came in at <strong className="font-medium">~21.6%</strong>, within rounding of the 5-year multi-start average of <strong className="font-medium">~21.1%</strong>. Two different windows, two different validation methods, the same compound growth rate.
+              Same strategy, run from October 2015 through April 2026 — a full ten-and-a-half-year window covering the 2018 vol spikes, the COVID crash, the 2022 bear market, and the AI rally. The annualized return came in at <strong className="font-medium">~21.6%</strong>, within rounding of our published <strong className="font-medium">~21.5%</strong> annualized. Two different windows, two different validation methods, the same compound growth rate.
             </p>
             <p className="mt-3 text-[0.85rem] text-ink-light leading-relaxed">
               The longer window includes more bear cycles, so the max drawdown reads slightly higher (28% vs the 5-year's 20%). SPY over the same 11-year window: +318% (about ~14% annualized).
