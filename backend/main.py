@@ -4400,7 +4400,11 @@ def handler(event, context):
                     for f in info_flags:
                         html_lines.append(f"<li style='{LI}'>{f}</li>")
                     html_lines.append("</ul>")
-                html = "\n".join(html_lines)
+                # send_admin_alert wraps the message in <pre style="white-space:pre-wrap">,
+                # which preserves literal newlines as visual gaps. Join with no newlines
+                # so the inline-styled HTML elements lay out cleanly without breathy
+                # whitespace between them.
+                html = "".join(html_lines)
 
                 await admin_email_service.send_admin_alert(
                     to_email="erik@rigacap.com",
