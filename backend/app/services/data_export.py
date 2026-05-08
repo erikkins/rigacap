@@ -1543,15 +1543,21 @@ class DataExportService:
                             "p_rows": p_rows, "q_rows": q_rows,
                         })
 
-                    # In pickle, `date` lives on the DataFrame index; in parquet
-                    # it's an explicit column. Normalize so the index name (if
-                    # set) is treated as part of the pickle column set — otherwise
-                    # the harness flags every symbol on a structural-but-spurious
-                    # `only_in_parquet=['date']` divergence.
+                    # `date` representation differs by store: pyarrow's natural
+                    # form puts it on the DataFrame index, while older pickle
+                    # exports kept it as a regular column. The diff harness
+                    # should treat "index named X" and "column named X" as the
+                    # same logical fact on either side. Without the symmetric
+                    # parquet normalization below, every symbol reported a
+                    # spurious column_set_diff (~4750 events/day) blocking the
+                    # Stage 3b cutover for what was a representation difference,
+                    # not a data difference.
                     p_cols = set(p_df.columns)
                     if p_df.index.name:
                         p_cols.add(p_df.index.name)
                     q_cols = set(q_df.columns)
+                    if q_df.index.name:
+                        q_cols.add(q_df.index.name)
                     if p_cols != q_cols:
                         events.append({
                             "symbol": sym, "type": "column_set_diff",
