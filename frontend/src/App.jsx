@@ -3567,30 +3567,23 @@ function Dashboard() {
 
                       // Continuity badge: NEW TODAY / DAY N / RE-SIGNAL.
                       // Only renders here in the signals view; monitoring intentionally skips it.
+                      // whitespace-nowrap on every variant so the badge never wraps in
+                      // narrow table cells (Advanced mode) — that was making the row
+                      // stack 3-deep and pushing the right-side action button onto a
+                      // second line. Keep badge text short for the same reason; gap-
+                      // days detail stays in the data + chart modal, not the badge.
                       const renderContinuityBadge = (s) => {
                         const c = s.continuity;
                         if (!c) return null;
+                        const base = "font-mono text-[0.62rem] tracking-[0.18em] uppercase ml-2 whitespace-nowrap";
                         if (c.is_new_today) {
-                          return (
-                            <span className="font-mono text-[0.62rem] tracking-[0.18em] uppercase text-claret font-medium ml-2">
-                              NEW today
-                            </span>
-                          );
+                          return <span className={`${base} text-claret font-medium`}>NEW today</span>;
                         }
                         if (c.is_resignal) {
-                          const gap = c.gap_days_before;
-                          return (
-                            <span className="font-mono text-[0.62rem] tracking-[0.18em] uppercase text-claret-light ml-2">
-                              Re-signal{gap ? ` · ${gap}d gap` : ''}
-                            </span>
-                          );
+                          return <span className={`${base} text-claret-light`}>Re-signal</span>;
                         }
                         if ((c.consecutive_days || 0) >= 2) {
-                          return (
-                            <span className="font-mono text-[0.62rem] tracking-[0.18em] uppercase text-ink-mute ml-2">
-                              Day {c.consecutive_days}
-                            </span>
-                          );
+                          return <span className={`${base} text-ink-mute`}>Day {c.consecutive_days}</span>;
                         }
                         return null;
                       };
@@ -3628,7 +3621,7 @@ function Dashboard() {
                             </div>
                             <div className="flex items-center gap-2">
                               {s.is_fresh && (
-                                <span className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase px-3 py-1.5 bg-ink text-paper border border-ink hover:bg-claret hover:border-claret transition-colors">RECORD ENTRY</span>
+                                <span className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase px-3 py-1.5 bg-ink text-paper border border-ink hover:bg-claret hover:border-claret transition-colors whitespace-nowrap">RECORD ENTRY</span>
                               )}
                             </div>
                           </div>
@@ -3680,7 +3673,7 @@ function Dashboard() {
                                   e.stopPropagation();
                                   setChartModal({ type: 'signal', data: s, symbol: s.symbol });
                                 }}
-                                className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase px-3 py-1.5 bg-ink text-paper border border-ink hover:bg-claret hover:border-claret transition-colors"
+                                className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase px-3 py-1.5 bg-ink text-paper border border-ink hover:bg-claret hover:border-claret transition-colors whitespace-nowrap"
                               >
                                 RECORD ENTRY
                               </button>
