@@ -1366,6 +1366,108 @@ class DataExportService:
             logger.error(f"Failed to export snapshot for {date_str}: {e}")
             return {"success": False, "message": str(e)}
 
+    def compute_signal_continuity(
+        self, today_symbols: List[str], lookback_days: int = 14
+    ) -> Dict[str, Dict]:
+        """For each symbol in today's buy_signals, compute consecutive-day
+        continuity by reading recent daily snapshots from S3.
+
+        Returns: {symbol: {
+            consecutive_days: int,        # length of the current uninterrupted run
+            is_new_today:    bool,        # True iff today is day 1 of a fresh run
+            is_resignal:     bool,        # True iff the run started after a >=2 day gap
+            gap_days_before: int|None,    # trading days the symbol was missing right before
+                                          # the current run started (None unless is_resignal)
+            run_started_date: str|None,   # ISO date when the current run began
+        }}
+
+        Rules:
+        - 0-day gap (consecutive trading days): Day count grows.
+        - 1-day gap: tolerated (data noise); count continues across it but the gap
+                     day itself is not counted as a present day.
+        - >=2 day gap: run breaks; current run starts after the gap.
+        - We only consider days for which a snapshot exists (= trading days).
+          Weekends and holidays don't have snapshots, so they don't count as
+          "missing" — going from Friday to Monday is one consecutive trading day.
+
+        Edge: if our lookback only contains a small number of days, we report what
+        we can see; we don't fabricate a gap from "before our visibility window."
+        """
+        from datetime import date, timedelta
+        today = date.today()
+
+        # Build a map of {date_iso: set_of_symbols} for each day we have a snapshot.
+        # Skip the no-snapshot dates (weekends, holidays, scan failures) entirely.
+        snap_by_date: Dict[str, set] = {}
+        for d_offset in range(0, lookback_days + 1):
+            d = today - timedelta(days=d_offset)
+            d_str = d.strftime("%Y-%m-%d")
+            snap = self.read_snapshot(d_str)
+            if snap and isinstance(snap.get('buy_signals'), list):
+                snap_by_date[d_str] = {
+                    s.get('symbol') for s in snap['buy_signals'] if s.get('symbol')
+                }
+
+        # Trading days we have data for, oldest first
+        sorted_dates = sorted(snap_by_date.keys())
+        if not sorted_dates:
+            return {sym: {
+                "consecutive_days": 1, "is_new_today": True, "is_resignal": False,
+                "gap_days_before": None, "run_started_date": None,
+            } for sym in today_symbols}
+
+        out: Dict[str, Dict] = {}
+        for sym in today_symbols:
+            # Presence list in chronological order; last entry = today (or most recent snap)
+            presence = [(d, sym in snap_by_date[d]) for d in sorted_dates]
+
+            # Defensive: if today's snap doesn't yet contain the symbol (caller is
+            # mid-build before the snapshot is written) treat as fresh-day-1.
+            if not presence[-1][1]:
+                out[sym] = {
+                    "consecutive_days": 1, "is_new_today": True, "is_resignal": False,
+                    "gap_days_before": None, "run_started_date": presence[-1][0],
+                }
+                continue
+
+            # Walk backward through trading days; tolerate single-day gaps, break on 2+.
+            run_length = 0
+            run_start_date = None
+            pending_misses = 0
+            broke_on_gap = False
+            i = len(presence) - 1
+            while i >= 0:
+                d_str, is_present = presence[i]
+                if is_present:
+                    run_length += 1
+                    run_start_date = d_str
+                    pending_misses = 0
+                else:
+                    pending_misses += 1
+                    if pending_misses >= 2:
+                        broke_on_gap = True
+                        break
+                i -= 1
+
+            # If broken on gap, count the full gap length going further back
+            gap_days_before = 0
+            if broke_on_gap:
+                gap_days_before = pending_misses
+                j = i - 1
+                while j >= 0 and not presence[j][1]:
+                    gap_days_before += 1
+                    j -= 1
+
+            out[sym] = {
+                "consecutive_days": run_length,
+                "is_new_today": run_length == 1,
+                "is_resignal": gap_days_before >= 2,
+                "gap_days_before": gap_days_before if gap_days_before >= 2 else None,
+                "run_started_date": run_start_date,
+            }
+
+        return out
+
     def read_snapshot(self, date_str: str) -> Optional[dict]:
         """
         Read a date-keyed dashboard snapshot for time-travel mode.

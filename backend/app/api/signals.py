@@ -1295,6 +1295,25 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
     except Exception as hl_err:
         print(f"⚠️ Headline fetch failed (non-fatal): {hl_err}")
 
+    # --- Signal continuity (Day N / NEW / Re-signal badges) ---
+    # For each symbol in today's buy_signals, look back through recent daily
+    # snapshots to compute its consecutive-day run. Bake the values onto each
+    # signal entry so the frontend can render a badge and the AI briefing can
+    # differentiate "new today" from "continuing a run." Tolerates 1-day gaps
+    # (data noise); breaks on >=2 days of misses (real drop-out).
+    try:
+        from app.services.data_export import data_export_service as _des
+        if buy_signals:
+            _continuity = _des.compute_signal_continuity(
+                [s['symbol'] for s in buy_signals if s.get('symbol')]
+            )
+            for s in buy_signals:
+                cont = _continuity.get(s.get('symbol'))
+                if cont:
+                    s['continuity'] = cont
+    except Exception as cont_err:
+        print(f"⚠️ Signal continuity compute failed (non-fatal): {cont_err}")
+
     # --- Market context (AI-generated daily briefing) ---
     # Reuse today's cached context if it exists (generate once per day, not per call)
     market_context = None
@@ -1432,11 +1451,34 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
             cross_asset_block = "\n".join(cross_asset_lines) + "\n" if cross_asset_lines else ""
             spy_tech_line = f"SPY technicals: {spy_technical}\n" if spy_technical else ""
 
+            # Continuity breakdown: NEW today vs continuing-run vs re-signaling.
+            # Use the per-symbol continuity computed before the briefing.
+            new_today_syms = []
+            continuing_syms = []  # list of "TICKER (Day N)" strings
+            resignal_syms = []    # list of "TICKER (re-signal after Nd)" strings
+            for s in buy_signals:
+                cont = s.get('continuity') or {}
+                sym = s.get('symbol')
+                if not sym:
+                    continue
+                if cont.get('is_resignal'):
+                    gap = cont.get('gap_days_before') or 0
+                    resignal_syms.append(f"{sym} (re-signal after {gap}d)")
+                elif cont.get('is_new_today'):
+                    new_today_syms.append(sym)
+                elif cont.get('consecutive_days', 0) >= 2:
+                    continuing_syms.append(f"{sym} (Day {cont['consecutive_days']})")
+            new_line = f"New today ({len(new_today_syms)}): {', '.join(new_today_syms[:8]) or 'none'}"
+            cont_line = f"Continuing runs ({len(continuing_syms)}): {', '.join(continuing_syms[:8]) or 'none'}"
+            resig_line = f"Re-signaling ({len(resignal_syms)}): {', '.join(resignal_syms[:6]) or 'none'}"
+
             context_block = (
                 f"Signal count: {today_count} ensemble signals{change_note}\n"
                 f"Fresh entries today: {fresh_count}{fresh_note}\n"
+                f"{new_line}\n"
+                f"{cont_line}\n"
+                f"{resig_line}\n"
                 f"Dropped since yesterday: {dropped_list}{dropped_extra}\n"
-                f"New since yesterday: {added_list}{added_extra}\n"
                 f"Top 5 momentum: {', '.join(top5)}\n"
                 f"S&P 500: ${spy_price} | Market Fear: {vix_level} (VIX)\n"
                 f"{spy_tech_line}"
@@ -1471,6 +1513,13 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                 "- Never give financial advice or say 'buy' / 'sell'.\n"
                 "- Reference specific tickers, regimes, or data points when interesting.\n"
                 "- Vary your phrasing. Don't start every sentence the same way. Change up structure daily.\n"
+                "- Be HONEST about signal continuity. The data shows 'New today' vs 'Continuing runs' vs "
+                "'Re-signaling.' Most days, the qualifying list is mostly continuing names with one or two "
+                "new entries. DO NOT frame continuing names as if they appeared today; if you cite a name, "
+                "say 'continues its run' or 'on day N' for continuing names, and 'new today' for actually "
+                "new ones. Re-signaling names ('re-signal after Nd') get a 'returns to the list after a gap' "
+                "framing. This is a discipline product; never imply fresh research drama where the data is "
+                "showing patient continuity.\n"
                 "- If cross-asset data shows something notable (everything down, rotation happening, "
                 "bonds diverging from stocks), LEAD with that — it's more interesting than signal counts.\n"
                 "- If signals dropped hard, be matter-of-fact, not alarming.\n"

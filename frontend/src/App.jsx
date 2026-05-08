@@ -3565,6 +3565,36 @@ function Dashboard() {
                       })();
                       const heldFreshCount = (dashboardData?.total_fresh_count || 0) - freshSignals.length;
 
+                      // Continuity badge: NEW TODAY / DAY N / RE-SIGNAL.
+                      // Only renders here in the signals view; monitoring intentionally skips it.
+                      const renderContinuityBadge = (s) => {
+                        const c = s.continuity;
+                        if (!c) return null;
+                        if (c.is_new_today) {
+                          return (
+                            <span className="font-mono text-[0.62rem] tracking-[0.18em] uppercase text-claret font-medium ml-2">
+                              NEW today
+                            </span>
+                          );
+                        }
+                        if (c.is_resignal) {
+                          const gap = c.gap_days_before;
+                          return (
+                            <span className="font-mono text-[0.62rem] tracking-[0.18em] uppercase text-claret-light ml-2">
+                              Re-signal{gap ? ` · ${gap}d gap` : ''}
+                            </span>
+                          );
+                        }
+                        if ((c.consecutive_days || 0) >= 2) {
+                          return (
+                            <span className="font-mono text-[0.62rem] tracking-[0.18em] uppercase text-ink-mute ml-2">
+                              Day {c.consecutive_days}
+                            </span>
+                          );
+                        }
+                        return null;
+                      };
+
                       const renderSimpleSignal = (s) => {
                         const label = s.signal_strength_label || (() => {
                           const score = s.ensemble_score || 0;
@@ -3588,6 +3618,7 @@ function Dashboard() {
                             <div className="flex items-center gap-3">
                               <div>
                                 <span className="font-display text-[1.1rem] font-medium tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>{s.symbol}</span>
+                                {renderContinuityBadge(s)}
                                 <span className="block font-mono text-[0.68rem] text-ink-light tracking-wide">
                                   {s.is_fresh ? `${Math.min(s.days_since_entry ?? 999, s.days_since_crossover ?? 999)}d ago` : `${s.days_since_crossover}d`}
                                 </span>
@@ -3618,6 +3649,7 @@ function Dashboard() {
                             <span className="font-display text-[1.05rem] font-medium tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>
                               {s.symbol}
                             </span>
+                            {renderContinuityBadge(s)}
                             <span className="block font-mono text-[0.68rem] text-ink-light tracking-wide mt-0.5">
                               {s.is_fresh
                                 ? ((s.days_since_entry ?? s.days_since_crossover) === 0 ? 'TODAY' : `${Math.min(s.days_since_entry ?? 999, s.days_since_crossover ?? 999)}D AGO`)
