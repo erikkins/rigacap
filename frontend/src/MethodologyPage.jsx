@@ -143,7 +143,7 @@ export default function MethodologyPage() {
               <div className="grid sm:grid-cols-3 gap-4 pt-3 border-t border-gray-800">
                 <div>
                   <div className="text-gray-500 text-xs uppercase tracking-wider mb-1">Optimized per period</div>
-                  <div className="text-gray-300">Trailing stop %, position size, momentum weights, DWAP threshold, breakout window</div>
+                  <div className="text-gray-300">Trailing stop %, position size, momentum weights, breakout-trigger threshold, confirmation window</div>
                 </div>
                 <div>
                   <div className="text-gray-500 text-xs uppercase tracking-wider mb-1">Fixed across periods</div>

@@ -667,15 +667,15 @@ const LAUNCH_POSTS = [
     label: 'Three-Factor Ensemble',
     imageUrl: '/launch-cards/launch-3.png',
     twitter: {
-      text: "Three things have to align before RigaCap signals a buy:\n\nI. Timing \u2014 DWAP cross with momentum confirmation\nII. Quality \u2014 top-ranked momentum, near 50-day high\nIII. Risk \u2014 regime permits exposure\n\nWhen they don't align, the system stays quiet. Most months, that is the right answer.",
+      text: "Three things have to align before RigaCap signals a buy:\n\nI. Timing \u2014 proprietary breakout trigger\nII. Quality \u2014 leading momentum across the universe\nIII. Risk \u2014 market regime permits exposure\n\nWhen they don't align, the system stays quiet. Most months, that is the right answer.",
       hashtags: '',
     },
     instagram: {
-      text: "A signal is not a single indicator firing. It is a coincidence of three.\n\nI. TIMING. The price has crossed above its 200-day weighted average and is within 5% of a 50-day high. Volume is confirming.\n\nII. QUALITY. The stock ranks in the top decile of momentum across the universe. Trend, not noise.\n\nIII. RISK. The market regime \u2014 one of seven the system reads \u2014 permits new exposure. In a panic regime, no entries fire. In strong bull, full sizing.\n\nWhen all three align, RigaCap signals. When they don't, it does nothing.\n\nMost months, that is the right answer.\n\nrigacap.com",
+      text: "A signal is not a single indicator firing. It is a coincidence of three.\n\nI. TIMING. A proprietary breakout trigger has confirmed.\n\nII. QUALITY. The stock leads its universe on momentum. Trend, not noise.\n\nIII. RISK. The market regime \u2014 one of seven the system reads \u2014 permits new exposure. In a panic regime, no entries fire. In strong bull, full sizing.\n\nWhen all three align, RigaCap signals. When they don't, it does nothing.\n\nMost months, that is the right answer.\n\nrigacap.com",
       hashtags: '#investing #ensemble #systematictrading #rigacap',
     },
     threads: {
-      text: "Three things have to align before RigaCap signals a buy.\n\nI. Timing \u2014 DWAP cross with momentum confirmation\nII. Quality \u2014 top-ranked momentum, near 50-day high\nIII. Risk \u2014 regime permits exposure\n\nWhen they don't align, the system stays quiet. Most months, that is the right answer.\n\nrigacap.com",
+      text: "Three things have to align before RigaCap signals a buy.\n\nI. Timing \u2014 proprietary breakout trigger\nII. Quality \u2014 leading momentum across the universe\nIII. Risk \u2014 market regime permits exposure\n\nWhen they don't align, the system stays quiet. Most months, that is the right answer.\n\nrigacap.com",
     },
   },
   {
