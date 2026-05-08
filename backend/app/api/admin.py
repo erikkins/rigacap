@@ -3874,7 +3874,7 @@ async def send_newsletter_now(
 # context paragraph synthesizing the news.
 
 import httpx
-from app.core.database import SymbolMetadata, Position
+from app.core.database import SymbolMetadata, SymbolMetadataEvent, Position
 
 _TRIAGE_CLAUDE_MODEL = "claude-sonnet-4-6"
 _TRIAGE_CLAUDE_URL = "https://api.anthropic.com/v1/messages"
@@ -4069,9 +4069,11 @@ async def admin_symbol_mark_delisted(
     _admin = Depends(get_admin_user),
 ):
     """Mark a missing-in-Alpaca symbol as delisted: status -> 'delisted',
-    quarantine_reason -> 'manual_delist', clears first_missing_at so it
-    drops out of the active missing-streak counter and won't appear in
-    future hygiene digests."""
+    audit logged in symbol_metadata_events, clears first_missing_at so
+    it drops out of the active missing-streak counter and won't appear
+    in future hygiene digests. The 'delisted' status is in the universe
+    exclusion filter (symbol_metadata_service.get_excluded_symbols), so
+    the daily scanner skips this symbol going forward."""
     symbol = symbol.upper().strip()
     res = await db.execute(select(SymbolMetadata).where(SymbolMetadata.symbol == symbol))
     meta = res.scalar_one_or_none()
@@ -4080,8 +4082,13 @@ async def admin_symbol_mark_delisted(
     meta.status = "delisted"
     meta.quarantine_reason = "manual_delist"
     meta.first_missing_at = None
+    db.add(SymbolMetadataEvent(
+        symbol=symbol,
+        event_type="manual_delist",
+        details_json=json.dumps({"action": "mark_delisted", "via": "admin_triage_page"}),
+    ))
     await db.commit()
-    return _SymbolActionResponse(status="ok", detail=f"{symbol} marked as delisted")
+    return _SymbolActionResponse(status="ok", detail=f"{symbol} marked as delisted; excluded from future scans")
 
 
 @router.post("/symbol-triage/{symbol}/mark-renamed", response_model=_SymbolActionResponse)
@@ -4091,10 +4098,12 @@ async def admin_symbol_mark_renamed(
     db: AsyncSession = Depends(get_db),
     _admin = Depends(get_admin_user),
 ):
-    """Mark a missing symbol as renamed to a new ticker. Stores the new
-    ticker in quarantine_reason so the admin trail is auditable. Does
-    NOT update SymbolMetadata for the new ticker — that will populate
-    naturally on the next nightly hygiene run."""
+    """Mark a missing symbol as renamed to a new ticker. Records the
+    redirect in quarantine_reason and audit-logs the action. Does NOT
+    pre-create the new ticker's metadata row — that will populate
+    naturally on the next nightly hygiene run when the new symbol's
+    Alpaca asset is verified. The 'renamed' status is in the universe
+    exclusion filter so the old ticker is no longer scanned."""
     symbol = symbol.upper().strip()
     new_ticker = body.new_ticker.upper().strip()
     if not new_ticker or new_ticker == symbol:
@@ -4106,8 +4115,13 @@ async def admin_symbol_mark_renamed(
     meta.status = "renamed"
     meta.quarantine_reason = f"renamed_to:{new_ticker}"
     meta.first_missing_at = None
+    db.add(SymbolMetadataEvent(
+        symbol=symbol,
+        event_type="manual_rename",
+        details_json=json.dumps({"action": "mark_renamed", "new_ticker": new_ticker, "via": "admin_triage_page"}),
+    ))
     await db.commit()
-    return _SymbolActionResponse(status="ok", detail=f"{symbol} -> {new_ticker} recorded")
+    return _SymbolActionResponse(status="ok", detail=f"{symbol} -> {new_ticker} recorded; old ticker excluded from future scans")
 
 
 @router.post("/symbol-triage/{symbol}/repoll-now", response_model=_SymbolActionResponse)

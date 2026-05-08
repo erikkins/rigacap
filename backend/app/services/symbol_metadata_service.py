@@ -398,18 +398,24 @@ class SymbolMetadataService:
             } for r in rows]
 
     async def get_excluded_symbols(self) -> List[str]:
-        """List of symbols to exclude from signal generation (quarantined + inactive)."""
+        """List of symbols to exclude from signal generation. Three terminal
+        statuses (quarantined / inactive / delisted) all keep a symbol out
+        of the active universe; only 'active' or 'renamed' (where the
+        renamed-to ticker has its own active row) get scanned.
+        'delisted' is the explicit admin verdict from the triage page —
+        permanent, audited, distinct from 'quarantined' (auto safety hold)
+        and 'inactive' (Alpaca-side flag)."""
         async with async_session() as db:
             result = await db.execute(
                 select(SymbolMetadata.symbol).where(
-                    SymbolMetadata.status.in_(["quarantined", "inactive"])
+                    SymbolMetadata.status.in_(["quarantined", "inactive", "delisted", "renamed"])
                 )
             )
             return [r[0] for r in result.all()]
 
     async def set_status(self, symbol: str, status: str, reason: Optional[str] = None) -> bool:
         """Manually set a symbol's status (admin override)."""
-        assert status in {"active", "inactive", "quarantined"}
+        assert status in {"active", "inactive", "quarantined", "delisted", "renamed"}
         async with async_session() as db:
             result = await db.execute(
                 select(SymbolMetadata).where(SymbolMetadata.symbol == symbol)
