@@ -4302,23 +4302,24 @@ def handler(event, context):
                             f"style='color:#7A2430;text-decoration:none;'>"
                             f"<b>{sym}</b></a>"
                         )
+                        cell = "border:1px solid #DDD5C7;padding:3px 8px;"
                         out_rows.append(
                             f"<tr>"
-                            f"<td>{triage_link}</td>"
-                            f"<td>{days_str}</td>"
-                            f"<td>{action_label}</td>"
-                            f"<td>{'yes' if r['in_open_position'] else ''}</td>"
+                            f"<td style='{cell}'>{triage_link}</td>"
+                            f"<td style='{cell}'>{days_str}</td>"
+                            f"<td style='{cell}'>{action_label}</td>"
+                            f"<td style='{cell}'>{'yes' if r['in_open_position'] else ''}</td>"
                             f"</tr>"
                         )
                     overflow = max(0, len(actionable) - 20)
                     overflow_row = (
-                        f"<tr><td colspan='4'><i>...and {overflow} more</i></td></tr>"
+                        f"<tr><td colspan='4' style='border:1px solid #DDD5C7;padding:3px 8px;color:#5A544E;font-style:italic;'>...and {overflow} more</td></tr>"
                         if overflow else ""
                     )
                     return (
-                        "<p style='font-size:0.9em;color:#5A544E;'>Click a symbol to triage it (last close, Alpaca status, recent news, AI summary, one-click delist/rename/repoll).</p>"
-                        "<table border='1' cellpadding='4' style='border-collapse:collapse;'>"
-                        "<tr><th>symbol</th><th>missing</th><th>action</th><th>held?</th></tr>"
+                        "<p style='margin:4px 0 8px 0;font-size:12px;color:#5A544E;line-height:1.4;'>Click a symbol to triage it &mdash; last close, Alpaca status, recent news, AI summary, one-click delist/rename/repoll.</p>"
+                        "<table cellpadding='6' style='border-collapse:collapse;font-size:13px;line-height:1.3;'>"
+                        "<tr style='background:#FAF7F0;'><th style='border:1px solid #DDD5C7;text-align:left;padding:4px 8px;'>symbol</th><th style='border:1px solid #DDD5C7;text-align:left;padding:4px 8px;'>missing</th><th style='border:1px solid #DDD5C7;text-align:left;padding:4px 8px;'>action</th><th style='border:1px solid #DDD5C7;text-align:left;padding:4px 8px;'>held?</th></tr>"
                         + "".join(out_rows) + overflow_row +
                         "</table>"
                     )
@@ -4360,35 +4361,44 @@ def handler(event, context):
                 status_word = "Healthy" if not critical_flags else "Attention Needed"
                 emoji = "✅" if not critical_flags else "🚨"
 
+                # Inline style tokens — many email clients (Gmail web especially)
+                # strip <head> / <style> blocks, so styling has to live on each
+                # element. The defaults give h3 lots of top/bottom margin and ul
+                # rolls double-spaced, making the email feel breathless.
+                H3 = "margin:18px 0 6px 0;font-size:14px;font-weight:600;color:#141210;"
+                UL = "margin:0 0 12px 0;padding:0 0 0 18px;list-style:disc;line-height:1.45;"
+                LI = "margin:1px 0;padding:0;"
+                P  = "margin:6px 0;line-height:1.45;"
+
                 html_lines = [
-                    f"<h2>{emoji} Data Hygiene: {status_word}</h2>",
-                    "<h3>Asset-ID Verification</h3>",
-                    f"<ul>",
-                    f"<li>Verified: {len(symbols)}</li>",
-                    f"<li>OK: {tally['ok']}</li>",
-                    f"<li>New (first-seen): {tally['new']}</li>",
-                    f"<li>Ticker-reuse (quarantined): {tally['reused']}</li>",
-                    f"<li>Missing in Alpaca: {tally['missing_in_alpaca']}</li>",
+                    f"<h2 style='margin:0 0 14px 0;font-size:18px;font-weight:600;'>{emoji} Data Hygiene: {status_word}</h2>",
+                    f"<h3 style='{H3}'>Asset-ID Verification</h3>",
+                    f"<ul style='{UL}'>",
+                    f"<li style='{LI}'>Verified: {len(symbols)}</li>",
+                    f"<li style='{LI}'>OK: {tally['ok']}</li>",
+                    f"<li style='{LI}'>New (first-seen): {tally['new']}</li>",
+                    f"<li style='{LI}'>Ticker-reuse (quarantined): {tally['reused']}</li>",
+                    f"<li style='{LI}'>Missing in Alpaca: {tally['missing_in_alpaca']}</li>",
                     f"</ul>",
-                    "<h3>Corporate Actions</h3>",
-                    f"<ul>",
-                    f"<li>Events detected (last 36h): {len(corp_events)}</li>",
-                    f"<li>Split symbols: {len(split_symbols)}</li>",
+                    f"<h3 style='{H3}'>Corporate Actions</h3>",
+                    f"<ul style='{UL}'>",
+                    f"<li style='{LI}'>Events detected (last 36h): {len(corp_events)}</li>",
+                    f"<li style='{LI}'>Split symbols: {len(split_symbols)}</li>",
                     f"</ul>",
                 ]
                 if missing_diag:
-                    html_lines.append("<h3>Missing-in-Alpaca Symbols (action required)</h3>")
+                    html_lines.append(f"<h3 style='{H3}'>Missing-in-Alpaca Symbols (action required)</h3>")
                     html_lines.append(_render_missing_table(missing_diag))
 
                 if critical_flags:
-                    html_lines.append("<h3>⚠️ Needs Attention</h3><ul>")
+                    html_lines.append(f"<h3 style='{H3}'>⚠️ Needs Attention</h3><ul style='{UL}'>")
                     for f in critical_flags:
-                        html_lines.append(f"<li>{f}</li>")
+                        html_lines.append(f"<li style='{LI}'>{f}</li>")
                     html_lines.append("</ul>")
                 if info_flags:
-                    html_lines.append("<h3>ℹ️ Auto-Remediated / Informational</h3><ul>")
+                    html_lines.append(f"<h3 style='{H3}'>ℹ️ Auto-Remediated / Informational</h3><ul style='{UL}'>")
                     for f in info_flags:
-                        html_lines.append(f"<li>{f}</li>")
+                        html_lines.append(f"<li style='{LI}'>{f}</li>")
                     html_lines.append("</ul>")
                 html = "\n".join(html_lines)
 
