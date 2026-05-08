@@ -3863,3 +3863,280 @@ async def send_newsletter_now(
             failed += 1
 
     return {"sent": sent, "failed": failed, "total": len(all_emails)}
+
+
+# ─────────────────────────── Symbol triage ───────────────────────────
+# Triage UI for "Missing in Alpaca" symbols flagged in the daily data
+# hygiene email. Each "investigate" row in the email links here. The
+# page consolidates everything an admin needs to make a delist / rename
+# / wait call in seconds: last known close, Alpaca asset endpoint
+# response, recent news headlines from yfinance, and a Claude-generated
+# context paragraph synthesizing the news.
+
+import httpx
+from app.core.database import SymbolMetadata, Position
+
+_TRIAGE_CLAUDE_MODEL = "claude-sonnet-4-6"
+_TRIAGE_CLAUDE_URL = "https://api.anthropic.com/v1/messages"
+
+
+async def _summarize_symbol_news(symbol: str, company_name: str | None, headlines: List[Dict]) -> str:
+    """One-paragraph plain-English summary of recent news for a symbol —
+    enough for the admin to make a delist / rename / wait call. Returns
+    a graceful fallback string when ANTHROPIC_API_KEY is unset or the
+    headlines list is empty."""
+    if not settings.ANTHROPIC_API_KEY:
+        return "AI summary unavailable (ANTHROPIC_API_KEY not configured)."
+    if not headlines:
+        return f"No recent news headlines found for {symbol} via yfinance. The symbol may have been quietly delisted, renamed, or had its data feed dropped without a news event."
+
+    headline_lines = []
+    for h in headlines[:8]:
+        title = h.get("title") or ""
+        publisher = h.get("publisher") or ""
+        ts = h.get("providerPublishTime")
+        date_str = ""
+        if ts:
+            try:
+                date_str = datetime.fromtimestamp(int(ts)).strftime("%Y-%m-%d")
+            except Exception:
+                date_str = ""
+        headline_lines.append(f"- ({date_str}) [{publisher}] {title}")
+    joined = "\n".join(headline_lines)
+
+    name_clause = f" ({company_name})" if company_name else ""
+    user_prompt = (
+        f"You are helping a financial-data operator triage a stock symbol whose "
+        f"price feed has stopped updating. The ticker is {symbol}{name_clause}. "
+        f"Recent headlines:\n\n{joined}\n\n"
+        f"Summarize in one paragraph (3-5 sentences) what likely happened to this "
+        f"ticker. Specifically address whether the stock has been: delisted, "
+        f"merged/acquired, renamed (new ticker), filed for bankruptcy, or had any "
+        f"other corporate action that would explain why the data feed stopped. "
+        f"If the headlines are unrelated to the data-feed issue, say so plainly. "
+        f"End with a one-line recommendation: \"DELIST\", \"RENAME (suggested new "
+        f"ticker)\", \"INVESTIGATE FURTHER\", or \"WAIT — likely transient\"."
+    )
+
+    headers = {
+        "x-api-key": settings.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+    }
+    payload = {
+        "model": _TRIAGE_CLAUDE_MODEL,
+        "max_tokens": 600,
+        "messages": [{"role": "user", "content": user_prompt}],
+    }
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.post(_TRIAGE_CLAUDE_URL, headers=headers, json=payload)
+        if resp.status_code != 200:
+            return f"AI summary failed (Claude API {resp.status_code}). Headlines available below."
+        content = resp.json().get("content", [])
+        if content and content[0].get("type") == "text":
+            return content[0]["text"].strip()
+        return "AI summary returned empty content. Headlines available below."
+    except Exception as e:
+        return f"AI summary failed ({e!s}). Headlines available below."
+
+
+@router.get("/symbol-triage/{symbol}")
+async def admin_symbol_triage(
+    symbol: str,
+    db: AsyncSession = Depends(get_db),
+    _admin = Depends(get_admin_user),
+):
+    """Return everything needed to triage a missing-in-Alpaca symbol in
+    one place. Used by the admin triage page; also linked from the
+    daily data-hygiene email."""
+    symbol = symbol.upper().strip()
+
+    # 1. SymbolMetadata row (drives the missing-streak counter)
+    meta_q = await db.execute(
+        select(SymbolMetadata).where(SymbolMetadata.symbol == symbol)
+    )
+    meta = meta_q.scalar_one_or_none()
+
+    days_missing = None
+    if meta and meta.first_missing_at:
+        days_missing = (datetime.utcnow() - meta.first_missing_at).days
+
+    # 2. Last known bar from the in-memory pickle (if available)
+    last_bar = None
+    try:
+        from app.services.scanner import scanner_service
+        df = scanner_service.data_cache.get(symbol)
+        if df is not None and len(df) > 0:
+            last_bar = {
+                "date": str(df.index[-1].date()) if hasattr(df.index[-1], 'date') else str(df.index[-1]),
+                "close": float(df.iloc[-1].get("close", 0)) if hasattr(df.iloc[-1], 'get') else None,
+                "volume": float(df.iloc[-1].get("volume", 0)) if hasattr(df.iloc[-1], 'get') else None,
+            }
+    except Exception:
+        last_bar = None
+
+    # 3. Held-position check
+    held_q = await db.execute(
+        select(Position.id).where(
+            and_(Position.symbol == symbol, Position.status == 'open')
+        ).limit(1)
+    )
+    in_open_position = held_q.first() is not None
+
+    # 4. Alpaca asset lookup (does Alpaca know this ticker?)
+    alpaca_asset = None
+    alpaca_error = None
+    try:
+        from alpaca.trading.client import TradingClient
+        client = TradingClient(
+            api_key=settings.ALPACA_API_KEY,
+            secret_key=settings.ALPACA_SECRET_KEY,
+            paper=False,
+        )
+        asset = client.get_asset(symbol)
+        if asset:
+            alpaca_asset = {
+                "id": str(asset.id) if asset.id else None,
+                "name": getattr(asset, "name", None),
+                "exchange": str(getattr(asset, "exchange", "")),
+                "asset_class": str(getattr(asset, "asset_class", "")),
+                "tradable": bool(getattr(asset, "tradable", False)),
+                "status": str(getattr(asset, "status", "")),
+            }
+    except Exception as e:
+        alpaca_error = str(e)[:200]
+
+    # 5. yfinance recent news + company name
+    yf_news: List[Dict] = []
+    yf_name = None
+    yf_error = None
+    try:
+        import yfinance as yf
+        ticker = yf.Ticker(symbol)
+        try:
+            info = ticker.info or {}
+            yf_name = info.get("longName") or info.get("shortName")
+        except Exception:
+            yf_name = None
+        try:
+            news_raw = ticker.news or []
+            for n in news_raw[:10]:
+                yf_news.append({
+                    "title": n.get("title") or n.get("content", {}).get("title"),
+                    "publisher": n.get("publisher") or n.get("content", {}).get("provider", {}).get("displayName"),
+                    "providerPublishTime": n.get("providerPublishTime") or n.get("content", {}).get("pubDate"),
+                    "link": n.get("link") or n.get("content", {}).get("canonicalUrl", {}).get("url"),
+                })
+        except Exception:
+            yf_news = []
+    except Exception as e:
+        yf_error = str(e)[:200]
+
+    # 6. AI synthesis paragraph
+    ai_summary = await _summarize_symbol_news(symbol, yf_name, yf_news)
+
+    return {
+        "symbol": symbol,
+        "company_name": yf_name,
+        "days_missing": days_missing,
+        "first_missing_at": meta.first_missing_at.isoformat() if meta and meta.first_missing_at else None,
+        "status": meta.status if meta else None,
+        "quarantine_reason": meta.quarantine_reason if meta else None,
+        "in_open_position": in_open_position,
+        "last_known_bar": last_bar,
+        "alpaca_asset": alpaca_asset,
+        "alpaca_error": alpaca_error,
+        "news_headlines": yf_news,
+        "yf_error": yf_error,
+        "ai_summary": ai_summary,
+    }
+
+
+class _SymbolActionResponse(BaseModel):
+    status: str
+    detail: str = ""
+
+
+class _MarkRenamedRequest(BaseModel):
+    new_ticker: str
+
+
+@router.post("/symbol-triage/{symbol}/mark-delisted", response_model=_SymbolActionResponse)
+async def admin_symbol_mark_delisted(
+    symbol: str,
+    db: AsyncSession = Depends(get_db),
+    _admin = Depends(get_admin_user),
+):
+    """Mark a missing-in-Alpaca symbol as delisted: status -> 'delisted',
+    quarantine_reason -> 'manual_delist', clears first_missing_at so it
+    drops out of the active missing-streak counter and won't appear in
+    future hygiene digests."""
+    symbol = symbol.upper().strip()
+    res = await db.execute(select(SymbolMetadata).where(SymbolMetadata.symbol == symbol))
+    meta = res.scalar_one_or_none()
+    if not meta:
+        raise HTTPException(status_code=404, detail=f"No metadata row for {symbol}")
+    meta.status = "delisted"
+    meta.quarantine_reason = "manual_delist"
+    meta.first_missing_at = None
+    await db.commit()
+    return _SymbolActionResponse(status="ok", detail=f"{symbol} marked as delisted")
+
+
+@router.post("/symbol-triage/{symbol}/mark-renamed", response_model=_SymbolActionResponse)
+async def admin_symbol_mark_renamed(
+    symbol: str,
+    body: _MarkRenamedRequest,
+    db: AsyncSession = Depends(get_db),
+    _admin = Depends(get_admin_user),
+):
+    """Mark a missing symbol as renamed to a new ticker. Stores the new
+    ticker in quarantine_reason so the admin trail is auditable. Does
+    NOT update SymbolMetadata for the new ticker — that will populate
+    naturally on the next nightly hygiene run."""
+    symbol = symbol.upper().strip()
+    new_ticker = body.new_ticker.upper().strip()
+    if not new_ticker or new_ticker == symbol:
+        raise HTTPException(status_code=400, detail="new_ticker must be non-empty and different from old")
+    res = await db.execute(select(SymbolMetadata).where(SymbolMetadata.symbol == symbol))
+    meta = res.scalar_one_or_none()
+    if not meta:
+        raise HTTPException(status_code=404, detail=f"No metadata row for {symbol}")
+    meta.status = "renamed"
+    meta.quarantine_reason = f"renamed_to:{new_ticker}"
+    meta.first_missing_at = None
+    await db.commit()
+    return _SymbolActionResponse(status="ok", detail=f"{symbol} -> {new_ticker} recorded")
+
+
+@router.post("/symbol-triage/{symbol}/repoll-now", response_model=_SymbolActionResponse)
+async def admin_symbol_repoll(
+    symbol: str,
+    db: AsyncSession = Depends(get_db),
+    _admin = Depends(get_admin_user),
+):
+    """Force an immediate Alpaca re-poll. If Alpaca returns a valid
+    asset, clear the missing-streak so the symbol drops out of the
+    hygiene digest. If still missing, the streak counter continues."""
+    symbol = symbol.upper().strip()
+    asset = None
+    try:
+        from alpaca.trading.client import TradingClient
+        client = TradingClient(
+            api_key=settings.ALPACA_API_KEY,
+            secret_key=settings.ALPACA_SECRET_KEY,
+            paper=False,
+        )
+        asset = client.get_asset(symbol)
+    except Exception as e:
+        return _SymbolActionResponse(status="error", detail=f"Alpaca error: {e!s}")
+    if asset:
+        # Found — clear the streak
+        res = await db.execute(select(SymbolMetadata).where(SymbolMetadata.symbol == symbol))
+        meta = res.scalar_one_or_none()
+        if meta:
+            meta.first_missing_at = None
+            await db.commit()
+        return _SymbolActionResponse(status="ok", detail=f"{symbol} found in Alpaca; missing-streak cleared")
+    return _SymbolActionResponse(status="still_missing", detail=f"{symbol} still not found in Alpaca; streak counter continues")

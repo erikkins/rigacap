@@ -38,6 +38,7 @@ const BlogWeCalledItTGTXPage = lazy(() => import('./BlogWeCalledItTGTXPage'));
 const BlogIndexPage = lazy(() => import('./BlogIndexPage'));
 const NewsletterPage = lazy(() => import('./NewsletterPage'));
 const NewsletterIssuePage = lazy(() => import('./NewsletterPage').then(m => ({ default: m.NewsletterIssuePage })));
+const SymbolTriagePage = lazy(() => import('./SymbolTriagePage'));
 const PrivacyPage = lazy(() => import('./LegalPages').then(m => ({ default: m.PrivacyPage })));
 const TermsPage = lazy(() => import('./LegalPages').then(m => ({ default: m.TermsPage })));
 const ContactPage = lazy(() => import('./LegalPages').then(m => ({ default: m.ContactPage })));
@@ -4539,6 +4540,7 @@ export default function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/newsletter" element={<NewsletterPage />} />
         <Route path="/newsletter/:date" element={<NewsletterIssuePage />} />
+        <Route path="/admin/symbol/:symbol/triage" element={<SymbolTriagePage />} />
         <Route path="/market-regime" element={<MarketRegimePage />} />
         <Route path="/blog" element={<BlogIndexPage />} />
         <Route path="/blog/2022-story" element={<Blog2022StoryPage />} />

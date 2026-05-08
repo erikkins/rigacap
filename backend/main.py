@@ -4276,33 +4276,47 @@ def handler(event, context):
                 missing_diag = await symbol_metadata_service.diagnose_missing()
 
                 def _render_missing_table(rows: list) -> str:
+                    """Render only the actionable rows (urgent_held / auto_quarantine /
+                    investigate). 'recheck' rows are <7 days missing — the system
+                    auto-rechecks each night and they're not worth surfacing until
+                    they cross the 7-day threshold. The count of suppressed rechecks
+                    is rendered as a single summary line elsewhere in the email."""
                     if not rows:
                         return ""
+                    actionable = [r for r in rows if r.get("suggested_action") != "recheck"]
+                    if not actionable:
+                        return ""
                     out_rows = []
-                    for r in rows[:20]:
+                    for r in actionable[:20]:
                         action = r["suggested_action"]
                         action_label = {
                             "urgent_held": "🚨 URGENT (held position)",
                             "auto_quarantine": "🔒 auto-quarantined",
                             "investigate": "🔍 investigate",
-                            "recheck": "⏳ recheck",
                         }.get(action, action)
                         days = r.get("days_missing")
                         days_str = f"{days}d" if days is not None else "?"
+                        sym = r["symbol"]
+                        triage_link = (
+                            f"<a href='https://rigacap.com/admin/symbol/{sym}/triage' "
+                            f"style='color:#7A2430;text-decoration:none;'>"
+                            f"<b>{sym}</b></a>"
+                        )
                         out_rows.append(
                             f"<tr>"
-                            f"<td><b>{r['symbol']}</b></td>"
+                            f"<td>{triage_link}</td>"
                             f"<td>{days_str}</td>"
                             f"<td>{action_label}</td>"
                             f"<td>{'yes' if r['in_open_position'] else ''}</td>"
                             f"</tr>"
                         )
-                    overflow = max(0, len(rows) - 20)
+                    overflow = max(0, len(actionable) - 20)
                     overflow_row = (
                         f"<tr><td colspan='4'><i>...and {overflow} more</i></td></tr>"
                         if overflow else ""
                     )
                     return (
+                        "<p style='font-size:0.9em;color:#5A544E;'>Click a symbol to triage it (last close, Alpaca status, recent news, AI summary, one-click delist/rename/repoll).</p>"
                         "<table border='1' cellpadding='4' style='border-collapse:collapse;'>"
                         "<tr><th>symbol</th><th>missing</th><th>action</th><th>held?</th></tr>"
                         + "".join(out_rows) + overflow_row +
@@ -4333,6 +4347,15 @@ def handler(event, context):
                     info_flags.append(f"🔒 {auto_q_count} symbol(s) auto-quarantined (>=30 days missing)")
                 if 0 < tally["missing_in_alpaca"] <= 20:
                     info_flags.append(f"ℹ️ {tally['missing_in_alpaca']} symbols missing in Alpaca (below alarm threshold)")
+                # Quiet rechecks: <7d missing rows are auto-rechecked each night
+                # and don't need admin attention. Surface only the count so the
+                # email isn't a 13-row dead-end of "investigate" mismatches.
+                recheck_count = sum(1 for r in missing_diag if r.get("suggested_action") == "recheck")
+                if recheck_count > 0:
+                    info_flags.append(
+                        f"⏳ {recheck_count} symbol(s) missing &lt;7 days &mdash; auto-rechecking each night, "
+                        f"will surface for triage at the 7-day mark if still missing."
+                    )
 
                 status_word = "Healthy" if not critical_flags else "Attention Needed"
                 emoji = "✅" if not critical_flags else "🚨"
