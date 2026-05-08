@@ -129,9 +129,14 @@ class SymbolMetadataService:
             now = datetime.utcnow()
             # Threshold for auto-quarantining a consistently-missing symbol.
             # Symbols missing in Alpaca for this many consecutive days get
-            # status='quarantined' automatically with reason 'auto_30d_missing'.
-            # Catches real delistings without needing daily admin attention.
-            AUTO_QUARANTINE_DAYS = 30
+            # status='quarantined' automatically. Tightened from 30d to 14d
+            # on May 8 2026 to cut chronic noise in the daily hygiene email
+            # — the 14d→30d gap was a band of 'investigate' rows that just
+            # accumulated without any action being taken on them. Anything
+            # truly transient resolves inside 7 days (and the email already
+            # suppresses <7d rows); anything past 14d is almost always a
+            # real delisting or rename.
+            AUTO_QUARANTINE_DAYS = 14
 
             for symbol in symbols:
                 alpaca_sym = _to_alpaca(symbol)
@@ -152,7 +157,7 @@ class SymbolMetadataService:
                             if (days_missing >= AUTO_QUARANTINE_DAYS
                                     and stored_meta.status != "quarantined"):
                                 stored_meta.status = "quarantined"
-                                stored_meta.quarantine_reason = "auto_30d_missing"
+                                stored_meta.quarantine_reason = f"auto_{AUTO_QUARANTINE_DAYS}d_missing"
                                 stored_meta.quarantined_at = now
                                 auto_quarantined = True
 
@@ -254,7 +259,7 @@ class SymbolMetadataService:
 
         Suggested actions, in priority order:
           - 'urgent_held'     — any user has an open position; manual close needed
-          - 'auto_quarantine' — already auto-quarantined (>=30 days missing)
+          - 'auto_quarantine' — already auto-quarantined (>=14 days missing)
           - 'investigate'     — 7-29 days missing; possibly real delisting
           - 'recheck'         — <7 days missing; could be transient Alpaca issue
         """
@@ -302,7 +307,7 @@ class SymbolMetadataService:
             # Suggested action ranking
             if in_open_position:
                 action = "urgent_held"
-            elif m.status == "quarantined" and m.quarantine_reason == "auto_30d_missing":
+            elif m.status == "quarantined" and (m.quarantine_reason or "").startswith("auto_") and m.quarantine_reason.endswith("_missing"):
                 action = "auto_quarantine"
             elif days_missing is not None and days_missing >= 7:
                 action = "investigate"

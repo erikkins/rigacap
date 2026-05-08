@@ -4336,16 +4336,58 @@ def handler(event, context):
                     critical_flags.append(
                         f"⚠️ {tally['missing_in_alpaca']} symbols missing in Alpaca (>20 threshold)"
                     )
+                # Universe dirty count: alarm on rate-of-change, not absolute level.
+                # The absolute count drifts up slowly with universe expansion and
+                # historical-data quirks; firing on "current > 1500" means a chronic
+                # warning the operator can't act on. What matters is a sudden spike:
+                # if today's dirty count jumps materially over yesterday's baseline,
+                # something changed in the data pipeline. Persist yesterday's baseline
+                # to S3; alert only when the delta exceeds +50 symbols OR +5%.
                 dirty_total = diag.get("total_dirty_symbols") if isinstance(diag, dict) else None
-                if dirty_total and dirty_total > 1500:
-                    critical_flags.append(f"⚠️ Universe dirty count {dirty_total} above 1500 threshold")
+                dirty_delta = None
+                dirty_prev = None
+                if dirty_total is not None:
+                    try:
+                        import boto3 as _boto, json as _json
+                        s3c = _boto.client("s3", region_name="us-east-1")
+                        bkt = "rigacap-prod-price-data-149218244179"
+                        key = "hygiene/last_dirty_count.json"
+                        try:
+                            obj = s3c.get_object(Bucket=bkt, Key=key)
+                            prev_data = _json.loads(obj["Body"].read())
+                            dirty_prev = prev_data.get("count")
+                        except s3c.exceptions.NoSuchKey:
+                            dirty_prev = None
+                        if dirty_prev is not None:
+                            dirty_delta = dirty_total - dirty_prev
+                            pct_change = (dirty_delta / dirty_prev * 100) if dirty_prev > 0 else 0
+                            if dirty_delta > 50 or pct_change > 5:
+                                critical_flags.append(
+                                    f"⚠️ Universe dirty count jumped {dirty_prev} → {dirty_total} "
+                                    f"(+{dirty_delta}, {pct_change:+.1f}%). Investigate data pipeline."
+                                )
+                            else:
+                                info_flags.append(
+                                    f"ℹ️ Universe dirty count: {dirty_total} ({dirty_delta:+d} vs yesterday)"
+                                )
+                        else:
+                            info_flags.append(f"ℹ️ Universe dirty count: {dirty_total} (no prior baseline; recording for tomorrow)")
+                        # Persist today's count as tomorrow's baseline
+                        s3c.put_object(
+                            Bucket=bkt, Key=key,
+                            Body=_json.dumps({"count": dirty_total, "recorded_at": datetime.utcnow().isoformat()}).encode("utf-8"),
+                            ContentType="application/json",
+                        )
+                    except Exception as ee:
+                        # Don't fail the email on an S3 error — fall back to absolute alarm
+                        info_flags.append(f"ℹ️ Universe dirty count: {dirty_total} (rate-of-change unavailable: {ee})")
 
                 if refetch_result and refetch_result.get("refetched", 0) > 0:
                     info_flags.append(f"🔧 Auto-fixed {refetch_result['refetched']} split(s) via SPLIT-adjusted refetch")
                 if tally["new"] > 0:
                     info_flags.append(f"🆕 {tally['new']} new symbols added to metadata")
                 if auto_q_count > 0:
-                    info_flags.append(f"🔒 {auto_q_count} symbol(s) auto-quarantined (>=30 days missing)")
+                    info_flags.append(f"🔒 {auto_q_count} symbol(s) auto-quarantined (>=14 days missing)")
                 if 0 < tally["missing_in_alpaca"] <= 20:
                     info_flags.append(f"ℹ️ {tally['missing_in_alpaca']} symbols missing in Alpaca (below alarm threshold)")
                 # Quiet rechecks: <7d missing rows are auto-rechecked each night
