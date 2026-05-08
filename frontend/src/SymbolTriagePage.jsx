@@ -4,16 +4,36 @@ import TopNav from './components/TopNav';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-function fetchAuth(path, opts = {}) {
-  const token = localStorage.getItem('rigacap_token');
-  return fetch(`${API_BASE}${path}`, {
-    ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
-      ...(opts.headers || {}),
-    },
-  });
+async function fetchAuth(path, opts = {}) {
+  // Match App.jsx auth pattern: token lives under 'accessToken'; on 401 try
+  // a refresh-token roundtrip before giving up so admin sessions survive
+  // longer than the access-token TTL.
+  const doFetch = () => {
+    const token = localStorage.getItem('accessToken');
+    return fetch(`${API_BASE}${path}`, {
+      ...opts,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ? `Bearer ${token}` : '',
+        ...(opts.headers || {}),
+      },
+    });
+  };
+  let res = await doFetch();
+  if (res.status === 401 && localStorage.getItem('refreshToken')) {
+    const refresh = await fetch(`${API_BASE}/api/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: localStorage.getItem('refreshToken') }),
+    });
+    if (refresh.ok) {
+      const data = await refresh.json();
+      localStorage.setItem('accessToken', data.access_token);
+      if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token);
+      res = await doFetch();
+    }
+  }
+  return res;
 }
 
 function fmtDate(ts) {
