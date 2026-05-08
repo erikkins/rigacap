@@ -667,15 +667,15 @@ const LAUNCH_POSTS = [
     label: 'Three-Factor Ensemble',
     imageUrl: '/launch-cards/launch-3.png',
     twitter: {
-      text: "Three things have to align before RigaCap signals a buy:\n\nI. Timing \u2014 proprietary breakout trigger\nII. Quality \u2014 leading momentum across the universe\nIII. Risk \u2014 market regime permits exposure\n\nWhen they don't align, the system stays quiet. Most months, that is the right answer.",
+      text: "Three things have to align before RigaCap signals a buy:\n\nI. Timing \u2014 wait for the right breakout. Don't chase.\nII. Quality \u2014 buy strength, not hope. Leaders, not laggards.\nIII. Risk \u2014 read the regime first. Some weeks, the answer is cash.\n\nWhen they don't align, the system stays quiet.",
       hashtags: '',
     },
     instagram: {
-      text: "A signal is not a single indicator firing. It is a coincidence of three.\n\nI. TIMING. A proprietary breakout trigger has confirmed.\n\nII. QUALITY. The stock leads its universe on momentum. Trend, not noise.\n\nIII. RISK. The market regime \u2014 one of seven the system reads \u2014 permits new exposure. In a panic regime, no entries fire. In strong bull, full sizing.\n\nWhen all three align, RigaCap signals. When they don't, it does nothing.\n\nMost months, that is the right answer.\n\nrigacap.com",
+      text: "A signal is not a single indicator firing. It is the coincidence of three things going right at once.\n\nI. TIMING. Wait for the right breakout. Don't chase. Patience over impulse.\n\nII. QUALITY. Buy strength, not hope. The system only acts on names already proving themselves \u2014 leaders, not laggards.\n\nIII. RISK. Read the regime first. The system reads seven distinct market conditions; in some of them, the right answer is to not trade at all. Some weeks, that is exactly what happens.\n\nWhen all three align, RigaCap signals. When they don't, the system does nothing.\n\nMost months, nothing is the right answer.\n\nrigacap.com",
       hashtags: '#investing #ensemble #systematictrading #rigacap',
     },
     threads: {
-      text: "Three things have to align before RigaCap signals a buy.\n\nI. Timing \u2014 proprietary breakout trigger\nII. Quality \u2014 leading momentum across the universe\nIII. Risk \u2014 market regime permits exposure\n\nWhen they don't align, the system stays quiet. Most months, that is the right answer.\n\nrigacap.com",
+      text: "Three things have to align before RigaCap signals a buy:\n\nI. Timing \u2014 wait for the right breakout. Don't chase.\nII. Quality \u2014 buy strength, not hope. Leaders, not laggards.\nIII. Risk \u2014 read the regime first. Some weeks, the answer is cash.\n\nWhen they don't align, the system stays quiet.\n\nrigacap.com",
     },
   },
   {
