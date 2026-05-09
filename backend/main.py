@@ -1461,6 +1461,7 @@ def handler(event, context):
             # 4b. SHADOW WRITE: parquet export (Parquet migration, Apr 2026).
             # Runs alongside pickle — pickle remains primary read path until
             # consumers are migrated. Any failure is logged but non-blocking.
+            pq_result = {"success": False, "message": "not attempted"}
             try:
                 pq_result = data_export_service.export_parquet(scanner_service.data_cache)
                 if pq_result.get('success'):
@@ -1469,6 +1470,7 @@ def handler(event, context):
                     print(f"⚠️ Shadow parquet failed: {pq_result.get('message')}")
             except Exception as _e:
                 print(f"⚠️ Shadow parquet error (non-blocking): {_e}")
+                pq_result = {"success": False, "message": str(_e)[:200]}
 
             # 4c. PARALLEL-READ DIFF (Parquet migration Stage 3a, Apr 2026).
             # When PARQUET_PARALLEL_READ=true, compare pickle vs parquet and log
@@ -1476,7 +1478,18 @@ def handler(event, context):
             # it can be disabled instantly without redeploy. Wrapped in try/except
             # so it can NEVER break the daily scan — divergence logging is
             # observation only, not load-bearing. See project_parquet_stage3_plan.md.
-            if os.environ.get("PARQUET_PARALLEL_READ", "").lower() in ("1", "true", "yes"):
+            #
+            # IMPORTANT: skip the diff if today's parquet export failed. The
+            # diff would otherwise compare today's fresh pickle against
+            # yesterday's stale parquet still in S3, false-positiving every
+            # symbol with a 1-2 row delta (= the trading days yesterday's
+            # pickle has that yesterday's parquet missed). Discovered May 8
+            # 2026: a single EFAULT on the parquet upload generated 4597
+            # row_count_diff events that triggered a Stage 3b 'pause' alarm.
+            if not pq_result.get('success'):
+                print("⚠️ Skipping parquet diff harness — today's parquet export failed; "
+                      "comparing against stale parquet would generate false-positive divergences.")
+            elif os.environ.get("PARQUET_PARALLEL_READ", "").lower() in ("1", "true", "yes"):
                 try:
                     diff_summary = await data_export_service.compare_pickle_to_parquet(
                         pickle_data=scanner_service.data_cache,

@@ -573,13 +573,22 @@ class DataExportService:
             if self._use_s3():
                 s3 = self._get_s3_client()
                 parquet_key = 'prices/all_data.parquet'
-                with open(tmp_path, 'rb') as f:
-                    s3.put_object(
-                        Bucket=S3_BUCKET,
-                        Key=parquet_key,
-                        Body=f.read(),
-                        ContentType='application/vnd.apache.parquet',
-                    )
+                # upload_file auto-multiparts large files and streams from disk
+                # rather than loading the whole file into a single in-memory
+                # buffer. The previous put_object(Body=f.read()) approach hit
+                # `[Errno 14] Bad address` (EFAULT) on the May 8 daily scan
+                # when the parquet was 351 MB — Lambda's /tmp is on a backing
+                # store that mmap-style large reads can fault on. The
+                # downstream consequence was worse than the failed write
+                # itself: the parallel-read diff harness ran against the
+                # *previous day's* parquet still in S3 and false-positived
+                # 4500+ row_count_diff events.
+                s3.upload_file(
+                    tmp_path,
+                    S3_BUCKET,
+                    parquet_key,
+                    ExtraArgs={'ContentType': 'application/vnd.apache.parquet'},
+                )
                 os.remove(tmp_path)
                 storage = "S3"
                 location = f"s3://{S3_BUCKET}/{parquet_key}"
