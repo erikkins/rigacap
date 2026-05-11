@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import {
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -1328,6 +1328,67 @@ const MetricCard = ({ title, value, subtitle, trend }) => (
     {subtitle && <div className="font-mono text-[0.7rem] text-ink-light mt-1 tracking-wide">{subtitle}</div>}
   </div>
 );
+
+// Inline popover that explains the Strong / Moderate / Very Strong labels in
+// 3-4 lines. Click ⓘ to open, click outside or "Got it" to close, "Read more"
+// jumps to /methodology#signal-strength for the full explanation.
+const StrengthInfoPopover = () => {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const handle = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [open]);
+  return (
+    <span ref={wrapRef} className="relative inline-block">
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        className="text-ink-light hover:text-claret no-underline align-baseline cursor-pointer bg-transparent border-0 p-0 leading-none"
+        title="What do these labels mean?"
+      >
+        ⓘ
+      </button>
+      {open && (
+        <div
+          className="absolute left-0 top-full mt-2 z-50 w-[320px] bg-paper border border-rule-dark shadow-lg p-4 text-left normal-case tracking-normal"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="font-display text-[0.98rem] font-medium text-ink mb-2" style={{ fontVariationSettings: '"opsz" 24' }}>
+            What Strong means
+          </div>
+          <p className="text-[0.85rem] leading-[1.55] text-ink-mute mb-3">
+            A composite of five validated factors: timing setup, momentum quality, volume confirmation, volatility profile, and regime fit. Higher = more factors aligning.
+          </p>
+          <p className="text-[0.82rem] leading-[1.5] text-ink-mute mb-3 italic">
+            Read as context, not a verdict — a Moderate signal in a strong-bull regime can outperform a Very Strong signal in a range-bound one.
+          </p>
+          <div className="flex items-center justify-between pt-2 border-t border-rule">
+            <a
+              href="/methodology#signal-strength"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[0.78rem] text-claret hover:underline no-underline"
+            >
+              Read full methodology →
+            </a>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="text-[0.78rem] text-ink-mute hover:text-ink bg-transparent border-0 cursor-pointer"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+    </span>
+  );
+};
 
 // Signal Strength indicator
 const SignalStrengthBar = ({ strength }) => {
@@ -3352,15 +3413,7 @@ function Dashboard() {
                 <div className="flex items-baseline justify-between pb-3 border-b-2 border-ink mb-5">
                   <div className="flex items-baseline gap-2">
                     <h2 className="font-display text-[1.25rem] font-medium text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>Buy Signals</h2>
-                    <a
-                      href="/methodology#signal-strength"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-ink-light hover:text-claret no-underline text-[0.95rem]"
-                      title="What do Strong / Very Strong / Moderate mean? Opens methodology."
-                    >
-                      ⓘ
-                    </a>
+                    <StrengthInfoPopover />
                     <em className="font-display italic text-ink-mute text-[0.85rem]" style={{ fontVariationSettings: '"opsz" 24' }}>Signals only — execute via your broker</em>
                     {dashboardData?.buy_signals?.filter(s => s.is_fresh).length > 0 && (
                       <span className="font-body text-[0.65rem] font-medium tracking-[0.15em] uppercase text-claret ml-1">
@@ -3728,16 +3781,7 @@ function Dashboard() {
                                       <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Rank</th>
                                       <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink whitespace-nowrap">
                                         Strength
-                                        <a
-                                          href="/methodology#signal-strength"
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          onClick={(e) => e.stopPropagation()}
-                                          className="ml-1.5 text-ink-light hover:text-claret no-underline normal-case tracking-normal"
-                                          title="What do Strong / Very Strong mean? Opens methodology."
-                                        >
-                                          ⓘ
-                                        </a>
+                                        <span className="ml-1.5"><StrengthInfoPopover /></span>
                                       </th>
                                       <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink"></th>
                                     </tr>
@@ -3798,16 +3842,7 @@ function Dashboard() {
                                       <th className="px-3 py-2 text-right font-medium">Rank</th>
                                       <th className="px-3 py-2 text-center font-medium whitespace-nowrap">
                                         Strength
-                                        <a
-                                          href="/methodology#signal-strength"
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          onClick={(e) => e.stopPropagation()}
-                                          className="ml-1 text-ink-light hover:text-claret no-underline"
-                                          title="What do Strong / Very Strong mean? Opens methodology."
-                                        >
-                                          ⓘ
-                                        </a>
+                                        <span className="ml-1"><StrengthInfoPopover /></span>
                                       </th>
                                     </tr>
                                   </thead>
