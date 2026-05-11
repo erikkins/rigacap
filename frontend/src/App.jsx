@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
+import ReactDOM from 'react-dom';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import {
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -1332,30 +1333,57 @@ const MetricCard = ({ title, value, subtitle, trend }) => (
 // Inline popover that explains the Strong / Moderate / Very Strong labels in
 // 3-4 lines. Click ⓘ to open, click outside or "Got it" to close, "Read more"
 // jumps to /methodology#signal-strength for the full explanation.
+// Rendered into a portal (document.body) so it escapes overflow:hidden
+// scroll containers — the trigger sits inside the Monitoring scroller
+// which was clipping the absolutely-positioned popover.
 const StrengthInfoPopover = () => {
   const [open, setOpen] = useState(false);
-  const wrapRef = useRef(null);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const triggerRef = useRef(null);
+  const popoverRef = useRef(null);
+
   useEffect(() => {
     if (!open) return;
     const handle = (e) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+      if (popoverRef.current && popoverRef.current.contains(e.target)) return;
+      if (triggerRef.current && triggerRef.current.contains(e.target)) return;
+      setOpen(false);
     };
     document.addEventListener('mousedown', handle);
     return () => document.removeEventListener('mousedown', handle);
   }, [open]);
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    if (!open && triggerRef.current) {
+      const r = triggerRef.current.getBoundingClientRect();
+      // Position popover below the icon, aligned left, with viewport-edge guard
+      const POP_WIDTH = 320;
+      let left = r.left;
+      if (left + POP_WIDTH > window.innerWidth - 12) {
+        left = Math.max(12, window.innerWidth - POP_WIDTH - 12);
+      }
+      setPosition({ top: r.bottom + window.scrollY + 6, left: left + window.scrollX });
+    }
+    setOpen((v) => !v);
+  };
+
   return (
-    <span ref={wrapRef} className="relative inline-block">
+    <>
       <button
+        ref={triggerRef}
         type="button"
-        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        onClick={handleClick}
         className="text-ink-light hover:text-claret no-underline align-baseline cursor-pointer bg-transparent border-0 p-0 leading-none"
         title="What do these labels mean?"
       >
         ⓘ
       </button>
-      {open && (
+      {open && ReactDOM.createPortal(
         <div
-          className="absolute left-0 top-full mt-2 z-50 w-[320px] bg-paper border border-rule-dark shadow-lg p-4 text-left normal-case tracking-normal"
+          ref={popoverRef}
+          style={{ position: 'absolute', top: position.top, left: position.left, width: 320 }}
+          className="z-[9999] bg-paper border border-rule-dark shadow-lg p-4 text-left normal-case tracking-normal"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="font-display text-[0.98rem] font-medium text-ink mb-2" style={{ fontVariationSettings: '"opsz" 24' }}>
@@ -1384,9 +1412,10 @@ const StrengthInfoPopover = () => {
               Got it
             </button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
-    </span>
+    </>
   );
 };
 
