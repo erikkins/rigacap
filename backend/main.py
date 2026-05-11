@@ -4299,6 +4299,9 @@ def handler(event, context):
                 #   - AI verdict must explicitly be DELIST (not WAIT,
                 #     INVESTIGATE, or RENAME). Anything ambiguous stays
                 #     for human review.
+                # Auto-delisted rows surface in the email as their own
+                # audited table so the operator has a log of what
+                # happened + a link to the triage page to undo.
                 auto_delisted_by_ai: list = []
                 try:
                     from app.api.admin import fetch_symbol_news_and_summarize
