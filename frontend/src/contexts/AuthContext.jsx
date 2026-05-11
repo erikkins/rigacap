@@ -260,6 +260,12 @@ export function AuthProvider({ children }) {
 
       setTokens(data.access_token, data.refresh_token);
       setUser(data.user);
+      // Log login event AFTER tokens are set — eventLogger reads accessToken
+      // from localStorage, so it needs the token in place before calling.
+      try {
+        const { logEvent } = await import('../lib/eventLogger');
+        logEvent('login', { method: 'password', user_id: data.user?.id });
+      } catch {}
       return { success: true };
     } catch (err) {
       console.error('Login failed:', err.message);

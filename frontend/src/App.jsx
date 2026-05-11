@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom';
+import { logEvent } from './lib/eventLogger';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import {
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -260,6 +261,7 @@ const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanc
 
   const handleBuy = async () => {
     setSubmitting(true);
+    logEvent('record_entry_submit', { symbol, shares, price: entryPrice, time_travel: !!timeTravelDate });
     try {
       const result = await api.post('/api/portfolio/positions', {
         symbol,
@@ -267,10 +269,12 @@ const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanc
         price: entryPrice,
         ...(timeTravelDate && { entry_date: timeTravelDate }),
       });
+      logEvent('record_entry_success', { symbol, shares, price: entryPrice, position_id: result.position?.id });
       onBuy(result.position);
       onClose();
     } catch (err) {
       console.error('Buy failed:', err);
+      logEvent('record_entry_failed', { symbol, error: String(err).slice(0, 200) });
       alert('Failed to create position. Please try again.');
     } finally {
       setSubmitting(false);
@@ -363,12 +367,15 @@ const SellModal = ({ symbol, position, currentPrice, stockInfo, onClose, onSell 
 
   const handleSell = async () => {
     setSubmitting(true);
+    logEvent('close_position_submit', { symbol: position.symbol, position_id: position.id, exit_price: exitPrice, pnl_pct: pnlPct });
     try {
       await api.delete(`/api/portfolio/positions/${position.id}?exit_price=${exitPrice}`);
+      logEvent('close_position_success', { symbol: position.symbol, position_id: position.id, exit_price: exitPrice, pnl_pct: pnlPct });
       onSell();
       onClose();
     } catch (err) {
       console.error('Sell failed:', err);
+      logEvent('close_position_failed', { symbol: position.symbol, position_id: position.id, error: String(err).slice(0, 200) });
       alert('Failed to close position. Please try again.');
     } finally {
       setSubmitting(false);
@@ -2024,6 +2031,7 @@ function Dashboard() {
   // Persist active tab to sessionStorage (survives refresh, clears on tab close)
   useEffect(() => {
     sessionStorage.setItem('rigacap_active_tab', activeTab);
+    logEvent('tab_change', { tab: activeTab });
   }, [activeTab]);
 
   // Persist view mode to localStorage
@@ -3709,7 +3717,10 @@ function Dashboard() {
                               alignItems: 'center',
                               gap: '0.75rem',
                             }}
-                            onClick={() => setChartModal({ type: 'signal', data: s, symbol: s.symbol })}
+                            onClick={() => {
+                              logEvent('signal_click', { symbol: s.symbol, mode: 'simple', is_fresh: s.is_fresh, label });
+                              setChartModal({ type: 'signal', data: s, symbol: s.symbol });
+                            }}
                           >
                             <div className="flex items-baseline gap-2 min-w-0">
                               <span className="font-display text-[1.1rem] font-medium tracking-tight truncate" style={{ fontVariationSettings: '"opsz" 48' }}>{s.symbol}</span>
@@ -3734,7 +3745,10 @@ function Dashboard() {
                               ? 'border-l-4 border-l-claret'
                               : 'hover:bg-paper-card'
                           }`}
-                          onClick={() => setChartModal({ type: 'signal', data: s, symbol: s.symbol })}
+                          onClick={() => {
+                            logEvent('signal_click', { symbol: s.symbol, mode: 'advanced', is_fresh: s.is_fresh });
+                            setChartModal({ type: 'signal', data: s, symbol: s.symbol });
+                          }}
                         >
                           <td className="px-3 py-3">
                             <span className="font-display text-[1.05rem] font-medium tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>

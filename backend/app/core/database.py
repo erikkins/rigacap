@@ -6,7 +6,7 @@ import os
 import uuid
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, ForeignKey, Text, JSON, Date, UniqueConstraint
+from sqlalchemy import Column, Integer, BigInteger, String, Float, DateTime, Boolean, ForeignKey, Text, JSON, Date, UniqueConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -817,6 +817,28 @@ class ParquetDivergenceEvent(Base):
     parquet_row_count = Column(Integer)
 
 
+class UserEvent(Base):
+    """Per-user activity log. Every meaningful interaction writes one row:
+    signal click, chart open, record entry, position close, tab change,
+    time-travel toggle, etc. Powers the admin's per-user activity feed
+    for support, and is queryable for cohort analysis (e.g. did users
+    who clicked signal X retain better?). Server-side custom logging —
+    not GA4 — so the data stays in RDS and can be joined directly with
+    subscription/signal tables.
+    """
+    __tablename__ = "user_events"
+
+    id = Column(BigInteger, primary_key=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    session_id = Column(String(64), index=True)
+    event_type = Column(String(64), nullable=False, index=True)
+    payload_json = Column(Text)
+    path = Column(String(255))
+    ip = Column(String(64))
+    user_agent = Column(String(255))
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+
 # Track database availability (set during init_db)
 db_available = False
 db_init_attempted = False
@@ -1137,6 +1159,28 @@ async def _run_schema_migrations(conn):
     await _run("symbol_metadata.first_missing_at column", [
         "ALTER TABLE symbol_metadata ADD COLUMN IF NOT EXISTS first_missing_at TIMESTAMP",
         "CREATE INDEX IF NOT EXISTS idx_smd_first_missing ON symbol_metadata(first_missing_at) WHERE first_missing_at IS NOT NULL",
+    ])
+
+    # Per-user usage events: server-side activity log. Every meaningful
+    # interaction (signal click, chart open, record entry, etc.) writes one
+    # row. Admin endpoint surfaces a user's recent activity for support and
+    # behavioral analysis. Data stays in RDS so it can be joined with
+    # subscription/signal data for cohort questions.
+    await _run("user_events table", [
+        """CREATE TABLE IF NOT EXISTS user_events (
+            id BIGSERIAL PRIMARY KEY,
+            user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+            session_id VARCHAR(64),
+            event_type VARCHAR(64) NOT NULL,
+            payload_json TEXT,
+            path VARCHAR(255),
+            ip VARCHAR(64),
+            user_agent VARCHAR(255),
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_ue_user_created ON user_events(user_id, created_at DESC)",
+        "CREATE INDEX IF NOT EXISTS idx_ue_type_created ON user_events(event_type, created_at DESC)",
+        "CREATE INDEX IF NOT EXISTS idx_ue_session ON user_events(session_id)",
     ])
 
 

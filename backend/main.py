@@ -38,6 +38,7 @@ from app.api.admin import router as admin_router
 from app.api.social import router as social_router
 from app.api.push import router as push_router
 from app.api.two_factor import router as two_factor_router
+from app.api.events import router as events_router
 from app.services.scanner import scanner_service
 # scheduler_service is deferred — imported inline by:
 #   * the lifespan startup (local dev only; Lambda doesn't run lifespan)
@@ -340,6 +341,7 @@ app.include_router(social_router, prefix="/api/admin/social", tags=["social"])
 app.include_router(push_router, prefix="/api/push", tags=["push"])
 app.include_router(two_factor_router, prefix="/api/auth/2fa", tags=["2fa"])
 app.include_router(public_signals_router, prefix="/api/public", tags=["public"])
+app.include_router(events_router, prefix="/api/events", tags=["events"])
 
 # Lambda handler (for AWS Lambda deployment)
 # lifespan="off" avoids issues with event loop reuse on warm Lambdas
