@@ -1301,6 +1301,14 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
     # signal entry so the frontend can render a badge and the AI briefing can
     # differentiate "new today" from "continuing a run." Tolerates 1-day gaps
     # (data noise); breaks on >=2 days of misses (real drop-out).
+    #
+    # Also promotes is_fresh=True when continuity says today is Day 1 of a
+    # run. The legacy is_fresh logic looks only at recent crossover/entry
+    # dates — it correctly catches truly-new names (e.g. IONQ today), but
+    # misses Day-1-of-a-re-signal cases where the crossover is old (the
+    # symbol qualified, dropped out, and re-qualified). Those are freshly
+    # actionable today and belong in the Fresh Signals section, not the
+    # Watchlist section. After Day 1, is_fresh reverts to legacy behavior.
     try:
         from app.services.data_export import data_export_service as _des
         if buy_signals:
@@ -1311,6 +1319,8 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                 cont = _continuity.get(s.get('symbol'))
                 if cont:
                     s['continuity'] = cont
+                    if cont.get('is_new_today'):
+                        s['is_fresh'] = True
     except Exception as cont_err:
         print(f"⚠️ Signal continuity compute failed (non-fatal): {cont_err}")
 
@@ -1452,18 +1462,24 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
             spy_tech_line = f"SPY technicals: {spy_technical}\n" if spy_technical else ""
 
             # Continuity breakdown: NEW today vs continuing-run vs re-signaling.
-            # Use the per-symbol continuity computed before the briefing.
+            # 'Re-signaling' means Day 1 of a return after a 2+ day gap — TODAY
+            # is the day the name came back. After that it's a continuing run
+            # (Day 2, Day 3...) even though is_resignal stays True for the
+            # whole run. Mis-bucketing day-3-of-a-return as 're-signaling'
+            # produced briefings like "NVDA returns to the list" on May 11
+            # when the actual return was May 6 — Claude correctly reflected
+            # the bucket, but the bucket was wrong.
             new_today_syms = []
             continuing_syms = []  # list of "TICKER (Day N)" strings
-            resignal_syms = []    # list of "TICKER (re-signal after Nd)" strings
+            resignal_syms = []    # Day-1-of-return only
             for s in buy_signals:
                 cont = s.get('continuity') or {}
                 sym = s.get('symbol')
                 if not sym:
                     continue
-                if cont.get('is_resignal'):
+                if cont.get('is_resignal') and cont.get('is_new_today'):
                     gap = cont.get('gap_days_before') or 0
-                    resignal_syms.append(f"{sym} (re-signal after {gap}d)")
+                    resignal_syms.append(f"{sym} (returns today after {gap}d gap)")
                 elif cont.get('is_new_today'):
                     new_today_syms.append(sym)
                 elif cont.get('consecutive_days', 0) >= 2:

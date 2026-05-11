@@ -3576,11 +3576,17 @@ function Dashboard() {
                         const c = s.continuity;
                         if (!c) return null;
                         const base = "font-mono text-[0.62rem] tracking-[0.18em] uppercase ml-2 whitespace-nowrap";
+                        // 'Re-signal' fires only on Day 1 of the return — the day the
+                        // name actually came back to the list. After that it's a
+                        // continuing run (Day 2, Day 3…) even though is_resignal
+                        // stays true for the whole run's lifetime. Showing
+                        // 'Re-signal' on day 3 was misleading: the return event
+                        // happened 2 days ago, not today.
+                        if (c.is_resignal && c.is_new_today) {
+                          return <span className={`${base} text-claret-light`}>Re-signal</span>;
+                        }
                         if (c.is_new_today) {
                           return <span className={`${base} text-claret font-medium`}>NEW today</span>;
-                        }
-                        if (c.is_resignal) {
-                          return <span className={`${base} text-claret-light`}>Re-signal</span>;
                         }
                         if ((c.consecutive_days || 0) >= 2) {
                           return <span className={`${base} text-ink-mute`}>Day {c.consecutive_days}</span>;
