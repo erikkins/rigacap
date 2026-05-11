@@ -3700,22 +3700,26 @@ function Dashboard() {
                         return (
                           <div
                             key={s.symbol}
-                            className={`px-4 py-3 flex items-center justify-between cursor-pointer transition-colors border-b border-rule ${
+                            className={`px-4 py-3 cursor-pointer transition-colors border-b border-rule ${
                               s.is_fresh ? 'border-l-4 border-l-claret' : 'hover:bg-paper-card'
                             }`}
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'minmax(0, 1fr) 80px 96px 110px',
+                              alignItems: 'center',
+                              gap: '0.75rem',
+                            }}
                             onClick={() => setChartModal({ type: 'signal', data: s, symbol: s.symbol })}
                           >
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-baseline gap-2">
-                                <span className="font-display text-[1.1rem] font-medium tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>{s.symbol}</span>
-                                {renderContinuityBadge(s)}
-                              </div>
-                              <span className="font-mono text-[0.88rem] text-ink-mute">${s.price?.toFixed(2)}</span>
-                              <span className="font-mono text-[0.7rem] tracking-[0.12em] uppercase text-claret">{label}</span>
+                            <div className="flex items-baseline gap-2 min-w-0">
+                              <span className="font-display text-[1.1rem] font-medium tracking-tight truncate" style={{ fontVariationSettings: '"opsz" 48' }}>{s.symbol}</span>
+                              {renderContinuityBadge(s)}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <span className="font-mono text-[0.88rem] text-ink-mute text-right">${s.price?.toFixed(2)}</span>
+                            <span className="font-mono text-[0.7rem] tracking-[0.1em] uppercase text-claret text-right">{label}</span>
+                            <div className="text-right">
                               {s.is_fresh && (
-                                <span className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase px-3 py-1.5 bg-ink text-paper border border-ink hover:bg-claret hover:border-claret transition-colors whitespace-nowrap">RECORD ENTRY</span>
+                                <span className="font-body text-[0.7rem] font-medium tracking-[0.12em] uppercase px-2.5 py-1 bg-ink text-paper border border-ink hover:bg-claret hover:border-claret transition-colors whitespace-nowrap inline-block">+ Entry</span>
                               )}
                             </div>
                           </div>
@@ -3762,9 +3766,9 @@ function Dashboard() {
                                   e.stopPropagation();
                                   setChartModal({ type: 'signal', data: s, symbol: s.symbol });
                                 }}
-                                className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase px-3 py-1.5 bg-ink text-paper border border-ink hover:bg-claret hover:border-claret transition-colors whitespace-nowrap"
+                                className="font-body text-[0.7rem] font-medium tracking-[0.1em] uppercase px-2.5 py-1 bg-ink text-paper border border-ink hover:bg-claret hover:border-claret transition-colors whitespace-nowrap"
                               >
-                                RECORD ENTRY
+                                + Entry
                               </button>
                             </td>
                           )}
