@@ -3352,6 +3352,15 @@ function Dashboard() {
                 <div className="flex items-baseline justify-between pb-3 border-b-2 border-ink mb-5">
                   <div className="flex items-baseline gap-2">
                     <h2 className="font-display text-[1.25rem] font-medium text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>Buy Signals</h2>
+                    <a
+                      href="/methodology#signal-strength"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-ink-light hover:text-claret no-underline text-[0.95rem]"
+                      title="What do Strong / Very Strong / Moderate mean? Opens methodology."
+                    >
+                      ⓘ
+                    </a>
                     <em className="font-display italic text-ink-mute text-[0.85rem]" style={{ fontVariationSettings: '"opsz" 24' }}>Signals only — execute via your broker</em>
                     {dashboardData?.buy_signals?.filter(s => s.is_fresh).length > 0 && (
                       <span className="font-body text-[0.65rem] font-medium tracking-[0.15em] uppercase text-claret ml-1">
@@ -3717,7 +3726,19 @@ function Dashboard() {
                                       <th className="px-3 py-2 text-right font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Price</th>
                                       <th className="px-3 py-2 text-right font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Breakout</th>
                                       <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Rank</th>
-                                      <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Strength</th>
+                                      <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink whitespace-nowrap">
+                                        Strength
+                                        <a
+                                          href="/methodology#signal-strength"
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="ml-1.5 text-ink-light hover:text-claret no-underline normal-case tracking-normal"
+                                          title="What do Strong / Very Strong mean? Opens methodology."
+                                        >
+                                          ⓘ
+                                        </a>
+                                      </th>
                                       <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink"></th>
                                     </tr>
                                   </thead>
@@ -3775,7 +3796,19 @@ function Dashboard() {
                                       <th className="px-3 py-2 text-right font-medium">Price</th>
                                       <th className="px-3 py-2 text-right font-medium">Breakout%</th>
                                       <th className="px-3 py-2 text-right font-medium">Rank</th>
-                                      <th className="px-3 py-2 text-center font-medium">Strength</th>
+                                      <th className="px-3 py-2 text-center font-medium whitespace-nowrap">
+                                        Strength
+                                        <a
+                                          href="/methodology#signal-strength"
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="ml-1 text-ink-light hover:text-claret no-underline"
+                                          title="What do Strong / Very Strong mean? Opens methodology."
+                                        >
+                                          ⓘ
+                                        </a>
+                                      </th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-rule">

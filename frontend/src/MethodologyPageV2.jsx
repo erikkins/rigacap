@@ -148,6 +148,45 @@ export default function MethodologyPageV2() {
         </div>
       </section>
 
+      {/* Signal Strength */}
+      <section id="signal-strength" className="py-16 border-t border-rule">
+        <div className="max-w-[800px] mx-auto px-4 sm:px-8">
+          <SectionLabel>Signal Strength</SectionLabel>
+          <h2 className="font-display text-ink mb-8 tracking-[-0.02em]" style={{ fontSize: 'clamp(1.6rem, 3vw, 2.25rem)', fontVariationSettings: '"opsz" 96' }}>
+            Why some signals read <em className="text-claret italic">Strong</em>, and what that means.
+          </h2>
+
+          <p className="text-[1.05rem] leading-[1.75] text-ink max-w-[62ch] mb-6">
+            Every published signal carries a strength label &mdash; <strong className="font-medium">Weak</strong>, <strong className="font-medium">Moderate</strong>, <strong className="font-medium">Strong</strong>, or <strong className="font-medium">Very Strong</strong>. The label is not a single indicator firing harder; it is a <em>composite</em> score derived from five validated factors.
+          </p>
+
+          <div className="grid sm:grid-cols-2 gap-x-12 gap-y-6 mb-10">
+            {[
+              ['Timing setup', 'How the breakout looks relative to historical winners.'],
+              ['Momentum quality', 'Strength of trend continuation relative to the rest of the universe.'],
+              ['Volume confirmation', 'Whether buying interest stepped up alongside price, or price moved alone.'],
+              ['Volatility profile', 'Whether the move is occurring in a tradeable volatility band &mdash; too quiet or too violent both score lower.'],
+              ['Regime fit', 'Whether the broader market context supports new exposure.'],
+            ].map(([label, desc]) => (
+              <div key={label}>
+                <div className="font-body text-[0.78rem] font-medium tracking-[0.15em] uppercase text-claret mb-1">{label}</div>
+                <div className="text-ink-mute text-[0.95rem] leading-[1.55]">{desc}</div>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-[1.02rem] leading-[1.75] text-ink max-w-[62ch] mb-6">
+            The score was validated on hundreds of walk-forward trades across multiple market start dates. Higher-scored signals show a small but statistically significant edge in forward returns (Pearson correlation +0.083, p &lt; 0.05; ~2.4 percentage-point spread between the strongest and weakest quintiles). The edge is real; it is not large enough to override the rest of the system &mdash; rank, regime, and trailing-stop discipline still drive the bulk of long-run performance.
+          </p>
+
+          <div className="bg-paper-card border-l-[3px] border-claret p-5 max-w-[62ch]">
+            <p className="text-ink text-[0.95rem] leading-relaxed">
+              <strong className="font-medium">Read strength as context, not a verdict.</strong> A Moderate signal in a strong-bull regime can outperform a Very Strong signal in a range-bound regime; the system reads both factors together. The label tells you where this individual setup sits among historically successful entries &mdash; nothing more, nothing less.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Universe & Data */}
       <section className="py-16 border-t border-rule">
         <div className="max-w-[800px] mx-auto px-4 sm:px-8">
