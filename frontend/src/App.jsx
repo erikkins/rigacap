@@ -3615,12 +3615,9 @@ function Dashboard() {
                             onClick={() => setChartModal({ type: 'signal', data: s, symbol: s.symbol })}
                           >
                             <div className="flex items-center gap-3">
-                              <div>
+                              <div className="flex items-baseline gap-2">
                                 <span className="font-display text-[1.1rem] font-medium tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>{s.symbol}</span>
                                 {renderContinuityBadge(s)}
-                                <span className="block font-mono text-[0.68rem] text-ink-light tracking-wide">
-                                  {s.is_fresh ? `${Math.min(s.days_since_entry ?? 999, s.days_since_crossover ?? 999)}d ago` : `${s.days_since_crossover}d`}
-                                </span>
                               </div>
                               <span className="font-mono text-[0.88rem] text-ink-mute">${s.price?.toFixed(2)}</span>
                               <span className="font-mono text-[0.7rem] tracking-[0.12em] uppercase text-claret">{label}</span>
@@ -3649,11 +3646,11 @@ function Dashboard() {
                               {s.symbol}
                             </span>
                             {renderContinuityBadge(s)}
-                            <span className="block font-mono text-[0.68rem] text-ink-light tracking-wide mt-0.5">
-                              {s.is_fresh
-                                ? ((s.days_since_entry ?? s.days_since_crossover) === 0 ? 'TODAY' : `${Math.min(s.days_since_entry ?? 999, s.days_since_crossover ?? 999)}D AGO`)
-                                : `${s.days_since_crossover}D AGO`}
-                            </span>
+                            {s.sector && (
+                              <span className="block font-mono text-[0.68rem] text-ink-light tracking-wide mt-0.5 uppercase">
+                                {s.sector}
+                              </span>
+                            )}
                           </td>
                           <td className="px-3 py-3 text-right font-mono text-[0.88rem]">${s.price?.toFixed(2)}</td>
                           <td className="px-3 py-3 text-right font-mono text-[0.88rem] text-positive">+{s.pct_above_dwap?.toFixed(1)}%</td>
