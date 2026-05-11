@@ -3737,11 +3737,6 @@ function Dashboard() {
                               {s.symbol}
                             </span>
                             {renderContinuityBadge(s)}
-                            {s.sector && (
-                              <span className="block font-mono text-[0.68rem] text-ink-light tracking-wide mt-0.5 uppercase">
-                                {s.sector}
-                              </span>
-                            )}
                           </td>
                           <td className="px-3 py-3 text-right font-mono text-[0.88rem]">${s.price?.toFixed(2)}</td>
                           <td className="px-3 py-3 text-right font-mono text-[0.88rem] text-positive">+{s.pct_above_dwap?.toFixed(1)}%</td>
