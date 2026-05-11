@@ -3777,13 +3777,22 @@ function Dashboard() {
 
                       return (
                         <div>
-                          {/* AI Market Briefing — shown whenever it exists, not just empty state */}
+                          {/* AI Market Briefing — sticky at the top of the signals
+                              scroll area so the system's editorial voice stays
+                              visible while subscribers scan the list. z-10 to
+                              sit above the rows but well below the popover
+                              portal (z-9999). bg-paper-card matches its block
+                              treatment; an outer wrapper carries the paper
+                              background so the briefing doesn't show row content
+                              bleeding through when scrolled. */}
                           {dashboardData?.market_context && (
-                            <div className="mx-4 mt-4 mb-4 py-4 px-5 bg-paper-card border-l-2 border-claret" style={{ fontVariationSettings: '"opsz" 24' }}>
-                              <span className="block font-body text-[0.64rem] font-medium tracking-[0.22em] uppercase text-ink-mute mb-2 not-italic">
-                                {new Date().toLocaleDateString('en-US', { weekday: 'long' })} · {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                              </span>
-                              <p className="font-display italic text-[1rem] text-ink leading-[1.6]">{dashboardData.market_context}</p>
+                            <div className="sticky top-0 z-10 bg-paper mx-4 pt-4 pb-2">
+                              <div className="py-4 px-5 bg-paper-card border-l-2 border-claret" style={{ fontVariationSettings: '"opsz" 24' }}>
+                                <span className="block font-body text-[0.64rem] font-medium tracking-[0.22em] uppercase text-ink-mute mb-2 not-italic">
+                                  {new Date().toLocaleDateString('en-US', { weekday: 'long' })} · {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                </span>
+                                <p className="font-display italic text-[1rem] text-ink leading-[1.6]">{dashboardData.market_context}</p>
+                              </div>
                             </div>
                           )}
 
