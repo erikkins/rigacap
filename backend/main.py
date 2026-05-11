@@ -4288,6 +4288,73 @@ def handler(event, context):
                 # info instead of just a name list.
                 missing_diag = await symbol_metadata_service.diagnose_missing()
 
+                # ─── AI auto-delist sweep ────────────────────────────────
+                # For symbols stuck in 'investigate' for >=14 days that no
+                # user holds, run the same AI triage Claude uses on the
+                # triage page. If the verdict comes back DELIST, mark the
+                # symbol delisted automatically — operator never has to
+                # click through obvious cases. Conservative gating:
+                #   - days_missing >= 14 (corroboration via persistence)
+                #   - not in any open user position
+                #   - AI verdict must explicitly be DELIST (not WAIT,
+                #     INVESTIGATE, or RENAME). Anything ambiguous stays
+                #     for human review.
+                auto_delisted_by_ai: list = []
+                try:
+                    from app.api.admin import fetch_symbol_news_and_summarize
+                    from app.core.database import SymbolMetadata as _SM, SymbolMetadataEvent as _SME
+                    candidates = [
+                        r for r in missing_diag
+                        if r.get("suggested_action") in ("investigate", "auto_quarantine")
+                        and (r.get("days_missing") or 0) >= 14
+                        and not r.get("in_open_position")
+                        and r.get("status") != "delisted"
+                    ]
+                    # Cap at 12 to keep latency + API spend bounded. Anything
+                    # over surfaces in tomorrow's run.
+                    for r in candidates[:12]:
+                        sym = r["symbol"]
+                        try:
+                            triage = await fetch_symbol_news_and_summarize(sym)
+                        except Exception as _se:
+                            print(f"⚠️ AI auto-delist sweep failed for {sym}: {_se}")
+                            continue
+                        if triage.get("verdict") != "DELIST":
+                            continue
+                        # Apply the same DB updates the manual mark-delisted
+                        # endpoint does (status, audit event, clear streak).
+                        async with async_session() as adb:
+                            res = await adb.execute(select(_SM).where(_SM.symbol == sym))
+                            meta = res.scalar_one_or_none()
+                            if not meta:
+                                continue
+                            meta.status = "delisted"
+                            meta.quarantine_reason = "ai_auto_delist"
+                            meta.first_missing_at = None
+                            adb.add(_SME(
+                                symbol=sym,
+                                event_type="ai_auto_delist",
+                                details_json=__import__('json').dumps({
+                                    "verdict": "DELIST",
+                                    "days_missing": r.get("days_missing"),
+                                    "summary": (triage.get("summary") or "")[:300],
+                                }),
+                            ))
+                            await adb.commit()
+                        auto_delisted_by_ai.append(sym)
+                    if auto_delisted_by_ai:
+                        info_flags.append(
+                            f"🤖 AI auto-delisted {len(auto_delisted_by_ai)} symbol(s): "
+                            f"{', '.join(auto_delisted_by_ai[:8])}"
+                            + (f" (+{len(auto_delisted_by_ai)-8} more)" if len(auto_delisted_by_ai) > 8 else "")
+                        )
+                        # Remove the auto-delisted ones from missing_diag so
+                        # they don't double-render in the action-required table
+                        auto_set = set(auto_delisted_by_ai)
+                        missing_diag = [r for r in missing_diag if r["symbol"] not in auto_set]
+                except Exception as _ade:
+                    print(f"⚠️ AI auto-delist sweep error (non-blocking): {_ade}")
+
                 def _render_missing_table(rows: list) -> str:
                     """Render only the actionable rows (urgent_held / auto_quarantine /
                     investigate). 'recheck' rows are <7 days missing — the system
@@ -4345,10 +4412,47 @@ def handler(event, context):
                 if urgent_count > 0:
                     # ANY held-position symbol going missing in Alpaca is critical regardless of count
                     critical_flags.append(f"🚨 {urgent_count} missing symbol(s) ARE in open user positions — manual review needed")
-                if tally["missing_in_alpaca"] > 20:
-                    critical_flags.append(
-                        f"⚠️ {tally['missing_in_alpaca']} symbols missing in Alpaca (>20 threshold)"
+                # Missing-in-Alpaca: alarm on rate-of-change, not absolute count.
+                # The chronic count drifts up slowly as ETFs and edge-case symbols
+                # accumulate; firing on 'current > 20' was a permanent warning the
+                # operator couldn't act on. What matters is a sudden spike: today's
+                # count jumping materially over yesterday's. Persist baseline to S3;
+                # alert only when delta > 15 symbols OR > 25%.
+                missing_alpaca_now = tally["missing_in_alpaca"]
+                missing_alpaca_prev = None
+                try:
+                    import boto3 as _boto, json as _json
+                    s3c = _boto.client("s3", region_name="us-east-1")
+                    bkt = "rigacap-prod-price-data-149218244179"
+                    key = "hygiene/last_missing_alpaca_count.json"
+                    try:
+                        obj = s3c.get_object(Bucket=bkt, Key=key)
+                        prev_data = _json.loads(obj["Body"].read())
+                        missing_alpaca_prev = prev_data.get("count")
+                    except s3c.exceptions.NoSuchKey:
+                        missing_alpaca_prev = None
+                    if missing_alpaca_prev is not None:
+                        delta = missing_alpaca_now - missing_alpaca_prev
+                        pct = (delta / missing_alpaca_prev * 100) if missing_alpaca_prev > 0 else 0
+                        if delta > 15 or pct > 25:
+                            critical_flags.append(
+                                f"⚠️ Missing-in-Alpaca count jumped {missing_alpaca_prev} → {missing_alpaca_now} "
+                                f"(+{delta}, {pct:+.1f}%). Investigate data pipeline."
+                            )
+                        else:
+                            info_flags.append(
+                                f"ℹ️ Missing-in-Alpaca: {missing_alpaca_now} ({delta:+d} vs yesterday)"
+                            )
+                    else:
+                        info_flags.append(f"ℹ️ Missing-in-Alpaca: {missing_alpaca_now} (no prior baseline; recording for tomorrow)")
+                    # Persist today's count as tomorrow's baseline
+                    s3c.put_object(
+                        Bucket=bkt, Key=key,
+                        Body=_json.dumps({"count": missing_alpaca_now, "recorded_at": datetime.utcnow().isoformat()}).encode("utf-8"),
+                        ContentType="application/json",
                     )
+                except Exception as _e:
+                    info_flags.append(f"ℹ️ Missing-in-Alpaca: {missing_alpaca_now} (rate-of-change unavailable: {_e})")
                 # Universe dirty count: alarm on rate-of-change, not absolute level.
                 # The absolute count drifts up slowly with universe expansion and
                 # historical-data quirks; firing on "current > 1500" means a chronic
@@ -4401,8 +4505,7 @@ def handler(event, context):
                     info_flags.append(f"🆕 {tally['new']} new symbols added to metadata")
                 if auto_q_count > 0:
                     info_flags.append(f"🔒 {auto_q_count} symbol(s) auto-quarantined (>=14 days missing)")
-                if 0 < tally["missing_in_alpaca"] <= 20:
-                    info_flags.append(f"ℹ️ {tally['missing_in_alpaca']} symbols missing in Alpaca (below alarm threshold)")
+                # (Missing-in-Alpaca info line now rendered above with rate-of-change context.)
                 # Quiet rechecks: <7d missing rows are auto-rechecked each night
                 # and don't need admin attention. Surface only the count so the
                 # email isn't a 13-row dead-end of "investigate" mismatches.

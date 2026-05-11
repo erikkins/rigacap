@@ -3880,6 +3880,65 @@ _TRIAGE_CLAUDE_MODEL = "claude-sonnet-4-6"
 _TRIAGE_CLAUDE_URL = "https://api.anthropic.com/v1/messages"
 
 
+def parse_triage_verdict(summary: str | None) -> str | None:
+    """Extract the AI triage one-line verdict from the end of a summary.
+    Returns one of: 'DELIST', 'RENAME', 'INVESTIGATE', 'WAIT', or None.
+    The prompt instructs the model to end with one of those tokens; we
+    inspect the last 3 lines (~the last sentence + maybe a header line)
+    for safety."""
+    if not summary:
+        return None
+    tail = ' '.join((summary.strip().splitlines() or [''])[-3:]).upper()
+    # Order matters: 'INVESTIGATE FURTHER' contains no DELIST/RENAME/WAIT,
+    # but a stray 'RENAME' could appear in the body — match against the
+    # tail only and check for the strongest signal that survives a
+    # disambiguation pass.
+    if 'INVESTIGATE' in tail:
+        return 'INVESTIGATE'
+    if 'WAIT' in tail and 'TRANSIENT' in tail:
+        return 'WAIT'
+    if 'RENAME' in tail:
+        return 'RENAME'
+    if 'DELIST' in tail:
+        return 'DELIST'
+    if 'WAIT' in tail:
+        return 'WAIT'
+    return None
+
+
+async def fetch_symbol_news_and_summarize(symbol: str) -> dict:
+    """End-to-end news+AI fetch for a single symbol. Returns a dict with
+    {company_name, headlines, summary, verdict}. Encapsulates the
+    yfinance fetch + Claude call so it can be invoked from both the
+    triage page endpoint and the nightly auto-delist sweep."""
+    yf_name = None
+    headlines: List[Dict] = []
+    try:
+        import yfinance as yf
+        ticker = yf.Ticker(symbol)
+        try:
+            info = ticker.info or {}
+            yf_name = info.get("longName") or info.get("shortName")
+        except Exception:
+            yf_name = None
+        try:
+            news_raw = ticker.news or []
+            for n in news_raw[:10]:
+                headlines.append({
+                    "title": n.get("title") or n.get("content", {}).get("title"),
+                    "publisher": n.get("publisher") or n.get("content", {}).get("provider", {}).get("displayName"),
+                    "providerPublishTime": n.get("providerPublishTime") or n.get("content", {}).get("pubDate"),
+                    "link": n.get("link") or n.get("content", {}).get("canonicalUrl", {}).get("url"),
+                })
+        except Exception:
+            headlines = []
+    except Exception:
+        pass
+    summary = await _summarize_symbol_news(symbol, yf_name, headlines)
+    verdict = parse_triage_verdict(summary)
+    return {"company_name": yf_name, "headlines": headlines, "summary": summary, "verdict": verdict}
+
+
 async def _summarize_symbol_news(symbol: str, company_name: str | None, headlines: List[Dict]) -> str:
     """One-paragraph plain-English summary of recent news for a symbol —
     enough for the admin to make a delist / rename / wait call. Returns
@@ -4154,3 +4213,29 @@ async def admin_symbol_repoll(
             await db.commit()
         return _SymbolActionResponse(status="ok", detail=f"{symbol} found in Alpaca; missing-streak cleared")
     return _SymbolActionResponse(status="still_missing", detail=f"{symbol} still not found in Alpaca; streak counter continues")
+
+
+@router.post("/symbol-triage/{symbol}/defer", response_model=_SymbolActionResponse)
+async def admin_symbol_defer(
+    symbol: str,
+    db: AsyncSession = Depends(get_db),
+    _admin = Depends(get_admin_user),
+):
+    """Defer a symbol for 30 days — the operator wants to revisit later
+    rather than make a delist/rename call now. Records the defer in
+    symbol_metadata_events with a deferred_until timestamp. The hygiene
+    digest's diagnose_missing helper filters out symbols whose latest
+    defer event is still active, so the row drops out of the daily
+    email for 30 days. After that window, it re-surfaces."""
+    symbol = symbol.upper().strip()
+    defer_until = datetime.utcnow() + timedelta(days=30)
+    db.add(SymbolMetadataEvent(
+        symbol=symbol,
+        event_type="defer",
+        details_json=json.dumps({"deferred_until": defer_until.isoformat(), "via": "admin_triage_page"}),
+    ))
+    await db.commit()
+    return _SymbolActionResponse(
+        status="ok",
+        detail=f"{symbol} deferred until {defer_until.strftime('%Y-%m-%d')}; will resurface in hygiene digest after that date",
+    )

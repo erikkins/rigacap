@@ -268,6 +268,17 @@ export default function SymbolTriagePage() {
                     Forces a fresh asset check. If found, clears the missing-streak.
                   </span>
                 </button>
+
+                <button
+                  onClick={() => action('defer')}
+                  disabled={actionState.busy}
+                  className="text-left border border-rule px-5 py-3 hover:bg-paper-card transition-colors disabled:opacity-40"
+                >
+                  <span className="font-display font-medium">Defer 30 days</span>
+                  <span className="block text-[0.85rem] text-ink-mute mt-0.5">
+                    Drops the symbol from the daily hygiene digest for 30 days. Use when the AI says &ldquo;investigate further&rdquo; and you want to revisit later rather than make a call now. Re-surfaces automatically after the defer window passes.
+                  </span>
+                </button>
               </div>
             </section>
           </>

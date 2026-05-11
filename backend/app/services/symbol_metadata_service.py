@@ -264,7 +264,7 @@ class SymbolMetadataService:
           - 'recheck'         — <7 days missing; could be transient Alpaca issue
         """
         from app.services.scanner import scanner_service
-        from app.core.database import Position
+        from app.core.database import Position, SymbolMetadataEvent
 
         async with async_session() as db:
             # All symbols with first_missing_at set (active streak)
@@ -289,9 +289,35 @@ class SymbolMetadataService:
             )
             held_syms = {row[0] for row in held_result.all()}
 
-        now = datetime.utcnow()
+            # Deferred symbols — operator chose to revisit later. The defer
+            # endpoint records a SymbolMetadataEvent with event_type='defer'
+            # and details_json={"deferred_until": "<iso>"}. We honor the
+            # most recent defer event per symbol and skip it from the
+            # missing-row list if its deferred_until is still in the future.
+            defer_rows = await db.execute(
+                select(SymbolMetadataEvent.symbol, SymbolMetadataEvent.details_json, SymbolMetadataEvent.id)
+                .where(SymbolMetadataEvent.event_type == 'defer')
+                .where(SymbolMetadataEvent.symbol.in_(missing_syms))
+                .order_by(SymbolMetadataEvent.symbol, SymbolMetadataEvent.id.desc())
+            )
+            now = datetime.utcnow()
+            deferred_until: Dict[str, datetime] = {}
+            seen: set = set()
+            for sym, details_json, _id in defer_rows.all():
+                if sym in seen:
+                    continue
+                seen.add(sym)
+                try:
+                    details = json.loads(details_json or '{}')
+                    until = datetime.fromisoformat(details.get('deferred_until', ''))
+                    if until > now:
+                        deferred_until[sym] = until
+                except Exception:
+                    pass
         out = []
         for m in missing_metas:
+            if m.symbol in deferred_until:
+                continue  # active defer; skip until the deferred_until date passes
             days_missing = (now - m.first_missing_at).days if m.first_missing_at else None
 
             # Pickle freshness lookup — last bar date if symbol still in pickle
