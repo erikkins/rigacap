@@ -2361,6 +2361,162 @@ def handler(event, context):
             traceback.print_exc()
             return {"status": "failed", "error": str(e)}
 
+    # Pickle health validator — runs against the actual pickle in S3 (not
+    # parquet). Reports schema completeness, date freshness, index naming,
+    # row-count distribution, and value sanity. Useful as a standalone
+    # check between daily scans, or to verify a heal job worked.
+    # {"pickle_validate": {"_": 1}}
+    if event.get("pickle_validate"):
+        print("🔬 Pickle validate: running standalone health check")
+
+        async def _validate():
+            import pandas as _pd
+            import numpy as _np
+            from datetime import datetime as _dt, timedelta as _td
+            from app.services.data_export import data_export_service
+
+            cache = data_export_service.import_all()
+            if not cache:
+                return {"status": "failed", "error": "Empty pickle"}
+
+            # Use the canonical indicator set from the scanner so we never
+            # drift from production's expectation.
+            expected_indicators = set(scanner_service.EXPECTED_INDICATORS)
+            expected_ohlcv = {'open', 'high', 'low', 'close', 'volume'}
+
+            total = len(cache)
+            today = _pd.Timestamp.now().normalize()
+            # Trading-day tolerance: weekends + holidays + market still open
+            stale_cutoff = today - _td(days=4)
+
+            schema_issues = {
+                'missing_indicators': {},   # indicator -> count of symbols missing it
+                'missing_ohlcv': {},        # ohlcv col -> count of symbols missing it
+                'bad_index_name': 0,        # symbols where index.name != 'date'
+                'non_datetime_index': 0,    # symbols with non-DatetimeIndex
+                'duplicate_dates': 0,       # symbols with duplicate index entries
+            }
+            freshness_buckets = {'today': 0, 'yesterday': 0, 'within_4d': 0, 'stale': 0, 'no_data': 0}
+            row_count_dist = {'<50': 0, '50_252': 0, '252_1000': 0, '>1000': 0}
+            value_issues = {
+                'all_nan_close': 0,
+                'negative_close': 0,
+                'negative_volume': 0,
+                'nan_tail_close': 0,
+                'nan_tail_indicators': {ind: 0 for ind in expected_indicators},
+            }
+            stale_examples = []
+            schema_examples = []
+
+            for sym, df in cache.items():
+                if df is None or len(df) == 0:
+                    freshness_buckets['no_data'] += 1
+                    row_count_dist['<50'] += 1
+                    continue
+
+                # Row count
+                rc = len(df)
+                if rc < 50: row_count_dist['<50'] += 1
+                elif rc < 252: row_count_dist['50_252'] += 1
+                elif rc < 1000: row_count_dist['252_1000'] += 1
+                else: row_count_dist['>1000'] += 1
+
+                # Index name
+                if df.index.name != 'date':
+                    schema_issues['bad_index_name'] += 1
+                    if len(schema_examples) < 5:
+                        schema_examples.append({"symbol": sym, "issue": f"index.name={df.index.name!r}"})
+
+                # Index type + uniqueness
+                if not isinstance(df.index, _pd.DatetimeIndex):
+                    schema_issues['non_datetime_index'] += 1
+                if df.index.duplicated().any():
+                    schema_issues['duplicate_dates'] += 1
+
+                # OHLCV completeness
+                cols = set(df.columns)
+                for c in expected_ohlcv:
+                    if c not in cols:
+                        schema_issues['missing_ohlcv'][c] = schema_issues['missing_ohlcv'].get(c, 0) + 1
+
+                # Indicator completeness
+                for ind in expected_indicators:
+                    if ind not in cols:
+                        schema_issues['missing_indicators'][ind] = schema_issues['missing_indicators'].get(ind, 0) + 1
+
+                # Freshness (tz-naive comparison)
+                try:
+                    last_date = df.index.max()
+                    if hasattr(last_date, 'tz') and last_date.tz is not None:
+                        last_date = last_date.tz_localize(None)
+                    days_old = (today - _pd.Timestamp(last_date).normalize()).days
+                    if days_old == 0:
+                        freshness_buckets['today'] += 1
+                    elif days_old == 1:
+                        freshness_buckets['yesterday'] += 1
+                    elif days_old <= 4:
+                        freshness_buckets['within_4d'] += 1
+                    else:
+                        freshness_buckets['stale'] += 1
+                        if len(stale_examples) < 10:
+                            stale_examples.append({
+                                "symbol": sym, "last_date": str(last_date)[:10],
+                                "days_old": days_old, "rows": rc,
+                            })
+                except Exception:
+                    freshness_buckets['stale'] += 1
+
+                # Value sanity (cheap checks only)
+                if 'close' in cols:
+                    close = df['close']
+                    if close.isna().all():
+                        value_issues['all_nan_close'] += 1
+                    elif _pd.isna(close.iloc[-1]):
+                        value_issues['nan_tail_close'] += 1
+                    if (close.dropna() < 0).any():
+                        value_issues['negative_close'] += 1
+                if 'volume' in cols and (df['volume'].dropna() < 0).any():
+                    value_issues['negative_volume'] += 1
+                # NaN-tail per indicator (already-present indicators only)
+                for ind in expected_indicators:
+                    if ind in cols and _pd.isna(df[ind].iloc[-1]):
+                        value_issues['nan_tail_indicators'][ind] += 1
+
+            # Verdict
+            structural_clean = (
+                schema_issues['bad_index_name'] == 0
+                and schema_issues['non_datetime_index'] == 0
+                and schema_issues['duplicate_dates'] == 0
+                and not schema_issues['missing_ohlcv']
+                and not schema_issues['missing_indicators']
+            )
+            freshness_clean = (
+                freshness_buckets['stale'] == 0
+                and freshness_buckets['no_data'] == 0
+            )
+
+            return {
+                "status": "ok" if (structural_clean and freshness_clean) else "issues_found",
+                "total_symbols": total,
+                "schema_issues": schema_issues,
+                "schema_examples": schema_examples,
+                "freshness": freshness_buckets,
+                "stale_examples": stale_examples,
+                "row_count_distribution": row_count_dist,
+                "value_issues": value_issues,
+                "verdict": {
+                    "structural_clean": structural_clean,
+                    "freshness_clean": freshness_clean,
+                    "ready_for_parquet_cutover": structural_clean,
+                },
+            }
+
+        try:
+            return _run_async(_validate())
+        except Exception as e:
+            import traceback
+            return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:600]}
+
     # One-time pickle-schema heal: rewrite the production pickle so every
     # symbol carries the full indicator column set AND has canonical
     # index.name='date'. Closes the column_set_diff gap that's been blocking
