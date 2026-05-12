@@ -108,6 +108,7 @@
 
 ## Storage Roadmap
 - [Pickle → Parquet/DuckDB/TimescaleDB migration](project_storage_migration_roadmap.md) — triggers, options, sequencing. Stay on pickle through ~500 paid subs, then start with Parquet on S3.
+- **[Parquet: fix the difference, never silence the alarm](feedback_parquet_fix_not_silence.md)** — when the diff harness flags a divergence, ask "if parquet were already primary, which side is correct?" Align parquet with target behavior. Never broaden "explainable" just to make the warning go away. Once we cut over, every silenced quirk is permanent.
 
 ## Active Tasks
 - **[Intraday WF validation pickup (Apr 30 night → May 1)](project_intraday_validation_apr30.md)** — production-matched 5-min cadence simulator suggests WF overstates production by ~5 pp annualized (linear approx). Tomorrow: verify prod code → b-full re-run → cadence sweep. Material parity-gap signal.
@@ -181,6 +182,7 @@
 - **[Numbers citations registry](project_numbers_citations_registry.md)** — `docs/numbers-citations-registry.md` enumerates every surface citing perf numbers. Walk it before any number refresh. No partial updates.
 
 ## Planned Features
+- **[Admin run_sql Lambda handler (TODO)](project_admin_run_sql_handler.md)** — add a generic read-only SQL/diagnostic event branch to the worker so ad-hoc invokes don't trip the worker-errors alarm. ~1 hr build with read-only guard + row cap + audit log.
 - [Signal slippage tracking](project_signal_slippage_tracking.md) — post-publication price monitoring to measure real achievable execution vs published entry price
 - [Balanced content rule](project_balanced_content_rule.md) — every 4th social post must be a loss/quiet week/limitation; trust-building differentiator
 - [Trial length decision (post-launch+60d)](project_trial_length_decision.md) — default $0/14d auto-extend, A/B-test $19/30d paid; SaaS data favors paid trials for conversion. Don't act before 60 days of launch data.
