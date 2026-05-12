@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, Activity, DollarSign, Clock, Search, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, Plus, Zap, TrendingUp, AlertCircle, CheckCircle, PlayCircle, RefreshCw, Beaker, Bot, Settings, Share2, Server, Briefcase, Sparkles, Calculator, Shield, Mail, Lock, Loader2, Edit3 } from 'lucide-react';
+import { Users, Activity, DollarSign, Clock, Search, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, Plus, Zap, TrendingUp, AlertCircle, CheckCircle, PlayCircle, RefreshCw, Beaker, Bot, Settings, Share2, Server, Briefcase, Sparkles, Calculator, Shield, Mail, Lock, Loader2, Edit3, X as XIcon } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import StrategyGenerator from './StrategyGenerator';
@@ -119,6 +119,23 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error('Failed to fetch users:', err);
+    }
+  };
+
+  // Per-user activity modal
+  const [activityModal, setActivityModal] = useState(null); // {user, events, loading, error, filter}
+  const openActivity = async (user) => {
+    setActivityModal({ user, events: [], loading: true, error: null, filter: '' });
+    try {
+      const response = await fetchWithAuth(`${API_URL}/api/events/admin/users/${user.id}/activity?limit=200`);
+      if (!response.ok) {
+        setActivityModal({ user, events: [], loading: false, error: `Server ${response.status}`, filter: '' });
+        return;
+      }
+      const data = await response.json();
+      setActivityModal({ user, events: data.events || [], loading: false, error: null, filter: '' });
+    } catch (err) {
+      setActivityModal({ user, events: [], loading: false, error: String(err), filter: '' });
     }
   };
 
@@ -439,6 +456,14 @@ export default function AdminDashboard() {
           compUser={compUser}
           revokeComp={revokeComp}
           fetchUsers={fetchUsers}
+          openActivity={openActivity}
+        />
+      )}
+      {activityModal && (
+        <UserActivityModal
+          state={activityModal}
+          onFilterChange={(f) => setActivityModal({ ...activityModal, filter: f })}
+          onClose={() => setActivityModal(null)}
         />
       )}
     </div>
@@ -1069,7 +1094,7 @@ function AutoPilotTab({ fetchWithAuth }) {
 }
 
 // Users Tab Component
-function UsersTab({ users, usersPagination, searchQuery, setSearchQuery, handleSearch, toggleUserStatus, extendTrial, compUser, revokeComp, fetchUsers }) {
+function UsersTab({ users, usersPagination, searchQuery, setSearchQuery, handleSearch, toggleUserStatus, extendTrial, compUser, revokeComp, fetchUsers, openActivity }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200">
       <div className="p-6 border-b border-gray-200">
@@ -1145,6 +1170,13 @@ function UsersTab({ users, usersPagination, searchQuery, setSearchQuery, handleS
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => openActivity(user)}
+                      className="p-1 rounded text-indigo-600 hover:bg-indigo-50"
+                      title="View user activity"
+                    >
+                      <Activity size={20} />
+                    </button>
                     <button
                       onClick={() => toggleUserStatus(user.id, user.is_active)}
                       className={`p-1 rounded ${user.is_active ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}`}
@@ -2735,6 +2767,140 @@ function NewsletterTab({ fetchWithAuth }) {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+
+// Per-user activity modal — shows the recent user_events feed for one user.
+// Powers the support workflow: click Activity icon on a user row, see what
+// they've been doing in the past few hundred events.
+function UserActivityModal({ state, onFilterChange, onClose }) {
+  const { user, events, loading, error, filter } = state;
+  // Filter events by event_type substring (case-insensitive)
+  const filteredEvents = filter
+    ? events.filter((e) => (e.event_type || '').toLowerCase().includes(filter.toLowerCase()))
+    : events;
+
+  // Distinct event types for the filter chips
+  const eventTypes = [...new Set(events.map((e) => e.event_type))].sort();
+
+  const fmtTime = (iso) => {
+    try {
+      const d = new Date(iso);
+      const now = new Date();
+      const diffMs = now - d;
+      const diffMin = Math.floor(diffMs / 60000);
+      if (diffMin < 1) return 'just now';
+      if (diffMin < 60) return `${diffMin}m ago`;
+      const diffHr = Math.floor(diffMin / 60);
+      if (diffHr < 24) return `${diffHr}h ago`;
+      const diffDay = Math.floor(diffHr / 24);
+      if (diffDay < 7) return `${diffDay}d ago`;
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    } catch {
+      return iso;
+    }
+  };
+
+  const eventColor = (type) => {
+    if (type?.includes('login')) return 'bg-emerald-100 text-emerald-800';
+    if (type?.includes('entry')) return 'bg-blue-100 text-blue-800';
+    if (type?.includes('close_position')) return 'bg-orange-100 text-orange-800';
+    if (type?.includes('signal_click')) return 'bg-indigo-100 text-indigo-800';
+    if (type?.includes('tab_change')) return 'bg-gray-100 text-gray-700';
+    return 'bg-gray-100 text-gray-700';
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[80] p-4" onClick={onClose}>
+      <div className="bg-white w-full max-w-3xl max-h-[85vh] flex flex-col rounded-lg shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">User Activity</h2>
+            <p className="text-sm text-gray-500">{user?.email || user?.id}</p>
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600">
+            <XIcon size={20} />
+          </button>
+        </div>
+
+        {/* Filter bar */}
+        {!loading && events.length > 0 && (
+          <div className="px-6 py-3 border-b border-gray-200 bg-gray-50 flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-gray-500 uppercase tracking-wider mr-1">Filter:</span>
+            <button
+              onClick={() => onFilterChange('')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-full ${!filter ? 'bg-gray-900 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+            >
+              All ({events.length})
+            </button>
+            {eventTypes.slice(0, 10).map((et) => {
+              const count = events.filter((e) => e.event_type === et).length;
+              return (
+                <button
+                  key={et}
+                  onClick={() => onFilterChange(et)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-full ${filter === et ? 'bg-gray-900 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+                >
+                  {et} ({count})
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto">
+          {loading && (
+            <div className="p-12 flex items-center justify-center text-gray-500">
+              <Loader2 className="animate-spin mr-2" size={18} />
+              Loading…
+            </div>
+          )}
+          {error && (
+            <div className="p-6 text-red-600 text-sm">Error loading activity: {error}</div>
+          )}
+          {!loading && !error && events.length === 0 && (
+            <div className="p-12 text-center text-gray-500">
+              <Activity size={32} className="mx-auto mb-3 text-gray-400" />
+              <p className="text-sm">No activity yet for this user.</p>
+              <p className="text-xs text-gray-400 mt-1">Events start logging after their next session post-deploy.</p>
+            </div>
+          )}
+          {!loading && !error && filteredEvents.length > 0 && (
+            <ul className="divide-y divide-gray-100">
+              {filteredEvents.map((ev) => (
+                <li key={ev.id} className="px-6 py-3 hover:bg-gray-50">
+                  <div className="flex items-start gap-3">
+                    <span className={`px-2 py-0.5 text-[0.7rem] font-medium rounded-full ${eventColor(ev.event_type)} whitespace-nowrap shrink-0`}>
+                      {ev.event_type}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      {ev.payload && (
+                        <div className="text-xs font-mono text-gray-600 truncate">
+                          {Object.entries(ev.payload).slice(0, 4).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join('  ·  ')}
+                        </div>
+                      )}
+                      <div className="text-[0.7rem] text-gray-400 mt-0.5 flex items-center gap-2">
+                        <span>{fmtTime(ev.created_at)}</span>
+                        {ev.path && <span className="font-mono">{ev.path}</span>}
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-3 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 flex items-center justify-between">
+          <span>{filteredEvents.length} of {events.length} events shown · last 200</span>
+          <span className="font-mono">user_id: {user?.id?.slice(0, 8)}…</span>
+        </div>
+      </div>
     </div>
   );
 }
