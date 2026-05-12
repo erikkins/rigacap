@@ -1998,8 +1998,19 @@ def handler(event, context):
             print(f"📦 Using cold-start cache ({len(scanner_service.data_cache)} symbols, skipping incremental)")
 
             # Stream pickle to /tmp file to avoid OOM (pickle.dumps holds 2x in memory)
-            # Use compresslevel=1 for speed (~5x faster than default 9, ~10% larger file)
-            clean_cache = {s: df for s, df in scanner_service.data_cache.items() if len(df) >= 50}
+            # Use compresslevel=1 for speed (~5x faster than default 9, ~10% larger file).
+            # Normalize index.name to 'date' on the way through — same fix as
+            # data_export.export_pickle does for the slower path. Without this,
+            # newly-fetched index symbols (^VIX/^GSPC, etc.) carry yf.download's
+            # 'Date' (or None) and diverge from parquet's canonical 'date'.
+            clean_cache = {}
+            for s, df in scanner_service.data_cache.items():
+                if df is None or len(df) < 50:
+                    continue
+                if df.index.name != 'date':
+                    df = df.copy()
+                    df.index.name = 'date'
+                clean_cache[s] = df
             tmp_path = "/tmp/all_data.pkl.gz"
             print(f"💾 Writing {len(clean_cache)} symbols to {tmp_path}...")
             t0 = _time.time()
