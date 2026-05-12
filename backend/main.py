@@ -2361,6 +2361,73 @@ def handler(event, context):
             traceback.print_exc()
             return {"status": "failed", "error": str(e)}
 
+    # One-time pickle-schema heal: rewrite the production pickle so every
+    # symbol carries the full indicator column set AND has canonical
+    # index.name='date'. Closes the column_set_diff gap that's been blocking
+    # the Stage 3b parquet cutover gate. Safe to re-invoke — it's idempotent.
+    # {"parquet_alignment_heal": {"_": 1}}
+    if event.get("parquet_alignment_heal"):
+        print("🩹 Parquet alignment heal: re-writing pickle with canonical schema")
+
+        async def _heal():
+            import time as _time
+            from app.services.data_export import data_export_service
+
+            # 1. Force-reload pickle from S3. This goes through _import_from_s3
+            #    which now normalizes index.name='date' across all symbols
+            #    on read. We need a fresh load — a warm worker may have a
+            #    pre-fix cache.
+            t0 = _time.time()
+            fresh_cache = data_export_service.import_all()
+            if not fresh_cache:
+                return {"status": "failed", "error": "import_all returned empty cache"}
+            print(f"📦 Loaded {len(fresh_cache)} symbols in {_time.time()-t0:.1f}s")
+
+            # 2. Run _ensure_indicators on every symbol. With the new trigger,
+            #    any symbol missing ANY indicator (atr in particular) will be
+            #    recomputed in this pass.
+            t0 = _time.time()
+            healed = 0
+            empty = 0
+            for sym, df in list(fresh_cache.items()):
+                if df is None or len(df) == 0:
+                    empty += 1
+                    continue
+                # Track whether recompute fired so we can report progress
+                before_cols = set(df.columns)
+                new_df = scanner_service._ensure_indicators(df)
+                if set(new_df.columns) != before_cols:
+                    healed += 1
+                fresh_cache[sym] = new_df
+            print(f"🔧 _ensure_indicators ran in {_time.time()-t0:.1f}s "
+                  f"({healed} symbols gained columns, {empty} empty)")
+
+            # 3. Replace the live scanner cache so subsequent in-process
+            #    reads see the canonical schema, then export. export_pickle
+            #    applies the index.name='date' normalization on write.
+            scanner_service.data_cache = fresh_cache
+            t0 = _time.time()
+            export_result = data_export_service.export_pickle(fresh_cache)
+            print(f"💾 Pickle exported in {_time.time()-t0:.1f}s: {export_result}")
+
+            return {
+                "status": "completed" if export_result.get("success") else "export_blocked",
+                "symbols_loaded": len(fresh_cache),
+                "symbols_healed": healed,
+                "empty_symbols": empty,
+                "export": export_result,
+            }
+
+        try:
+            result = _run_async(_heal())
+            print(f"🩹 Heal result: {result}")
+            return result
+        except Exception as e:
+            import traceback
+            print(f"❌ Parquet alignment heal failed: {e}")
+            traceback.print_exc()
+            return {"status": "failed", "error": str(e)}
+
     # Handle daily WF cache (chained from daily scan — refreshes simulated portfolio)
     if event.get("daily_wf_cache"):
         print(f"📊 Daily WF cache triggered - {len(scanner_service.data_cache)} symbols in cache")
