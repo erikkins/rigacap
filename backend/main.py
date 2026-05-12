@@ -566,6 +566,19 @@ async def _run_walk_forward_job(job_config: dict, wf_state_key: str = None):
                         print(f"[ASYNC-WF] Warning: failed to update state file: {cleanup_err}")
 
                 print(f"[ASYNC-WF] Job {job_id} completed: return={sim_result.total_return_pct}%")
+
+                # Post-completion hook for the nightly missed-opps job: regenerate
+                # social posts from the trades. This used to live in the monolithic
+                # nightly handler — moved here so it fires on the FINAL chunk of a
+                # chained run. Best-effort: a failure here doesn't fail the job.
+                if job_config.get("nightly_post_complete"):
+                    try:
+                        from app.services.social_content_service import social_content_service
+                        posts = await social_content_service.generate_from_nightly_wf(db, job_id)
+                        print(f"[ASYNC-WF] Nightly post-complete: generated {len(posts)} social posts")
+                    except Exception as social_err:
+                        print(f"[ASYNC-WF] Nightly social-content step failed: {social_err}")
+
                 return {"status": "completed", "job_id": job_id}
 
         except Exception as e:
@@ -3067,31 +3080,46 @@ def handler(event, context):
             print(f"❌ WF-FAIL handler itself failed: {e}")
             return {"error": str(e)}
 
-    # Handle nightly walk-forward job (direct Lambda invocation)
+    # Handle nightly walk-forward job (direct Lambda invocation).
+    #
+    # Previously this ran as a single monolithic call to the WF service. With
+    # the larger universe + per-period optimizer work it now exceeds Lambda's
+    # 900s ceiling, AWS auto-retries the same RequestId twice, all three time
+    # out, and the simulation row is stranded at status='running' — starving
+    # both the dashboard's Missed Opportunities widget and the social-content
+    # AI pipeline (next-day fallback to yesterday's data masks but doesn't fix
+    # the silent failure).
+    #
+    # Fix: bootstrap the simulation row here, then delegate to the chunked,
+    # self-chaining _run_walk_forward_job. The runner processes `periods_limit`
+    # periods per Lambda invocation, persists continuation state to S3, and
+    # async-invokes itself for the next chunk until done. The social-content
+    # step fires from _run_walk_forward_job's final-chunk completion path when
+    # nightly_post_complete=True (see the post-completion hook there).
     if "nightly_wf_job" in event:
         print(f"🌙 Nightly WF job received - {len(scanner_service.data_cache)} symbols in cache")
         config = event["nightly_wf_job"] or {}
-        async def _run_nightly_wf():
+
+        async def _bootstrap_nightly_wf():
             from datetime import timedelta
             from app.core.database import WalkForwardSimulation
-            from app.services.walk_forward_service import walk_forward_service
-            from sqlalchemy import select
-            import json
 
             days_back = config.get("days_back", 90)
             strategy_id = config.get("strategy_id", 5)
             max_symbols = config.get("max_symbols", 500)
+            # 2 biweekly periods per chunk = ~6-10 min per Lambda, well under
+            # the 900s ceiling even at the larger universe. With a 90-day
+            # window that's ~7 periods, so 3-4 chunks total.
+            periods_limit = config.get("periods_limit", 2)
 
             end_date = datetime.now()
             start_date = end_date - timedelta(days=days_back)
 
             async with async_session() as db:
                 # Append-only: never delete prior nightly cache rows. Readers
-                # (signals.py, social_content_service.py) already do
-                # ORDER BY simulation_date DESC LIMIT 1, so latest-cache
-                # semantics are preserved without a DELETE that races with
-                # the FK on walk_forward_period_results.
-
+                # do ORDER BY simulation_date DESC LIMIT 1 with status='completed',
+                # so latest-completed semantics are preserved without a DELETE
+                # that would race the FK on walk_forward_period_results.
                 job = WalkForwardSimulation(
                     simulation_date=datetime.utcnow(),
                     start_date=start_date,
@@ -3109,45 +3137,33 @@ def handler(event, context):
                 await db.commit()
                 await db.refresh(job)
                 job_id = job.id
+                print(f"[NIGHTLY-WF] Created job {job_id} ({days_back}d, biweekly, "
+                      f"periods_limit={periods_limit}, max_symbols={max_symbols})")
 
-                print(f"[NIGHTLY-WF] Starting {days_back}-day walk-forward (job {job_id})")
-
-                result = await walk_forward_service.run_walk_forward_simulation(
-                    db=db,
-                    start_date=start_date,
-                    end_date=end_date,
-                    reoptimization_frequency="biweekly",
-                    min_score_diff=10.0,
-                    enable_ai_optimization=False,
-                    max_symbols=max_symbols,
-                    existing_job_id=job_id,
-                    fixed_strategy_id=strategy_id,
-                    carry_positions=True,
-                )
-
-                # Generate social content
-                post_count = 0
-                try:
-                    from app.services.social_content_service import social_content_service
-                    posts = await social_content_service.generate_from_nightly_wf(db, job_id)
-                    post_count = len(posts)
-                except Exception as e:
-                    print(f"[NIGHTLY-WF] Social content error: {e}")
-
-                return {
-                    "status": "completed",
-                    "job_id": job_id,
-                    "total_return_pct": result.total_return_pct,
-                    "total_trades": len(result.trades) if hasattr(result, 'trades') else 0,
-                    "social_posts_generated": post_count,
-                }
+            return {
+                "job_id": job_id,
+                "start_date": start_date.strftime("%Y-%m-%d"),
+                "end_date": end_date.strftime("%Y-%m-%d"),
+                "frequency": "biweekly",
+                "strategy_id": strategy_id,
+                "max_symbols": max_symbols,
+                "carry_positions": True,
+                "min_score_diff": 10.0,
+                "enable_ai": False,
+                "periods_limit": periods_limit,
+                "nightly_post_complete": True,  # trigger social-content step on final chunk
+            }
 
         try:
-            result = _run_async(_run_nightly_wf())
+            job_config = _run_async(_bootstrap_nightly_wf())
+            # Hand off to the chunked, self-chaining runner. The first chunk
+            # runs in this same Lambda invocation; subsequent chunks are
+            # async-invoked by the runner itself.
+            result = _run_async(_run_walk_forward_job(job_config))
             return result
         except Exception as e:
             import traceback
-            print(f"❌ Nightly WF failed: {e}")
+            print(f"❌ Nightly WF bootstrap failed: {e}")
             print(traceback.format_exc())
             return {"status": "failed", "error": str(e)}
 
