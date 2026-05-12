@@ -3447,27 +3447,27 @@ function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* LEFT: Buy Signals */}
               <div className="overflow-hidden">
-                <div className="flex items-baseline justify-between pb-3 border-b-2 border-ink mb-5 gap-3">
-                  <div className="flex items-baseline gap-2 min-w-0">
-                    <h2 className="font-display text-[1.25rem] font-medium text-ink tracking-tight whitespace-nowrap" style={{ fontVariationSettings: '"opsz" 48' }}>Buy Signals</h2>
-                    <StrengthInfoPopover />
-                    {dashboardData?.buy_signals?.filter(s => s.is_fresh).length > 0 && (
-                      <span className="font-body text-[0.65rem] font-medium tracking-[0.15em] uppercase text-claret whitespace-nowrap">
-                        {dashboardData.buy_signals.filter(s => s.is_fresh).length} Fresh
-                      </span>
-                    )}
-                    <button
-                      onClick={() => setSectorFilterOpen(prev => !prev)}
-                      className="p-1 rounded hover:bg-paper-deep transition-colors relative"
-                      title="Filter by sector"
-                    >
-                      <Filter size={14} className="text-ink-light" />
-                      {excludedSectors.length > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-claret rounded-full" />
+                <div className="pb-3 border-b-2 border-ink mb-5">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="flex items-baseline gap-2 min-w-0">
+                      <h2 className="font-display text-[1.25rem] font-medium text-ink tracking-tight whitespace-nowrap" style={{ fontVariationSettings: '"opsz" 48' }}>Buy Signals</h2>
+                      <StrengthInfoPopover />
+                      {dashboardData?.buy_signals?.filter(s => s.is_fresh).length > 0 && (
+                        <span className="font-body text-[0.65rem] font-medium tracking-[0.15em] uppercase text-claret whitespace-nowrap">
+                          {dashboardData.buy_signals.filter(s => s.is_fresh).length} Fresh
+                        </span>
                       )}
-                    </button>
-                    <em className="font-display italic text-ink-mute text-[0.78rem] truncate hidden sm:inline" style={{ fontVariationSettings: '"opsz" 24' }}>Signals only — execute via your broker</em>
-                  </div>
+                      <button
+                        onClick={() => setSectorFilterOpen(prev => !prev)}
+                        className="p-1 rounded hover:bg-paper-deep transition-colors relative"
+                        title="Filter by sector"
+                      >
+                        <Filter size={14} className="text-ink-light" />
+                        {excludedSectors.length > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-claret rounded-full" />
+                        )}
+                      </button>
+                    </div>
                   <span className="font-mono text-[0.72rem] text-ink-light tracking-wide">
                     {(() => {
                       // Find the most recent ensemble entry date
@@ -3496,6 +3496,8 @@ function Dashboard() {
                       return `Last signal: ${diffDays}d ago`;
                     })()}
                   </span>
+                  </div>
+                  <em className="block font-display italic text-ink-mute text-[0.78rem] mt-1.5" style={{ fontVariationSettings: '"opsz" 24' }}>Signals only — execute via your broker</em>
                 </div>
 
                 {/* Collapsible sector filter pills */}
