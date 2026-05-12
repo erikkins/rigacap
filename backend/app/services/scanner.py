@@ -527,19 +527,31 @@ class ScannerService:
 
         return True
 
-    def _ensure_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Compute indicators if missing or stale (lazy computation).
+    # Indicator columns that every full-history symbol should carry. Order
+    # is the order recompute writes them. Kept as a class-level tuple so the
+    # trigger check and the parquet-divergence diagnostic both reference the
+    # same source of truth.
+    EXPECTED_INDICATORS = ('dwap', 'ma_50', 'ma_200', 'vol_avg', 'high_52w', 'atr')
 
-        Recomputes when:
-        - The dwap column is missing entirely, OR
-        - The dwap column exists but the last row's value is NaN (stale tail
-          from fetch_incremental appending OHLCV-only rows without indicators).
-        The second case is critical — without it, the scanner silently skips
-        every symbol whose latest bar was appended incrementally.
+    def _ensure_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Compute indicators if any are missing or stale (lazy computation).
+
+        Recomputes when ANY column in EXPECTED_INDICATORS is either:
+        - missing from df entirely, OR
+        - present but the last row's value is NaN (stale tail from
+          fetch_incremental which appends OHLCV-only rows).
+
+        Previously this only inspected `dwap` — so a symbol that already had
+        dwap but never had `atr` (or any future indicator added to the set)
+        would silently keep its old, incomplete schema forever, blocking the
+        pickle↔parquet schema converging. With the broader trigger, the
+        first call against any incomplete symbol heals it.
         """
-        needs_recompute = (
-            'dwap' not in df.columns
-            or (len(df) > 0 and pd.isna(df['dwap'].iloc[-1]))
+        if len(df) == 0:
+            return df
+        needs_recompute = any(
+            col not in df.columns or pd.isna(df[col].iloc[-1])
+            for col in self.EXPECTED_INDICATORS
         )
         if needs_recompute:
             df = df.copy()
@@ -548,9 +560,6 @@ class ScannerService:
             df['ma_200'] = self.sma(df['close'], 200)
             df['vol_avg'] = self.sma(df['volume'], 200)
             df['high_52w'] = self.high_52w(df['close'])
-            # ATR was missing from this lazy-recompute path, causing pickle to
-            # diverge from parquet (parquet has it from a different code path).
-            # Adding here so future incremental updates restore it.
             from app.services.strategy_params_v2 import compute_atr
             df['atr'] = compute_atr(df['high'], df['low'], df['close'], period=14)
         return df

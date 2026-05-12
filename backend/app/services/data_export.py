@@ -270,6 +270,20 @@ class DataExportService:
                 pkl_bytes = gzip.decompress(raw_bytes)
                 print(f"📦 Decompressed to {len(pkl_bytes)} bytes, unpickling...")
                 data_cache = pickle.loads(pkl_bytes)
+                # Normalize index name across all symbol DataFrames. Pickle
+                # historically contained inconsistent index naming (notably
+                # ^VIX / ^GSPC carried index.name=None or 'Date' from a
+                # yf.download path that skipped set_index('date'); everywhere
+                # else it was 'date'). Parquet's import_parquet ALWAYS sets
+                # index.name='date' on read, so any pickle-side inconsistency
+                # shows up as a spurious column_set_diff. Normalizing here
+                # gives every consumer of data_cache a single canonical
+                # shape — which is also what parquet-primary will deliver
+                # post-cutover. Skip silently if df.index isn't a
+                # DatetimeIndex (defensive, shouldn't happen).
+                for _sym, _df in data_cache.items():
+                    if isinstance(_df, pd.DataFrame) and _df.index.name != 'date':
+                        _df.index.name = 'date'
                 print(f"✅ Loaded {len(data_cache)} symbols from pickle file")
                 # Update metadata with correct count
                 self.exported_symbols = list(data_cache.keys())
@@ -401,11 +415,20 @@ class DataExportService:
         try:
             import pickle
 
-            # Filter out small dataframes
-            clean_cache = {
-                symbol: df for symbol, df in data_cache.items()
-                if len(df) >= 50
-            }
+            # Filter out small dataframes AND normalize each df's index.name
+            # to 'date'. Historically a yf.download fetch path for ^VIX/^GSPC
+            # left index.name as 'Date' or None, which then showed up as a
+            # column_set_diff vs parquet (parquet always sets index.name='date'
+            # on read). Canonicalizing on the way out keeps the pickle and
+            # the parquet writer aligned on schema.
+            clean_cache = {}
+            for symbol, df in data_cache.items():
+                if df is None or len(df) < 50:
+                    continue
+                if df.index.name != 'date':
+                    df = df.copy()
+                    df.index.name = 'date'
+                clean_cache[symbol] = df
 
             if not clean_cache:
                 return {"success": False, "message": "No valid data to export", "count": 0}
