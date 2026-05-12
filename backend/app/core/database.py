@@ -817,6 +817,30 @@ class ParquetDivergenceEvent(Base):
     parquet_row_count = Column(Integer)
 
 
+class EmailEvent(Base):
+    """Per-recipient email engagement log. One row at send time (event_type
+    'sent'), one row per pixel hit ('opened'), one row per tracked-link click
+    ('clicked'). Token is unique per individual recipient send so we can
+    attribute engagement to the right user.
+
+    Apple Mail Privacy Protection inflates opens — interpret open rate as
+    a relative signal (campaign A vs B, today vs last week), not absolute
+    readership.
+    """
+    __tablename__ = "email_events"
+
+    id = Column(BigInteger, primary_key=True)
+    token = Column(String(64), nullable=False, index=True)
+    email_address = Column(String(255))
+    email_type = Column(String(64))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), index=True)
+    event_type = Column(String(32), nullable=False)  # 'sent' | 'opened' | 'clicked'
+    click_url = Column(Text)
+    ip = Column(String(64))
+    user_agent = Column(String(255))
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+
 class UserEvent(Base):
     """Per-user activity log. Every meaningful interaction writes one row:
     signal click, chart open, record entry, position close, tab change,
@@ -1181,6 +1205,32 @@ async def _run_schema_migrations(conn):
         "CREATE INDEX IF NOT EXISTS idx_ue_user_created ON user_events(user_id, created_at DESC)",
         "CREATE INDEX IF NOT EXISTS idx_ue_type_created ON user_events(event_type, created_at DESC)",
         "CREATE INDEX IF NOT EXISTS idx_ue_session ON user_events(session_id)",
+    ])
+
+    # Email engagement events: tracks sent/opened/clicked per (email, recipient).
+    # Token is unique per individual send (so we can attribute opens to a
+    # specific recipient, not just "someone in the batch"). Open events come
+    # from a 1x1 pixel hit; click events come from a redirect through
+    # /api/email/click/{token}. Caveat: Apple Mail Privacy Protection
+    # pre-fetches images automatically, so iOS recipients register as opened
+    # the moment the email lands — open rate is useful for relative
+    # comparisons (this email vs that), not absolute readership.
+    await _run("email_events table", [
+        """CREATE TABLE IF NOT EXISTS email_events (
+            id BIGSERIAL PRIMARY KEY,
+            token VARCHAR(64) NOT NULL,
+            email_address VARCHAR(255),
+            email_type VARCHAR(64),
+            user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+            event_type VARCHAR(32) NOT NULL,
+            click_url TEXT,
+            ip VARCHAR(64),
+            user_agent VARCHAR(255),
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_ee_token ON email_events(token)",
+        "CREATE INDEX IF NOT EXISTS idx_ee_user_created ON email_events(user_id, created_at DESC)",
+        "CREATE INDEX IF NOT EXISTS idx_ee_type_created ON email_events(email_type, event_type, created_at DESC)",
     ])
 
 

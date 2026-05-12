@@ -151,6 +151,7 @@ class EmailService:
         text_content: Optional[str] = None,
         user_id: str = None,
         list_unsubscribe_url: Optional[str] = None,
+        email_type: Optional[str] = None,
     ) -> bool:
         """
         Send an email to a single recipient with retry + exponential backoff.
@@ -161,6 +162,11 @@ class EmailService:
             html_content: HTML body of the email
             text_content: Plain text fallback (optional)
             user_id: User ID for List-Unsubscribe header (omit for transactional emails)
+            email_type: Email-tracking category (e.g. 'daily_digest', 'signal_alert',
+                'welcome', 'newsletter'). When provided, the HTML is instrumented
+                with a 1x1 tracking pixel + click-redirect-wrapped links, and a
+                'sent' row is recorded in email_events. Omit for operational/admin
+                emails that shouldn't be tracked.
 
         Returns:
             True if sent successfully, False otherwise
@@ -168,6 +174,21 @@ class EmailService:
         if not self.enabled:
             logger.warning(f"Email service disabled, would have sent to: {to_email}")
             return False
+
+        # Email engagement tracking — opt-in per call via email_type. Returns
+        # the original html unchanged if instrumentation fails so the actual
+        # send never breaks on a tracking issue.
+        if email_type:
+            try:
+                from app.services.email_tracking_service import prepare_tracked_email
+                html_content, _tok = await prepare_tracked_email(
+                    html=html_content,
+                    email_address=to_email,
+                    email_type=email_type,
+                    user_id=user_id,
+                )
+            except Exception as _te:
+                logger.warning(f"Email tracking instrumentation failed for {email_type} -> {to_email}: {_te}")
 
         try:
             import aiosmtplib

@@ -2804,6 +2804,9 @@ function UserActivityModal({ state, onFilterChange, onClose }) {
   };
 
   const eventColor = (type) => {
+    if (type === 'email_clicked') return 'bg-purple-100 text-purple-800';
+    if (type === 'email_opened') return 'bg-pink-100 text-pink-800';
+    if (type === 'email_sent') return 'bg-amber-50 text-amber-800';
     if (type?.includes('login')) return 'bg-emerald-100 text-emerald-800';
     if (type?.includes('entry')) return 'bg-blue-100 text-blue-800';
     if (type?.includes('close_position')) return 'bg-orange-100 text-orange-800';
