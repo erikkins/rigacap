@@ -713,7 +713,7 @@ class EmailService:
 
         text = self.generate_plain_text(signals, market_regime, date=date, watchlist=watchlist)
 
-        return await self.send_email(to_email, subject, html, text, user_id=user_id)
+        return await self.send_email(to_email, subject, html, text, user_id=user_id, email_type="daily_digest")
 
     async def send_market_measured(
         self,
@@ -1147,6 +1147,7 @@ Market, Measured. is a weekly reading from RigaCap.
             to_email, subject, html, text,
             user_id=user_id,
             list_unsubscribe_url=unsub_url,
+            email_type="market_measured",
         )
 
     async def send_newsletter_from_draft(
@@ -1279,6 +1280,7 @@ Market, Measured. is a weekly reading from RigaCap.
             to_email, subject, html, "",
             user_id=user_id,
             list_unsubscribe_url=unsub_url,
+            email_type="newsletter",
         )
 
     async def send_bulk_daily_summary(
@@ -1466,7 +1468,8 @@ For information purposes only. RigaCap, LLC is not a registered investment advis
             subject="🚀 Welcome to RigaCap — Your Trading Edge Starts Now!",
             html_content=html,
             text_content=text,
-            user_id=user_id
+            user_id=user_id,
+            email_type="welcome",
         )
 
     async def send_password_reset_email(self, to_email: str, name: str, reset_url: str) -> bool:
@@ -1581,7 +1584,8 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
             subject=f"RigaCap — Your trial ends {urgency}",
             html_content=html,
             text_content=text,
-            user_id=user_id
+            user_id=user_id,
+            email_type="trial_ending",
         )
 
     async def send_goodbye_email(self, to_email: str, name: str, user_id: str = None) -> bool:
@@ -1632,7 +1636,8 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
             subject="RigaCap — the system is still running",
             html_content=html,
             text_content=text,
-            user_id=user_id
+            user_id=user_id,
+            email_type="goodbye",
         )
 
 
@@ -2127,7 +2132,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
 </body>
 </html>"""
 
-        return await self.send_email(to_email, subject, html, user_id=user_id)
+        return await self.send_email(to_email, subject, html, user_id=user_id, email_type=f"onboarding_step{step}")
 
     async def send_sell_alert(
         self,
@@ -2209,7 +2214,8 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
             subject=subject,
             html_content=html,
             text_content=text,
-            user_id=user_id
+            user_id=user_id,
+            email_type="sell_alert",
         )
 
     async def send_double_signal_alert(
@@ -2304,7 +2310,8 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
             subject=f"RigaCap — {len(new_signals)} new signal{'s' if len(new_signals) > 1 else ''}",
             html_content=html,
             text_content=text,
-            user_id=user_id
+            user_id=user_id,
+            email_type="double_signal_alert",
         )
 
 
@@ -2380,7 +2387,8 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
             subject=f"🔔 LIVE SIGNAL: {symbol} breakout +{pct_above_dwap:.1f}%",
             html_content=html,
             text_content="\n".join(text_lines),
-            user_id=user_id
+            user_id=user_id,
+            email_type="intraday_signal_alert",
         )
 
     async def send_referral_reward_email(self, to_email: str, name: str, friend_name: str, user_id: str = None) -> bool:
@@ -2416,7 +2424,8 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
             subject=f"RigaCap — You earned a free month",
             html_content=html,
             text_content=text,
-            user_id=user_id
+            user_id=user_id,
+            email_type="referral_reward",
         )
 
 
@@ -2669,6 +2678,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
             subject=subject,
             html_content=html,
             user_id=user_id,  # For List-Unsubscribe header (paid users only)
+            email_type="weekly_regime",
         )
 
 
@@ -2714,7 +2724,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
 
         html = self._email_wrapper("We'll be here", content, user_id)
 
-        return await self.send_email(to_email, f"RigaCap — the system is still running", html, user_id=user_id)
+        return await self.send_email(to_email, f"RigaCap — the system is still running", html, user_id=user_id, email_type="winback")
 
 
 # Singleton instance
