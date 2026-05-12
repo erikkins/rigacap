@@ -206,6 +206,7 @@
 - Terraform needs `AWS_PROFILE=rigacap`. CI/CD fights over `image_uri` — pass current tag.
 - RDS endpoint: `rigacap-prod-db-v2.csfsa4i06rux.us-east-1.rds.amazonaws.com`
 - [No "tape" in brand voice](feedback_no_tape.md) — trader jargon, banned everywhere including section names
+- **[No Brit-isms or trader-desk shorthand](feedback_no_britisms_trader_jargon.md)** — "what it says on the tin", "catches a bid", "no joy" etc. all banned. Voice is editorial-sharp US-English. Sister rule to no-tape and us-english.
 - **[US English only](feedback_us_english.md)** — favor/optimize/modeled/realize. Never favour/optimise/modelled/realise. Easy to slip into British forms unconsciously.
 - **[NEVER name DWAP in public prose](feedback_no_dwap_in_public.md)** — proprietary indicator. Use "proprietary timing reference" / "long-term accumulation reference" instead. Code field names + admin UI + email labels are fine; prose is not.
 - [Newsletter topic rotation](project_newsletter_topics.md) — §02 educational topics, review quarterly, add from new features + subscriber feedback
