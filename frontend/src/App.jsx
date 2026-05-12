@@ -3800,7 +3800,7 @@ function Dashboard() {
                               background so the briefing doesn't show row content
                               bleeding through when scrolled. */}
                           {dashboardData?.market_context && (
-                            <div className="sticky top-0 z-10 bg-paper mx-4 pt-4 pb-2">
+                            <div className="sticky top-0 z-10 bg-paper px-4 pt-4 pb-2 border-b border-rule">
                               <div className="py-4 px-5 bg-paper-card border-l-2 border-claret" style={{ fontVariationSettings: '"opsz" 24' }}>
                                 <span className="block font-body text-[0.64rem] font-medium tracking-[0.22em] uppercase text-ink-mute mb-2 not-italic">
                                   {new Date().toLocaleDateString('en-US', { weekday: 'long' })} · {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
