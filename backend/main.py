@@ -2916,6 +2916,74 @@ def handler(event, context):
             traceback.print_exc()
             return {"status": "failed", "error": str(e)}
 
+    # Inspect parquet divergence events — drills into the details_json for the
+    # most recent N events of a given type. Used to verify what's actually
+    # diverging before deciding whether to fix parquet, fix pickle, or
+    # canonicalize the diff harness. Returns a deduplicated view of the
+    # only_in_pickle / only_in_parquet column lists so we can see the shape
+    # of the drift at a glance.
+    # {"parquet_divergence_inspect": {"type": "column_set_diff", "limit": 50}}
+    if event.get("parquet_divergence_inspect"):
+        cfg = event["parquet_divergence_inspect"]
+        div_type = cfg.get("type", "column_set_diff")
+        limit = int(cfg.get("limit", 50))
+
+        async def _inspect():
+            from app.core.database import ParquetDivergenceEvent
+            from sqlalchemy import select, desc
+            import json as _json
+            from collections import Counter
+
+            async with async_session() as db:
+                rows = (await db.execute(
+                    select(ParquetDivergenceEvent)
+                    .where(ParquetDivergenceEvent.divergence_type == div_type)
+                    .order_by(desc(ParquetDivergenceEvent.detected_at))
+                    .limit(limit)
+                )).scalars().all()
+
+            shape_counter: Counter = Counter()
+            samples = []
+            for r in rows:
+                try:
+                    details = _json.loads(r.details_json) if r.details_json else {}
+                except Exception:
+                    details = {}
+                only_p = tuple(sorted(details.get("only_in_pickle", [])))
+                only_q = tuple(sorted(details.get("only_in_parquet", [])))
+                shape = (only_p, only_q)
+                shape_counter[shape] += 1
+                if len(samples) < 10:
+                    samples.append({
+                        "symbol": r.symbol,
+                        "detected_at": r.detected_at.isoformat() if r.detected_at else None,
+                        "only_in_pickle": list(only_p),
+                        "only_in_parquet": list(only_q),
+                        "pickle_rows": r.pickle_row_count,
+                        "parquet_rows": r.parquet_row_count,
+                    })
+
+            shapes_summary = [
+                {
+                    "only_in_pickle": list(p),
+                    "only_in_parquet": list(q),
+                    "count": n,
+                }
+                for (p, q), n in shape_counter.most_common()
+            ]
+            return {
+                "type": div_type,
+                "events_inspected": len(rows),
+                "distinct_shapes": shapes_summary,
+                "sample_events": samples,
+            }
+
+        try:
+            return _run_async(_inspect())
+        except Exception as e:
+            import traceback
+            return {"error": str(e), "trace": traceback.format_exc()[:500]}
+
     # Query walk-forward job details (read-only)
     if event.get("wf_query"):
         config = event["wf_query"]
