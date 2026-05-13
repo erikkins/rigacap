@@ -5970,40 +5970,77 @@ def handler(event, context):
 
     if event.get("generate_newsletter"):
         from app.services.newsletter_generator_service import newsletter_generator
+        from app.services.email_service import admin_email_service
+        import re as _re
+
+        ADMIN_EMAIL = "erik@rigacap.com"
+
+        def _strip_html(s):
+            return _re.sub(r"<[^>]+>", "", s or "") if s else ""
+
         try:
             draft = newsletter_generator.generate_draft()
         except ValueError as ve:
             # Lock-protection guardrail — refusing to overwrite a locked draft
             print(f"⚠️ Newsletter generate refused: {ve}")
             try:
-                from app.services.email_service import AdminEmailService
-                admin_svc = AdminEmailService()
-                _run_async(admin_svc.send_admin_email(
+                _run_async(admin_email_service.send_admin_alert(
+                    to_email=ADMIN_EMAIL,
                     subject="ℹ️ Newsletter generate skipped — draft already locked",
-                    body=f"The Saturday cron tried to generate this week's draft but it's already locked.\n\n{ve}\n\nNo action needed — your locked version will publish Sunday.",
+                    message=f"The Saturday cron tried to generate this week's draft but it's already locked.\n\n{ve}\n\nNo action needed — your locked version will publish Sunday.",
                 ))
-            except Exception:
-                pass
+            except Exception as _e:
+                print(f"⚠️ Admin notify (lock-skip) failed: {_e}")
             return {"status": "skipped", "reason": "draft already locked"}
 
-        # Notify admin: draft is ready for editing
-        try:
-            from app.services.email_service import AdminEmailService
-            admin_svc = AdminEmailService()
-            _run_async(admin_svc.send_admin_email(
-                subject=f"📝 Newsletter draft ready for {draft.get('date_display', draft['date'])}",
-                body=f"""The Saturday cron generated this week's Market, Measured draft.
+        # Build full-copy body so Erik can read on phone without opening admin
+        # UI. Plain text + section dividers; admin_alert wraps in <pre> so
+        # whitespace + line breaks render correctly.
+        section_blocks = []
+        for sec in draft.get("sections", []):
+            num = sec.get("num", "??")
+            label = sec.get("label", "")
+            title = _strip_html(sec.get("title")) if sec.get("title") else ""
+            header = f"§{num} · {label.upper()}"
+            if title:
+                header += f"\n{title}"
+            if sec.get("body"):
+                section_blocks.append(f"{header}\n\n{sec['body']}")
+            elif sec.get("items"):
+                items_text = "\n".join(f"  · {_strip_html(i)}" for i in sec["items"])
+                section_blocks.append(f"{header}\n\n{items_text}")
+            else:
+                section_blocks.append(header)
+
+        full_body = "\n\n" + ("\n\n" + ("─" * 60) + "\n\n").join(section_blocks)
+
+        message = f"""The Saturday cron generated this week's Market, Measured draft.
 
 Date: {draft.get('date_display', draft['date'])}
 Word count: {draft['word_count']}
 Regime: {draft.get('regime', 'unknown')}
 SPY: ${draft.get('spy_price', '?')} ({draft.get('spy_change', '?')}%)
 
-Edit at: https://rigacap.com/admin (Newsletter tab)
-Lock the draft before Sunday 7 PM ET to publish.
+To approve and lock: https://rigacap.com/admin (Newsletter tab)
+The cron will publish your LOCKED version Sunday 7 PM ET.
+If you don't lock by Sunday 7 PM, the send is skipped and you'll get another email.
 
-If you don't lock by Sunday 7 PM, the cron will skip the send and email you again.""",
+{"=" * 60}
+DRAFT COPY ({draft['word_count']} words)
+{"=" * 60}
+{full_body}
+
+{"=" * 60}
+End of draft. Edit + lock at https://rigacap.com/admin
+"""
+
+        try:
+            _run_async(admin_email_service.send_admin_alert(
+                to_email=ADMIN_EMAIL,
+                subject=f"📝 Newsletter draft ready — review + lock by Sunday 7 PM ET ({draft.get('date_display', draft['date'])})",
+                message=message,
             ))
+            print(f"✉️ Admin notified: draft ready for {draft['date']}")
         except Exception as e:
             print(f"⚠️ Admin notify failed: {e}")
 
@@ -6038,20 +6075,15 @@ If you don't lock by Sunday 7 PM, the cron will skip the send and email you agai
                 print("⚠️ No locked newsletter draft found — SKIPPING send")
                 # Notify admin
                 try:
-                    from app.services.email_service import AdminEmailService
-                    admin_svc = AdminEmailService()
-                    import asyncio as _aio
-                    _loop = _aio.get_event_loop()
-                    if _loop.is_closed():
-                        _loop = _aio.new_event_loop()
-                        _aio.set_event_loop(_loop)
-                    _run_async(admin_svc.send_admin_email(
+                    from app.services.email_service import admin_email_service
+                    _run_async(admin_email_service.send_admin_alert(
+                        to_email="erik@rigacap.com",
                         subject="⚠️ Sunday newsletter SKIPPED — no locked draft",
-                        body=f"The Market, Measured cron fired but no locked draft was found for {today_str}. "
-                             f"The newsletter was NOT sent. Lock a draft in the admin editor before next Sunday.",
+                        message=f"The Market, Measured cron fired but no locked draft was found for {today_str}. "
+                                f"The newsletter was NOT sent. Lock a draft in the admin editor before next Sunday.",
                     ))
-                except Exception:
-                    pass
+                except Exception as _e:
+                    print(f"⚠️ Admin notify (sunday-skip) failed: {_e}")
                 return {"status": "skipped", "reason": "No locked draft — newsletter requires editorial approval"}
             else:
                 print(f"📨 Using locked newsletter draft from {draft.get('date')}")
