@@ -2419,7 +2419,14 @@ function NewsletterTab({ fetchWithAuth }) {
     setLoading(false);
   };
 
-  useEffect(() => { loadDraft(); }, []);
+  useEffect(() => {
+    loadDraft();
+    // Refresh when the window/tab regains focus — catches the case where
+    // the cron generated a new draft while the admin tab was open.
+    const onFocus = () => loadDraft();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -2547,6 +2554,15 @@ function NewsletterTab({ fetchWithAuth }) {
           <p className="text-sm text-ink-mute mt-1">Weekly newsletter editor</p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={loadDraft}
+            disabled={loading}
+            title="Reload latest draft from S3 (in case the Saturday cron generated a new one)"
+            className="flex items-center gap-2 px-3 py-2 border border-rule text-ink-mute rounded hover:bg-paper-deep transition-colors disabled:opacity-50 text-sm"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Reload
+          </button>
           {!draft && (
             <button
               onClick={handleGenerate}
