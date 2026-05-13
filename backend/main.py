@@ -6063,28 +6063,50 @@ End of draft. Edit + lock at https://rigacap.com/admin
         show_symbols = cfg.get("show_symbols", False) if isinstance(cfg, dict) else False
         print(f"📨 Market, Measured triggered" + (f" for {target_emails}" if target_emails else " (full list)"))
 
-        # Newsletter ONLY sends from a locked draft — never auto-generates
+        # Newsletter ONLY sends from a locked draft for TODAY'S date. No
+        # fallback to the most-recent draft across weeks — that path caused
+        # the May 10 incident where a missed Saturday notification meant
+        # the Sunday cron fell back to and RE-SENT the May 3 locked issue.
+        # If today's draft doesn't exist or isn't locked, the publish
+        # window was missed: skip the send, alert admin, leave any unlocked
+        # draft sitting in S3 for historical reference.
         try:
             from app.services.newsletter_generator_service import newsletter_generator
             from datetime import datetime as _dt
             today_str = _dt.now().strftime("%Y-%m-%d")
             draft = newsletter_generator.get_draft(today_str)
+
+            # Build a precise skip-reason so the admin email is actionable
+            # rather than generic.
+            skip_reason = None
             if not draft:
-                draft = newsletter_generator.get_latest_draft()
-            if not draft or draft.get("status") != "locked":
-                print("⚠️ No locked newsletter draft found — SKIPPING send")
-                # Notify admin
+                skip_reason = (
+                    f"No draft file exists for {today_str}. The Saturday "
+                    f"generator either didn't run or failed to save. "
+                    f"Newsletter NOT sent. Investigate worker logs around "
+                    f"the most recent Saturday 14:00 UTC cron."
+                )
+            elif draft.get("status") != "locked":
+                skip_reason = (
+                    f"Draft for {today_str} exists but is in '{draft.get('status', 'unknown')}' "
+                    f"status (not 'locked'). The editorial lock window was "
+                    f"missed. Newsletter NOT sent. The unlocked draft is "
+                    f"preserved at newsletter/drafts/{today_str}.json for "
+                    f"historical reference."
+                )
+
+            if skip_reason:
+                print(f"⚠️ Sunday newsletter SKIPPED — {skip_reason}")
                 try:
                     from app.services.email_service import admin_email_service
                     _run_async(admin_email_service.send_admin_alert(
                         to_email="erik@rigacap.com",
-                        subject="⚠️ Sunday newsletter SKIPPED — no locked draft",
-                        message=f"The Market, Measured cron fired but no locked draft was found for {today_str}. "
-                                f"The newsletter was NOT sent. Lock a draft in the admin editor before next Sunday.",
+                        subject=f"⚠️ Sunday newsletter SKIPPED ({today_str}) — editorial window missed",
+                        message=skip_reason + "\n\nNo fallback re-send of a prior week's issue will occur. To resume normal cadence, lock next Saturday's draft before Sunday 7 PM ET.",
                     ))
                 except Exception as _e:
                     print(f"⚠️ Admin notify (sunday-skip) failed: {_e}")
-                return {"status": "skipped", "reason": "No locked draft — newsletter requires editorial approval"}
+                return {"status": "skipped", "reason": skip_reason}
             else:
                 print(f"📨 Using locked newsletter draft from {draft.get('date')}")
 
