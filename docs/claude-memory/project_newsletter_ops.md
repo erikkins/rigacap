@@ -5,7 +5,7 @@ type: project
 originSessionId: 1081317d-f863-470f-ab07-65ddc614e856
 ---
 **Live schedule (in production as of Apr 29 2026):**
-- **Saturday 10:00 AM ET (14:00 UTC):** EventBridge cron `rigacap-prod-newsletter-draft-saturday` fires `{"generate_newsletter": true}` at the worker Lambda. Generates the upcoming Sunday's draft, saves to `s3://rigacap-prod-price-data-149218244179/newsletter/drafts/{next_sunday}.json`, emails admin "📝 Newsletter draft ready for {date}".
+- **Saturday 10:00 AM ET (14:00 UTC) — EARLY SATURDAY is intentional:** EventBridge cron `rigacap-prod-newsletter-draft-saturday` fires `{"generate_newsletter": true}` at the worker Lambda. Generates the upcoming Sunday's draft, saves to `s3://rigacap-prod-price-data-149218244179/newsletter/drafts/{next_sunday}.json`, emails admin "📝 Newsletter draft ready for {date}" with the full copy embedded so Erik can read on phone without opening the admin UI. Early generation is the design — Erik wants all of Saturday available to review/edit. Do NOT propose pushing this later "for fresher Friday data" or similar — the editorial window matters more than freshness here.
 - **Saturday afternoon → Sunday 7 PM ET:** Erik edits + locks via admin UI Newsletter tab. Lock writes to BOTH `newsletter/drafts/{sunday}.json` (status: locked) AND `newsletter/issues/{sunday}.json` (public archive).
 - **Sunday 7:00 PM ET (23:00 UTC):** EventBridge cron `rigacap-prod-market-measured-weekly` fires `{"market_measured": {"_": 1}}`. Handler looks for `drafts/{today}.json` (today=Sunday); if locked, sends; otherwise SKIPS and emails admin.
 
