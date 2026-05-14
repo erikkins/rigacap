@@ -183,6 +183,7 @@
 
 ## Planned Features
 - **[Admin run_sql Lambda handler (TODO)](project_admin_run_sql_handler.md)** — add a generic read-only SQL/diagnostic event branch to the worker so ad-hoc invokes don't trip the worker-errors alarm. ~1 hr build with read-only guard + row cap + audit log.
+- **[main.py housekeeping — extract event handlers](project_main_py_housekeeping.md)** — main.py is 9,228 lines, 90+ event-handler branches. Refactor target: `app/lambda_events/<domain>.py` modules dispatched from a list in main.py. Not urgent (no active pain); trigger when merge conflicts in main.py block shipping, OR during a quiet parquet-migration window. Start with the diagnostics cluster (highest growth rate, easiest to test).
 - [Signal slippage tracking](project_signal_slippage_tracking.md) — post-publication price monitoring to measure real achievable execution vs published entry price
 - [Balanced content rule](project_balanced_content_rule.md) — every 4th social post must be a loss/quiet week/limitation; trust-building differentiator
 - [Trial length decision (post-launch+60d)](project_trial_length_decision.md) — default $0/14d auto-extend, A/B-test $19/30d paid; SaaS data favors paid trials for conversion. Don't act before 60 days of launch data.
