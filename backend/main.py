@@ -3568,10 +3568,14 @@ def handler(event, context):
             days_back = config.get("days_back", 90)
             strategy_id = config.get("strategy_id", 5)
             max_symbols = config.get("max_symbols", 500)
-            # 2 biweekly periods per chunk = ~6-10 min per Lambda, well under
-            # the 900s ceiling even at the larger universe. With a 90-day
-            # window that's ~7 periods, so 3-4 chunks total.
-            periods_limit = config.get("periods_limit", 2)
+            # 1 biweekly period per chunk = ~3-5 min per Lambda + ~half the
+            # peak memory footprint of the 2-period chunks. Reduced from 2
+            # after May 13 OOM kill (3008/3008 MB peak). A 90-day window
+            # produces ~7 periods so 7 chunks total — well under the 15-min
+            # ceiling, and each chunk has plenty of memory headroom.
+            # Parquet migration will further reduce this since each chunk
+            # can partial-read by symbol rather than holding the full pickle.
+            periods_limit = config.get("periods_limit", 1)
 
             end_date = datetime.now()
             start_date = end_date - timedelta(days=days_back)
