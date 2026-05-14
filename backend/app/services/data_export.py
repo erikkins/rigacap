@@ -415,19 +415,35 @@ class DataExportService:
         try:
             import pickle
 
-            # Filter out small dataframes AND normalize each df's index.name
-            # to 'date'. Historically a yf.download fetch path for ^VIX/^GSPC
-            # left index.name as 'Date' or None, which then showed up as a
-            # column_set_diff vs parquet (parquet always sets index.name='date'
-            # on read). Canonicalizing on the way out keeps the pickle and
-            # the parquet writer aligned on schema.
+            # Canonicalize each symbol's DataFrame at the storage boundary:
+            #   1. Filter out short-history (< 50 rows) — same as before
+            #   2. index.name == 'date' — historically a yf.download path for
+            #      ^VIX/^GSPC left this as 'Date' or None
+            #   3. All EXPECTED_INDICATORS columns present — without this, a
+            #      symbol that gets added/updated by a non-scan path (e.g.
+            #      nightly data hygiene, ticker health check) can land in the
+            #      pickle with bare OHLCV. Parquet's strict-schema concat union
+            #      fills those NaN, so the diff harness sees column_set_diff.
+            #      The export-side ensure-indicators pass is the defensive net
+            #      that keeps pickle and parquet aligned regardless of how
+            #      symbols got into the cache.
+            # TODO: still need to find the upstream path that drops indicators
+            # — the May 14 regression flagged SMX/KALA/DKI/ASBP/AIXI between
+            # the May 12 heal and the May 13 scan, suspect nightly-data-hygiene.
+            from app.services.scanner import scanner_service
+            expected_indicators = set(scanner_service.EXPECTED_INDICATORS)
             clean_cache = {}
             for symbol, df in data_cache.items():
                 if df is None or len(df) < 50:
                     continue
+                # Index name normalization
                 if df.index.name != 'date':
                     df = df.copy()
                     df.index.name = 'date'
+                # Indicator canonicalization — recompute if any expected
+                # indicator is missing as a column entirely.
+                if any(c not in df.columns for c in expected_indicators):
+                    df = scanner_service._ensure_indicators(df)
                 clean_cache[symbol] = df
 
             if not clean_cache:

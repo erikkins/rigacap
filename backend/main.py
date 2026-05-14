@@ -1999,10 +1999,13 @@ def handler(event, context):
 
             # Stream pickle to /tmp file to avoid OOM (pickle.dumps holds 2x in memory)
             # Use compresslevel=1 for speed (~5x faster than default 9, ~10% larger file).
-            # Normalize index.name to 'date' on the way through — same fix as
-            # data_export.export_pickle does for the slower path. Without this,
-            # newly-fetched index symbols (^VIX/^GSPC, etc.) carry yf.download's
-            # 'Date' (or None) and diverge from parquet's canonical 'date'.
+            # Canonicalize at the storage boundary — same three-step pass as
+            # data_export.export_pickle: filter short history, normalize
+            # index.name='date', ensure all expected indicators are present.
+            # Without the indicator step, a symbol that got into the cache via
+            # nightly-data-hygiene or similar non-scan path can land in pickle
+            # with bare OHLCV and trigger parquet column_set_diff.
+            expected_indicators = set(scanner_service.EXPECTED_INDICATORS)
             clean_cache = {}
             for s, df in scanner_service.data_cache.items():
                 if df is None or len(df) < 50:
@@ -2010,6 +2013,8 @@ def handler(event, context):
                 if df.index.name != 'date':
                     df = df.copy()
                     df.index.name = 'date'
+                if any(c not in df.columns for c in expected_indicators):
+                    df = scanner_service._ensure_indicators(df)
                 clean_cache[s] = df
             tmp_path = "/tmp/all_data.pkl.gz"
             print(f"💾 Writing {len(clean_cache)} symbols to {tmp_path}...")
