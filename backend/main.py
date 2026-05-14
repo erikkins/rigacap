@@ -2430,12 +2430,17 @@ def handler(event, context):
 
                 # Model portfolio: every position that touched the month
                 # (entered during the month OR opened before but closed during).
+                # entry_date / exit_date are DateTime columns, so build datetime
+                # boundaries from the start/end date objects for the compare.
+                from datetime import datetime as _dt, time as _time
+                start_dt = _dt.combine(start, _time.min)
+                end_dt = _dt.combine(end, _time.max)
                 pos_rows = (await db.execute(
                     select(ModelPosition)
                     .where(or_(
-                        and_(ModelPosition.entry_date >= start, ModelPosition.entry_date <= end),
-                        and_(ModelPosition.exit_date >= start, ModelPosition.exit_date <= end),
-                        and_(ModelPosition.entry_date < start, ModelPosition.exit_date.is_(None)),
+                        and_(ModelPosition.entry_date >= start_dt, ModelPosition.entry_date <= end_dt),
+                        and_(ModelPosition.exit_date >= start_dt, ModelPosition.exit_date <= end_dt),
+                        and_(ModelPosition.entry_date < start_dt, ModelPosition.exit_date.is_(None)),
                     ))
                     .order_by(ModelPosition.entry_date)
                 )).scalars().all()
@@ -2465,10 +2470,11 @@ def handler(event, context):
                 for d, syms in sorted(by_day.items())
             ]
 
-            # Model portfolio breakdown
+            # Model portfolio breakdown (entry_date / exit_date are DateTime,
+            # so compare with the datetime boundaries built above)
             open_now = [p for p in pos_rows if p.exit_date is None]
-            closed_in_month = [p for p in pos_rows if p.exit_date and start <= p.exit_date <= end]
-            entered_in_month = [p for p in pos_rows if start <= p.entry_date <= end]
+            closed_in_month = [p for p in pos_rows if p.exit_date and start_dt <= p.exit_date <= end_dt]
+            entered_in_month = [p for p in pos_rows if start_dt <= p.entry_date <= end_dt]
             closed_winners = [p for p in closed_in_month if p.pnl_pct and p.pnl_pct > 0]
             closed_losers = [p for p in closed_in_month if p.pnl_pct and p.pnl_pct <= 0]
             win_rate = (len(closed_winners) / len(closed_in_month)) if closed_in_month else None
