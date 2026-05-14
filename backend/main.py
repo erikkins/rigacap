@@ -4735,6 +4735,15 @@ def handler(event, context):
                         } for b in rows])
                         df['date'] = _pd.to_datetime(df['date'])
                         df = df.set_index('date').sort_index()
+                        # Compute indicators on the freshly-refetched bars
+                        # before assigning to the cache. Without this, the
+                        # split-refetch lands a bare-OHLCV DataFrame in
+                        # cache; the next daily scan's fetch_incremental
+                        # skips it (last_date is current) and the bare
+                        # state persists into pickle, triggering parquet
+                        # column_set_diff. Surfaced by SMX/KALA/DKI/ASBP/
+                        # AIXI on May 13 2026.
+                        df = scanner_service._ensure_indicators(df)
                         scanner_service.data_cache[sym] = df
                         refetched += 1
                     # Re-export pickle + parquet
