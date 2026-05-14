@@ -2371,40 +2371,55 @@ def handler(event, context):
         month = int(cfg.get("month", datetime.now().month))
 
         async def _analyze():
-            from sqlalchemy import select, func, and_, or_
+            from sqlalchemy import select, func, and_, or_, distinct
             from datetime import date as _date
             from calendar import monthrange
-            from app.core.database import EnsembleSignalRecord, ModelPosition
+            from app.core.database import EnsembleSignal, ModelPosition
 
             start = _date(year, month, 1)
             end_day = monthrange(year, month)[1]
             end = _date(year, month, end_day)
 
             async with async_session() as db:
-                # All signal events whose ensemble_entry_date falls in the month
-                month_rows = (await db.execute(
-                    select(EnsembleSignalRecord)
-                    .where(EnsembleSignalRecord.ensemble_entry_date >= start)
-                    .where(EnsembleSignalRecord.ensemble_entry_date <= end)
-                    .order_by(EnsembleSignalRecord.ensemble_entry_date)
-                )).scalars().all()
+                # A "signal event" = one (symbol, ensemble_entry_date) tuple.
+                # The ensemble_signals table records every (signal_date, symbol)
+                # — so a name on the list 10 days has 10 rows sharing the same
+                # ensemble_entry_date. Distinct on the entry tuple collapses
+                # those to one event per actual fire.
+                event_rows = (await db.execute(
+                    select(
+                        EnsembleSignal.symbol,
+                        EnsembleSignal.ensemble_entry_date,
+                        func.min(EnsembleSignal.signal_date).label("first_seen"),
+                    )
+                    .where(EnsembleSignal.ensemble_entry_date >= start)
+                    .where(EnsembleSignal.ensemble_entry_date <= end)
+                    .group_by(EnsembleSignal.symbol, EnsembleSignal.ensemble_entry_date)
+                    .order_by(EnsembleSignal.ensemble_entry_date)
+                )).all()
 
-                month_symbols = sorted({r.symbol for r in month_rows})
+                # Each row is one fire event. Convert into a list of dicts.
+                month_events = [
+                    {"symbol": r.symbol, "ensemble_entry_date": r.ensemble_entry_date, "first_seen": r.first_seen}
+                    for r in event_rows
+                ]
+                month_symbols = sorted({e["symbol"] for e in month_events})
 
-                # For each symbol that fired this month, check if it fired
-                # before this month — that distinguishes respawns from
-                # genuinely new names.
+                # For each symbol that fired this month, check whether it
+                # had any PRIOR (symbol, ensemble_entry_date) distinct from
+                # the ones in this month. Counts of distinct prior entries
+                # = how many times this name has fired before.
                 prior_count_by_symbol = {}
                 if month_symbols:
                     prior_q = (
                         select(
-                            EnsembleSignalRecord.symbol,
-                            func.count(EnsembleSignalRecord.id).label("n"),
-                            func.min(EnsembleSignalRecord.ensemble_entry_date).label("first_fired"),
+                            EnsembleSignal.symbol,
+                            func.count(distinct(EnsembleSignal.ensemble_entry_date)).label("n"),
+                            func.min(EnsembleSignal.ensemble_entry_date).label("first_fired"),
                         )
-                        .where(EnsembleSignalRecord.symbol.in_(month_symbols))
-                        .where(EnsembleSignalRecord.ensemble_entry_date < start)
-                        .group_by(EnsembleSignalRecord.symbol)
+                        .where(EnsembleSignal.symbol.in_(month_symbols))
+                        .where(EnsembleSignal.ensemble_entry_date < start)
+                        .group_by(EnsembleSignal.symbol)
                     )
                     prior_rows = (await db.execute(prior_q)).all()
                     for row in prior_rows:
@@ -2439,11 +2454,12 @@ def handler(event, context):
                 else:
                     new_names.append(sym)
 
-            # Daily breakdown
+            # Daily breakdown — keyed by ensemble_entry_date so each fire
+            # event lands on the day the signal actually triggered.
             from collections import defaultdict
             by_day = defaultdict(list)
-            for r in month_rows:
-                by_day[r.ensemble_entry_date.isoformat()].append(r.symbol)
+            for e in month_events:
+                by_day[e["ensemble_entry_date"].isoformat()].append(e["symbol"])
             daily = [
                 {"date": d, "count": len(syms), "symbols": syms}
                 for d, syms in sorted(by_day.items())
@@ -2461,7 +2477,7 @@ def handler(event, context):
                 "window": f"{start.isoformat()} → {end.isoformat()}",
                 "month_label": start.strftime("%B %Y"),
                 "signals_summary": {
-                    "total_signal_events": len(month_rows),
+                    "total_signal_events": len(month_events),
                     "distinct_symbols": len(month_symbols),
                     "genuinely_new_names": len(new_names),
                     "respawns_with_prior_history": len(respawns),
