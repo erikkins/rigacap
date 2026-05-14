@@ -938,10 +938,18 @@ class WalkForwardService:
                 pause_events=list(getattr(result, 'pause_events', []) or []),
             )
         except Exception as e:
-            error_msg = f"Period {start_date.strftime('%Y-%m-%d')}: ERROR {str(e)}"
-            print(f"[WF-SIM] ERROR: {error_msg}")
-            import traceback
-            traceback.print_exc()
+            # "No trading days in date range" is a benign edge case — happens
+            # when a chunked-WF period boundary lands purely on weekend / holiday
+            # days. The run continues fine on subsequent chunks. Downgrade to
+            # warn-level so it doesn't trip the Lambda Worker Errors alarm
+            # (alert fatigue). Other exceptions stay ERROR with traceback.
+            is_empty_period = isinstance(e, RuntimeError) and "No trading days" in str(e)
+            log_label = "WARN" if is_empty_period else "ERROR"
+            error_msg = f"Period {start_date.strftime('%Y-%m-%d')}: {'no trading days (weekend/holiday — skipping)' if is_empty_period else 'ERROR ' + str(e)}"
+            print(f"[WF-SIM] {log_label}: {error_msg}")
+            if not is_empty_period:
+                import traceback
+                traceback.print_exc()
             return PeriodSimulationOutput(
                 ending_capital=starting_capital,
                 period_return_pct=0.0,
@@ -1090,11 +1098,18 @@ class WalkForwardService:
             )
 
         except Exception as e:
-            # If backtest fails, assume flat return
-            error_msg = f"Period {start_date.strftime('%Y-%m-%d')}: {str(e)}"
-            print(f"[WF-SIM] ERROR: {error_msg}")
-            import traceback
-            traceback.print_exc()
+            # "No trading days in date range" is a benign edge case — happens
+            # when a chunked-WF period boundary lands purely on weekend /
+            # holiday days. The run continues fine. Downgrade to warn-level
+            # so it doesn't trip the Lambda Worker Errors alarm (alert
+            # fatigue). Other exceptions stay ERROR with traceback.
+            is_empty_period = isinstance(e, RuntimeError) and "No trading days" in str(e)
+            log_label = "WARN" if is_empty_period else "ERROR"
+            error_msg = f"Period {start_date.strftime('%Y-%m-%d')}: {'no trading days (weekend/holiday — skipping)' if is_empty_period else str(e)}"
+            print(f"[WF-SIM] {log_label}: {error_msg}")
+            if not is_empty_period:
+                import traceback
+                traceback.print_exc()
             return PeriodSimulationOutput(
                 ending_capital=starting_capital,
                 period_return_pct=0.0,
