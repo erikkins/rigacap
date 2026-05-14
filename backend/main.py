@@ -2361,6 +2361,138 @@ def handler(event, context):
             traceback.print_exc()
             return {"status": "failed", "error": str(e)}
 
+    # Month-to-date signal analysis — answers "how many signals this month,
+    # how many distinct names, how many respawns, regime context, and
+    # what's the model portfolio actually holding right now?"
+    # {"signal_month_analysis": {"year": 2026, "month": 5}}
+    if event.get("signal_month_analysis"):
+        cfg = event["signal_month_analysis"] or {}
+        year = int(cfg.get("year", datetime.now().year))
+        month = int(cfg.get("month", datetime.now().month))
+
+        async def _analyze():
+            from sqlalchemy import select, func, and_, or_
+            from datetime import date as _date
+            from calendar import monthrange
+            from app.core.database import EnsembleSignalRecord, ModelPosition
+
+            start = _date(year, month, 1)
+            end_day = monthrange(year, month)[1]
+            end = _date(year, month, end_day)
+
+            async with async_session() as db:
+                # All signal events whose ensemble_entry_date falls in the month
+                month_rows = (await db.execute(
+                    select(EnsembleSignalRecord)
+                    .where(EnsembleSignalRecord.ensemble_entry_date >= start)
+                    .where(EnsembleSignalRecord.ensemble_entry_date <= end)
+                    .order_by(EnsembleSignalRecord.ensemble_entry_date)
+                )).scalars().all()
+
+                month_symbols = sorted({r.symbol for r in month_rows})
+
+                # For each symbol that fired this month, check if it fired
+                # before this month — that distinguishes respawns from
+                # genuinely new names.
+                prior_count_by_symbol = {}
+                if month_symbols:
+                    prior_q = (
+                        select(
+                            EnsembleSignalRecord.symbol,
+                            func.count(EnsembleSignalRecord.id).label("n"),
+                            func.min(EnsembleSignalRecord.ensemble_entry_date).label("first_fired"),
+                        )
+                        .where(EnsembleSignalRecord.symbol.in_(month_symbols))
+                        .where(EnsembleSignalRecord.ensemble_entry_date < start)
+                        .group_by(EnsembleSignalRecord.symbol)
+                    )
+                    prior_rows = (await db.execute(prior_q)).all()
+                    for row in prior_rows:
+                        prior_count_by_symbol[row.symbol] = {
+                            "prior_fires": int(row.n),
+                            "first_fired": row.first_fired.isoformat() if row.first_fired else None,
+                        }
+
+                # Model portfolio: every position that touched the month
+                # (entered during the month OR opened before but closed during).
+                pos_rows = (await db.execute(
+                    select(ModelPosition)
+                    .where(or_(
+                        and_(ModelPosition.entry_date >= start, ModelPosition.entry_date <= end),
+                        and_(ModelPosition.exit_date >= start, ModelPosition.exit_date <= end),
+                        and_(ModelPosition.entry_date < start, ModelPosition.exit_date.is_(None)),
+                    ))
+                    .order_by(ModelPosition.entry_date)
+                )).scalars().all()
+
+            # Build the per-signal summary
+            new_names = []
+            respawns = []
+            for sym in month_symbols:
+                if sym in prior_count_by_symbol:
+                    p = prior_count_by_symbol[sym]
+                    respawns.append({
+                        "symbol": sym,
+                        "prior_fires": p["prior_fires"],
+                        "first_fired_ever": p["first_fired"],
+                    })
+                else:
+                    new_names.append(sym)
+
+            # Daily breakdown
+            from collections import defaultdict
+            by_day = defaultdict(list)
+            for r in month_rows:
+                by_day[r.ensemble_entry_date.isoformat()].append(r.symbol)
+            daily = [
+                {"date": d, "count": len(syms), "symbols": syms}
+                for d, syms in sorted(by_day.items())
+            ]
+
+            # Model portfolio breakdown
+            open_now = [p for p in pos_rows if p.exit_date is None]
+            closed_in_month = [p for p in pos_rows if p.exit_date and start <= p.exit_date <= end]
+            entered_in_month = [p for p in pos_rows if start <= p.entry_date <= end]
+            closed_winners = [p for p in closed_in_month if p.pnl_pct and p.pnl_pct > 0]
+            closed_losers = [p for p in closed_in_month if p.pnl_pct and p.pnl_pct <= 0]
+            win_rate = (len(closed_winners) / len(closed_in_month)) if closed_in_month else None
+
+            return {
+                "window": f"{start.isoformat()} → {end.isoformat()}",
+                "month_label": start.strftime("%B %Y"),
+                "signals_summary": {
+                    "total_signal_events": len(month_rows),
+                    "distinct_symbols": len(month_symbols),
+                    "genuinely_new_names": len(new_names),
+                    "respawns_with_prior_history": len(respawns),
+                },
+                "new_names": new_names,
+                "respawn_detail": sorted(respawns, key=lambda r: -r["prior_fires"]),
+                "daily_signal_counts": daily,
+                "model_portfolio": {
+                    "currently_open": len(open_now),
+                    "entered_this_month": len(entered_in_month),
+                    "closed_this_month": len(closed_in_month),
+                    "winners_closed": len(closed_winners),
+                    "losers_closed": len(closed_losers),
+                    "win_rate_closed_this_month": round(win_rate, 3) if win_rate is not None else None,
+                    "open_symbols": [
+                        {
+                            "symbol": p.symbol,
+                            "entry_date": p.entry_date.isoformat() if p.entry_date else None,
+                            "entry_price": p.entry_price,
+                            "shares": p.shares,
+                        } for p in open_now
+                    ],
+                },
+            }
+
+        try:
+            return _run_async(_analyze())
+        except Exception as e:
+            import traceback
+            return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:600]}
+
     # Pickle health validator — runs against the actual pickle in S3 (not
     # parquet). Reports schema completeness, date freshness, index naming,
     # row-count distribution, and value sanity. Useful as a standalone
