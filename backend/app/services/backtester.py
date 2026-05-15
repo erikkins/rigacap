@@ -224,6 +224,15 @@ class BacktesterService:
         # close-only (current EOD-anchored backtest). Default False keeps every existing
         # WF result reproducible bit-for-bit.
         self.intraday_aware = False
+        # Path B (May 15 2026): asymmetric mode for WF research.
+        # When True, HWM updates from day_high while the stop trigger STILL
+        # fires only on close. The b-full May 3 test showed intraday_aware
+        # (day-high HWM + day-low trigger) costs -17pp ann, but it bundled
+        # both behaviors. Hypothesis: the day-low trigger is the cost, and
+        # day-high HWM tracking might actually win.
+        # Only effective when intraday_aware=False. When intraday_aware=True
+        # this flag is ignored (the full bundle is used).
+        self.hwm_from_day_high = False
         self.regime_cooldown_days = 0    # Days to stay in cash after regime exit before allowing new entries; 0=disabled
         self.graduated_reentry = False   # Graduated re-entry: deploy partial capital on recovery signals
         # Profit-based stop tightening (V2 lever 8)
@@ -702,13 +711,25 @@ class BacktesterService:
                 and day_high is not None
                 and day_low is not None
             )
+            # Asymmetric mode: HWM from day_high, trigger still on close.
+            # Only takes effect when intraday_aware=False AND day_high provided.
+            use_asym_hwm = (
+                not use_intraday
+                and self.hwm_from_day_high
+                and day_high is not None
+            )
 
             # Update high water mark.
-            # In EOD mode: HWM updates from the day's CLOSE.
-            # In intraday-aware mode: HWM updates from the day's HIGH (matches
-            # production's day_high bridge between 5-min checks).
+            # EOD mode (default): HWM from the day's CLOSE.
+            # Intraday-aware mode: HWM from the day's HIGH (full intraday bundle).
+            # Asymmetric mode (Path B research): HWM from day's HIGH but
+            # trigger stays on close — captures peaks without intraday-flush
+            # false exits.
             high_water = pos.get('high_water_mark', entry_price)
-            hwm_candidate = day_high if use_intraday else current_price
+            if use_intraday or use_asym_hwm:
+                hwm_candidate = day_high
+            else:
+                hwm_candidate = current_price
             if hwm_candidate > high_water:
                 pos['high_water_mark'] = hwm_candidate
                 high_water = hwm_candidate

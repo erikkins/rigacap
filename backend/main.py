@@ -502,6 +502,7 @@ async def _run_walk_forward_job(job_config: dict, wf_state_key: str = None):
                 ensemble_seeds=job_config.get("ensemble_seeds", 0),
                 regime_fixed_params=job_config.get("regime_fixed_params"),
                 intraday_aware=job_config.get("intraday_aware", False),
+                hwm_from_day_high=job_config.get("hwm_from_day_high", False),
             )
 
             # Check if more chunks are needed
