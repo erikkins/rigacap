@@ -421,29 +421,40 @@ class DataExportService:
             #      ^VIX/^GSPC left this as 'Date' or None
             #   3. All EXPECTED_INDICATORS columns present — without this, a
             #      symbol that gets added/updated by a non-scan path (e.g.
-            #      nightly data hygiene, ticker health check) can land in the
-            #      pickle with bare OHLCV. Parquet's strict-schema concat union
-            #      fills those NaN, so the diff harness sees column_set_diff.
-            #      The export-side ensure-indicators pass is the defensive net
-            #      that keeps pickle and parquet aligned regardless of how
-            #      symbols got into the cache.
-            # TODO: still need to find the upstream path that drops indicators
-            # — the May 14 regression flagged SMX/KALA/DKI/ASBP/AIXI between
-            # the May 12 heal and the May 13 scan, suspect nightly-data-hygiene.
+            #      nightly data hygiene split-refetch) can land in the
+            #      pickle with bare OHLCV. Parquet's strict-schema concat
+            #      union fills those NaN, so the diff harness sees
+            #      column_set_diff.
+            #
+            # CRITICAL: canonicalization writes back to the input data_cache
+            # in-place. The diff harness `compare_pickle_to_parquet()` reads
+            # the live data_cache, not the S3 pickle — so without in-place
+            # mutation, the disk-pickle is canonical but the cache (and thus
+            # the diff harness) still sees stale state. May 13-14 5-event
+            # regression was exactly this: pickle on disk was clean, but the
+            # diff harness reported divergence because it inspected the
+            # un-canonicalized in-memory dict.
             from app.services.scanner import scanner_service
             expected_indicators = set(scanner_service.EXPECTED_INDICATORS)
             clean_cache = {}
             for symbol, df in data_cache.items():
                 if df is None or len(df) < 50:
                     continue
+                mutated = False
                 # Index name normalization
                 if df.index.name != 'date':
                     df = df.copy()
                     df.index.name = 'date'
-                # Indicator canonicalization — recompute if any expected
-                # indicator is missing as a column entirely.
+                    mutated = True
+                # Indicator canonicalization
                 if any(c not in df.columns for c in expected_indicators):
                     df = scanner_service._ensure_indicators(df)
+                    mutated = True
+                if mutated:
+                    # Write back to live cache so downstream consumers see
+                    # the canonical schema. Safe — we're replacing dict
+                    # values, not keys, mid-iteration.
+                    data_cache[symbol] = df
                 clean_cache[symbol] = df
 
             if not clean_cache:

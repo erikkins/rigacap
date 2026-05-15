@@ -1999,22 +1999,25 @@ def handler(event, context):
 
             # Stream pickle to /tmp file to avoid OOM (pickle.dumps holds 2x in memory)
             # Use compresslevel=1 for speed (~5x faster than default 9, ~10% larger file).
-            # Canonicalize at the storage boundary — same three-step pass as
-            # data_export.export_pickle: filter short history, normalize
-            # index.name='date', ensure all expected indicators are present.
-            # Without the indicator step, a symbol that got into the cache via
-            # nightly-data-hygiene or similar non-scan path can land in pickle
-            # with bare OHLCV and trigger parquet column_set_diff.
+            # Canonicalize at the storage boundary AND mutate the live cache
+            # in-place — the diff harness reads scanner_service.data_cache,
+            # not the S3 pickle, so without in-place mutation the on-disk
+            # state can be canonical while the in-memory state isn't.
             expected_indicators = set(scanner_service.EXPECTED_INDICATORS)
             clean_cache = {}
             for s, df in scanner_service.data_cache.items():
                 if df is None or len(df) < 50:
                     continue
+                mutated = False
                 if df.index.name != 'date':
                     df = df.copy()
                     df.index.name = 'date'
+                    mutated = True
                 if any(c not in df.columns for c in expected_indicators):
                     df = scanner_service._ensure_indicators(df)
+                    mutated = True
+                if mutated:
+                    scanner_service.data_cache[s] = df
                 clean_cache[s] = df
             tmp_path = "/tmp/all_data.pkl.gz"
             print(f"💾 Writing {len(clean_cache)} symbols to {tmp_path}...")
