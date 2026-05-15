@@ -3178,11 +3178,18 @@ def handler(event, context):
                 await db.commit()
 
                 # --- Model portfolio: check live trailing stop / regime exits ---
+                # Path A (May 15 2026): production runs CLOSE-ONLY HWM tracking
+                # to match the WF backtester's default mode (intraday_aware=False).
+                # The intraday_aware=True mode bundles day-high HWM AND day-low
+                # trigger — that bundle showed -17pp ann in b-full validation.
+                # The asymmetric "day-high HWM + close trigger" variant has NEVER
+                # been WF-validated, so we don't run it in production. Until that
+                # validation lands (Path B research), production uses close-only.
                 model_closed = []
                 try:
                     from app.services.model_portfolio_service import model_portfolio_service
                     model_closed = await model_portfolio_service.process_live_exits(
-                        db, live_prices, regime_forecast, day_highs=day_highs
+                        db, live_prices, regime_forecast
                     )
                     if model_closed:
                         print(f"📈 [MODEL-LIVE] Closed {len(model_closed)} position(s): {[c.get('symbol') for c in model_closed]}")
@@ -3193,9 +3200,10 @@ def handler(event, context):
                 # --- Signal track record: check intraday exits ---
                 try:
                     from app.services.model_portfolio_service import model_portfolio_service
+                    # Same Path A close-only constraint as live portfolio above.
                     st_closed = await model_portfolio_service.process_signal_track_exits(
                         db,
-                        live_prices=live_prices, day_highs=day_highs,
+                        live_prices=live_prices,
                         regime_forecast=regime_forecast,
                     )
                     if st_closed:

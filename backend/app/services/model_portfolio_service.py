@@ -313,8 +313,13 @@ class ModelPortfolioService:
                 result = await self._close_position(db, pos, price, exit_reason)
                 closed.append(result)
 
-        if closed:
-            await db.commit()
+        # Commit unconditionally. The HWM updates earlier in the loop
+        # (pos.highest_price = hwm_price) modify ORM objects and need to
+        # persist even when no exits fire. Previously this commit was gated
+        # on `if closed:`, which silently discarded HWM updates and caused
+        # IREN to sit with highest_price=entry_price for 9 days (May 15 2026
+        # diagnosis).
+        await db.commit()
 
         return closed
 
@@ -369,8 +374,8 @@ class ModelPortfolioService:
                 result = await self._close_position(db, pos, close_price, exit_reason)
                 closed.append(result)
 
-        if closed:
-            await db.commit()
+        # Commit unconditionally (HWM update persistence — see process_live_exits comment)
+        await db.commit()
 
         # Mark this period as processed so boundary doesn't fire again
         if is_boundary:
@@ -1527,8 +1532,8 @@ class ModelPortfolioService:
                 result = await self._close_position(db, pos, price, exit_reason)
                 closed.append(result)
 
-        if closed:
-            await db.commit()
+        # Commit unconditionally (HWM update persistence — see process_live_exits comment)
+        await db.commit()
 
         return closed
 
