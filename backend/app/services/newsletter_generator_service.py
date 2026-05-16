@@ -418,9 +418,86 @@ CRITICAL RULES:
         s3_items = s3_items[:3]
 
         # §04 — A Note From Erik
+        # Rotated themes so the note doesn't drift back to "system doing less,
+        # not more" every week. Pick by ISO week so the cycle is predictable
+        # and recoverable across months. Prior-week's §04 is also passed in as
+        # an anti-pattern to actively avoid.
+        from datetime import date as _date
+        s4_themes = [
+            {
+                "name": "the_craft",
+                "guidance": "Reflect on a small craft / engineering decision in building the system — e.g., a metric you chose to optimize for, a tradeoff you made, an assumption you discarded. Concrete, not abstract.",
+            },
+            {
+                "name": "founder_life",
+                "guidance": "Something about building this solo. A small moment from the week — a piece of feedback, a bug hunt, a long Saturday at the keyboard. Human, specific, not motivational.",
+            },
+            {
+                "name": "market_moment",
+                "guidance": "React to something specific that happened in the market this week — a regime shift, an unusual signal pattern, a stock that moved against the system. Show the system reasoning, don't editorialize the news.",
+            },
+            {
+                "name": "week_in_world",
+                "guidance": "Tie to a notable current event from this week's headlines if any is genuinely relevant to investing mindset. If nothing fits, default to a craft or founder-life note. Never force a stretched analogy.",
+            },
+            {
+                "name": "community",
+                "guidance": "Reference reader feedback, a recurring question, or pose one back to the audience. Invites replies more directly. (Don't fabricate specific quotes — speak to the pattern of questions, not invented exchanges.)",
+            },
+            {
+                "name": "philosophy",
+                "guidance": "A lens on discipline, patience, or process — but anchored to a SPECIFIC example from this week's data or your day. Not abstract platitudes; not 'doing less, not more' (overused).",
+            },
+        ]
+        week_idx = target_date.isocalendar()[1] % len(s4_themes)
+        theme = s4_themes[week_idx]
+
+        # Pull last week's §04 text to instruct Claude not to repeat its theme
+        prev_s4_text = ""
+        try:
+            prev_date2 = target_date - timedelta(days=7)
+            prev_draft2 = self.get_draft(prev_date2.strftime("%Y-%m-%d"))
+            if prev_draft2 and prev_draft2.get("sections"):
+                # Sections list is ordered; §04 is last
+                for sec in prev_draft2["sections"]:
+                    if sec.get("num") == "04":
+                        prev_s4_text = (sec.get("body") or "")[:400]
+                        break
+        except Exception:
+            pass
+
+        # Pull top headlines via Google News RSS — same source the dashboard
+        # AI briefing uses. Best-effort; an empty list is fine.
+        headlines_lines = []
+        try:
+            import httpx as _httpx
+            import xml.etree.ElementTree as _ET
+            resp = _httpx.get(
+                "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en",
+                timeout=3, follow_redirects=True,
+            )
+            if resp.status_code == 200:
+                root = _ET.fromstring(resp.text)
+                for item in root.findall(".//item")[:5]:
+                    title = item.findtext("title", "")
+                    if title:
+                        headlines_lines.append(title)
+        except Exception:
+            pass
+        headlines_block = ""
+        if headlines_lines:
+            headlines_block = "\nThis week's top US headlines (use only if naturally relevant):\n" + "\n".join(f"- {h}" for h in headlines_lines) + "\n"
+
+        prev_s4_block = ""
+        if prev_s4_text:
+            prev_s4_block = f'\nLast week\'s §04 (DO NOT echo its theme or phrasing — pick a different angle):\n"""{prev_s4_text}"""\n'
+
         s4_prompt = f"""Write §04 "A Note From Erik" — the founder signoff.
 
-2-3 sentences only. Personal, informal, not pitch-y. Invite replies. Something tied to the current moment — maybe the regime, the season, a reflection on building in public. Don't be cheesy. Don't be motivational. Just be a real person writing to people who read your newsletter.
+THIS WEEK'S THEME: {theme['name'].upper()}
+Theme guidance: {theme['guidance']}
+{prev_s4_block}{headlines_block}
+2-3 sentences only. Personal, informal, not pitch-y. Invite replies. Don't be cheesy. Don't be motivational. Just be a real person writing to people who read your newsletter.
 
 End with "See you next Sunday." on its own line.
 
