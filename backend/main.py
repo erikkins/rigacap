@@ -2524,6 +2524,89 @@ def handler(event, context):
             import traceback
             return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:600]}
 
+    # One-time HWM heal for ModelPosition rows. The pre-May-15 persistence
+    # bug (commit gated on `if closed:`) silently discarded HWM updates for
+    # 9+ days on positions where no exit fired. AMD's stored highest_price
+    # was $358.23 while actual max close since entry was $458.79. This
+    # handler walks every open ModelPosition, computes the true max close
+    # since entry_date from the price cache, and persists the corrected
+    # highest_price. Same pattern as parquet_alignment_heal but for the
+    # positions table. Idempotent — safe to re-invoke.
+    # {"hwm_heal": {"_": 1}}
+    if event.get("hwm_heal"):
+        print("🩹 HWM heal: correcting stored highest_price across all open ModelPositions")
+
+        async def _heal_hwm():
+            from sqlalchemy import select
+            from app.core.database import ModelPosition
+
+            async with async_session() as db:
+                rows = (await db.execute(
+                    select(ModelPosition).where(ModelPosition.status == "open")
+                )).scalars().all()
+
+                healed = []
+                no_data = []
+                already_correct = []
+
+                for pos in rows:
+                    df = scanner_service.data_cache.get(pos.symbol)
+                    if df is None or len(df) == 0:
+                        no_data.append(pos.symbol)
+                        continue
+
+                    # Filter to bars on or after entry_date (using close-only,
+                    # matching post-Path-A WF parity behavior)
+                    entry_date = pos.entry_date
+                    if hasattr(entry_date, 'date'):
+                        entry_date = entry_date.date()
+                    # df.index is DatetimeIndex; compare on .date()
+                    mask = df.index.date >= entry_date if hasattr(df.index, 'date') else None
+                    if mask is None or not mask.any():
+                        no_data.append(pos.symbol)
+                        continue
+
+                    max_close = float(df.loc[mask, "close"].max())
+                    correct_hwm = max(max_close, pos.entry_price or 0)
+
+                    stored = pos.highest_price or pos.entry_price or 0
+                    # Only heal if correct HWM is HIGHER than stored — we
+                    # never want to LOWER a previously-recorded peak (could
+                    # have come from intraday data we don't see in close-only).
+                    if correct_hwm > stored + 0.01:  # cent tolerance
+                        healed.append({
+                            "symbol": pos.symbol,
+                            "portfolio_type": pos.portfolio_type,
+                            "entry_date": str(entry_date),
+                            "entry_price": pos.entry_price,
+                            "stored_hwm": stored,
+                            "correct_hwm": correct_hwm,
+                            "delta": round(correct_hwm - stored, 2),
+                        })
+                        pos.highest_price = correct_hwm
+                    else:
+                        already_correct.append(pos.symbol)
+
+                await db.commit()
+
+                return {
+                    "status": "completed",
+                    "open_positions_scanned": len(rows),
+                    "healed_count": len(healed),
+                    "already_correct_count": len(already_correct),
+                    "no_data_count": len(no_data),
+                    "healed_detail": sorted(healed, key=lambda x: -x["delta"])[:30],
+                    "no_data_symbols": no_data[:10],
+                }
+
+        try:
+            return _run_async(_heal_hwm())
+        except Exception as e:
+            import traceback
+            print(f"❌ HWM heal failed: {e}")
+            traceback.print_exc()
+            return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:600]}
+
     # Pickle health validator — runs against the actual pickle in S3 (not
     # parquet). Reports schema completeness, date freshness, index naming,
     # row-count distribution, and value sanity. Useful as a standalone
