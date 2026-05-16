@@ -1015,6 +1015,9 @@ class WalkForwardService:
         # Intraday-aware mode (b-full WF parity)
         if getattr(self, '_intraday_aware_for_run', False):
             backtester.intraday_aware = True
+        # Path B asymmetric mode (May 15 2026)
+        if getattr(self, '_hwm_from_day_high_for_run', False):
+            backtester.hwm_from_day_high = True
 
         # Seed carryover pause from prior period.
         if pause_days_remaining > 0:
