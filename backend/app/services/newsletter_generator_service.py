@@ -213,9 +213,48 @@ class NewsletterGeneratorService:
         vix = market_stats.get("vix_level")
         market_context = dashboard.get("market_context", "")
         buy_signals = dashboard.get("buy_signals", [])
-        fresh_count = len([s for s in buy_signals if s.get("is_fresh")])
+        # Snapshot — today's fresh-flagged count. Useful for monitoring/total
+        # context but NOT the right "this week" number (the newsletter is a
+        # WEEKLY recap, not a today snapshot).
+        fresh_today = len([s for s in buy_signals if s.get("is_fresh")])
         monitoring_count = len([s for s in buy_signals if not s.get("is_fresh")])
         watchlist = dashboard.get("watchlist", [])
+
+        # Real "fresh this week" — union of distinct symbols across the past
+        # 7 days, sourced from ensemble_signals AND model_positions entries
+        # (model_positions catches names the model_portfolio acted on even if
+        # the STR row insertion lagged — May 13 2026 audit revealed STR writes
+        # can trail model_positions by a day in some flows).
+        fresh_count = fresh_today  # safe default if DB query fails
+        try:
+            import asyncio
+            from app.core.database import async_session
+            from sqlalchemy import text as sa_text
+
+            async def _fetch_week_fresh():
+                nonlocal fresh_count
+                async with async_session() as db:
+                    rows = await db.execute(sa_text("""
+                        SELECT DISTINCT symbol FROM (
+                            SELECT symbol FROM ensemble_signals
+                            WHERE ensemble_entry_date >= CURRENT_DATE - INTERVAL '7 days'
+                            UNION
+                            SELECT symbol FROM model_positions
+                            WHERE entry_date >= CURRENT_DATE - INTERVAL '7 days'
+                            AND portfolio_type = 'live'
+                        ) AS week_fresh
+                    """))
+                    fresh_count = len(rows.fetchall())
+
+            loop2 = asyncio.get_event_loop()
+            if loop2.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    pool.submit(lambda: asyncio.run(_fetch_week_fresh())).result(timeout=10)
+            else:
+                loop2.run_until_complete(_fetch_week_fresh())
+        except Exception as e:
+            logger.warning(f"Could not load 7-day fresh count, falling back to today snapshot: {e}")
 
         # Pull real position data from DB (dashboard.json doesn't include portfolio)
         open_count = 0
