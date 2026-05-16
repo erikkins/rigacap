@@ -200,6 +200,7 @@
 - [No dated callouts in design docs](feedback_no_dated_callouts_in_docs.md) — don't sprinkle "(Apr 2026)" or "newly added" markers; keep docs evergreen, let git history carry the session-dated context
 - [Signal frequency = "3-4 per month"](feedback_signal_frequency_claim.md) — never "6-8 every 2 weeks" or "~15/month"; both are stale drift
 - [SVG attachments cause 400 loops](feedback_svg_attachments.md) — always pre-convert SVG→PNG before downstream use
+- **[S3 list+sort always filter subdirs](feedback_s3_list_filter_subdirs.md)** — `list_objects_v2(Prefix=)` returns nested paths too. `backups/` and other subdirs sort above dated files because `b` > digits. Surfaced May 16 when newsletter editor stubbornly showed May 3 draft for 12 days because backup file outranked live drafts in descending sort.
 - **[Social card render — strip gallery-view body styling](feedback_social_card_render_gray_strip.md)** — the launch-cards source HTML has `body { background: #999; padding: 40px }` for gallery preview. Single-card screenshots leak gray strips top/bottom unless you inject `html, body { background: transparent !important; padding: 0 !important; margin: 0 !important; }` override before rendering.
 - [SLOW DOWN before Lambda jobs](feedback_slow_down_lambda.md) — think first, compute locally if possible, ONE job at a time
 - [Concurrency rules](feedback_concurrency_guardrail.md) — NEVER launch >3 WF jobs during market hours
@@ -213,6 +214,7 @@
 - **[US English only](feedback_us_english.md)** — favor/optimize/modeled/realize. Never favour/optimise/modelled/realise. Easy to slip into British forms unconsciously.
 - **[NEVER name DWAP in public prose](feedback_no_dwap_in_public.md)** — proprietary indicator. Use "proprietary timing reference" / "long-term accumulation reference" instead. Code field names + admin UI + email labels are fine; prose is not.
 - [Newsletter topic rotation](project_newsletter_topics.md) — §02 educational topics, review quarterly, add from new features + subscriber feedback
+- **[Newsletter §04 variance preservation](feedback_newsletter_s4_variance.md)** — §04 (A Note From Erik) prompt has explicit theme rotation + anti-repeat + headlines hook. Do NOT simplify back to vague "current moment" guidance — caused every week to drift to "discipline / doing less, not more". Erik-flagged May 16 2026.
 - [Newsletter ops and timing](project_newsletter_ops.md) — Sat 8PM generate, Sun 10AM auto-send, no weekend refresh by design
 - [Newsletter has no signals](feedback_newsletter_no_signals.md) — purely editorial, same for free and paid, no tickers ever
 - [Never blast emails without target_emails check](feedback_never_blast_without_target.md) — verify handler supports filtering BEFORE invoking

@@ -21,9 +21,12 @@ Both 5y biweekly, strategy_id=5 (DWAP+Momentum Ensemble), max_symbols=500, carry
 | Job ID | hwm_from_day_high | Purpose |
 |--------|---|---|
 | **1248** | false | Baseline (current production behavior) |
-| **1249** | true  | Asymmetric: day-high HWM + close trigger |
+| ~~1249~~ | ~~true~~ | INVALID — wiring missed the fixed-strategy code path, ran baseline by mistake. Bit-for-bit identical to 1248. |
+| **1251** | true | Asymmetric (Path B), re-fired May 16 20:32 UTC after wiring fix |
 
-Both started at ~19:00 PDT. Chained-runner ETA ~3-5 hours wall-clock.
+Baseline 1248 reference numbers: total_return_pct = 134.665, sharpe = 0.7183, MaxDD = 37.79%, total_trades = 216, benchmark (SPY) = 84.82%.
+
+Compare job 1251 to these once complete. ETA 3-5 hours wall-clock from May 16 20:32 UTC.
 
 ## How to compare when done
 
