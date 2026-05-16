@@ -507,8 +507,19 @@ IMPORTANT: Output ONLY the personal note text. Do NOT include any section header
             resp = self.s3.list_objects_v2(
                 Bucket=S3_BUCKET, Prefix=DRAFT_KEY_PREFIX
             )
+            # Filter out the backups/ subdirectory — those files have keys
+            # like 'newsletter/drafts/backups/2026-05-03.pre-regime-fix.json'
+            # which sort AFTER the top-level dated drafts in descending order
+            # (because 'b' > digit chars), so without this filter
+            # get_latest_draft() returned the BACKUP of an old issue instead
+            # of the latest live draft. Surfaced May 16 2026 when the admin
+            # editor stubbornly showed the May 3 draft even though May 17
+            # was the freshest.
             keys = sorted(
-                [o["Key"] for o in resp.get("Contents", [])],
+                [
+                    o["Key"] for o in resp.get("Contents", [])
+                    if "/backups/" not in o["Key"]
+                ],
                 reverse=True,
             )
             if keys:
