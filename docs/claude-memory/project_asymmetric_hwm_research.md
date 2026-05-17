@@ -26,7 +26,27 @@ Both 5y biweekly, strategy_id=5 (DWAP+Momentum Ensemble), max_symbols=500, carry
 
 Baseline 1248 reference numbers: total_return_pct = 134.665, sharpe = 0.7183, MaxDD = 37.79%, total_trades = 216, benchmark (SPY) = 84.82%.
 
-Compare job 1251 to these once complete. ETA 3-5 hours wall-clock from May 16 20:32 UTC.
+## RESULT (May 17 2026)
+
+**Asymmetric mode LOSES on return and Sharpe; WINS marginally on MaxDD.**
+
+| Metric | 1248 baseline | 1251 asymmetric | Delta |
+|--------|---|---|---|
+| Total Return | 134.665% | 110.650% | **−24 pp** |
+| Sharpe | 0.7183 | 0.6723 | −0.05 |
+| MaxDD | −37.79% | −31.70% | +6.1 pp better |
+| Trades | 216 | 245 | +29 |
+
+**Interpretation:** Day-high HWM tracking tightens the trailing stop earlier, firing 29 more exits over 5 years. That reduces drawdown by 6 pp but costs 24 pp of return. The MaxDD improvement is real but doesn't pay for the return loss. Close-only baseline (Path A as shipped May 15) is the validated optimum.
+
+## Decisions (final, May 17 2026)
+
+1. ✅ **ModelPortfolio on close-only** (Path A shipped May 15) — `process_live_exits`, `process_wf_exits`, `process_signal_track_exits` all use close-only HWM, commit unconditionally.
+2. ✅ **User-position alert path on close-only** (Option B shipped May 17, commit f52f900) — HWM tracks `data_cache` latest close (yesterday's during market hours, today's after the 4:30 PM scan). Trigger still fires on `live_price` for intraday alerting. Closes last parity gap.
+3. **`hwm_from_day_high` flag kept dormant** — harmless (default false), useful for any future asymmetric variant research.
+4. **One-time HWM heal completed** (May 17) — 17 of 38 open positions had stale stored HWMs; corrected via `{"hwm_heal": {"_": 1}}` handler. AMD was the dramatic case ($100.56 gap), IREN was minor ($0.22).
+
+Parity audit: all production HWM tracking paths now match WF default `intraday_aware=False` (close HWM + close trigger), except the user-alert path's trigger fires on live_price for intraday UX — which alerts EARLIER than WF but on the same stop LEVEL.
 
 ## How to compare when done
 
