@@ -175,6 +175,17 @@ variable "threads_access_token" {
   default     = ""
 }
 
+variable "meta_ig_app_id" {
+  description = "Meta (Instagram/Threads) App ID — for token refresh OAuth flow"
+  default     = ""
+}
+
+variable "meta_ig_app_secret" {
+  description = "Meta (Instagram/Threads) App Secret — for token refresh OAuth flow"
+  sensitive   = true
+  default     = ""
+}
+
 variable "threads_user_id" {
   description = "Threads User ID"
   default     = ""
@@ -921,6 +932,8 @@ locals {
     INSTAGRAM_BUSINESS_ACCOUNT_ID = var.instagram_business_account_id
     THREADS_ACCESS_TOKEN          = var.threads_access_token
     THREADS_USER_ID               = var.threads_user_id
+    META_IG_APP_ID                = var.meta_ig_app_id
+    META_IG_APP_SECRET            = var.meta_ig_app_secret
     ALPACA_API_KEY                = var.alpaca_api_key
     ALPACA_SECRET_KEY             = var.alpaca_secret_key
     HEYGEN_API_KEY                = var.heygen_api_key
