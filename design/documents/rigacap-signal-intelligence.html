@@ -274,6 +274,23 @@
   tbody tr.benchmark-row td:first-child {
     font-style: italic;
   }
+  /* Text-heavy comparison table — overrides the default numeric/mono style */
+  table.text-table tbody td {
+    text-align: left;
+    font-family: var(--sans);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  table.text-table thead th {
+    text-align: left;
+    padding-left: 0.5rem;
+  }
+  table.text-table thead th:first-child { padding-left: 0; }
+  table.text-table tbody td:first-child {
+    font-weight: 500;
+    width: 28%;
+  }
   caption, .table-caption {
     font-family: var(--sans);
     font-size: 0.8rem;
@@ -1226,6 +1243,121 @@
     </svg>
     <div class="diagram-caption">Stops follow the price up &mdash; never down.</div>
   </div>
+</div>
+
+<!-- ============================================================
+     SECTION 05a - WALK-FORWARD PARITY
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">05a &middot; Validation discipline</span>
+  <h2>Walk-forward to production &mdash; exact <em>parity.</em></h2>
+
+  <p class="lead">
+    The walk-forward result is only realizable if production runs the same strategy
+    the backtest validated. Every mechanic &mdash; ranking universe, HWM tracking,
+    stop trigger, position sizing &mdash; is audited for parity, and any divergence
+    is treated as a defect that costs subscribers real returns.
+  </p>
+
+  <p>
+    Most of these alignments were in place at launch. A handful drifted as features
+    were added incrementally and were realigned in mid-May 2026 after this audit
+    surfaced the gaps. The table below is the post-audit state.
+  </p>
+
+  <h3>Parity table.</h3>
+
+  <table class="text-table">
+    <thead>
+      <tr>
+        <th>Mechanic</th>
+        <th>Walk-forward default</th>
+        <th>Production live</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Ranking universe</strong></td>
+        <td>top 500 by 60-day avg volume, recomputed per period</td>
+        <td>top 500 by liquidity (matched May 17 2026 &mdash; previously 100)</td>
+      </tr>
+      <tr>
+        <td><strong>HWM source</strong></td>
+        <td>day's close</td>
+        <td>day's close (from price cache)</td>
+      </tr>
+      <tr>
+        <td><strong>HWM persistence</strong></td>
+        <td>in-process across periods</td>
+        <td>database commit on every pass (unconditional)</td>
+      </tr>
+      <tr>
+        <td><strong>Stop trigger</strong></td>
+        <td>close &le; HWM &times; (1 &minus; stop %)</td>
+        <td>close &le; stop level (intraday firing intentionally disabled)</td>
+      </tr>
+      <tr>
+        <td><strong>Trailing stop %</strong></td>
+        <td>strategy parameter, regime-adjusted</td>
+        <td>strategy parameter, regime-adjusted</td>
+      </tr>
+      <tr>
+        <td><strong>Max concurrent positions</strong></td>
+        <td>6</td>
+        <td>6</td>
+      </tr>
+      <tr>
+        <td><strong>Position sizing</strong></td>
+        <td>15% of capital per slot</td>
+        <td>15% of capital per slot</td>
+      </tr>
+      <tr>
+        <td><strong>Entry: timing reference</strong></td>
+        <td>price above long-term accumulation reference + breakout band</td>
+        <td>identical filter</td>
+      </tr>
+      <tr>
+        <td><strong>Entry: breakout band</strong></td>
+        <td>within 3% of 50-day high</td>
+        <td>identical</td>
+      </tr>
+      <tr>
+        <td><strong>Entry: momentum quality</strong></td>
+        <td>top ensemble score</td>
+        <td>identical</td>
+      </tr>
+      <tr>
+        <td><strong>Carry positions across rebalance</strong></td>
+        <td>true (positions survive period boundaries)</td>
+        <td>true (live portfolio is always-on)</td>
+      </tr>
+      <tr>
+        <td><strong>Regime adjustments</strong></td>
+        <td>per-regime deltas to trailing stop &amp; sizing</td>
+        <td>identical, via dashboard regime cache</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>The audit method.</h3>
+
+  <p>
+    Parity is not assumed; it is measured. The largest single realization gap
+    discovered in this audit was the ranking universe: production filtered to
+    100 most-liquid symbols, while the walk-forward result was generated against
+    500. A liquidity-rank audit of a representative walk-forward run found that
+    <strong>about 70% of the simulated trades came from symbols ranked 101-500</strong>
+    &mdash; including several of the strongest winners. Production at N=100 was
+    quietly missing the majority of validated trade opportunities. The fix was
+    a one-line configuration change; the discovery required reading the trade
+    list against the same ranking logic and counting where each entry came from.
+  </p>
+
+  <p>
+    This kind of mechanical audit runs whenever a new lever is added to either
+    side &mdash; backtester or production &mdash; before the lever is allowed to
+    influence published results.
+  </p>
 </div>
 
 <!-- ============================================================
