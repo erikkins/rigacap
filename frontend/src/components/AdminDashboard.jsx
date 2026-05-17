@@ -1593,6 +1593,7 @@ function ModelPortfolioTab({ fetchWithAuth }) {
                           <th className="pb-2 pr-3">Entry Date</th>
                           <th className="pb-2 pr-3">Entry</th>
                           <th className="pb-2 pr-3">Current</th>
+                          <th className="pb-2 pr-3" title="High Water Mark — peak since entry, drives the trailing stop">HWM</th>
                           <th className="pb-2 pr-3">P&L</th>
                           <th className="pb-2 pr-3">Days</th>
                           <th className="pb-2">Shares</th>
@@ -1602,12 +1603,16 @@ function ModelPortfolioTab({ fetchWithAuth }) {
                         {p.open_positions.map((pos) => {
                           const pnlColor = pos.pnl_pct > 0 ? 'text-green-600' : pos.pnl_pct < 0 ? 'text-red-600' : 'text-gray-600';
                           const daysHeld = pos.entry_date ? Math.floor((Date.now() - new Date(pos.entry_date).getTime()) / 86400000) : null;
+                          const hwm = pos.highest_price ?? pos.entry_price;
+                          // Highlight HWM if it's the same as entry (suggests stale / never updated)
+                          const hwmStale = hwm != null && pos.entry_price != null && Math.abs(hwm - pos.entry_price) < 0.01;
                           return (
                             <tr key={pos.symbol} className="border-b border-gray-50">
                               <td className="py-2 pr-3 font-medium text-indigo-600 cursor-pointer hover:text-indigo-800 hover:underline" onClick={() => openChart(pos.symbol, { entry_date: pos.entry_date, entry_price: pos.entry_price })}>{pos.symbol}</td>
                               <td className="py-2 pr-3 text-gray-500 text-xs">{formatDate(pos.entry_date) || '—'}</td>
                               <td className="py-2 pr-3 text-gray-600">${pos.entry_price?.toFixed(2)}</td>
                               <td className="py-2 pr-3 text-gray-600">${pos.current_price?.toFixed(2)}</td>
+                              <td className={`py-2 pr-3 ${hwmStale ? 'text-amber-600' : 'text-gray-600'}`} title={hwmStale ? 'HWM equals entry — may not have updated yet' : ''}>${hwm?.toFixed(2)}</td>
                               <td className={`py-2 pr-3 font-medium ${pnlColor}`}>
                                 {pos.pnl_pct >= 0 ? '+' : ''}{pos.pnl_pct?.toFixed(1)}%
                                 <span className="text-xs text-gray-400 ml-1">
