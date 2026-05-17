@@ -2524,6 +2524,105 @@ def handler(event, context):
             import traceback
             return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:600]}
 
+    # One-shot diagnostic: for a completed WF job, classify each trade's
+    # symbol by where it ranked in the liquidity universe AT ENTRY TIME.
+    # Answers the question: would running production at SIGNAL_UNIVERSE_SIZE
+    # = 100 vs 500 actually have changed which signals fired? If all
+    # winners came from top-100, the parity gap is theoretical; if winners
+    # came from 101-500, bumping is materially important.
+    # {"wf_liquidity_rank_audit": {"job_id": 1248}}
+    if event.get("wf_liquidity_rank_audit"):
+        cfg = event["wf_liquidity_rank_audit"] or {}
+        job_id = cfg.get("job_id")
+        if not job_id:
+            return {"error": "job_id required"}
+
+        async def _audit():
+            import json as _json
+            from sqlalchemy import select
+            from app.core.database import WalkForwardSimulation
+
+            async with async_session() as db:
+                row = (await db.execute(
+                    select(WalkForwardSimulation).where(WalkForwardSimulation.id == job_id)
+                )).scalar_one_or_none()
+                if not row or not row.trades_json:
+                    return {"error": f"No trades found for job {job_id}"}
+                trades = _json.loads(row.trades_json)
+
+            # For each trade, compute liquidity rank as of entry_date using
+            # the same logic as walk_forward_service._get_top_symbols_as_of:
+            # 60-day avg volume up to that date.
+            from app.services.scanner import _EXCLUDED_SET
+            import pandas as _pd
+
+            results = {"top_100": 0, "rank_101_500": 0, "rank_501_plus": 0, "not_in_universe": 0}
+            buckets = {"top_100": [], "rank_101_500": [], "rank_501_plus": []}
+
+            for trade in trades:
+                sym = trade.get("symbol")
+                entry_date_str = trade.get("entry_date")
+                if not sym or not entry_date_str:
+                    continue
+                try:
+                    entry_ts = _pd.Timestamp(entry_date_str[:10])
+                except Exception:
+                    continue
+
+                # Build ranking as of entry_date
+                rankings = []
+                for s, df in scanner_service.data_cache.items():
+                    if s in _EXCLUDED_SET:
+                        continue
+                    hist = df[df.index <= entry_ts]
+                    if len(hist) < 60 or 'volume' not in hist.columns:
+                        continue
+                    avg_vol = hist['volume'].tail(60).mean()
+                    rankings.append((s, avg_vol))
+                rankings.sort(key=lambda x: x[1], reverse=True)
+
+                sym_rank = None
+                for i, (s, _) in enumerate(rankings, start=1):
+                    if s == sym:
+                        sym_rank = i
+                        break
+
+                if sym_rank is None:
+                    results["not_in_universe"] += 1
+                    continue
+
+                if sym_rank <= 100:
+                    bucket = "top_100"
+                elif sym_rank <= 500:
+                    bucket = "rank_101_500"
+                else:
+                    bucket = "rank_501_plus"
+
+                results[bucket] += 1
+                if len(buckets.get(bucket, [])) < 15:
+                    buckets[bucket].append({
+                        "symbol": sym,
+                        "entry_date": entry_date_str[:10],
+                        "rank": sym_rank,
+                        "pnl_pct": trade.get("pnl_pct"),
+                        "pnl_dollars": trade.get("pnl_dollars"),
+                    })
+
+            total = sum(results.values())
+            return {
+                "job_id": job_id,
+                "total_trades": total,
+                "summary": results,
+                "summary_pct": {k: round(v / total * 100, 1) if total else 0 for k, v in results.items()},
+                "samples": buckets,
+            }
+
+        try:
+            return _run_async(_audit())
+        except Exception as e:
+            import traceback
+            return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:600]}
+
     # One-time HWM heal for ModelPosition rows. The pre-May-15 persistence
     # bug (commit gated on `if closed:`) silently discarded HWM updates for
     # 9+ days on positions where no exit fired. AMD's stored highest_price
