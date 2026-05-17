@@ -62,6 +62,14 @@ PHRASE_BANS: dict[str, str] = {
     "crush the market":      "forbidden phrase",
     "join thousands":        "forbidden phrase",
     "diamond hands":         "crypto / meme-speak",
+    # Smarty-pants / refutation patterns — engagement-reply voice fix (May 17 2026)
+    "actually,":             "refutation framing — Erik addresses the topic, not the author",
+    "not quite":             "disagreement softener — sounds combative",
+    "not really":            "disagreement softener — sounds combative",
+    "i'd push back":         "explicit refutation framing",
+    "the problem with":      "refutation framing — corrects rather than adds",
+    "to be fair":            "passive-aggressive softener",
+    "to be honest":          "passive-aggressive softener — adds nothing",
 }
 
 
