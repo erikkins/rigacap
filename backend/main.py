@@ -3219,10 +3219,17 @@ def handler(event, context):
 
                     live_price = live_prices[sym]
 
-                    # Use day_high for HWM to capture peaks between 5-min checks
-                    hwm_price = max(live_price, day_highs.get(sym, live_price))
-                    if hwm_price > (position.highest_price or position.entry_price):
-                        position.highest_price = hwm_price
+                    # Option B (May 17 2026): HWM tracks CLOSE only — matches
+                    # the WF-validated strategy. Trigger STILL fires on live
+                    # price for intraday alerting. Path B WF test (jobs 1248
+                    # vs 1251) confirmed day-high HWM cost -24 pp return.
+                    # Pull latest close from cache: yesterday's during market
+                    # hours; today's after the 4:30 PM daily scan refresh.
+                    df_sym = scanner_service.data_cache.get(sym)
+                    if df_sym is not None and not df_sym.empty:
+                        latest_close = float(df_sym['close'].iloc[-1])
+                        if latest_close > (position.highest_price or position.entry_price):
+                            position.highest_price = latest_close
 
                     guidance = sched._check_sell_trigger(position, live_price, regime_forecast)
 
