@@ -773,6 +773,105 @@ class DataExportService:
         finally:
             conn.close()
 
+    def snapshot_universe_history(self, snapshot_date: Optional[str] = None) -> Dict:
+        """
+        Persist a full daily snapshot of the scan universe ranking to S3.
+
+        Captures, for a given snapshot date:
+          - Full ranked list: every eligible symbol with 60-day avg volume
+            up to and including snapshot_date (survivorship-bias-free)
+          - The exclusion set in effect at write time
+          - Snapshot timestamp + universe size hint
+
+        Files are append-only at signals/universe-history/{date}.json. Never
+        overwritten without explicit force; idempotent on re-invocation for
+        the same date (returns existing summary).
+
+        Use case: future audits of "where did rank N go" don't need to
+        reconstruct from the current pickle — they read the historical
+        snapshot directly. Closes the gap surfaced by the May 17 2026
+        SIGNAL_UNIVERSE_SIZE 100→500 investigation, where rank attribution
+        relied on reconstruction.
+
+        Args:
+            snapshot_date: ISO YYYY-MM-DD. Defaults to today (UTC).
+        """
+        from app.services.scanner import scanner_service, _EXCLUDED_SET
+        from datetime import datetime as _dt, date as _date
+
+        if snapshot_date is None:
+            snapshot_date = _date.today().isoformat()
+        snap_ts = pd.Timestamp(snapshot_date)
+        key = f"signals/universe-history/{snapshot_date}.json"
+
+        # Skip if already exists (idempotent — never overwrite history)
+        if self._use_s3():
+            try:
+                s3 = self._get_s3_client()
+                s3.head_object(Bucket=S3_BUCKET, Key=key)
+                return {"status": "exists", "key": key, "snapshot_date": snapshot_date}
+            except Exception:
+                pass  # NoSuchKey → write new
+
+        if not scanner_service.data_cache:
+            return {"status": "failed", "error": "data_cache is empty"}
+
+        # Build full ranking — every symbol with ≥60d history as of snapshot_date
+        rankings = []
+        for symbol, df in scanner_service.data_cache.items():
+            if df is None or df.empty:
+                continue
+            hist = df[df.index <= snap_ts]
+            if len(hist) < 60 or 'volume' not in hist.columns or 'close' not in hist.columns:
+                continue
+            avg_vol = float(hist['volume'].tail(60).mean())
+            last_close = float(hist['close'].iloc[-1])
+            last_date = hist.index[-1]
+            rankings.append({
+                "symbol": symbol,
+                "avg_volume_60d": avg_vol,
+                "last_close": last_close,
+                "last_date": last_date.strftime("%Y-%m-%d") if hasattr(last_date, 'strftime') else str(last_date)[:10],
+                "is_excluded": symbol in _EXCLUDED_SET,
+            })
+
+        # Sort by avg_volume descending; assign rank
+        rankings.sort(key=lambda r: r["avg_volume_60d"], reverse=True)
+        for i, r in enumerate(rankings, start=1):
+            r["rank"] = i
+
+        snapshot = {
+            "snapshot_date": snapshot_date,
+            "snapshot_time_utc": _dt.utcnow().isoformat() + "Z",
+            "total_eligible_symbols": len(rankings),
+            "excluded_count": sum(1 for r in rankings if r["is_excluded"]),
+            "signal_universe_size_setting": int(os.environ.get("SIGNAL_UNIVERSE_SIZE", "0")) or None,
+            "excluded_symbols_in_universe": sorted(r["symbol"] for r in rankings if r["is_excluded"]),
+            "rankings": rankings,
+        }
+
+        # Persist
+        body = json.dumps(snapshot).encode()
+        if self._use_s3():
+            s3 = self._get_s3_client()
+            s3.put_object(
+                Bucket=S3_BUCKET, Key=key,
+                Body=body, ContentType='application/json',
+            )
+            location = f"s3://{S3_BUCKET}/{key}"
+        else:
+            (LOCAL_DATA_DIR / "universe-history").mkdir(parents=True, exist_ok=True)
+            (LOCAL_DATA_DIR / "universe-history" / f"{snapshot_date}.json").write_bytes(body)
+            location = str(LOCAL_DATA_DIR / "universe-history" / f"{snapshot_date}.json")
+
+        return {
+            "status": "written",
+            "snapshot_date": snapshot_date,
+            "total_eligible_symbols": len(rankings),
+            "size_kb": round(len(body) / 1024, 1),
+            "location": location,
+        }
+
     def diagnose_corruption(self) -> Dict:
         """
         DuckDB-powered corruption scan across the universe. Runs SEPARATE

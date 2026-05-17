@@ -1790,6 +1790,21 @@ def handler(event, context):
                 print(f"⚠️ Failed to chain user portfolio recompute: {ce}")
             _log_step("User Portfolio Recompute Chain", "ok", "async fire-and-forget")
 
+            # Chain universe-history snapshot — captures today's full ranked
+            # universe so future audits don't have to reconstruct it from the
+            # pickle. Append-only, idempotent on re-invocation.
+            try:
+                import boto3, json as _json
+                boto3.client('lambda', region_name='us-east-1').invoke(
+                    FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker'),
+                    InvocationType='Event',
+                    Payload=_json.dumps({"universe_snapshot": {"_": 1}})
+                )
+                print("📚 Chained universe-history snapshot")
+            except Exception as ce:
+                print(f"⚠️ Failed to chain universe snapshot: {ce}")
+            _log_step("Universe Snapshot Chain", "ok", "async fire-and-forget")
+
             # Write structured pipeline log to S3
             _write_pipeline_log(
                 "success",
@@ -2523,6 +2538,80 @@ def handler(event, context):
         except Exception as e:
             import traceback
             return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:600]}
+
+    # Universe history snapshot — write today's full ranked liquidity
+    # universe to s3://.../signals/universe-history/{date}.json. Append-only:
+    # idempotent on re-invocation (returns "exists" without overwriting).
+    # {"universe_snapshot": {"date": "2026-05-17"}}  (date optional, defaults to today)
+    if event.get("universe_snapshot"):
+        cfg = event["universe_snapshot"] or {}
+        snap_date = cfg.get("date") if isinstance(cfg, dict) else None
+        try:
+            from app.services.data_export import data_export_service
+            return data_export_service.snapshot_universe_history(snapshot_date=snap_date)
+        except Exception as e:
+            import traceback
+            return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:500]}
+
+    # Backfill universe-history snapshots across a date range. Walks every
+    # weekday between start_date and end_date (inclusive) and writes a
+    # snapshot if one doesn't already exist. Idempotent — re-runnable.
+    # Chunked: stops after `max_per_run` to stay under Lambda timeout;
+    # self-invoke or call repeatedly to finish.
+    # {"universe_snapshot_backfill": {"start_date": "2019-06-03",
+    #   "end_date": "2026-05-16", "max_per_run": 200}}
+    if event.get("universe_snapshot_backfill"):
+        cfg = event["universe_snapshot_backfill"] or {}
+        from datetime import date as _date2, timedelta as _td2
+
+        async def _backfill():
+            from app.services.data_export import data_export_service
+            start_s = cfg.get("start_date") or "2019-06-03"
+            end_s = cfg.get("end_date") or _date2.today().isoformat()
+            max_per_run = int(cfg.get("max_per_run", 200))
+
+            start_d = _date2.fromisoformat(start_s)
+            end_d = _date2.fromisoformat(end_s)
+
+            written = 0
+            skipped_existing = 0
+            failed = 0
+            current = start_d
+            stopped_at = None
+
+            while current <= end_d:
+                # Skip weekends (no trading)
+                if current.weekday() < 5:
+                    if written + skipped_existing + failed >= max_per_run:
+                        stopped_at = current.isoformat()
+                        break
+                    try:
+                        res = data_export_service.snapshot_universe_history(
+                            snapshot_date=current.isoformat()
+                        )
+                        if res.get("status") == "written":
+                            written += 1
+                        elif res.get("status") == "exists":
+                            skipped_existing += 1
+                        else:
+                            failed += 1
+                    except Exception as e:
+                        failed += 1
+                        print(f"⚠️ backfill {current}: {e}")
+                current += _td2(days=1)
+
+            return {
+                "status": "stopped_at_limit" if stopped_at else "complete",
+                "start_date": start_s, "end_date": end_s,
+                "written": written, "skipped_existing": skipped_existing, "failed": failed,
+                "next_start": stopped_at,
+            }
+
+        try:
+            return _run_async(_backfill())
+        except Exception as e:
+            import traceback
+            return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:500]}
 
     # One-shot diagnostic: for a completed WF job, classify each trade's
     # symbol by where it ranked in the liquidity universe AT ENTRY TIME.
