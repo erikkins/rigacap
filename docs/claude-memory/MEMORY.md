@@ -22,6 +22,7 @@
 - API Gateway 29s timeout — direct Lambda invoke for long ops. Lambda 10s init — DB connections lazy.
 - **Lambda concurrency**: 1000 total, API reserved=50, Worker reserved=200 (increased from 10 after Mar 30 outage).
 - **[Lambda memory capped at 3008 MB](project_aws_lambda_memory_cap.md)** — AWS support tier blocks quota increase above 3008. DO NOT propose `memory_size > 3008` in Terraform; parquet migration is the real unblock (partial-read by symbol vs holding the full 700 MB pickle).
+- **[Universe history snapshots (May 17 2026)](project_universe_history_snapshots.md)** — daily full ranked liquidity universe persisted to `s3://.../signals/universe-history/{date}.json`. Chained from daily scan. Future rank audits read directly instead of reconstructing.
 
 ## Pickle Safety
 - **Current: 7y pickle** (2019-06-03 → 2026-03-27, 4360 symbols, 269 MB). Built Mar 27, 2026.
