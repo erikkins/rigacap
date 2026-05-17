@@ -981,7 +981,14 @@ resource "aws_lambda_function" "worker" {
   environment {
     variables = merge(local.lambda_env_vars, {
       LAMBDA_ROLE          = "worker"
-      SIGNAL_UNIVERSE_SIZE = "100"
+      # SIGNAL_UNIVERSE_SIZE = 500 matches the WF backtester's max_symbols=500
+      # ranking pool. Per liquidity-rank audit of WF job 1248 (May 17 2026),
+      # 70% of WF's 216 trades came from rank 101-500 — including the biggest
+      # winners (FUTU +67.8%, BILI +20.2%, VIPS +26.5%). Production at N=100
+      # was missing 70% of validated trade opportunities. Marketing claim
+      # (134.67% return) underwritten by 500-symbol universe; production
+      # must match for parity.
+      SIGNAL_UNIVERSE_SIZE = "500"
       # Parquet migration Stage 3a — diff harness DISABLED Apr 28 2026 after
       # Re-enabled 2026-04-29 after compare_pickle_to_parquet was refactored
       # to stream symbols in batches of 100 via pyarrow filter (downloads
