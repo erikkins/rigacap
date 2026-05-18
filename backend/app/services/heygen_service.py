@@ -154,6 +154,11 @@ class HeyGenService:
                 "type": "color",
                 "value": background_color,
             },
+            # Avatar V is HeyGen's newer engine — higher fidelity / better
+            # motion than the default. Required per HeyGen API sample
+            # (May 18 2026 confirmation). Strictly additive — top-level
+            # type="avatar" still required; engine.type selects the variant.
+            "engine": {"type": "avatar_v"},
         }
 
         if callback_url:
