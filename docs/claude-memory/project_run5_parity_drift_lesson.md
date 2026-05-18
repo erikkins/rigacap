@@ -14,7 +14,7 @@ originSessionId: c3d0833d-cb3f-474f-8dd8-e530f3300c60
 
 ## Concrete cost observed
 
-IREN entered May 6 at $60.98. Under Run5+regime params (rotating_bull → 14% stop on $61.20 HWM = $52.63), held through May 15 close of $52.94 (+$0.31 margin above stop). Under canonical 12% fixed stop, stop = $53.86, May 15 close FIRES at $52.94. Under canonical rules IREN exits May 15; under Run5 rules it stayed in, then dropped to $49 intraday May 18. The drift cost ~3-5% additional drawdown on that one position.
+IREN entered May 6 at $60.98. Under Run5+regime params (rotating_bull → 14% stop on $61.20 HWM = $52.63), held through May 15 close of $52.94 (+$0.31 margin above stop). Under canonical 12% fixed stop, stop = $53.86, May 15 close FIRES at $52.94. Under canonical rules IREN exits May 15 at -13.2%; under Run5 rules it stayed in, kept dropping, and actually exited May 18 at -17.3%. **Confirmed drift cost on this single position: 4.1 percentage points (May 18 measurement).**
 
 Plus the slot was occupied for an extra 3 trading days that, under canonical rules, would have been freed for whatever fresh signal qualified next. We CANNOT cleanly reconstruct what would have filled it (would require replaying canonical-rule scans across May 15-18).
 
