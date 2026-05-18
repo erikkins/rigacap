@@ -2604,6 +2604,45 @@ def handler(event, context):
             import traceback
             return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:600]}
 
+    # Narrow write handler: set is_active on a single strategy_adaptive_params
+    # row. Used May 18 2026 to deactivate the Run5 over-fit row (id=1) so
+    # production falls back to config.py canonical values. Reversible by
+    # re-invoking with is_active=true.
+    # {"adaptive_params_set_active": {"id": 1, "is_active": false}}
+    if event.get("adaptive_params_set_active"):
+        cfg = event["adaptive_params_set_active"] or {}
+        row_id = cfg.get("id")
+        new_active = cfg.get("is_active")
+        if row_id is None or new_active is None:
+            return {"error": "id and is_active required"}
+        if not isinstance(new_active, bool):
+            return {"error": "is_active must be true or false (boolean)"}
+
+        async def _set():
+            from sqlalchemy import select
+            from app.core.database import StrategyAdaptiveParams
+            async with async_session() as db:
+                row = (await db.execute(
+                    select(StrategyAdaptiveParams).where(StrategyAdaptiveParams.id == int(row_id))
+                )).scalar_one_or_none()
+                if row is None:
+                    return {"error": f"No row with id={row_id}"}
+                before = row.is_active
+                row.is_active = bool(new_active)
+                await db.commit()
+                return {
+                    "id": row.id,
+                    "effective_date": row.effective_date.isoformat() if row.effective_date else None,
+                    "source": row.source,
+                    "before": before,
+                    "after": row.is_active,
+                }
+        try:
+            return _run_async(_set())
+        except Exception as e:
+            import traceback
+            return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:500]}
+
     # Read-only inspection of strategy_adaptive_params table — what's the
     # biweekly TPE cron currently feeding the scanner? Used during the
     # May 18 2026 parity audit to find the StrategyAdaptiveParams DB
