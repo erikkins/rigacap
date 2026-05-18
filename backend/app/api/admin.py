@@ -307,17 +307,25 @@ INITIAL_STRATEGIES = [
     },
     {
         "name": "DWAP+Momentum Ensemble",
-        "description": "DWAP timing entry (catches early breakouts) + momentum quality filter (only top-ranked stocks) + trailing stop exit (lets winners run). TPE Trial 37 optimized.",
+        "description": "DWAP timing entry (catches early breakouts) + momentum quality filter (only top-ranked stocks) + trailing stop exit (lets winners run).",
         "strategy_type": "ensemble",
+        # Apr 28 2026 marketing-baseline params (re-aligned May 18 2026).
+        # Source: scripts/local_wf_runner.py CLI defaults that produced
+        # the +160.22% / 21.5% ann / 0.92 / 20.4% 8-date result.
+        # Previously seeded with Trial 37 over-fit values
+        # (dwap=6.5, max_pos=8, pos_size=17, trail=13) — those are retired.
+        # NOTE: only runs on first-ever DB init (seed_strategies skips if
+        # any strategy row exists). Existing prod DBs are unaffected by
+        # this change, but a fresh deploy now seeds canonical values.
         "parameters": {
-            "dwap_threshold_pct": 6.5,      # TPE Trial 37
+            "dwap_threshold_pct": 5.0,
             "volume_spike_mult": 1.3,
             "short_momentum_days": 10,
             "long_momentum_days": 60,
-            "near_50d_high_pct": 5.0,
-            "max_positions": 8,             # TPE Trial 37 (was 6)
-            "position_size_pct": 17.0,      # TPE Trial 37 (was 15)
-            "trailing_stop_pct": 13.0,      # TPE Trial 37 (was 12)
+            "near_50d_high_pct": 3.0,
+            "max_positions": 6,
+            "position_size_pct": 15.0,
+            "trailing_stop_pct": 12.0,
             "market_filter_enabled": True,
             "min_volume": 500000,
             "min_price": 15.0

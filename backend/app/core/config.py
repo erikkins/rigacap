@@ -141,8 +141,17 @@ class Settings(BaseSettings):
     SIGNAL_TIER1_SIZE: int = int(os.getenv("SIGNAL_TIER1_SIZE", "150"))
     SIGNAL_TIER1_BONUS: float = float(os.getenv("SIGNAL_TIER1_BONUS", "0"))
 
-    # Track Record — TPE Trial 37, Jan 1 2021 start, single continuous sim
-    TRACK_RECORD_SIM_IDS: List[int] = [922, 924, 925, 926, 927, 928, 929, 930]  # 8 start dates, same params, confidence band
+    # Track Record — 8 walk-forward simulations powering the public
+    # Track Record page (start-date confidence band).
+    # WARNING: original comment claimed "TPE Trial 37, Jan 1 2021 start,
+    # single continuous sim" but the data structure is 8 IDs (8 start
+    # dates). On May 18 2026 audit we confirmed marketing claims come
+    # from the Apr 28 2026 8-date 5y baseline (+160.22% / 21.5% ann /
+    # 0.92 Sharpe / 20.4% MaxDD). Whether sim IDs 922-930 ARE the Apr 28
+    # baseline runs or are stale Trial 37 leftovers is NOT yet verified.
+    # TODO: verify each row in walk_forward_simulations table by ID and
+    # either confirm or rebuild from the Apr 28 launch-5y-8dates.sh output.
+    TRACK_RECORD_SIM_IDS: List[int] = [922, 924, 925, 926, 927, 928, 929, 930]
 
     # AWS
     AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
