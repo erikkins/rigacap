@@ -48,15 +48,24 @@ fi
 echo "  → META_IG_APP_ID preserved: ${META_IG_APP_ID:0:6}…"
 echo "  → META_IG_APP_SECRET preserved: ${META_IG_APP_SECRET:0:6}…"
 
-echo
-echo "→ Paste your HeyGen API key (hidden — won't echo). Press ENTER when done:"
-read -s HEYGEN_KEY
-echo
-if [ -z "$HEYGEN_KEY" ]; then
-  echo "  ✗ Empty key. Aborting."
-  exit 1
+echo "→ Checking if HeyGen API key is already set on the Lambda..."
+EXISTING_KEY=$(AWS_PROFILE=rigacap aws lambda get-function-configuration \
+  --function-name "$WORKER_FN" --region us-east-1 \
+  --query 'Environment.Variables.HEYGEN_API_KEY' --output text)
+if [ -n "$EXISTING_KEY" ] && [ "$EXISTING_KEY" != "None" ]; then
+  echo "  → Key already set (${EXISTING_KEY:0:10}…). Reusing existing value, no input needed."
+  HEYGEN_KEY="$EXISTING_KEY"
+else
+  echo
+  echo "→ Paste your HeyGen API key (hidden — won't echo). Press ENTER when done:"
+  read -s HEYGEN_KEY
+  echo
+  if [ -z "$HEYGEN_KEY" ]; then
+    echo "  ✗ Empty key. Aborting."
+    exit 1
+  fi
+  echo "  → Key captured (${#HEYGEN_KEY} chars)."
 fi
-echo "  → Key captured (${#HEYGEN_KEY} chars)."
 echo
 
 echo "→ Running terraform apply..."

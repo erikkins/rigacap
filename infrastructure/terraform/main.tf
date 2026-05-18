@@ -186,6 +186,17 @@ variable "meta_ig_app_secret" {
   default     = ""
 }
 
+variable "heygen_avatar_rotation" {
+  description = "Comma-separated HeyGen avatar IDs (2 landscape + 6 portrait Digital Twin looks). Round-robined per video."
+  # 2 landscape (16:9) + 6 portrait (9:16) — see reference_heygen.md
+  default     = "ac84b8d9349340278a69cbcae5db15bc,bc69ba83f80249c8a7c7df9a0d97bdff,34b5e03e3d5d4b3bbfaf0fe5e817348b,2e4229526c294b8c92804dffcb9f5070,79d9f095a2d74071b4026064093563dd,3b9df741f65c4e178aec1a057ef7fab2,89dc1faa445048bea66aaec387ace7a0,9e2730b9a3da4e38bcf5d857fd15e503"
+}
+
+variable "heygen_default_voice_id" {
+  description = "Default HeyGen voice ID used when not overridden in payload"
+  default     = "99dd0e4a4ace44c39f8c0a79d0bd42dd"
+}
+
 variable "threads_user_id" {
   description = "Threads User ID"
   default     = ""
@@ -937,6 +948,8 @@ locals {
     ALPACA_API_KEY                = var.alpaca_api_key
     ALPACA_SECRET_KEY             = var.alpaca_secret_key
     HEYGEN_API_KEY                = var.heygen_api_key
+    HEYGEN_AVATAR_ROTATION        = var.heygen_avatar_rotation
+    HEYGEN_DEFAULT_VOICE_ID       = var.heygen_default_voice_id
     WORKER_FUNCTION_NAME          = "${local.prefix}-worker"
   }
 }
