@@ -1805,6 +1805,71 @@ def handler(event, context):
                 print(f"⚠️ Failed to chain universe snapshot: {ce}")
             _log_step("Universe Snapshot Chain", "ok", "async fire-and-forget")
 
+            # User-position EOD alert pass (Option C — May 18 2026).
+            # Intraday monitor no longer emails warn/sell. Alerts fire only
+            # here, on close-based trigger evaluation, matching WF parity.
+            # One email per position per day max (dedup key omits action).
+            try:
+                from app.services.scheduler import scheduler_service as _sched
+                from app.services.email_service import email_service as _es
+                from app.core.database import Position as _Pos, User as _User
+                from datetime import date as _today_d
+                user_alert_count = 0
+                async with async_session() as ua_db:
+                    pos_q = await ua_db.execute(
+                        select(_Pos, _User.email, _User.name)
+                        .join(_User, _Pos.user_id == _User.id)
+                        .where(_Pos.status == 'open')
+                    )
+                    today_d = _today_d.today().isoformat()
+                    regime_forecast_for_ua = data.get("regime_forecast") if isinstance(data, dict) else None
+                    regime_stop_pct_for_ua = _get_regime_trailing_stop(data) if isinstance(data, dict) else 12.0
+                    for row in pos_q.all():
+                        position, u_email, u_name = row
+                        sym = position.symbol
+                        df_sym = scanner_service.data_cache.get(sym)
+                        if df_sym is None or df_sym.empty:
+                            continue
+                        close_price = float(df_sym['close'].iloc[-1])
+                        # HWM update from close (matches Option B-shipped logic)
+                        if close_price > (position.highest_price or position.entry_price):
+                            position.highest_price = close_price
+                        guidance_ua = _sched._check_sell_trigger(
+                            position, close_price, regime_forecast_for_ua,
+                            trailing_stop_pct=regime_stop_pct_for_ua or 12.0,
+                        )
+                        if not guidance_ua or guidance_ua['action'] not in ('sell', 'warning'):
+                            continue
+                        # Dedup by position+day (NOT action) so warn-then-sell
+                        # in the same day fires ONE email, not two like the
+                        # May 18 IONQ regression where warn fired at 9 AM and
+                        # sell at 9:05 AM as price dropped further.
+                        dedup_key = f"eod_{position.id}_{today_d}"
+                        if dedup_key in _sched._alerted_sell_positions:
+                            continue
+                        try:
+                            await _es.send_sell_alert(
+                                to_email=u_email,
+                                user_name=u_name or "",
+                                symbol=sym,
+                                action=guidance_ua['action'],
+                                reason=guidance_ua['reason'],
+                                current_price=close_price,
+                                entry_price=position.entry_price,
+                                stop_price=guidance_ua.get('stop_price'),
+                                user_id=str(position.user_id),
+                            )
+                            _sched._alerted_sell_positions.add(dedup_key)
+                            user_alert_count += 1
+                        except Exception as ue:
+                            print(f"⚠️ user-position EOD alert failed for {sym}: {ue}")
+                    await ua_db.commit()
+                print(f"📧 User-position EOD alerts: {user_alert_count} sent")
+                _log_step("User Position EOD Alerts", "ok", f"{user_alert_count} sent")
+            except Exception as ue_outer:
+                print(f"⚠️ User-position EOD pass failed (non-fatal): {ue_outer}")
+                _log_step("User Position EOD Alerts", "error", str(ue_outer)[:120])
+
             # Write structured pipeline log to S3
             _write_pipeline_log(
                 "success",
@@ -3462,28 +3527,22 @@ def handler(event, context):
                         if latest_close > (position.highest_price or position.entry_price):
                             position.highest_price = latest_close
 
+                    # Option C (May 18 2026): intraday monitor DOES NOT send
+                    # warn or sell emails to subscribers. Both alert types are
+                    # gated to the EOD pass (post-close, in daily_scan handler)
+                    # to match WF parity — alerts only fire when CLOSE actually
+                    # crosses the stop level. Today's IONQ case: intraday low
+                    # tripped at $51.05 with stop $51.20, but the position
+                    # closed above stop → model book held, but subscriber got
+                    # alerted to sell mid-day and realized a -7.6% loss the
+                    # system would have avoided. That's a parity break.
+                    #
+                    # The intraday monitor still computes guidance for the
+                    # details payload (dashboard display) but doesn't email.
                     guidance = sched._check_sell_trigger(position, live_price, regime_forecast)
 
                     if guidance and guidance['action'] in ('sell', 'warning'):
-                        dedup_key = f"{position.id}_{guidance['action']}_{today}"
-                        if dedup_key not in sched._alerted_sell_positions:
-                            try:
-                                await email_service.send_sell_alert(
-                                    to_email=user_email,
-                                    user_name=user_name or "",
-                                    symbol=sym,
-                                    action=guidance['action'],
-                                    reason=guidance['reason'],
-                                    current_price=live_price,
-                                    entry_price=position.entry_price,
-                                    stop_price=guidance.get('stop_price'),
-                                    user_id=str(position.user_id),
-                                )
-                                sched._alerted_sell_positions.add(dedup_key)
-                                alerts_sent += 1
-                            except Exception as e:
-                                print(f"Failed to send alert for {sym}: {e}")
-
+                        # No email send here — EOD pass handles alerts.
                         details.append({
                             "symbol": sym,
                             "price": live_price,
