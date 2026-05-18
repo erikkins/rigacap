@@ -193,6 +193,7 @@
 
 ## References
 - [HeyGen avatar ID](reference_heygen.md) — Erik's current avatar for AI video generation
+- **[HeyGen API key not wired (May 18 2026)](project_heygen_api_key_gap.md)** — Avatar V engine fix shipped but production Lambda has empty HEYGEN_API_KEY. Test fires fail. Resolve via `-var="heygen_api_key=..."` on next terraform apply.
 - [Twitter media upload field naming](reference_twitter_media_api.md) — use 'media' for raw bytes, 'media_data' for base64; wrong field silently drops images
 - [Cascade Guard = Circuit Breaker](reference_naming_cascade_guard.md) — external/marketing name vs internal/code name; same mechanism
 

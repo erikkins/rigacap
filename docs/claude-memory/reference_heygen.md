@@ -18,7 +18,7 @@ originSessionId: 39ce1e26-1ab7-4fbd-8e9a-6c892d933b00
 - **Base Avatar ID:** `cfe14f503dff46478bc38b146e3e0799` (don't use directly)
 - **API:** Use v3 endpoint (`POST https://api.heygen.com/v3/videos`). v2 produces low bitrate.
 - **CRITICAL: Aspect ratio must match avatar orientation** — portrait avatars in 16:9 get head cropped. Landscape in 9:16 also breaks.
-- **KNOWN ISSUE: API lip sync is worse than website.** Website uses Avatar V motion engine; API appears stuck on Avatar IV. No documented param to force V. `avatar_engine`, `scale`, `test`, `avatar_style` are all silently ignored by v3. Raise with HeyGen support.
+- **~~KNOWN ISSUE~~ RESOLVED May 18 2026: Avatar V engine now available via `engine: {"type": "avatar_v"}` field.** Per HeyGen API sample, this is a top-level field added alongside the existing `type: "avatar"`. Production payload in `heygen_service.py:145-162` now includes it; videos generate with the higher-fidelity Avatar V motion engine (better lip sync, matches website quality). The previously-tried `avatar_engine`, `scale`, `test`, `avatar_style` were dead ends — `engine.type` is the documented param.
 - **v3 accepts only these params:** type, avatar_id, title, resolution, aspect_ratio, background, remove_background, callback_url, callback_id, output_format, script, voice_id, audio_url, audio_asset_id, voice_settings, motion_prompt, expressiveness
 - **Env var:** `HEYGEN_AVATAR_ROTATION` = comma-separated list of all 8 IDs
 
