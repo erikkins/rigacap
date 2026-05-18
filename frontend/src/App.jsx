@@ -3826,7 +3826,35 @@ function Dashboard() {
                             <div className="sticky top-0 z-10 bg-paper px-4 pt-4 pb-2 border-b border-rule">
                               <div className="py-4 px-5 bg-paper-card border-l-2 border-claret" style={{ fontVariationSettings: '"opsz" 24' }}>
                                 <span className="block font-body text-[0.64rem] font-medium tracking-[0.22em] uppercase text-ink-mute mb-2 not-italic">
-                                  {new Date().toLocaleDateString('en-US', { weekday: 'long' })} · {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                  {(() => {
+                                    // Show the BRIEFING'S date (data_date from
+                                    // S3 dashboard), not the viewing date.
+                                    // Otherwise on Monday we'd render a header
+                                    // saying "Monday May 18" with Friday's
+                                    // briefing prose underneath — confusing
+                                    // and untrue. If data_date == today, no
+                                    // staleness suffix; if older, append
+                                    // "(from <day>'s close)".
+                                    const dashDate = dashboardData?.data_date;
+                                    const todayStr = (() => {
+                                      const t = new Date();
+                                      const y = t.getFullYear();
+                                      const m = String(t.getMonth() + 1).padStart(2, '0');
+                                      const d = String(t.getDate()).padStart(2, '0');
+                                      return `${y}-${m}-${d}`;
+                                    })();
+                                    if (!dashDate) {
+                                      return `${new Date().toLocaleDateString('en-US', { weekday: 'long' })} · ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+                                    }
+                                    const [yy, mm, dd] = dashDate.split('-').map(Number);
+                                    const date = new Date(yy, mm - 1, dd);
+                                    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+                                    const monthDay = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                                    const stale = dashDate !== todayStr;
+                                    return stale
+                                      ? `${dayName} · ${monthDay} (from ${dayName}'s close)`
+                                      : `${dayName} · ${monthDay}`;
+                                  })()}
                                 </span>
                                 <p className="font-display italic text-[1rem] text-ink leading-[1.6]">{dashboardData.market_context}</p>
                               </div>
