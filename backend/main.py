@@ -2604,6 +2604,46 @@ def handler(event, context):
             import traceback
             return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:600]}
 
+    # Read-only inspection of strategy_adaptive_params table — what's the
+    # biweekly TPE cron currently feeding the scanner? Used during the
+    # May 18 2026 parity audit to find the StrategyAdaptiveParams DB
+    # override that was masking the config.py Path A revert.
+    # {"adaptive_params_list": {"limit": 10}}
+    if event.get("adaptive_params_list"):
+        cfg = event["adaptive_params_list"] or {}
+        limit = int(cfg.get("limit", 10))
+
+        async def _list():
+            from sqlalchemy import select, desc
+            from app.core.database import StrategyAdaptiveParams
+            async with async_session() as db:
+                rows = (await db.execute(
+                    select(StrategyAdaptiveParams)
+                    .order_by(desc(StrategyAdaptiveParams.effective_date))
+                    .limit(limit)
+                )).scalars().all()
+            return {
+                "count": len(rows),
+                "rows": [
+                    {
+                        "id": r.id,
+                        "effective_date": r.effective_date.isoformat() if r.effective_date else None,
+                        "optimization_date": r.optimization_date.isoformat() if r.optimization_date else None,
+                        "is_active": r.is_active,
+                        "source": r.source,
+                        "regime_at_optimization": r.regime_at_optimization,
+                        "expected_return_pct": r.expected_return_pct,
+                        "expected_sharpe": r.expected_sharpe,
+                        "params_json": r.params_json,
+                    } for r in rows
+                ]
+            }
+        try:
+            return _run_async(_list())
+        except Exception as e:
+            import traceback
+            return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:500]}
+
     # Quick symbol-signal-history lookup for ad-hoc questions like
     # "when did X show up on the dashboard?" — returns every ensemble_signal
     # row for the symbol so we can see signal_date, is_fresh per day, etc.
