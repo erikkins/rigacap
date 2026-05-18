@@ -2604,6 +2604,49 @@ def handler(event, context):
             import traceback
             return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:600]}
 
+    # Read-only inspection of strategy_definitions table — what params is
+    # the WF backtester actually loading when we fire with --strategy-id N
+    # but no CLI overrides? Used during the May 18 parity audit after job
+    # 1253 returned terrible numbers; need to know if the DB row's params
+    # are why.
+    # {"strategy_def_get": {"id": 5}}
+    if event.get("strategy_def_get"):
+        cfg = event["strategy_def_get"] or {}
+        sid = cfg.get("id")
+        if sid is None:
+            return {"error": "id required"}
+
+        async def _get_strat():
+            from sqlalchemy import select
+            from app.core.database import StrategyDefinition
+            async with async_session() as db:
+                row = (await db.execute(
+                    select(StrategyDefinition).where(StrategyDefinition.id == int(sid))
+                )).scalar_one_or_none()
+                if row is None:
+                    return {"error": f"No strategy with id={sid}"}
+                params = row.parameters
+                # parameters column is JSON; might come back as dict or str
+                if isinstance(params, str):
+                    try:
+                        import json as _j
+                        params = _j.loads(params)
+                    except Exception:
+                        pass
+                return {
+                    "id": row.id,
+                    "name": row.name,
+                    "strategy_type": row.strategy_type,
+                    "description": row.description,
+                    "is_active": getattr(row, 'is_active', None),
+                    "parameters": params,
+                }
+        try:
+            return _run_async(_get_strat())
+        except Exception as e:
+            import traceback
+            return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:500]}
+
     # Narrow write handler: set is_active on a single strategy_adaptive_params
     # row. Used May 18 2026 to deactivate the Run5 over-fit row (id=1) so
     # production falls back to config.py canonical values. Reversible by
