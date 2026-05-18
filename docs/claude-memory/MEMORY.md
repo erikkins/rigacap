@@ -183,6 +183,7 @@
 
 ## Numbers Discipline
 - **[Numbers citations registry](project_numbers_citations_registry.md)** — `docs/numbers-citations-registry.md` enumerates every surface citing perf numbers. Walk it before any number refresh. No partial updates.
+- **[Run5 parity drift (Apr 19-May 18 2026)](project_run5_parity_drift_lesson.md)** — production ran Run5 over-fit params for 4 weeks while marketing claimed Apr 28 baseline. Rollback shipped May 18 (commit 0055177). LESSON: every commit touching strategy params requires a parity audit. Track Record sim_ids 922-930 still stale (separate fix).
 
 ## Planned Features
 - **[Admin run_sql Lambda handler (TODO)](project_admin_run_sql_handler.md)** — add a generic read-only SQL/diagnostic event branch to the worker so ad-hoc invokes don't trip the worker-errors alarm. ~1 hr build with read-only guard + row cap + audit log.
