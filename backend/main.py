@@ -2539,6 +2539,49 @@ def handler(event, context):
             import traceback
             return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:600]}
 
+    # Quick symbol-signal-history lookup for ad-hoc questions like
+    # "when did X show up on the dashboard?" — returns every ensemble_signal
+    # row for the symbol so we can see signal_date, is_fresh per day, etc.
+    # {"signal_history_for_symbol": {"symbol": "WULF", "limit": 200}}
+    if event.get("signal_history_for_symbol"):
+        cfg = event["signal_history_for_symbol"] or {}
+        sym = cfg.get("symbol")
+        limit = int(cfg.get("limit", 100))
+        if not sym:
+            return {"error": "symbol required"}
+
+        async def _hist():
+            from sqlalchemy import select, desc
+            from app.core.database import EnsembleSignal
+            async with async_session() as db:
+                rows = (await db.execute(
+                    select(EnsembleSignal)
+                    .where(EnsembleSignal.symbol == sym)
+                    .order_by(desc(EnsembleSignal.signal_date))
+                    .limit(limit)
+                )).scalars().all()
+            return {
+                "symbol": sym,
+                "count": len(rows),
+                "rows": [
+                    {
+                        "signal_date": r.signal_date.isoformat() if r.signal_date else None,
+                        "ensemble_entry_date": r.ensemble_entry_date.isoformat() if r.ensemble_entry_date else None,
+                        "is_fresh": r.is_fresh,
+                        "ensemble_score": r.ensemble_score,
+                        "momentum_rank": r.momentum_rank,
+                        "status": r.status,
+                        "price": r.price,
+                    } for r in rows
+                ]
+            }
+
+        try:
+            return _run_async(_hist())
+        except Exception as e:
+            import traceback
+            return {"status": "failed", "error": str(e), "trace": traceback.format_exc()[:500]}
+
     # Universe history snapshot — write today's full ranked liquidity
     # universe to s3://.../signals/universe-history/{date}.json. Append-only:
     # idempotent on re-invocation (returns "exists" without overwriting).

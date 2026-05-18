@@ -3673,6 +3673,29 @@ function Dashboard() {
                       // stack 3-deep and pushing the right-side action button onto a
                       // second line. Keep badge text short for the same reason; gap-
                       // days detail stays in the data + chart modal, not the badge.
+                      // "NEW today" lies when viewing the dashboard between
+                      // scans (e.g. Monday morning, dashboard is from Friday).
+                      // Replace "today" with the day-of-week the signal actually
+                      // fired when data_date != real today. Surfaced May 18
+                      // 2026 (WULF, XOM) — both showed "NEW today" on Monday
+                      // but the scan that flagged them ran the prior Friday.
+                      const dashDate = dashboardData?.data_date;
+                      const todayStr = (() => {
+                        const t = new Date();
+                        const y = t.getFullYear();
+                        const m = String(t.getMonth() + 1).padStart(2, '0');
+                        const d = String(t.getDate()).padStart(2, '0');
+                        return `${y}-${m}-${d}`;
+                      })();
+                      const newLabelWhen = (dashDate && dashDate !== todayStr)
+                        ? (() => {
+                            const [yy, mm, dd] = dashDate.split('-').map(Number);
+                            const day = new Date(yy, mm - 1, dd)
+                              .toLocaleDateString('en-US', { weekday: 'short' });
+                            return day.toUpperCase();  // MON, TUE, ...
+                          })()
+                        : 'TODAY';
+
                       const renderContinuityBadge = (s) => {
                         const c = s.continuity;
                         if (!c) return null;
@@ -3680,14 +3703,12 @@ function Dashboard() {
                         // 'Re-signal' fires only on Day 1 of the return — the day the
                         // name actually came back to the list. After that it's a
                         // continuing run (Day 2, Day 3…) even though is_resignal
-                        // stays true for the whole run's lifetime. Showing
-                        // 'Re-signal' on day 3 was misleading: the return event
-                        // happened 2 days ago, not today.
+                        // stays true for the whole run's lifetime.
                         if (c.is_resignal && c.is_new_today) {
-                          return <span className={`${base} text-claret-light`}>Re-signal</span>;
+                          return <span className={`${base} text-claret-light`}>Re-signal {newLabelWhen === 'TODAY' ? '' : newLabelWhen}</span>;
                         }
                         if (c.is_new_today) {
-                          return <span className={`${base} text-claret font-medium`}>NEW today</span>;
+                          return <span className={`${base} text-claret font-medium`}>NEW {newLabelWhen}</span>;
                         }
                         if ((c.consecutive_days || 0) >= 2) {
                           return <span className={`${base} text-ink-mute`}>Day {c.consecutive_days}</span>;
