@@ -87,11 +87,12 @@ REGIME_DEFINITIONS = {
             "long_term_trend": (10, 100),     # Strong 1-year gains
         },
         "risk_level": "low",
-        "param_adjustments": {
-            "trailing_stop_pct": -2,
-            "max_positions": +1,
-            "position_size_pct": +2,
-        },
+        # Apr 28 marketing baseline (commit restoring parity, May 18 2026):
+        # ran with FIXED stop/breakout/positions — no regime overlay. Restore
+        # bit-for-bit parity by emptying these adjustments. To re-enable
+        # regime adaptation later, must re-validate via launch-5y-8dates.sh
+        # and update the canonical numbers accordingly.
+        "param_adjustments": {},
         "scoring_weights": {
             "sharpe_ratio": 0.25,
             "total_return": 0.35,
@@ -136,10 +137,8 @@ REGIME_DEFINITIONS = {
             "breadth_pct": (40, 70),            # Mixed breadth (rotation)
         },
         "risk_level": "medium",
-        "param_adjustments": {
-            "max_positions": 0,                 # Keep normal position count
-            "trailing_stop_pct": +1,            # Slightly wider stops for rotation
-        },
+        # Apr 28 parity (see strong_bull comment).
+        "param_adjustments": {},
         "scoring_weights": {
             "sharpe_ratio": 0.25,
             "total_return": 0.30,
@@ -161,11 +160,9 @@ REGIME_DEFINITIONS = {
             "trend_strength": (-15, 15),
         },
         "risk_level": "medium",
-        "param_adjustments": {
-            "max_positions": -1,
-            "near_50d_high_pct": +3,
-            "profit_target_pct": -5,
-        },
+        # Apr 28 parity (see strong_bull comment). profit_target_pct is legacy
+        # DWAP-strategy only — not used by the ensemble.
+        "param_adjustments": {},
         "scoring_weights": {
             "sharpe_ratio": 0.35,
             "total_return": 0.15,
@@ -187,11 +184,8 @@ REGIME_DEFINITIONS = {
             "long_term_trend": (-20, 10),     # Flat or negative 1-year
         },
         "risk_level": "high",
-        "param_adjustments": {
-            "trailing_stop_pct": +3,
-            "max_positions": -2,
-            "position_size_pct": -3,
-        },
+        # Apr 28 parity (see strong_bull comment).
+        "param_adjustments": {},
         "scoring_weights": {
             "sharpe_ratio": 0.20,
             "total_return": 0.15,
@@ -211,11 +205,11 @@ REGIME_DEFINITIONS = {
             "trend_strength": (-100, -30),
         },
         "risk_level": "extreme",
-        "param_adjustments": {
-            "trailing_stop_pct": +5,
-            "max_positions": -3,
-            "position_size_pct": -5,
-        },
+        # Apr 28 parity (see strong_bull comment). NOTE: regime-exit
+        # (go_to_cash) is a SEPARATE mechanism from these param adjustments
+        # — capital preservation in panic still works via the regime exit
+        # signal, not via tightening these params.
+        "param_adjustments": {},
         "scoring_weights": {
             "sharpe_ratio": 0.15,
             "total_return": 0.10,
@@ -237,10 +231,8 @@ REGIME_DEFINITIONS = {
             "spy_20d_return": (5, 30),
         },
         "risk_level": "medium",
-        "param_adjustments": {
-            "trailing_stop_pct": +2,
-            "near_50d_high_pct": -2,
-        },
+        # Apr 28 parity (see strong_bull comment).
+        "param_adjustments": {},
         "scoring_weights": {
             "sharpe_ratio": 0.25,
             "total_return": 0.30,

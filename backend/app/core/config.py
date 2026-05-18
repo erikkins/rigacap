@@ -60,19 +60,25 @@ class Settings(BaseSettings):
     TIKTOK_ACCESS_TOKEN: str = os.getenv("TIKTOK_ACCESS_TOKEN", "")
     
     # Trading strategy (legacy DWAP - kept for backward compatibility)
-    DWAP_THRESHOLD_PCT: float = 5.5  # Run5 adaptive optimizer (was 6.5 Trial 37)
+    DWAP_THRESHOLD_PCT: float = 5.0  # Apr 28 marketing baseline (was 5.5 Run5, was 6.5 Trial 37)
     STOP_LOSS_PCT: float = 8.0
     PROFIT_TARGET_PCT: float = 20.0
     MIN_VOLUME: int = 500_000
     MIN_PRICE: float = 15.0
     VOLUME_SPIKE_MULT: float = 1.5
 
-    # ENSEMBLE STRATEGY — Run5 adaptive optimizer (Apr 18, 2026)
-    # +297.8% over 5.3 years, Sharpe 1.10, MaxDD 29.97%
-    # These defaults are from the latest period (period 138).
-    # The biweekly TPE cron will update these dynamically.
-    MAX_POSITIONS: int = 4
-    POSITION_SIZE_PCT: float = 20.0
+    # ENSEMBLE STRATEGY — Apr 28 2026 marketing baseline (8-date 5y avg)
+    # +160.22% / 21.5% annualized / 0.92 Sharpe / 20.4% MaxDD
+    # Source: scripts/launch-5y-8dates.sh -> scripts/local_wf_runner.py
+    # CLI defaults. These are the params the marketing claim is
+    # underwritten by; do not drift without re-validating WF.
+    #
+    # HISTORY: Run5 (Apr 18, 2026) set 14/4/20/5/7 here claiming +297.8%;
+    # those numbers were over-fit and replaced in the Apr 29 marketing
+    # refresh (commit 9ac87f1) but the CODE drift went uncaught until
+    # May 18. This commit restores the validated values.
+    MAX_POSITIONS: int = 6
+    POSITION_SIZE_PCT: float = 15.0
     SHORT_MOMENTUM_DAYS: int = 5
     LONG_MOMENTUM_DAYS: int = 60
     TRAILING_STOP_PCT: float = 12.0
@@ -80,18 +86,24 @@ class Settings(BaseSettings):
     MARKET_FILTER_PANIC_ONLY: bool = False
     REBALANCE_FREQUENCY: str = "biweekly"
 
-    # Scoring weights
+    # Scoring weights — NOT REVERTED. Apr 28 baseline likely used either
+    # these Run5 values OR the strategy 5 DB row's params (Trial 37
+    # seeded). Low confidence which path. Leave as-is until a
+    # verification WF run confirms reproduction.
     SHORT_MOM_WEIGHT: float = 0.3
     LONG_MOM_WEIGHT: float = 0.2
     VOLATILITY_PENALTY: float = 0.15
 
     # Quality filters
-    NEAR_50D_HIGH_PCT: float = 7.0  # Run5 latest period
-    MOMENTUM_SECTOR_CAP: int = 0  # Run5: no sector cap
+    NEAR_50D_HIGH_PCT: float = 3.0  # Apr 28 marketing baseline (was 7.0 Run5)
+    MOMENTUM_SECTOR_CAP: int = 0  # NOT REVERTED — same uncertainty as scoring weights
 
-    # Profit lock (tighten trailing stop once position is up X%)
-    PROFIT_LOCK_PCT: float = 12.0  # Tighten stop once up 12%
-    PROFIT_LOCK_STOP_PCT: float = 6.0  # Tightened trailing stop %
+    # Profit lock — REVERTED to disabled. The Apr 28 baseline ran
+    # local_wf_runner.py with --profit-lock 0 (its default). Run5 added
+    # profit_lock_pct=12 here; that was never part of the validated
+    # marketing baseline.
+    PROFIT_LOCK_PCT: float = 0.0  # Apr 28 baseline (was 12.0 Run5)
+    PROFIT_LOCK_STOP_PCT: float = 6.0  # Inert when PROFIT_LOCK_PCT == 0
 
     # Anti-squeeze filters
     MAX_RECENT_RETURN_PCT: float = 40.0  # Reject if up >40% in last ~10d
