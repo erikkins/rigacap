@@ -140,6 +140,30 @@ class AIContentService:
                 f"Our system flagged this before the news broke.\n"
                 f"News context: {news_context or 'No specific news provided.'}"
             ),
+            "loss_review": (
+                f"Write a post about a stopped-out trade where the system was wrong "
+                f"and the trailing stop did its job.\n"
+                f"${symbol}: entered at ${entry_price:.2f} on {entry_date}, "
+                f"exited at ${exit_price:.2f} on {exit_date} for {pnl_pct:+.1f}%.\n"
+                f"Exit reason: {exit_reason}.\n\n"
+                "FRAME: The trailing stop is a feature of the system, not a failure. The system "
+                "identifies opportunities and caps the cost when one doesn't work out. The job "
+                "of the stop is exactly this — exit before a small loss becomes a large one.\n\n"
+                "VOICE: Editorial, calm, restrained. Like writing the loss column in an annual "
+                "report — honest, specific, no spin.\n\n"
+                "DO:\n"
+                "- Name the loss amount honestly (use the actual percentage).\n"
+                "- Frame discipline as the product. The exit at the predetermined level IS the win.\n"
+                "- Be specific about the mechanic: 'trailing stop fired at X% from peak.'\n"
+                "- Treat the loss as data, not drama.\n\n"
+                "DO NOT:\n"
+                "- Apologize, spin, or oversell.\n"
+                "- Say 'we still believe in this stock' / 'we'll get them next time' / "
+                "'this is just temporary.'\n"
+                "- Add false optimism. The trade didn't work. That's the whole post.\n"
+                "- Use 'painful', 'tough', 'rough' — soft-pedaling words. State the loss "
+                "and what the system did about it."
+            ),
         }
 
         user_prompt = (
@@ -177,6 +201,7 @@ class AIContentService:
                 "trade_result": f"#StockTrading #AlgoTrading #WalkForward #RigaCap ${symbol}",
                 "missed_opportunity": f"#StockTrading #MissedTrade #AlgoTrading #RigaCap ${symbol}",
                 "we_called_it": f"#WeCalledIt #AlgoTrading #TradingSignals #RigaCap ${symbol}",
+                "loss_review": f"#TrailingStop #RiskManagement #SystematicTrading #RigaCap ${symbol}",
             }
 
             post = SocialPost(

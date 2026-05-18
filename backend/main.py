@@ -4409,11 +4409,24 @@ def handler(event, context):
 
             min_pnl = config.get("min_pnl_pct", 5.0)
             platforms = config.get("platforms", ["twitter", "instagram", "threads"])
+            # loss_review is intentionally NOT in the default post_types — see
+            # the gate below. Callers opt in explicitly OR it activates once the
+            # winner threshold is reached. trade_result and we_called_it remain
+            # the default because they only fire on winners.
             post_types = config.get("post_types", ["trade_result", "we_called_it"])
             max_trades = config.get("max_trades", 5)
+            # loss_review gate: don't post about losses until the track record
+            # has at least N winners. Posting "system was wrong but trailing
+            # stop did its job" makes sense as a discipline-narrative move
+            # AFTER the winners establish that the system has been right too.
+            # Without that context, the loss posts read as a system that only
+            # loses. Default threshold: 3 winners. Override via config.
+            min_winners_for_loss_review = int(config.get("min_winners_for_loss_review", 3))
+            include_loss_review = config.get("force_loss_review", False) or \
+                (config.get("auto_loss_review", True) and "loss_review" not in post_types)
 
             async with async_session() as db:
-                # Query signal track record closed trades that haven't had posts generated yet
+                # Query signal track record closed WINNERS that haven't had posts generated yet
                 result = await db.execute(
                     select(ModelPosition)
                     .where(
@@ -4427,14 +4440,55 @@ def handler(event, context):
                 )
                 positions = list(result.scalars().all())
 
-                if not positions:
+                # Loss-review gate: count all STR winners ever (regardless of
+                # whether they've been posted). If we have enough cumulative
+                # wins on record, the discipline-loss narrative becomes
+                # credible. Then pull losses not yet posted.
+                loss_positions = []
+                if include_loss_review:
+                    winner_count_q = await db.execute(
+                        select(func.count()).select_from(ModelPosition)
+                        .where(
+                            ModelPosition.portfolio_type == "signal_track_record",
+                            ModelPosition.status == "closed",
+                            ModelPosition.pnl_pct > 0,
+                        )
+                    )
+                    winner_count = winner_count_q.scalar() or 0
+                    print(f"loss_review gate: {winner_count} STR winners on record "
+                          f"(threshold: {min_winners_for_loss_review})")
+                    if winner_count >= min_winners_for_loss_review:
+                        loss_q = await db.execute(
+                            select(ModelPosition)
+                            .where(
+                                ModelPosition.portfolio_type == "signal_track_record",
+                                ModelPosition.status == "closed",
+                                ModelPosition.pnl_pct < 0,
+                                ModelPosition.social_post_generated == False,
+                            )
+                            .order_by(ModelPosition.exit_date.desc())
+                            .limit(max_trades)
+                        )
+                        loss_positions = list(loss_q.scalars().all())
+                        print(f"loss_review gate OPEN: queued {len(loss_positions)} losses")
+                    else:
+                        print(f"loss_review gate CLOSED: need {min_winners_for_loss_review - winner_count} "
+                              f"more winners before loss posts activate")
+
+                if not positions and not loss_positions:
                     return {"status": "ok", "message": "No new signal track trades qualifying for social posts", "posts_created": 0}
 
-                print(f"Found {len(positions)} qualifying signal track trades")
+                print(f"Found {len(positions)} winners + {len(loss_positions)} losses for social-post generation")
 
-                # Generate posts for each trade x platform x post_type
+                # Generate posts for each trade x platform x post_type.
+                # Winners get the configured post_types (trade_result / we_called_it).
+                # Losses ONLY get loss_review — the other types assume a winner
+                # and their templates would read absurd for a stopped-out trade.
                 created = []
-                for pos in positions:
+                for pos, types_for_pos in (
+                    [(p, post_types) for p in positions] +
+                    [(p, ["loss_review"]) for p in loss_positions]
+                ):
                     trade_data = {
                         "symbol": pos.symbol,
                         "entry_price": pos.entry_price,
@@ -4446,7 +4500,7 @@ def handler(event, context):
                         "strategy": "DWAP+Momentum Ensemble",
                     }
                     for platform in platforms:
-                        for post_type in post_types:
+                        for post_type in types_for_pos:
                             post = await ai_content_service.generate_post(
                                 trade=trade_data,
                                 post_type=post_type,
