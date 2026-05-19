@@ -5226,6 +5226,101 @@ def handler(event, context):
     # Scheduled via EventBridge at 6 PM ET (between daily scan at 4:30 and
     # overnight emails). Chains: verify asset IDs → poll corp actions →
     # force-refetch on splits → parquet diagnose → admin digest.
+    # Force-refetch SPY from yfinance with auto_adjust=True, replace in cache,
+    # re-export pickle + parquet. One-time fix for the Alpaca SPY 2026-02-02
+    # corruption + dividend-adjustment treatment. Idempotent — safe to re-run.
+    # Payload: {"force_refetch_spy": true}
+    if event.get("force_refetch_spy"):
+        print("🔄 Force-refetching SPY from yfinance (auto_adjust=True)")
+
+        async def _refetch_spy():
+            import yfinance as yf
+            import pandas as _pd
+            from app.services.market_data_provider import _validate_bar_sanity
+            from app.services.data_export import data_export_service
+
+            # Pull SPY full history with dividend + split adjustment applied
+            start = "2019-06-01"  # Matches production pickle's existing range
+            df = yf.download('SPY', start=start, progress=False, auto_adjust=True)
+            if df is None or df.empty:
+                return {"status": "failed", "error": "yfinance returned no data"}
+
+            # Flatten yfinance's MultiIndex columns to lowercase scalars
+            if isinstance(df.columns, _pd.MultiIndex):
+                df.columns = [c[0].lower() if isinstance(c, tuple) else str(c).lower() for c in df.columns]
+            else:
+                df.columns = [str(c).lower() for c in df.columns]
+
+            # Normalize index — tz-naive midnight
+            if hasattr(df.index, 'tz') and df.index.tz is not None:
+                df.index = df.index.tz_localize(None)
+            df.index = df.index.normalize()
+
+            # Sanity check before touching anything
+            violations = _validate_bar_sanity('SPY', df)
+            if violations:
+                print(f"❌ ABORT — yfinance SPY data failed sanity check: {violations}")
+                return {"status": "failed", "error": "sanity violations", "violations": violations}
+
+            # Capture key diagnostic values for the response
+            sample_dates = ['2026-02-02', '2025-03-10', '2024-01-02', '2021-01-04']
+            samples = {}
+            for d in sample_dates:
+                ts = _pd.Timestamp(d)
+                if ts in df.index:
+                    samples[d] = {
+                        "open": float(df.loc[ts, 'open']),
+                        "high": float(df.loc[ts, 'high']),
+                        "low": float(df.loc[ts, 'low']),
+                        "close": float(df.loc[ts, 'close']),
+                    }
+
+            # Compute indicators using the scanner's canonical pipeline (same
+            # math as everywhere else — keeps dwap/ma_50/ma_200/etc consistent
+            # across symbols)
+            df = scanner_service._ensure_indicators(df)
+
+            # Snapshot existing SPY for diff logging
+            old_spy = scanner_service.data_cache.get('SPY')
+            old_low = None
+            if old_spy is not None and _pd.Timestamp('2026-02-02') in old_spy.index:
+                old_low = float(old_spy.loc[_pd.Timestamp('2026-02-02'), 'low'])
+
+            # Swap in
+            scanner_service.data_cache['SPY'] = df
+            print(f"✅ Replaced SPY in cache: {len(df)} bars, "
+                  f"{df.index.min().date()} → {df.index.max().date()}")
+            print(f"   2026-02-02 low: old={old_low}  new={samples.get('2026-02-02', {}).get('low')}")
+
+            # Re-export pickle + parquet (sister writes from same in-memory cache)
+            try:
+                data_export_service.export_pickle(scanner_service.data_cache)
+                print("✅ Pickle re-exported")
+            except Exception as e:
+                return {"status": "partial", "error": f"pickle export failed: {e}", "samples": samples}
+            try:
+                data_export_service.export_parquet(scanner_service.data_cache)
+                print("✅ Parquet re-exported")
+            except Exception as e:
+                # Parquet failure is non-fatal — pickle is the read source today
+                print(f"⚠️ Parquet export failed (non-fatal): {e}")
+
+            return {
+                "status": "ok",
+                "bars": len(df),
+                "first_date": str(df.index.min().date()),
+                "last_date": str(df.index.max().date()),
+                "old_2026_02_02_low": old_low,
+                "new_2026_02_02_low": samples.get('2026-02-02', {}).get('low'),
+                "samples": samples,
+            }
+
+        try:
+            return _run_async(_refetch_spy())
+        except Exception as e:
+            import traceback
+            return {"status": "error", "error": str(e), "trace": traceback.format_exc()[:600]}
+
     # {"nightly_data_hygiene": {"_": 1}} or {"symbols": [...]} for subset test
     if event.get("nightly_data_hygiene"):
         cfg = event.get("nightly_data_hygiene")

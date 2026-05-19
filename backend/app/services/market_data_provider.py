@@ -27,6 +27,83 @@ logger = logging.getLogger(__name__)
 # Symbols that Alpaca cannot serve (indices use ^ prefix)
 INDEX_SYMBOLS = {'^VIX', '^GSPC', '^DJI', '^IXIC', '^RUT', '^TNX'}
 
+# Symbols that Alpaca COULD serve but we deliberately route through yfinance
+# because Alpaca's SIP storage has known per-bar corruption for these names.
+#
+# SPY (May 19, 2026): Alpaca's SPY 2026-02-02 bar reports low=$68.81 across
+# all adjustment modes (RAW, SPLIT, ALL); actual market low was ~$687.54.
+# The corruption is in Alpaca's underlying daily bar, not our pipeline.
+# yfinance returns the correct value. Reported to Alpaca; routing change
+# is the durable fix regardless of their response. Also gives us dividend-
+# adjusted ("total return") SPY for benchmark consistency — matches the
+# 11y canonical pickle that the Apr 28 marketing baseline was built on.
+YFINANCE_PREFERRED = {'SPY'}
+
+# Combined: symbols that always route to yfinance, not Alpaca
+YFINANCE_ROUTED = INDEX_SYMBOLS | YFINANCE_PREFERRED
+
+
+def _validate_bar_sanity(symbol: str, df: pd.DataFrame) -> List[str]:
+    """Per-bar sanity check for newly-fetched OHLCV data. Returns a list of
+    human-readable violation strings (empty list = clean).
+
+    Catches the class of defect that hit SPY 2026-02-02 (Alpaca stored
+    low=$68.81 when surrounding open/high/close were ~$690). Trips when:
+      - low <= $0 or > high (logical violation)
+      - low < 50% of close AND close >= $20 (off-by-decimal in low)
+      - high > 2x close (off-by-decimal in high)
+      - intraday range (high - low) / close > 0.5 (95th-percentile sanity;
+        legit volatile days top out around 10% intraday — 50% is impossible
+        for a real bar)
+
+    SPY-specific extra: lows < $50 are always suspect (SPY has never traded
+    that low in the modern era; this would have caught the May 4 corruption
+    on landing instead of three weeks later).
+    """
+    violations = []
+    if df is None or df.empty:
+        return ["empty dataframe"]
+    required = {'open', 'high', 'low', 'close'}
+    if not required.issubset(df.columns):
+        return [f"missing columns: {required - set(df.columns)}"]
+
+    # Logical inversions / non-positive prices
+    bad = df[(df['low'] <= 0) | (df['low'] > df['high'])]
+    if len(bad):
+        violations.append(f"{len(bad)} bar(s) with low<=0 or low>high (e.g. {bad.index[0].date()})")
+
+    # Off-by-decimal in low (low << close on a non-microcap)
+    mid_or_large = df[df['close'] >= 20]
+    bad_lo = mid_or_large[mid_or_large['low'] < mid_or_large['close'] * 0.5]
+    if len(bad_lo):
+        d = bad_lo.index[0].date()
+        violations.append(
+            f"{len(bad_lo)} bar(s) with low < 50% of close (off-by-decimal suspect; "
+            f"e.g. {d}: low={bad_lo['low'].iloc[0]:.2f} vs close={bad_lo['close'].iloc[0]:.2f})"
+        )
+
+    # Off-by-decimal in high
+    bad_hi = df[df['high'] > df['close'] * 2]
+    if len(bad_hi):
+        violations.append(f"{len(bad_hi)} bar(s) with high > 2x close (e.g. {bad_hi.index[0].date()})")
+
+    # Crazy intraday range
+    rng_pct = (df['high'] - df['low']) / df['close'].clip(lower=0.01)
+    bad_rng = df[rng_pct > 0.5]
+    if len(bad_rng):
+        violations.append(f"{len(bad_rng)} bar(s) with intraday range > 50% of close (e.g. {bad_rng.index[0].date()})")
+
+    # SPY-specific floor — would have caught the May 4 corruption on landing
+    if symbol == 'SPY':
+        bad_spy = df[df['low'] < 50]
+        if len(bad_spy):
+            violations.append(
+                f"SPY-specific: {len(bad_spy)} bar(s) with low < $50 — SPY has never traded that low "
+                f"(e.g. {bad_spy.index[0].date()}: low=${bad_spy['low'].iloc[0]:.2f})"
+            )
+
+    return violations
+
 
 @dataclass
 class QuoteData:
@@ -125,7 +202,10 @@ class AlpacaProvider(MarketDataProvider):
             return False
 
     def supports_symbol(self, symbol: str) -> bool:
-        return symbol not in INDEX_SYMBOLS
+        # YFINANCE_ROUTED = INDEX_SYMBOLS ∪ YFINANCE_PREFERRED (currently {SPY}).
+        # Indexes are technically unsupported by Alpaca; SPY is supported but
+        # routed away due to known per-bar data corruption.
+        return symbol not in YFINANCE_ROUTED
 
     async def fetch_bars(
         self, symbols: List[str], start_date: str, end_date: Optional[str] = None
@@ -297,7 +377,21 @@ class YfinanceProvider(MarketDataProvider):
             batch = symbols[i:i + BATCH_SIZE]
 
             try:
-                kwargs = {"start": start_date, "progress": False, "threads": True, "timeout": 30}
+                # auto_adjust=True applies dividend + split back-adjustment to
+                # historical OHLC. For index symbols (^VIX, ^GSPC) this is a
+                # no-op (they don't pay dividends). For SPY this is essential —
+                # it produces the dividend-adjusted ("total return") series that
+                # the 11y canonical pickle was built from. Without it, SPY's
+                # raw historical closes have small downward gaps every quarter
+                # at ex-dividend dates, which produces 4x more spurious 200MA
+                # crossings (30 vs 8 over 5y) and -93pp WF return divergence.
+                kwargs = {
+                    "start": start_date,
+                    "progress": False,
+                    "threads": True,
+                    "timeout": 30,
+                    "auto_adjust": True,
+                }
                 if end_date:
                     kwargs["end"] = end_date
 
@@ -342,6 +436,18 @@ class YfinanceProvider(MarketDataProvider):
                         if hasattr(df.index, 'tz') and df.index.tz is not None:
                             df.index = df.index.tz_localize(None)
                         df.index = df.index.normalize()
+
+                        # Pre-write sanity check for SPY (the benchmark — bad
+                        # data here corrupts regime detection for every backtest
+                        # and every signal scan). For other symbols we keep the
+                        # fast path and rely on the periodic drift-detection
+                        # service to catch issues.
+                        if symbol in YFINANCE_PREFERRED:
+                            violations = _validate_bar_sanity(symbol, df)
+                            if violations:
+                                print(f"⚠️ Refusing {symbol} fetch — sanity violations: {violations}")
+                                continue  # Don't add this symbol to result
+
                         result[symbol] = df
 
                     except Exception as e:
