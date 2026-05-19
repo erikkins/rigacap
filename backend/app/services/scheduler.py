@@ -1651,13 +1651,17 @@ class SchedulerService:
                             'days_since_entry': days_since_entry,
                             'is_fresh': bool(is_fresh),
                         })
-                buy_signals.sort(key=lambda x: (
-                    0 if x['is_fresh'] else 1,
-                    x.get('days_since_crossover') or 999,
-                    -x['ensemble_score']
-                ))
+                # Sort by composite ensemble_score descending — same logic
+                # as the user-facing dashboard (signals.py) and the model
+                # portfolio's process_entries. Old recency-first sort buried
+                # high-score "stale" picks; users reading the email then saw
+                # an order that didn't match what's on the dashboard.
+                buy_signals.sort(key=lambda x: -x.get('ensemble_score', 0))
             else:
                 logger.info(f"📧 Using {len(buy_signals)} persisted signal(s) from 4 PM scan")
+                # Persisted signals come out in storage order — apply the
+                # same sort so the email matches dashboard order.
+                buy_signals.sort(key=lambda x: -x.get('ensemble_score', 0))
 
             # Read watchlist + regime + market_context from dashboard cache (same 4 PM data)
             watchlist = []
