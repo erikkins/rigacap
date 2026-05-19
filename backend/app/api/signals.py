@@ -940,12 +940,15 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                     'sector': sector,
                 })
 
-        buy_signals.sort(key=lambda x: (
-            0 if (x.get('days_since_entry') or 999) == 0 else 1,  # BUY NOW first
-            0 if x['is_fresh'] else 1,
-            x.get('days_since_entry') if x.get('days_since_entry') is not None else 999,
-            -x['ensemble_score']
-        ))
+        # Sort by composite ensemble_score descending — matches what
+        # model_portfolio_service.process_entries() uses to pick its next
+        # trade. The older recency-first tier'd sort buried high-score
+        # "stale" signals (e.g., STM at ens=92, 84d active) below
+        # recency-only newer signals (RKLB ens=91, 7d). Memory: stale
+        # signals historically outperform fresh ones (56.8% win vs 49.6%),
+        # so the recency-first sort was misleading users away from the
+        # empirically better entries. is_fresh stays as a badge, not a key.
+        buy_signals.sort(key=lambda x: -x.get('ensemble_score', 0))
 
         # Enrich signals with missing sector data from yfinance
         missing_sector_symbols = [s['symbol'] for s in buy_signals if not s.get('sector')]
@@ -1813,11 +1816,22 @@ async def get_dashboard_data(
     fresh_signal_dates = [d for d in fresh_signal_dates if d]  # remove None
     total_fresh_count = sum(1 for s in all_buy_signals if s.get('is_fresh'))
 
-    # Filter buy signals by user's open positions
+    # Annotate buy signals with in_user_position so the UI can render a
+    # HELD badge and suppress the + ENTRY button. Previously we filtered
+    # held symbols out entirely, which made the portfolio's own picks
+    # (e.g., STM at ensemble_score=92) invisible to the user and made
+    # the dashboard's "top of list" inconsistent with what
+    # model_portfolio_service actually picks.
     open_syms = {p.get('symbol', '') for p in positions_with_guidance}
-    buy_signals = [s for s in all_buy_signals if s['symbol'] not in open_syms]
+    buy_signals = []
+    for s in all_buy_signals:
+        annotated = dict(s)
+        annotated['in_user_position'] = s['symbol'] in open_syms
+        buy_signals.append(annotated)
 
-    # Filter missed opportunities by user's open positions
+    # Missed opportunities keep the held-filter — by definition these are
+    # signals the user didn't act on; showing already-held ones in that
+    # bucket would be conceptually wrong.
     missed_opportunities = [
         m for m in cached.get('missed_opportunities', [])
         if m.get('symbol', '') not in open_syms
@@ -1958,12 +1972,15 @@ async def _compute_dashboard_live(
         # Time-travel: only show fresh signals
         buy_signals = [s for s in buy_signals if s['is_fresh']]
 
-        buy_signals.sort(key=lambda x: (
-            0 if (x.get('days_since_entry') or 999) == 0 else 1,  # BUY NOW first
-            0 if x['is_fresh'] else 1,
-            x.get('days_since_entry') if x.get('days_since_entry') is not None else 999,
-            -x['ensemble_score']
-        ))
+        # Sort by composite ensemble_score descending — matches what
+        # model_portfolio_service.process_entries() uses to pick its next
+        # trade. The older recency-first tier'd sort buried high-score
+        # "stale" signals (e.g., STM at ens=92, 84d active) below
+        # recency-only newer signals (RKLB ens=91, 7d). Memory: stale
+        # signals historically outperform fresh ones (56.8% win vs 49.6%),
+        # so the recency-first sort was misleading users away from the
+        # empirically better entries. is_fresh stays as a badge, not a key.
+        buy_signals.sort(key=lambda x: -x.get('ensemble_score', 0))
     except Exception as e:
         print(f"Buy signals error: {e}")
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, Activity, DollarSign, Clock, Search, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, Plus, Zap, TrendingUp, AlertCircle, CheckCircle, PlayCircle, RefreshCw, Beaker, Bot, Settings, Share2, Server, Briefcase, Sparkles, Calculator, Shield, Mail, Lock, Loader2, Edit3, X as XIcon } from 'lucide-react';
+import { Users, Activity, DollarSign, Clock, Search, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, Plus, Zap, TrendingUp, AlertCircle, CheckCircle, PlayCircle, RefreshCw, Beaker, Bot, Settings, Share2, Server, Briefcase, Sparkles, Calculator, Shield, Mail, Lock, Loader2, Edit3, X as XIcon, Stethoscope } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import StrategyGenerator from './StrategyGenerator';
@@ -9,6 +9,7 @@ import AutoSwitchConfig from './AutoSwitchConfig';
 import StrategyEditor from './StrategyEditor';
 import FlexibleBacktest from './FlexibleBacktest';
 import SocialTab from './SocialTab';
+import HygieneTab from './HygieneTab';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -20,12 +21,24 @@ const TABS = [
   { id: 'autopilot', label: 'Auto-Pilot', icon: Bot },
   { id: 'social', label: 'Social', icon: Share2 },
   { id: 'newsletter', label: 'Newsletter', icon: Mail },
+  { id: 'hygiene', label: 'Hygiene', icon: Stethoscope },
   { id: 'users', label: 'Users', icon: Users },
 ];
 
 export default function AdminDashboard() {
   const { fetchWithAuth, isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('rigacap_admin_tab') || 'overview');
+  const [activeTab, setActiveTab] = useState(() => {
+    // ?tab=hygiene lets the nightly hygiene email deep-link straight in.
+    // Falls back to session storage, then the overview default.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get('tab');
+      if (fromUrl && ['overview','portfolio','strategies','lab','autopilot','social','newsletter','hygiene','users'].includes(fromUrl)) {
+        return fromUrl;
+      }
+    } catch (e) {}
+    return sessionStorage.getItem('rigacap_admin_tab') || 'overview';
+  });
   const [stats, setStats] = useState(null);
   const [serviceStatus, setServiceStatus] = useState(null);
   const [users, setUsers] = useState([]);
@@ -442,6 +455,10 @@ export default function AdminDashboard() {
 
       {activeTab === 'newsletter' && (
         <NewsletterTab fetchWithAuth={fetchWithAuth} />
+      )}
+
+      {activeTab === 'hygiene' && (
+        <HygieneTab fetchWithAuth={fetchWithAuth} />
       )}
 
       {activeTab === 'users' && (

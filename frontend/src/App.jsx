@@ -3736,7 +3736,7 @@ function Dashboard() {
                             }`}
                             style={{
                               display: 'grid',
-                              gridTemplateColumns: 'minmax(0, 1fr) 80px 96px 110px',
+                              gridTemplateColumns: 'minmax(0, 1fr) 80px 140px 110px',
                               alignItems: 'center',
                               gap: '0.75rem',
                             }}
@@ -3750,9 +3750,13 @@ function Dashboard() {
                               {renderContinuityBadge(s)}
                             </div>
                             <span className="font-mono text-[0.88rem] text-ink-mute text-right">${s.price?.toFixed(2)}</span>
-                            <span className="font-mono text-[0.7rem] tracking-[0.1em] uppercase text-claret text-right">{label}</span>
+                            <span className="font-mono text-[0.7rem] tracking-[0.1em] uppercase text-claret text-right whitespace-nowrap">
+                              <span className="text-ink">{Math.round(s.ensemble_score || 0)}</span> · {label}
+                            </span>
                             <div className="text-right">
-                              {s.is_fresh && (
+                              {s.in_user_position ? (
+                                <span className="font-body text-[0.7rem] font-medium tracking-[0.12em] uppercase px-2.5 py-1 bg-paper-card text-ink-mute border border-rule whitespace-nowrap inline-block">Held</span>
+                              ) : s.is_fresh && (
                                 <span className="font-body text-[0.7rem] font-medium tracking-[0.12em] uppercase px-2.5 py-1 bg-ink text-paper border border-ink hover:bg-claret hover:border-claret transition-colors whitespace-nowrap inline-block">+ Entry</span>
                               )}
                             </div>
@@ -3781,8 +3785,8 @@ function Dashboard() {
                           </td>
                           <td className="px-3 py-3 text-right font-mono text-[0.88rem]">${s.price?.toFixed(2)}</td>
                           <td className="px-3 py-3 text-right font-mono text-[0.88rem] text-positive">+{s.pct_above_dwap?.toFixed(1)}%</td>
-                          <td className="px-3 py-3 text-center font-mono text-[0.85rem] text-ink-mute">
-                            #{s.momentum_rank}
+                          <td className="px-3 py-3 text-center font-mono text-[0.95rem] text-ink">
+                            {Math.round(s.ensemble_score || 0)}
                           </td>
                           <td className="px-3 py-2.5 text-center">
                             {(() => {
@@ -3796,8 +3800,12 @@ function Dashboard() {
                               return <span className="font-mono text-[0.7rem] tracking-[0.12em] uppercase text-claret">{label}</span>;
                             })()}
                           </td>
-                          {s.is_fresh && (
-                            <td className="px-3 py-3 text-center">
+                          <td className="px-3 py-3 text-center">
+                            {s.in_user_position ? (
+                              <span className="font-body text-[0.7rem] font-medium tracking-[0.1em] uppercase px-2.5 py-1 bg-paper-card text-ink-mute border border-rule whitespace-nowrap inline-block">
+                                Held
+                              </span>
+                            ) : s.is_fresh && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -3807,8 +3815,8 @@ function Dashboard() {
                               >
                                 + Entry
                               </button>
-                            </td>
-                          )}
+                            )}
+                          </td>
                         </tr>
                       );
 
@@ -3880,7 +3888,7 @@ function Dashboard() {
                                       <th className="px-3 py-2 text-left font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Symbol</th>
                                       <th className="px-3 py-2 text-right font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Price</th>
                                       <th className="px-3 py-2 text-right font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Breakout</th>
-                                      <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Rank</th>
+                                      <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Conviction</th>
                                       <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink whitespace-nowrap">
                                         Strength
                                         <span className="ml-1.5"><StrengthInfoPopover /></span>
@@ -3941,7 +3949,7 @@ function Dashboard() {
                                       <th className="px-3 py-2 text-left font-medium">Symbol</th>
                                       <th className="px-3 py-2 text-right font-medium">Price</th>
                                       <th className="px-3 py-2 text-right font-medium">Breakout%</th>
-                                      <th className="px-3 py-2 text-right font-medium">Rank</th>
+                                      <th className="px-3 py-2 text-center font-medium">Conviction</th>
                                       <th className="px-3 py-2 text-center font-medium whitespace-nowrap">
                                         Strength
                                         <span className="ml-1"><StrengthInfoPopover /></span>
@@ -4242,7 +4250,6 @@ function Dashboard() {
                         onClick={() => setChartModal({ type: 'signal', data: { symbol: s.symbol }, symbol: s.symbol })}
                       >
                         <span className="font-semibold text-ink">{s.symbol}</span>
-                        <span className="text-xs text-claret">#{s.momentum_rank}</span>
                         <span className="text-xs text-ink-mute">+{s.pct_above_dwap?.toFixed(1)}%</span>
                         <span className="text-xs font-medium text-claret">+{s.distance_to_trigger?.toFixed(1)}% to go</span>
                       </div>

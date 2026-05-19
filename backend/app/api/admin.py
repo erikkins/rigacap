@@ -4223,27 +4223,250 @@ async def admin_symbol_repoll(
     return _SymbolActionResponse(status="still_missing", detail=f"{symbol} still not found in Alpaca; streak counter continues")
 
 
-@router.post("/symbol-triage/{symbol}/defer", response_model=_SymbolActionResponse)
-async def admin_symbol_defer(
-    symbol: str,
+# Defer 30d endpoint removed May 18 2026 — the indirection added decision
+# fatigue without buying anything. Either the symbol is delistable
+# (auto-acts at 14d), needs human eyes (EXCEPTION queue), or it's not
+# ready yet (<7d, auto-suppressed). A 30-day timer just kicks the can.
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Hygiene queue — batched, tier-classified replacement for the per-symbol triage
+# clicks. Source of truth is hygiene_scorer; the queue endpoint reads cached
+# state populated by the nightly hygiene run.
+
+
+@router.get("/hygiene/queue")
+async def admin_hygiene_queue(
+    include_recent_auto: bool = True,
+    _admin = Depends(get_admin_user),
+):
+    """
+    Return the current hygiene queue, tier-classified.
+
+    Default response:
+      {
+        "recommend": [QueueItem],          # one-click pre-filled actions
+        "exceptions": [QueueItem],         # held positions / ambiguous / KEEP
+        "recent_auto": [{symbol, action, when}],  # last 24h auto-actions
+        "summary": {auto_24h, recommend_count, exception_count, reuse_count},
+      }
+
+    Read-only — no AI calls, no DB writes. Safe to poll from the admin UI.
+    """
+    from app.services.hygiene_scorer import (
+        score_missing, score_reuse,
+        TIER_AUTO, TIER_RECOMMEND, TIER_EXCEPTION,
+    )
+
+    # run_ai=False here — the queue endpoint is hot-path; AI verdicts were
+    # written during the nightly hygiene run and are cached via
+    # SymbolMetadataEvent rows. The scorer reads those.
+    missing = await score_missing(run_ai=False)
+    reuse = await score_reuse()
+
+    items = missing + reuse
+    recommend = [it.to_dict() for it in items if it.tier == TIER_RECOMMEND]
+    exceptions = [it.to_dict() for it in items if it.tier == TIER_EXCEPTION
+                  and (it.days_missing or 0) >= 7]  # silence <7d noise
+
+    recent_auto: list = []
+    if include_recent_auto:
+        cutoff = datetime.utcnow() - timedelta(hours=24)
+        from app.core.database import SymbolMetadataEvent as _SME
+        async with async_session() as db:
+            res = await db.execute(
+                select(_SME)
+                .where(_SME.event_type.in_(["auto_delist", "ticker_reuse_migrated", "ai_auto_delist"]))
+                .where(_SME.detected_at >= cutoff)
+                .order_by(_SME.detected_at.desc())
+                .limit(100)
+            )
+            for ev in res.scalars().all():
+                recent_auto.append({
+                    "symbol": ev.symbol,
+                    "action": ev.event_type,
+                    "when": ev.detected_at.isoformat() if ev.detected_at else None,
+                })
+
+    return {
+        "recommend": recommend,
+        "exceptions": exceptions,
+        "recent_auto": recent_auto,
+        "summary": {
+            "auto_24h": len(recent_auto),
+            "recommend_count": len(recommend),
+            "exception_count": len(exceptions),
+            "reuse_count": sum(1 for it in items if it.category == "reuse"),
+        },
+    }
+
+
+class _HygieneApproveItem(BaseModel):
+    symbol: str
+    action: str                    # delist | rename | migrate | restore
+    new_ticker: Optional[str] = None   # required for rename
+
+
+class _HygieneApproveRequest(BaseModel):
+    items: List[_HygieneApproveItem]
+
+
+@router.post("/hygiene/approve-batch")
+async def admin_hygiene_approve_batch(
+    body: _HygieneApproveRequest,
     db: AsyncSession = Depends(get_db),
     _admin = Depends(get_admin_user),
 ):
-    """Defer a symbol for 30 days — the operator wants to revisit later
-    rather than make a delist/rename call now. Records the defer in
-    symbol_metadata_events with a deferred_until timestamp. The hygiene
-    digest's diagnose_missing helper filters out symbols whose latest
-    defer event is still active, so the row drops out of the daily
-    email for 30 days. After that window, it re-surfaces."""
-    symbol = symbol.upper().strip()
-    defer_until = datetime.utcnow() + timedelta(days=30)
-    db.add(SymbolMetadataEvent(
-        symbol=symbol,
-        event_type="defer",
-        details_json=json.dumps({"deferred_until": defer_until.isoformat(), "via": "admin_triage_page"}),
-    ))
+    """
+    Apply admin-approved actions to a batch of hygiene queue items in
+    one round-trip. Each item gets a per-row result; partial failure
+    does not roll back successful rows.
+    """
+    from app.services.scanner import scanner_service
+
+    results = []
+    for item in body.items:
+        sym = item.symbol.upper().strip()
+        try:
+            res = await db.execute(select(SymbolMetadata).where(SymbolMetadata.symbol == sym))
+            meta = res.scalar_one_or_none()
+            if not meta:
+                results.append({"symbol": sym, "ok": False, "error": "no metadata row"})
+                continue
+
+            if item.action == "delist":
+                meta.status = "delisted"
+                meta.quarantine_reason = "admin_batch_delist"
+                meta.first_missing_at = None
+                db.add(SymbolMetadataEvent(
+                    symbol=sym, event_type="manual_delist",
+                    details_json=json.dumps({"via": "hygiene_batch"}),
+                ))
+            elif item.action == "rename":
+                new_t = (item.new_ticker or "").upper().strip()
+                if not new_t:
+                    results.append({"symbol": sym, "ok": False, "error": "rename requires new_ticker"})
+                    continue
+                meta.status = "renamed"
+                meta.quarantine_reason = f"renamed_to:{new_t}"
+                meta.first_missing_at = None
+                db.add(SymbolMetadataEvent(
+                    symbol=sym, event_type="manual_rename",
+                    details_json=json.dumps({"new_ticker": new_t, "via": "hygiene_batch"}),
+                ))
+            elif item.action == "migrate":
+                # Ticker reuse: adopt new asset_id (already on the queue item),
+                # reset status to active, drop cached price history.
+                from app.services.hygiene_scorer import score_reuse
+                reuse_items = await score_reuse()
+                match = next((r for r in reuse_items if r.symbol == sym), None)
+                if not match or not match.new_asset_id:
+                    results.append({"symbol": sym, "ok": False, "error": "no asset_id_changed event"})
+                    continue
+                meta.asset_id = match.new_asset_id
+                meta.status = "active"
+                meta.quarantine_reason = None
+                meta.quarantined_at = None
+                meta.first_missing_at = None
+                db.add(SymbolMetadataEvent(
+                    symbol=sym, event_type="ticker_reuse_migrated",
+                    details_json=json.dumps({
+                        "old_asset_id": match.old_asset_id,
+                        "new_asset_id": match.new_asset_id,
+                        "via": "hygiene_batch",
+                    }),
+                ))
+                try:
+                    if scanner_service.data_cache and sym in scanner_service.data_cache:
+                        del scanner_service.data_cache[sym]
+                except Exception:
+                    pass
+            elif item.action == "restore":
+                # False positive — re-activate the symbol.
+                meta.status = "active"
+                meta.quarantine_reason = None
+                meta.quarantined_at = None
+                meta.first_missing_at = None
+                db.add(SymbolMetadataEvent(
+                    symbol=sym, event_type="manual_restore",
+                    details_json=json.dumps({"via": "hygiene_batch"}),
+                ))
+            else:
+                results.append({"symbol": sym, "ok": False, "error": f"unknown action {item.action}"})
+                continue
+
+            results.append({"symbol": sym, "ok": True, "action": item.action})
+        except Exception as e:
+            results.append({"symbol": sym, "ok": False, "error": str(e)[:200]})
+
     await db.commit()
-    return _SymbolActionResponse(
-        status="ok",
-        detail=f"{symbol} deferred until {defer_until.strftime('%Y-%m-%d')}; will resurface in hygiene digest after that date",
-    )
+    ok_count = sum(1 for r in results if r.get("ok"))
+    return {"results": results, "ok_count": ok_count, "total": len(results)}
+
+
+@router.post("/hygiene/approve-all-recommend")
+async def admin_hygiene_approve_all_recommend(
+    db: AsyncSession = Depends(get_db),
+    _admin = Depends(get_admin_user),
+):
+    """
+    Confirm every current RECOMMEND-tier item using its pre-filled action.
+    Rename actions are SKIPPED here because they need a new ticker — the
+    admin UI surfaces those individually.
+    """
+    from app.services.hygiene_scorer import score_missing, score_reuse, TIER_RECOMMEND
+
+    missing = await score_missing(run_ai=False)
+    reuse = await score_reuse()
+    items = [it for it in (missing + reuse) if it.tier == TIER_RECOMMEND]
+
+    approved = []
+    skipped = []
+    for it in items:
+        if it.recommended_action == "rename":
+            skipped.append({"symbol": it.symbol, "reason": "rename needs new ticker"})
+            continue
+        approved.append(_HygieneApproveItem(symbol=it.symbol, action=it.recommended_action))
+
+    if not approved:
+        return {"results": [], "skipped": skipped, "ok_count": 0, "total": 0}
+
+    fake_body = _HygieneApproveRequest(items=approved)
+    res = await admin_hygiene_approve_batch(fake_body, db, _admin=_admin)
+    res["skipped"] = skipped
+    return res
+
+
+@router.get("/hygiene/corp-actions")
+async def admin_hygiene_corp_actions(
+    days: int = 7,
+    _admin = Depends(get_admin_user),
+):
+    """Read-only corp-actions audit log over the last N days."""
+    cutoff = datetime.utcnow() - timedelta(days=max(1, min(days, 90)))
+    async with async_session() as db:
+        res = await db.execute(
+            select(SymbolMetadataEvent)
+            .where(SymbolMetadataEvent.detected_at >= cutoff)
+            .where(SymbolMetadataEvent.event_type.in_([
+                "split", "dividend", "spinoff", "merger", "delisting",
+                "rights_distribution", "name_change",
+            ]))
+            .order_by(SymbolMetadataEvent.detected_at.desc())
+            .limit(500)
+        )
+        out = []
+        for ev in res.scalars().all():
+            details = {}
+            try:
+                details = json.loads(ev.details_json or "{}")
+            except Exception:
+                pass
+            out.append({
+                "symbol": ev.symbol,
+                "event_type": ev.event_type,
+                "event_date": ev.event_date.isoformat() if ev.event_date else None,
+                "detected_at": ev.detected_at.isoformat() if ev.detected_at else None,
+                "details": details,
+            })
+    return {"events": out, "count": len(out)}

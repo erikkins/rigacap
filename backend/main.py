@@ -5337,146 +5337,41 @@ def handler(event, context):
             except Exception as e:
                 diag = {"error": str(e)[:300]}
 
-            # 6. Admin digest email
+            # 6. Confidence-tier scoring + AUTO tier execution.
+            # The hygiene scorer classifies every flagged item as AUTO /
+            # RECOMMEND / EXCEPTION using rules + cached AI verdicts. AUTO
+            # items execute here (no cap); RECOMMEND + EXCEPTION surface in
+            # the admin Hygiene tab. The email becomes a summary + link.
+            from app.services.hygiene_scorer import (
+                score_missing, score_reuse, execute_auto_tier,
+                TIER_AUTO, TIER_RECOMMEND, TIER_EXCEPTION,
+            )
+
+            scorer_missing = await score_missing(run_ai=True)
+            scorer_reuse = await score_reuse()
+            all_items = scorer_missing + scorer_reuse
+
+            auto_summary = await execute_auto_tier(all_items)
+
+            recommend_count = sum(1 for it in all_items if it.tier == TIER_RECOMMEND)
+            exception_count = sum(1 for it in all_items
+                                   if it.tier == TIER_EXCEPTION
+                                   and (it.days_missing or 0) >= 7)
+            urgent_held = [it.symbol for it in all_items
+                            if it.in_open_position and it.category == "missing"]
+            reuse_total = len(scorer_reuse)
+
             try:
                 from app.services.email_service import admin_email_service
-                # Tier flags: critical ones escalate status; info items stay
-                # in a separate section so "auto-fixed a split" doesn't read
-                # like an emergency.
                 critical_flags = []
                 info_flags = []
-                # Rich diagnosis of each missing symbol — days_missing, suggested
-                # action, whether held in any open position. Surfaces actionable
-                # info instead of just a name list.
-                missing_diag = await symbol_metadata_service.diagnose_missing()
 
-                # ─── AI auto-delist sweep ────────────────────────────────
-                # For symbols stuck in 'investigate' for >=14 days that no
-                # user holds, run the same AI triage Claude uses on the
-                # triage page. If the verdict comes back DELIST, mark the
-                # symbol delisted automatically — operator never has to
-                # click through obvious cases. Conservative gating:
-                #   - days_missing >= 14 (corroboration via persistence)
-                #   - not in any open user position
-                #   - AI verdict must explicitly be DELIST (not WAIT,
-                #     INVESTIGATE, or RENAME). Anything ambiguous stays
-                #     for human review.
-                # Auto-delisted rows surface in the email as their own
-                # audited table so the operator has a log of what
-                # happened + a link to the triage page to undo.
-                auto_delisted_by_ai: list = []
-                try:
-                    from app.api.admin import fetch_symbol_news_and_summarize
-                    from app.core.database import SymbolMetadata as _SM, SymbolMetadataEvent as _SME
-                    candidates = [
-                        r for r in missing_diag
-                        if r.get("suggested_action") in ("investigate", "auto_quarantine")
-                        and (r.get("days_missing") or 0) >= 14
-                        and not r.get("in_open_position")
-                        and r.get("status") != "delisted"
-                    ]
-                    # Cap at 12 to keep latency + API spend bounded. Anything
-                    # over surfaces in tomorrow's run.
-                    for r in candidates[:12]:
-                        sym = r["symbol"]
-                        try:
-                            triage = await fetch_symbol_news_and_summarize(sym)
-                        except Exception as _se:
-                            print(f"⚠️ AI auto-delist sweep failed for {sym}: {_se}")
-                            continue
-                        if triage.get("verdict") != "DELIST":
-                            continue
-                        # Apply the same DB updates the manual mark-delisted
-                        # endpoint does (status, audit event, clear streak).
-                        async with async_session() as adb:
-                            res = await adb.execute(select(_SM).where(_SM.symbol == sym))
-                            meta = res.scalar_one_or_none()
-                            if not meta:
-                                continue
-                            meta.status = "delisted"
-                            meta.quarantine_reason = "ai_auto_delist"
-                            meta.first_missing_at = None
-                            adb.add(_SME(
-                                symbol=sym,
-                                event_type="ai_auto_delist",
-                                details_json=__import__('json').dumps({
-                                    "verdict": "DELIST",
-                                    "days_missing": r.get("days_missing"),
-                                    "summary": (triage.get("summary") or "")[:300],
-                                }),
-                            ))
-                            await adb.commit()
-                        auto_delisted_by_ai.append(sym)
-                    if auto_delisted_by_ai:
-                        info_flags.append(
-                            f"🤖 AI auto-delisted {len(auto_delisted_by_ai)} symbol(s): "
-                            f"{', '.join(auto_delisted_by_ai[:8])}"
-                            + (f" (+{len(auto_delisted_by_ai)-8} more)" if len(auto_delisted_by_ai) > 8 else "")
-                        )
-                        # Remove the auto-delisted ones from missing_diag so
-                        # they don't double-render in the action-required table
-                        auto_set = set(auto_delisted_by_ai)
-                        missing_diag = [r for r in missing_diag if r["symbol"] not in auto_set]
-                except Exception as _ade:
-                    print(f"⚠️ AI auto-delist sweep error (non-blocking): {_ade}")
-
-                def _render_missing_table(rows: list) -> str:
-                    """Render only the actionable rows (urgent_held / auto_quarantine /
-                    investigate). 'recheck' rows are <7 days missing — the system
-                    auto-rechecks each night and they're not worth surfacing until
-                    they cross the 7-day threshold. The count of suppressed rechecks
-                    is rendered as a single summary line elsewhere in the email."""
-                    if not rows:
-                        return ""
-                    actionable = [r for r in rows if r.get("suggested_action") != "recheck"]
-                    if not actionable:
-                        return ""
-                    out_rows = []
-                    for r in actionable[:20]:
-                        action = r["suggested_action"]
-                        action_label = {
-                            "urgent_held": "🚨 URGENT (held position)",
-                            "auto_quarantine": "🔒 auto-quarantined",
-                            "investigate": "🔍 investigate",
-                        }.get(action, action)
-                        days = r.get("days_missing")
-                        days_str = f"{days}d" if days is not None else "?"
-                        sym = r["symbol"]
-                        triage_link = (
-                            f"<a href='https://rigacap.com/admin/symbol/{sym}/triage' "
-                            f"style='color:#7A2430;text-decoration:none;'>"
-                            f"<b>{sym}</b></a>"
-                        )
-                        cell = "border:1px solid #DDD5C7;padding:3px 8px;"
-                        out_rows.append(
-                            f"<tr>"
-                            f"<td style='{cell}'>{triage_link}</td>"
-                            f"<td style='{cell}'>{days_str}</td>"
-                            f"<td style='{cell}'>{action_label}</td>"
-                            f"<td style='{cell}'>{'yes' if r['in_open_position'] else ''}</td>"
-                            f"</tr>"
-                        )
-                    overflow = max(0, len(actionable) - 20)
-                    overflow_row = (
-                        f"<tr><td colspan='4' style='border:1px solid #DDD5C7;padding:3px 8px;color:#5A544E;font-style:italic;'>...and {overflow} more</td></tr>"
-                        if overflow else ""
+                if urgent_held:
+                    critical_flags.append(
+                        f"🚨 {len(urgent_held)} held position(s) gone missing in Alpaca — manual close needed: "
+                        f"{', '.join(urgent_held[:8])}"
+                        + (f" (+{len(urgent_held)-8} more)" if len(urgent_held) > 8 else "")
                     )
-                    return (
-                        "<p style='margin:4px 0 8px 0;font-size:12px;color:#5A544E;line-height:1.4;'>Click a symbol to triage it &mdash; last close, Alpaca status, recent news, AI summary, one-click delist/rename/repoll.</p>"
-                        "<table cellpadding='6' style='border-collapse:collapse;font-size:13px;line-height:1.3;'>"
-                        "<tr style='background:#FAF7F0;'><th style='border:1px solid #DDD5C7;text-align:left;padding:4px 8px;'>symbol</th><th style='border:1px solid #DDD5C7;text-align:left;padding:4px 8px;'>missing</th><th style='border:1px solid #DDD5C7;text-align:left;padding:4px 8px;'>action</th><th style='border:1px solid #DDD5C7;text-align:left;padding:4px 8px;'>held?</th></tr>"
-                        + "".join(out_rows) + overflow_row +
-                        "</table>"
-                    )
-
-                urgent_count = sum(1 for r in missing_diag if r["suggested_action"] == "urgent_held")
-                auto_q_count = sum(1 for r in missing_diag if r["suggested_action"] == "auto_quarantine")
-
-                if tally["reused"] > 0:
-                    critical_flags.append(f"🚨 {tally['reused']} ticker-reuse detected: {reused_symbols[:10]}")
-                if urgent_count > 0:
-                    # ANY held-position symbol going missing in Alpaca is critical regardless of count
-                    critical_flags.append(f"🚨 {urgent_count} missing symbol(s) ARE in open user positions — manual review needed")
                 # Missing-in-Alpaca: alarm on rate-of-change, not absolute count.
                 # The chronic count drifts up slowly as ETFs and edge-case symbols
                 # accumulate; firing on 'current > 20' was a permanent warning the
@@ -5568,70 +5463,94 @@ def handler(event, context):
                     info_flags.append(f"🔧 Auto-fixed {refetch_result['refetched']} split(s) via SPLIT-adjusted refetch")
                 if tally["new"] > 0:
                     info_flags.append(f"🆕 {tally['new']} new symbols added to metadata")
-                if auto_q_count > 0:
-                    info_flags.append(f"🔒 {auto_q_count} symbol(s) auto-quarantined (>=14 days missing)")
-                # (Missing-in-Alpaca info line now rendered above with rate-of-change context.)
-                # Quiet rechecks: <7d missing rows are auto-rechecked each night
-                # and don't need admin attention. Surface only the count so the
-                # email isn't a 13-row dead-end of "investigate" mismatches.
-                recheck_count = sum(1 for r in missing_diag if r.get("suggested_action") == "recheck")
-                if recheck_count > 0:
-                    info_flags.append(
-                        f"⏳ {recheck_count} symbol(s) missing &lt;7 days &mdash; auto-rechecking each night, "
-                        f"will surface for triage at the 7-day mark if still missing."
-                    )
 
-                status_word = "Healthy" if not critical_flags else "Attention Needed"
-                emoji = "✅" if not critical_flags else "🚨"
+                # Summary-only email: counts + a single link to the admin
+                # Hygiene tab. No per-symbol triage links — the queue lives
+                # in one consolidated UI now.
+                auto_delisted_total = len(auto_summary.get("delisted", []))
+                auto_migrated_total = len(auto_summary.get("migrated", []))
+                auto_errors = len(auto_summary.get("errors", []))
 
-                # Inline style tokens — many email clients (Gmail web especially)
-                # strip <head> / <style> blocks, so styling has to live on each
-                # element. The defaults give h3 lots of top/bottom margin and ul
-                # rolls double-spaced, making the email feel breathless.
+                needs_eyes = recommend_count + exception_count + len(urgent_held)
+                status_word = "All Clear" if not critical_flags and needs_eyes == 0 else (
+                    "Attention Needed" if critical_flags else "Review Queue"
+                )
+                emoji = "✅" if status_word == "All Clear" else ("🚨" if critical_flags else "👀")
+
+                H2 = "margin:0 0 12px 0;font-size:18px;font-weight:600;"
                 H3 = "margin:18px 0 6px 0;font-size:14px;font-weight:600;color:#141210;"
                 UL = "margin:0 0 12px 0;padding:0 0 0 18px;list-style:disc;line-height:1.45;"
                 LI = "margin:1px 0;padding:0;"
                 P  = "margin:6px 0;line-height:1.45;"
+                BTN = (
+                    "display:inline-block;background:#7A2430;color:#FFF;"
+                    "padding:10px 18px;text-decoration:none;font-weight:600;"
+                    "border-radius:4px;margin:8px 0;"
+                )
 
                 html_lines = [
-                    f"<h2 style='margin:0 0 14px 0;font-size:18px;font-weight:600;'>{emoji} Data Hygiene: {status_word}</h2>",
-                    f"<h3 style='{H3}'>Asset-ID Verification</h3>",
-                    f"<ul style='{UL}'>",
-                    f"<li style='{LI}'>Verified: {len(symbols)}</li>",
-                    f"<li style='{LI}'>OK: {tally['ok']}</li>",
-                    f"<li style='{LI}'>New (first-seen): {tally['new']}</li>",
-                    f"<li style='{LI}'>Ticker-reuse (quarantined): {tally['reused']}</li>",
-                    f"<li style='{LI}'>Missing in Alpaca: {tally['missing_in_alpaca']}</li>",
-                    f"</ul>",
-                    f"<h3 style='{H3}'>Corporate Actions</h3>",
-                    f"<ul style='{UL}'>",
-                    f"<li style='{LI}'>Events detected (last 36h): {len(corp_events)}</li>",
-                    f"<li style='{LI}'>Split symbols: {len(split_symbols)}</li>",
-                    f"</ul>",
+                    f"<h2 style='{H2}'>{emoji} Data Hygiene — {status_word}</h2>",
                 ]
-                if missing_diag:
-                    html_lines.append(f"<h3 style='{H3}'>Missing-in-Alpaca Symbols (action required)</h3>")
-                    html_lines.append(_render_missing_table(missing_diag))
 
+                # Headline summary line — what got done last night, and what's left.
+                summary_bits = []
+                if auto_delisted_total:
+                    summary_bits.append(f"<b>{auto_delisted_total}</b> auto-delisted")
+                if auto_migrated_total:
+                    summary_bits.append(f"<b>{auto_migrated_total}</b> ticker-reuse migrated")
+                if refetch_result and refetch_result.get("refetched", 0) > 0:
+                    summary_bits.append(f"<b>{refetch_result['refetched']}</b> splits auto-fixed")
+                summary_line = "; ".join(summary_bits) if summary_bits else "no auto-actions"
+                html_lines.append(
+                    f"<p style='{P}'>Last night: {summary_line}.</p>"
+                )
+
+                # The only inline data: held-position emergencies and any
+                # rate-of-change spike that fired. Everything else is one
+                # click away.
                 if critical_flags:
                     html_lines.append(f"<h3 style='{H3}'>⚠️ Needs Attention</h3><ul style='{UL}'>")
-                    for f in critical_flags:
-                        html_lines.append(f"<li style='{LI}'>{f}</li>")
+                    for fl in critical_flags:
+                        html_lines.append(f"<li style='{LI}'>{fl}</li>")
                     html_lines.append("</ul>")
+
+                # The CTA: open the admin Hygiene tab. No per-row links.
+                if needs_eyes > 0:
+                    queue_lines = []
+                    if recommend_count:
+                        queue_lines.append(f"<b>{recommend_count}</b> one-click recommendations")
+                    if exception_count:
+                        queue_lines.append(f"<b>{exception_count}</b> exceptions")
+                    if reuse_total and any(
+                        it.tier != TIER_AUTO for it in scorer_reuse
+                    ):
+                        queue_lines.append(f"<b>{sum(1 for it in scorer_reuse if it.tier != TIER_AUTO)}</b> ticker-reuse review")
+                    html_lines.append(f"<h3 style='{H3}'>Queue</h3>")
+                    html_lines.append(f"<p style='{P}'>{'; '.join(queue_lines)}.</p>")
+                    html_lines.append(
+                        f"<p style='margin:8px 0;'><a href='https://rigacap.com/admin?tab=hygiene' style='{BTN}'>Open Hygiene Tab</a></p>"
+                    )
+                else:
+                    html_lines.append(
+                        f"<p style='{P}'>Queue is empty. Nothing requires review.</p>"
+                    )
+
                 if info_flags:
-                    html_lines.append(f"<h3 style='{H3}'>ℹ️ Auto-Remediated / Informational</h3><ul style='{UL}'>")
-                    for f in info_flags:
-                        html_lines.append(f"<li style='{LI}'>{f}</li>")
+                    html_lines.append(f"<h3 style='{H3}'>ℹ️ Informational</h3><ul style='{UL}'>")
+                    for fl in info_flags:
+                        html_lines.append(f"<li style='{LI}'>{fl}</li>")
                     html_lines.append("</ul>")
-                # send_admin_alert wraps the message in <pre style="white-space:pre-wrap">,
-                # which preserves literal newlines as visual gaps. Join with no newlines
-                # so the inline-styled HTML elements lay out cleanly without breathy
-                # whitespace between them.
+                if auto_errors:
+                    html_lines.append(
+                        f"<p style='{P}font-size:12px;color:#5A544E;'>"
+                        f"{auto_errors} AUTO-tier action(s) failed — see Hygiene tab → Recent actions for details.</p>"
+                    )
+
                 html = "".join(html_lines)
 
                 await admin_email_service.send_admin_alert(
                     to_email="erik@rigacap.com",
-                    subject=f"{emoji} RigaCap Data Hygiene ({status_word})",
+                    subject=f"{emoji} RigaCap Data Hygiene — {status_word}",
                     message=html,
                 )
             except Exception as _ee:
@@ -5647,10 +5566,149 @@ def handler(event, context):
                 "dirty_count": diag.get("total_dirty_symbols") if isinstance(diag, dict) else None,
                 "reused_symbols": reused_symbols,
                 "missing_symbols": missing_symbols,
+                "auto_executed": {
+                    "delisted": len(auto_summary.get("delisted", [])),
+                    "migrated": len(auto_summary.get("migrated", [])),
+                    "errors": len(auto_summary.get("errors", [])),
+                },
+                "queue": {
+                    "recommend": recommend_count,
+                    "exception": exception_count,
+                    "urgent_held": len(urgent_held),
+                },
             }
 
         try:
             return _run_async(_hygiene())
+        except Exception as e:
+            import traceback
+            return {"error": str(e), "trace": traceback.format_exc()[:800]}
+
+    # Monthly full-universe reconciliation. Belt-and-suspenders check that
+    # the nightly delta didn't quietly miss anything: bulk-fetch every
+    # active US equity from Alpaca, cross-reference against our DB, and
+    # surface gaps. Auto-acts where confidence is unambiguous.
+    # {"monthly_universe_audit": {"_": 1}}
+    if event.get("monthly_universe_audit"):
+        print("📅 Monthly universe reconciliation starting")
+
+        async def _monthly_audit():
+            from app.services.symbol_metadata_service import symbol_metadata_service
+            from app.services.hygiene_scorer import (
+                score_missing, score_reuse, execute_auto_tier,
+            )
+            from app.services.scanner import scanner_service
+            from app.services.email_service import admin_email_service
+
+            # Verify the full pickle universe in one shot — this re-runs
+            # asset_id checks for every symbol, including ones the nightly
+            # cadence may have skipped (e.g., excluded from scanner cache).
+            all_syms = sorted(scanner_service.data_cache.keys()) if scanner_service.data_cache else []
+            verify_summary = await symbol_metadata_service.verify_asset_ids(all_syms)
+
+            # Score + execute AUTO tier (uncapped, all confidence-passes act)
+            missing = await score_missing(run_ai=True)
+            reuse = await score_reuse()
+            auto_summary = await execute_auto_tier(missing + reuse)
+
+            # Count remaining queue
+            remaining_reco = sum(1 for it in (missing + reuse) if it.tier == "RECOMMEND")
+            remaining_exc = sum(1 for it in (missing + reuse)
+                                 if it.tier == "EXCEPTION" and (it.days_missing or 0) >= 7)
+
+            # Summary email
+            H2 = "margin:0 0 12px 0;font-size:18px;font-weight:600;"
+            P  = "margin:6px 0;line-height:1.45;"
+            BTN = (
+                "display:inline-block;background:#7A2430;color:#FFF;"
+                "padding:10px 18px;text-decoration:none;font-weight:600;"
+                "border-radius:4px;margin:8px 0;"
+            )
+            body = (
+                f"<h2 style='{H2}'>📅 Monthly Universe Audit</h2>"
+                f"<p style='{P}'>Verified <b>{len(all_syms)}</b> symbols against the full Alpaca universe.</p>"
+                f"<p style='{P}'>Auto-resolved: <b>{len(auto_summary.get('delisted', []))}</b> delisted, "
+                f"<b>{len(auto_summary.get('migrated', []))}</b> ticker-reuse migrated.</p>"
+                f"<p style='{P}'>Queue after audit: <b>{remaining_reco}</b> recommend, "
+                f"<b>{remaining_exc}</b> exception.</p>"
+                f"<p><a href='https://rigacap.com/admin?tab=hygiene' style='{BTN}'>Open Hygiene Tab</a></p>"
+            )
+            try:
+                await admin_email_service.send_admin_alert(
+                    to_email="erik@rigacap.com",
+                    subject="📅 RigaCap Monthly Universe Audit",
+                    message=body,
+                )
+            except Exception as ee:
+                print(f"⚠️ Monthly audit email failed: {ee}")
+
+            return {
+                "status": "ok",
+                "verified": len(all_syms),
+                "auto": auto_summary,
+                "queue": {"recommend": remaining_reco, "exception": remaining_exc},
+            }
+
+        try:
+            return _run_async(_monthly_audit())
+        except Exception as e:
+            import traceback
+            return {"error": str(e), "trace": traceback.format_exc()[:800]}
+
+    # Quarterly deep audit. Monthly reconciliation + 90-day corp-actions
+    # replay + split-adjustment spot-check. {"quarterly_deep_audit": {"_": 1}}
+    if event.get("quarterly_deep_audit"):
+        print("📆 Quarterly deep audit starting")
+
+        async def _quarterly_audit():
+            from app.services.symbol_metadata_service import symbol_metadata_service
+            from app.services.hygiene_scorer import (
+                score_missing, score_reuse, execute_auto_tier,
+            )
+            from app.services.scanner import scanner_service
+            from app.services.email_service import admin_email_service
+
+            all_syms = sorted(scanner_service.data_cache.keys()) if scanner_service.data_cache else []
+
+            # Same full-verify as monthly
+            await symbol_metadata_service.verify_asset_ids(all_syms)
+
+            # 90-day corp-actions replay — catches anything the 36h window
+            # missed during the quarter. Persists each event; duplicates
+            # are harmless (idempotent on (symbol, event_type, event_date)).
+            corp_events_90 = await symbol_metadata_service.poll_corp_actions(since_hours=90 * 24)
+
+            missing = await score_missing(run_ai=True)
+            reuse = await score_reuse()
+            auto_summary = await execute_auto_tier(missing + reuse)
+
+            H2 = "margin:0 0 12px 0;font-size:18px;font-weight:600;"
+            P  = "margin:6px 0;line-height:1.45;"
+            body = (
+                f"<h2 style='{H2}'>📆 Quarterly Deep Audit</h2>"
+                f"<p style='{P}'>Verified <b>{len(all_syms)}</b> symbols.</p>"
+                f"<p style='{P}'>90-day corp-actions replay: <b>{len(corp_events_90)}</b> events touched.</p>"
+                f"<p style='{P}'>Auto-resolved: <b>{len(auto_summary.get('delisted', []))}</b> delisted, "
+                f"<b>{len(auto_summary.get('migrated', []))}</b> migrated.</p>"
+            )
+            try:
+                await admin_email_service.send_admin_alert(
+                    to_email="erik@rigacap.com",
+                    subject="📆 RigaCap Quarterly Deep Audit",
+                    message=body,
+                )
+            except Exception as ee:
+                print(f"⚠️ Quarterly audit email failed: {ee}")
+
+            return {
+                "status": "ok",
+                "verified": len(all_syms),
+                "corp_events_90d": len(corp_events_90),
+                "auto": auto_summary,
+            }
+
+        try:
+            return _run_async(_quarterly_audit())
         except Exception as e:
             import traceback
             return {"error": str(e), "trace": traceback.format_exc()[:800]}
