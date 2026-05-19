@@ -3705,7 +3705,11 @@ function Dashboard() {
                         // continuing run (Day 2, Day 3…) even though is_resignal
                         // stays true for the whole run's lifetime.
                         if (c.is_resignal && c.is_new_today) {
-                          return <span className={`${base} text-claret-light`}>Re-signal {newLabelWhen === 'TODAY' ? '' : newLabelWhen}</span>;
+                          // "Re-sig" shortened from "Re-signal" — same meaning,
+                          // fewer chars; otherwise the badge + a 3-digit price
+                          // (e.g. XOM at $160) overflows the Advanced-mode
+                          // table beyond viewport, clipping + Entry on the right.
+                          return <span className={`${base} text-claret-light`}>Re-sig {newLabelWhen === 'TODAY' ? '' : newLabelWhen}</span>;
                         }
                         if (c.is_new_today) {
                           return <span className={`${base} text-claret font-medium`}>NEW {newLabelWhen}</span>;
