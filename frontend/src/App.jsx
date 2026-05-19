@@ -3888,7 +3888,7 @@ function Dashboard() {
                                       <th className="px-3 py-2 text-left font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Symbol</th>
                                       <th className="px-3 py-2 text-right font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Price</th>
                                       <th className="px-3 py-2 text-right font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Breakout</th>
-                                      <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Conviction</th>
+                                      <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink">Score</th>
                                       <th className="px-3 py-2 text-center font-body text-[0.62rem] font-medium tracking-[0.2em] uppercase text-ink-mute border-b border-ink whitespace-nowrap">
                                         Strength
                                         <span className="ml-1.5"><StrengthInfoPopover /></span>
@@ -3949,7 +3949,7 @@ function Dashboard() {
                                       <th className="px-3 py-2 text-left font-medium">Symbol</th>
                                       <th className="px-3 py-2 text-right font-medium">Price</th>
                                       <th className="px-3 py-2 text-right font-medium">Breakout%</th>
-                                      <th className="px-3 py-2 text-center font-medium">Conviction</th>
+                                      <th className="px-3 py-2 text-center font-medium">Score</th>
                                       <th className="px-3 py-2 text-center font-medium whitespace-nowrap">
                                         Strength
                                         <span className="ml-1"><StrengthInfoPopover /></span>
