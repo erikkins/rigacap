@@ -4272,7 +4272,7 @@ async def admin_hygiene_queue(
     recent_auto: list = []
     if include_recent_auto:
         cutoff = datetime.utcnow() - timedelta(hours=24)
-        from app.core.database import SymbolMetadataEvent as _SME
+        from app.core.database import SymbolMetadataEvent as _SME, async_session
         async with async_session() as db:
             res = await db.execute(
                 select(_SME)
@@ -4444,6 +4444,7 @@ async def admin_hygiene_corp_actions(
 ):
     """Read-only corp-actions audit log over the last N days."""
     cutoff = datetime.utcnow() - timedelta(days=max(1, min(days, 90)))
+    from app.core.database import async_session
     async with async_session() as db:
         res = await db.execute(
             select(SymbolMetadataEvent)
