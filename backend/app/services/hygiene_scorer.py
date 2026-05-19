@@ -299,9 +299,11 @@ async def score_missing(run_ai: bool = True) -> List[QueueItem]:
         and r["symbol"] not in ai_cache
     ]
     if run_ai and need_ai:
-        logger.info(f"hygiene_scorer: running AI triage on {len(need_ai)} symbols")
+        # print() not logger.info — Lambda CloudWatch reliably surfaces print
+        print(f"🧠 hygiene_scorer: running AI triage on {len(need_ai)} symbols")
         fresh = await _run_ai_triage(need_ai)
         ai_cache.update(fresh)
+        print(f"🧠 hygiene_scorer: AI triage complete, {len(fresh)} fresh verdicts cached")
 
     out: List[QueueItem] = []
     for r in rows:

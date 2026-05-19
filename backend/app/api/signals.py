@@ -1828,6 +1828,12 @@ async def get_dashboard_data(
         annotated = dict(s)
         annotated['in_user_position'] = s['symbol'] in open_syms
         buy_signals.append(annotated)
+    # Re-sort in the serving path even when reading a cached
+    # dashboard.json. The cache may have been generated before the
+    # ensemble-score sort change shipped (May 18 2026) — without this
+    # re-sort the user would see stale ordering until the next daily
+    # scan regenerates the cache.
+    buy_signals.sort(key=lambda x: -x.get('ensemble_score', 0))
 
     # Missed opportunities keep the held-filter — by definition these are
     # signals the user didn't act on; showing already-held ones in that
