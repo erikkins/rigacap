@@ -121,6 +121,14 @@ async def _wait_for_alpaca_settlement(
     result = {"settled": False, "attempts": 0, "spy_date": None,
               "spy_volume": None, "fallback_to_yfinance": False}
 
+    # Settlement probe symbol — must be an Alpaca-native, ultra-liquid name.
+    # Was SPY (most-traded ETF) until May 19 2026 when we routed SPY through
+    # yfinance to avoid Alpaca's per-bar SPY data corruption. With SPY on
+    # yfinance, Alpaca returns nothing for it, settlement check hung 5 min
+    # then fell back to yfinance, blowing the 15-min Lambda budget — caused
+    # three consecutive daily_scan timeouts on May 20 2026 before this fix.
+    # AAPL: stock (never routed), Alpaca-native, ~50M daily volume.
+    PROBE_SYMBOL = "AAPL"
     alpaca = AlpacaProvider()
     five_days_ago = (expected_date - timedelta(days=7)).strftime("%Y-%m-%d")
 
@@ -135,28 +143,29 @@ async def _wait_for_alpaca_settlement(
                 break
 
         try:
-            bars = await alpaca.fetch_bars(["SPY"], start_date=five_days_ago)
-            spy_df = bars.get("SPY")
-            if spy_df is not None and len(spy_df) > 0:
-                last_date = spy_df.index.max()
+            bars = await alpaca.fetch_bars([PROBE_SYMBOL], start_date=five_days_ago)
+            probe_df = bars.get(PROBE_SYMBOL)
+            if probe_df is not None and len(probe_df) > 0:
+                last_date = probe_df.index.max()
                 last_date_normalized = pd.Timestamp(last_date).normalize().tz_localize(None)
                 expected_ts = pd.Timestamp(expected_date)
-                last_vol = int(spy_df.iloc[-1].get("volume", 0))
+                last_vol = int(probe_df.iloc[-1].get("volume", 0))
+                # Keep field names spy_* for backward compat with consumers
                 result["spy_date"] = str(last_date_normalized.date())
                 result["spy_volume"] = last_vol
 
                 if last_date_normalized >= expected_ts and last_vol >= min_spy_volume:
                     result["settled"] = True
                     print(f"📡 Alpaca settled: attempt {attempt}, "
-                          f"SPY {last_date_normalized.date()}, vol={last_vol:,}")
+                          f"{PROBE_SYMBOL} {last_date_normalized.date()}, vol={last_vol:,}")
                     break
                 else:
                     print(f"📡 Settlement attempt {attempt}/{max_retries}: "
-                          f"SPY date={last_date_normalized.date()} (need {expected_date}), "
+                          f"{PROBE_SYMBOL} date={last_date_normalized.date()} (need {expected_date}), "
                           f"vol={last_vol:,} (need {min_spy_volume:,}) — waiting {retry_interval}s...")
             else:
                 print(f"📡 Settlement attempt {attempt}/{max_retries}: "
-                      f"no SPY data from Alpaca — waiting {retry_interval}s...")
+                      f"no {PROBE_SYMBOL} data from Alpaca — waiting {retry_interval}s...")
         except Exception as e:
             print(f"📡 Settlement attempt {attempt}/{max_retries}: error {e} — waiting {retry_interval}s...")
 
