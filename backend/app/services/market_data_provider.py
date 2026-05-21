@@ -28,15 +28,28 @@ logger = logging.getLogger(__name__)
 INDEX_SYMBOLS = {'^VIX', '^GSPC', '^DJI', '^IXIC', '^RUT', '^TNX'}
 
 # Symbols that Alpaca COULD serve but we deliberately route through yfinance
-# because Alpaca's SIP storage has known per-bar corruption for these names.
+# because Alpaca's SIP-faithful storage produces values that misbehave for
+# our specific use cases.
 #
-# SPY (May 19, 2026): Alpaca's SPY 2026-02-02 bar reports low=$68.81 across
-# all adjustment modes (RAW, SPLIT, ALL); actual market low was ~$687.54.
-# The corruption is in Alpaca's underlying daily bar, not our pipeline.
-# yfinance returns the correct value. Reported to Alpaca; routing change
-# is the durable fix regardless of their response. Also gives us dividend-
-# adjusted ("total return") SPY for benchmark consistency — matches the
-# 11y canonical pickle that the Apr 28 marketing baseline was built on.
+# SPY (routed May 19, 2026): Alpaca's SPY 2026-02-02 bar shows low=$68.81
+# across all adjustment modes; surrounding open/high/close were ~$690.
+# Confirmed with Alpaca support (May 21 2026): this is NOT corruption —
+# it's a real trade that hit the FINRA tape and the SIP feed at $69.005.
+# An anomalous-but-valid transaction. Alpaca's data policy is to preserve
+# every SIP-faithful trade, never editing unilaterally. The SIP never
+# issued a correction. yfinance and some other providers chose to filter
+# the obvious outlier; their cleaned series is what we want.
+#
+# For SPY's role here (benchmark + 200MA regime filter), an outlier tick
+# that drives the 200MA calc for the next year is exactly the kind of
+# data artifact we need to insulate from. yfinance's outlier-filtered SPY
+# (auto_adjust=True applied separately) gives us a smoother, more usable
+# benchmark series. This also matches what the 11y canonical pickle was
+# built from — Apr 28 marketing baseline reproduces against this routing.
+#
+# Net: not a bug fix, a philosophy alignment. Alpaca is right by their
+# standards (SIP-faithful); we route SPY through yfinance because the
+# clean version is what our strategy needs.
 YFINANCE_PREFERRED = {'SPY'}
 
 # Combined: symbols that always route to yfinance, not Alpaca

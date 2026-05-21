@@ -122,11 +122,15 @@ async def _wait_for_alpaca_settlement(
               "spy_volume": None, "fallback_to_yfinance": False}
 
     # Settlement probe symbol — must be an Alpaca-native, ultra-liquid name.
-    # Was SPY (most-traded ETF) until May 19 2026 when we routed SPY through
-    # yfinance to avoid Alpaca's per-bar SPY data corruption. With SPY on
-    # yfinance, Alpaca returns nothing for it, settlement check hung 5 min
-    # then fell back to yfinance, blowing the 15-min Lambda budget — caused
-    # three consecutive daily_scan timeouts on May 20 2026 before this fix.
+    # Was SPY (most-traded ETF) until May 19 2026 when we re-routed SPY
+    # through yfinance for benchmark/regime use (see
+    # market_data_provider.YFINANCE_PREFERRED — Alpaca is SIP-faithful and
+    # preserves outlier ticks; yfinance applies outlier filtering, which
+    # is what our 200MA regime detection needs). With SPY no longer on
+    # Alpaca's side of the dual-source split, this settlement check hung
+    # 5 min then fell back to yfinance, blowing the 15-min Lambda budget
+    # — caused three consecutive daily_scan timeouts on May 20 2026
+    # before this fix.
     # AAPL: stock (never routed), Alpaca-native, ~50M daily volume.
     PROBE_SYMBOL = "AAPL"
     alpaca = AlpacaProvider()
@@ -5236,8 +5240,13 @@ def handler(event, context):
     # overnight emails). Chains: verify asset IDs → poll corp actions →
     # force-refetch on splits → parquet diagnose → admin digest.
     # Force-refetch SPY from yfinance with auto_adjust=True, replace in cache,
-    # re-export pickle + parquet. One-time fix for the Alpaca SPY 2026-02-02
-    # corruption + dividend-adjustment treatment. Idempotent — safe to re-run.
+    # re-export pickle + parquet. One-time migration to outlier-filtered,
+    # dividend-adjusted SPY for benchmark/regime use. Alpaca's SPY series is
+    # SIP-faithful (preserves every trade including anomalous outliers like
+    # the 2026-02-02 $69.005 print — confirmed real, never SIP-corrected);
+    # yfinance applies outlier filtering and dividend adjustment. See
+    # market_data_provider.YFINANCE_PREFERRED for the philosophy.
+    # Idempotent — safe to re-run.
     # Payload: {"force_refetch_spy": true}
     if event.get("force_refetch_spy"):
         print("🔄 Force-refetching SPY from yfinance (auto_adjust=True)")
