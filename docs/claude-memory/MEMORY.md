@@ -67,6 +67,9 @@
 - `replace_days` scan param can OOM on worker with large universe.
 - DB tables: `model_positions` (not model_portfolio_positions), `model_portfolio_state`, `regime_forecast_snapshots` (col: `probabilities_json`).
 
+## Strategy Mechanism Caveats
+- **[circuit_breaker_tighten_pct is a no-op](project_cb_tighten_incomplete.md)** — the write at backtester.py:1332 has no read site in the exit logic. Param defaults to 0 so prod is unaffected, but TPE results that searched over it were optimizing noise. Don't add the read-side fix without a regime-based CB trigger that fires during slow bears.
+
 ## Dual-Source Market Data
 - **Primary: Alpaca Pro (SIP).** yfinance = fallback + always for index symbols (^VIX, ^GSPC).
 - **SPY also routed to yfinance** (May 19 2026) — see [project_spy_routing_yfinance.md](project_spy_routing_yfinance.md). NOT because Alpaca is corrupted (confirmed via Alpaca support May 21: SPY 2026-02-02 $69.005 low was a real outlier trade) — but because we want outlier-filtered SPY for the 200MA regime detection, not SIP-faithful raw.
