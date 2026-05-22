@@ -11,6 +11,7 @@
 
 ## CRITICAL STRATEGY RULE
 - **[WF backtest ↔ production signal generation MUST be identical](feedback_wf_prod_parity.md)** — any lever proven in walk-forward backtesting MUST be ported into production signal code in lockstep. Marketing claims come from backtests; subscribers must be able to realize them. **Known gap (Apr 28 2026): CB pause logic exists in backtester only, not in production scanner.**
+- **[~30% MaxDD is structural, not 2022-bear-driven](project_maxdd_structural_concentration.md)** — skip-2022 3y sweep (May 22) showed mean MaxDD ~31% across 3 windows with NO 2022 exposure. Ruled out: gradual deployment, CB-tighten, reactive portfolio-DD sizing. Lever is concentration (6×15%), not regime detection. Frame MaxDD work as concentration-attack, not bear-fix.
 
 ## CRITICAL LEGAL FRAMEWORK
 - **[Publisher's exemption + canonical disclaimer language](project_disclaimer_canonical.md)** — RigaCap operates under the Investment Advisers Act §202(a)(11)(d) publisher's exemption (confirmed by counsel Apr 30 2026). Three Lowe factors must be preserved: impersonal advice, bona fide commentary, regular circulation. Canonical disclaimer language (long/short/micro forms) lives in the linked file — use it consistently, don't paraphrase.
