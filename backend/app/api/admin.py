@@ -343,11 +343,14 @@ async def seed_strategies(db: AsyncSession) -> int:
     if count > 0:
         added = 0
 
-        # Check if DWAP Hybrid exists, add if not (migration for existing DBs)
+        # Check if ANY DWAP Hybrid exists, add the default if not (migration
+        # for existing DBs). Uses .first() to tolerate multiple rows of the
+        # same strategy_type — see the ensemble check below for the full
+        # rationale (May 21 2026 incident with id=6 canonical reference row).
         hybrid_check = await db.execute(
-            select(StrategyDefinition).where(StrategyDefinition.strategy_type == "dwap_hybrid")
+            select(StrategyDefinition).where(StrategyDefinition.strategy_type == "dwap_hybrid").limit(1)
         )
-        if hybrid_check.scalar_one_or_none() is None:
+        if hybrid_check.scalars().first() is None:
             hybrid_data = next(
                 (s for s in INITIAL_STRATEGIES if s["strategy_type"] == "dwap_hybrid"),
                 None
