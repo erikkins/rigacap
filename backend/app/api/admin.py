@@ -385,11 +385,17 @@ async def seed_strategies(db: AsyncSession) -> int:
                 db.add(strategy)
                 added += 1
 
-        # Check if DWAP+Momentum Ensemble exists, add if not
+        # Check if ANY ensemble strategy exists, add the default if not.
+        # Use .first() (not scalar_one_or_none) so the check tolerates >1
+        # ensemble rows. Multiple ensemble rows are legitimate — e.g., on
+        # May 21 2026 we added id=6 'DWAP+Momentum Ensemble (Apr 28
+        # Canonical)' alongside the existing id=5 'DWAP+Momentum Ensemble'
+        # as a clean baseline reference. The seed function's intent is
+        # 'fill in if empty', not 'enforce exactly one'.
         ensemble_check = await db.execute(
-            select(StrategyDefinition).where(StrategyDefinition.strategy_type == "ensemble")
+            select(StrategyDefinition).where(StrategyDefinition.strategy_type == "ensemble").limit(1)
         )
-        if ensemble_check.scalar_one_or_none() is None:
+        if ensemble_check.scalars().first() is None:
             ensemble_data = next(
                 (s for s in INITIAL_STRATEGIES if s["strategy_type"] == "ensemble"),
                 None
