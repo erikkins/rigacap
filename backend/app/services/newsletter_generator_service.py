@@ -490,20 +490,32 @@ CRITICAL RULES:
 
         prev_s4_block = ""
         if prev_s4_text:
-            prev_s4_block = f'\nLast week\'s §04 (DO NOT echo its theme or phrasing — pick a different angle):\n"""{prev_s4_text}"""\n'
+            prev_s4_block = (
+                f'\nTHE TRAP — last week\'s §04 fell into a recurring pattern that we are TRYING TO BREAK OUT OF:\n'
+                f'"""{prev_s4_text}"""\n'
+                f'Your job is NOT to echo this. Write something that has nothing in common with it.\n'
+            )
 
         s4_prompt = f"""Write §04 "A Note From Erik" — the founder signoff.
 
-THIS WEEK'S THEME: {theme['name'].upper()}
-Theme guidance: {theme['guidance']}
+THIS WEEK'S THEME (mandatory — stay on this theme, do not drift):
+{theme['name'].upper()}: {theme['guidance']}
 {prev_s4_block}{headlines_block}
-2-3 sentences only. Personal, informal, not pitch-y. Invite replies. Don't be cheesy. Don't be motivational. Just be a real person writing to people who read your newsletter.
+HARD RULES:
+- 2-3 sentences. 50 words max.
+- Personal, informal, not pitch-y. Invite replies. Don't be cheesy or motivational.
+- BANNED themes (these have been overused — DO NOT touch them this week):
+  * "waiting / not acting / sitting on hands / watching the data"
+  * "doing less, not more"
+  * "discipline looks boring from the outside"
+  * "second-guessing yourself"
+  * The market being "exhausting" or making you "tired"
+- BANNED words/phrases this week: "waiting", "not acting", "doing less", "sitting", "exhausting", "exhausted", "second-guessing", "spinning wheels", "discipline looks boring"
+- Write ONLY about this week's assigned theme. If you can't think of something theme-specific, write about a concrete object/decision/moment (not an abstract feeling).
 
 End with "See you next Sunday." on its own line.
 
-IMPORTANT: Output ONLY the personal note text. Do NOT include any section header, title, number, or label. Do NOT start with "A Note From Erik" or similar — just the note itself.
-
-50 words max."""
+IMPORTANT: Output ONLY the personal note text. Do NOT include any section header, title, number, or label. Do NOT start with "A Note From Erik" or similar — just the note itself."""
 
         s4_text = self._clean_body(self._call_claude(s4_prompt, max_tokens=200))
 
