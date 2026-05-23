@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Users, Activity, DollarSign, Clock, Search, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, Plus, Zap, TrendingUp, AlertCircle, CheckCircle, PlayCircle, RefreshCw, Beaker, Bot, Settings, Share2, Server, Briefcase, Sparkles, Calculator, Shield, Mail, Lock, Loader2, Edit3, X as XIcon, Stethoscope } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
@@ -2424,6 +2424,9 @@ function NewsletterTab({ fetchWithAuth }) {
   const [sendResult, setSendResult] = useState(null);
   const [editedSections, setEditedSections] = useState(null);
   const [previewMode, setPreviewMode] = useState(false);
+  // Tracks whether the editor has unsaved local edits — used by the
+  // focus-refresh effect to avoid clobbering work-in-progress.
+  const dirtyRef = useRef(false);
 
   const loadDraft = async () => {
     setLoading(true);
@@ -2445,7 +2448,9 @@ function NewsletterTab({ fetchWithAuth }) {
     loadDraft();
     // Refresh when the window/tab regains focus — catches the case where
     // the cron generated a new draft while the admin tab was open.
-    const onFocus = () => loadDraft();
+    // Skip the refresh if the editor has unsaved edits; loadDraft() would
+    // overwrite editedSections from the server and silently wipe the work.
+    const onFocus = () => { if (dirtyRef.current) return; loadDraft(); };
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, []);
@@ -2491,6 +2496,7 @@ function NewsletterTab({ fetchWithAuth }) {
       if (res.ok) {
         const data = await res.json();
         setDraft(data);
+        dirtyRef.current = false;
       }
     } catch (e) { console.error(e); }
     setSaving(false);
@@ -2556,6 +2562,7 @@ function NewsletterTab({ fetchWithAuth }) {
       updated[idx] = { ...updated[idx], [field]: value };
     }
     setEditedSections(updated);
+    dirtyRef.current = true;
   };
 
   const isLocked = draft?.status === 'locked';
