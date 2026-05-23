@@ -39,6 +39,10 @@ MaxDD distribution caps at 24-28% (baseline was bimodal at 30/33.5). The patch g
 
 **Capped-consecutive variant** (tried May 22): if tightened ≥8 consecutive periods, release to baseline for 2 periods. **WORSE on every date tested.** On Date 2: ret +96 → +24, MaxDD 27.6 → 42.3 (-72pp return loss from just 4 cap-releases). Diagnosis: releasing the stop DURING DD lets losers compound. Wrong direction.
 
+**Depth-graduated variant** (tried May 22): DD bands 15-20%=10% trail, 20-25%=8%, ≥25%=6%. Loses to BASELINE on 4 of 5 validation dates. Date 2 collapsed (+96 → +21, Sharpe 0.64 → 0.29). 6% trail in deep DD churns the strategy the same way t10/s6 did. The graduated approach modestly helps the already-broken March 2021 dates (+19pp on worst date) but converts a working Date 2 into a disaster. Net negative. Diagnosis: any aggressive tightening below 8% causes churn in deep DDs.
+
+**Hard conclusion: t15/s8 is the FINAL form of this lever family.** To go higher (Sharpe/Calmar ≥ 1.0), must use orthogonal mechanism.
+
 ## What's still on the table
 
 **Depth-graduated** (next to test): instead of binary tight/baseline, scale by DD depth:
