@@ -43,6 +43,38 @@ MaxDD distribution caps at 24-28% (baseline was bimodal at 30/33.5). The patch g
 
 **Hard conclusion: t15/s8 is the FINAL form of this lever family.** To go higher (Sharpe/Calmar ≥ 1.0), must use orthogonal mechanism.
 
+## Orthogonal mechanisms tested May 22-23 — ALL DEAD
+
+After t15/s8 was validated, attempts to push median Sharpe/Calmar to ≥1.0 via orthogonal levers on the same 5-date validation set (Date 2, Date 3, March 8/15/22):
+
+| Mechanism | Result | Failure mode |
+|---|---|---|
+| **Mega-cap basket during CG pause** | Sum -8% basket return vs SPY +12% across 5 pause windows | Mega-caps fall HARDER than SPY during CB-triggered shocks. Wrong event class for Apr-28 memory's "+14d post-shock" claim. |
+| **VIX-conditional sizing** (VIX≥25 → 50% size) | Worse than baseline on 5/5 dates. MaxDD untouched (33.5%). | Same as DD-sizing: shrinking entries doesn't reduce MaxDD because drawdown comes from existing positions. |
+| **VIX-conditional trail tighten** (VIX≥25 → trail 8%) | Bimodal: wins Date 2, catastrophic on 4/5 dates | VIX trigger catches panic spikes, but our MaxDD comes from slow grinds (mid-vol months) — wrong signal for the failure mode. |
+| **TPE without patch on Date 3, 30 trials/period** | +11% (vs +186 baseline), Sharpe 0.20, MaxDD 45% | 131 strategy switches in 131 periods. Per-period overfit. Confirms long-standing project finding: fixed params beat AI in this strategy. |
+
+## Master lesson from May 22-23 research
+
+**Any entry-side lever (size, count, timing) cannot reduce MaxDD** because the drawdown is created by existing positions bleeding, not by new entries. Only exit-side levers move MaxDD.
+
+**Any exit-side trail-tighten below 8%** churns the strategy on momentum-name noise.
+
+**Any reactive trigger** (portfolio-DD, VIX) is path-dependent. Portfolio-DD trigger works (catches the actual signal) but VIX trigger misses slow grinds.
+
+**Any per-period parameter optimization** thrashes the strategy. Fixed params + DD-tighten is the structural ceiling.
+
+## What's left for future Sharpe/Calmar ≥ 1.0 attempts
+
+Untested lever families (no expectation any will work, but they're orthogonal to what's been ruled out):
+- **Entry filter changes** — stricter momentum quality / DWAP threshold during high-volatility periods (but doesn't help MaxDD)
+- **Universe filter changes** — exclude high-correlation names from the candidate pool
+- **Position-level DD tracking** — different from portfolio-DD; tighten stops only on the specific losers, not portfolio-wide
+- **Sector/correlation cap** — limit concentration in correlated names (DOES attack the real cause but hard to implement)
+- **Multi-strategy ensemble** — combine t15/s8 + Bear Ripper (the Apr 22 shelved sub-strategy that was positive in every bear individually)
+
+None of these have empirical evidence yet. t15/s8 alone (median Sharpe 0.91, Calmar 0.89) remains the defensible ceiling.
+
 ## What's still on the table
 
 **Depth-graduated** (next to test): instead of binary tight/baseline, scale by DD depth:
