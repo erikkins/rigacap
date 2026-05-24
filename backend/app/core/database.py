@@ -5,6 +5,7 @@ Database configuration and connection
 import os
 import uuid
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import Column, Integer, BigInteger, String, Float, DateTime, Boolean, ForeignKey, Text, JSON, Date, UniqueConstraint
 from sqlalchemy.sql import func
@@ -18,20 +19,53 @@ from app.core.config import settings
 # Convert sync URL to async
 DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
-# Connection pool settings with timeout to fail fast if DB unavailable
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=settings.DEBUG,
-    pool_pre_ping=True,
-    pool_size=1,
-    max_overflow=2,
-    pool_timeout=3,
-    pool_recycle=300,  # recycle idle connections every 5 min to free RDS slots
-    connect_args={
-        "command_timeout": 5,
-        "timeout": 3,
-    }
+# Local research mode detection. The production pool's pool_pre_ping=True does
+# an async health-check on every checkout. Our research monkey-patches
+# (wf_dd_tighten_stop.py etc.) sometimes call DB methods from sync code paths
+# inside the backtester loop, where there is no greenlet context — the ping
+# then raises MissingGreenlet and the whole WF run dies after 5-10 minutes of
+# work. NullPool bypasses the ping entirely (each query opens a fresh
+# connection), trading ~50ms overhead per query for bulletproof reliability.
+#
+# Heuristic: any process with LAMBDA_ROLE set but NOT actually running inside
+# Lambda (AWS sets AWS_LAMBDA_FUNCTION_NAME inside the Lambda runtime; local
+# scripts that set LAMBDA_ROLE=worker for worker-mode imports do not). Manual
+# override: RIGACAP_LOCAL_RESEARCH=1 forces NullPool. Production Lambdas keep
+# the pooled config untouched.
+_LOCAL_RESEARCH_MODE = (
+    os.environ.get("RIGACAP_LOCAL_RESEARCH") == "1"
+    or (
+        os.environ.get("LAMBDA_ROLE")
+        and not os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+    )
 )
+
+if _LOCAL_RESEARCH_MODE:
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=settings.DEBUG,
+        poolclass=NullPool,
+        connect_args={
+            "command_timeout": 10,
+            "timeout": 10,
+        }
+    )
+else:
+    # Connection pool settings with timeout to fail fast if DB unavailable
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=settings.DEBUG,
+        pool_pre_ping=True,
+        pool_size=1,
+        max_overflow=2,
+        pool_timeout=3,
+        pool_recycle=300,  # recycle idle connections every 5 min to free RDS slots
+        connect_args={
+            "command_timeout": 5,
+            "timeout": 3,
+        }
+    )
+
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
