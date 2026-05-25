@@ -31,19 +31,47 @@ API_FUNCTION_NAME = os.environ.get("API_FUNCTION_NAME", "rigacap-prod-api")
 WORKER_MEMORY_MB = 3008
 WORKER_TIMEOUT_S = 900
 
-# US market holidays 2026 (NYSE closed)
-# Update annually or pull from a holiday calendar
+# US market holidays (NYSE closed) — update annually.
+# Used by health checks AND by scheduler.send_daily_emails to skip non-trading
+# days. Memorial Day 2026 (May 25) shipped daily emails before this was wired —
+# the gate existed at scheduler.py:_is_trading_day but only checked weekday.
 US_MARKET_HOLIDAYS_2026 = {
     date(2026, 1, 1),   # New Year's Day
     date(2026, 1, 19),  # MLK Day
     date(2026, 2, 16),  # Presidents' Day
     date(2026, 4, 3),   # Good Friday
     date(2026, 5, 25),  # Memorial Day
-    date(2026, 7, 3),   # Independence Day (observed)
+    date(2026, 7, 3),   # Independence Day (observed; Jul 4 = Sat)
     date(2026, 9, 7),   # Labor Day
     date(2026, 11, 26), # Thanksgiving
     date(2026, 12, 25), # Christmas
 }
+
+US_MARKET_HOLIDAYS_2027 = {
+    date(2027, 1, 1),   # New Year's Day
+    date(2027, 1, 18),  # MLK Day
+    date(2027, 2, 15),  # Presidents' Day
+    date(2027, 3, 26),  # Good Friday
+    date(2027, 5, 31),  # Memorial Day
+    date(2027, 7, 5),   # Independence Day (observed; Jul 4 = Sun)
+    date(2027, 9, 6),   # Labor Day
+    date(2027, 11, 25), # Thanksgiving
+    date(2027, 12, 24), # Christmas (observed; Dec 25 = Sat)
+}
+
+US_MARKET_HOLIDAYS = US_MARKET_HOLIDAYS_2026 | US_MARKET_HOLIDAYS_2027
+
+
+def is_us_trading_day(d) -> bool:
+    """Check if a date is a US market trading day (not weekend or NYSE holiday).
+    Accepts a date or datetime. Single source of truth used by scheduler and
+    health monitor."""
+    from datetime import datetime as _dt
+    if isinstance(d, _dt):
+        d = d.date()
+    if d.weekday() >= 5:
+        return False
+    return d not in US_MARKET_HOLIDAYS
 
 
 class HealthStatus(str, Enum):

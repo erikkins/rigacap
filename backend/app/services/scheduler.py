@@ -448,12 +448,15 @@ class SchedulerService:
 
     def _is_trading_day(self, dt: datetime) -> bool:
         """
-        Check if the given date is a trading day
+        Check if the given date is a NYSE trading day.
 
-        Basic check: weekday only (Mon-Fri)
-        TODO: Add holiday calendar (NYSE holidays)
+        Delegates to the single source of truth in health_monitor_service —
+        weekday check + US_MARKET_HOLIDAYS set. Memorial Day 2026 incident
+        (May 25): daily emails sent on a holiday because this helper had a
+        TODO for the holiday calendar and was only checking weekday.
         """
-        return dt.weekday() < 5  # 0-4 = Mon-Fri
+        from app.services.health_monitor_service import is_us_trading_day
+        return is_us_trading_day(dt)
 
     def _check_sell_trigger(
         self,
