@@ -10,6 +10,7 @@ emerging trends and adapt parameters dynamically.
 
 import asyncio
 import json
+import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field, asdict
@@ -18,6 +19,25 @@ import numpy as np
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+
+# Skip per-period and end-of-run DB writes in local research mode. Two
+# concurrent WF runs writing to WalkForwardSimulation + WalkForwardPeriodResult
+# deadlock at the PG row-lock level (we hit this multiple times running
+# sector-cap + dd-tighten sweeps in parallel). Research scripts persist results
+# to JSON/pickle on disk anyway — DB writes are pure overhead in that mode.
+# Lambda production runs leave _SKIP_DB_WRITES=False, behavior unchanged.
+_SKIP_DB_WRITES = bool(os.environ.get("RIGACAP_LOCAL_RESEARCH")) or (
+    os.environ.get("LAMBDA_ROLE")
+    and not os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+)
+
+
+class _SkipDBWrite(Exception):
+    """Sentinel — raised at the top of a write block when _SKIP_DB_WRITES is
+    set, caught silently by the same try/except. Lets us short-circuit
+    write paths without re-indenting the body or restructuring the try."""
+    pass
+
 
 from app.core.database import StrategyDefinition, WalkForwardSimulation, WalkForwardPeriodResult
 from app.services.backtester import BacktesterService
@@ -1825,7 +1845,12 @@ class WalkForwardService:
             # Uses the same WalkForwardPeriodResult table as the Step Functions
             # path. Requires a simulation_id FK — create the parent row on
             # first period if it doesn't exist yet.
+            #
+            # Skipped in local research mode: parallel WF runs deadlock on the
+            # PG row locks here. Research scripts persist to JSON/pickle.
             try:
+                if _SKIP_DB_WRITES:
+                    raise _SkipDBWrite()  # caught silently below
                 if not existing_job_id and i == 0:
                     _init_sim = WalkForwardSimulation(
                         simulation_date=datetime.utcnow(),
@@ -1871,6 +1896,8 @@ class WalkForwardService:
                         parameter_snapshot_json=_pr_params,
                     ))
                     await db.commit()
+            except _SkipDBWrite:
+                pass  # research mode — skip silently
             except Exception as _pr_err:
                 print(f"[WF-SERVICE] ⚠️ Per-period commit {i+1} failed (non-fatal): {_pr_err!r}")
                 try:
@@ -2032,6 +2059,8 @@ class WalkForwardService:
         # We lost TWO 28-hour runs (run3 + run4, Apr 16-17 2026) because
         # exceptions here killed the function before it could return.
         try:
+            if _SKIP_DB_WRITES:
+                raise _SkipDBWrite()  # research mode — skip all end-of-run writes
             if existing_job_id:
                 result = await db.execute(
                     select(WalkForwardSimulation).where(WalkForwardSimulation.id == existing_job_id)
@@ -2085,6 +2114,8 @@ class WalkForwardService:
                 print(f"[WF-SERVICE] Payload sizes — switch_history: {len(switch_history_data)} bytes, "
                       f"equity_curve: {len(equity_curve_data)} bytes, "
                       f"trades: {len(trades_data)} bytes, errors: {len(errors_data)} bytes")
+        except _SkipDBWrite:
+            pass  # research mode — DB writes intentionally skipped
         except Exception as _db_err:
             print(f"[WF-SERVICE] ⚠️ DB SECTION FAILED: {_db_err!r}")
             print(f"[WF-SERVICE] Result WILL still be returned — caller should pickle it")
