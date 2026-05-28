@@ -37,7 +37,8 @@
 - **[Pickle build playbook](project_pickle_playbook.md)** — full build/validate/deploy process, ETF exclusions, guardrails, emergency restore
 
 ## Strategy IDs
-- ID 1: DWAP Classic | ID 2: Momentum v2 | ID 3: DWAP Hybrid | ID 4: Concentrated Momentum | ID 5: DWAP+Momentum Ensemble
+- ID 1: DWAP Classic | ID 2: Momentum v2 | ID 3: DWAP Hybrid | ID 4: Concentrated Momentum | ID 5: DWAP+Momentum Ensemble | ID 6: **DWAP+Momentum Ensemble — T3** (active May 28 2026)
+- **[Strategy 6 provenance — Apr 28 Canonical → T3 rename](project_strategy6_provenance.md)** — row 6 repurposed May 28 2026; pre-rename it documented Apr 28 baseline +160% / 0.92 / 20.4% on 11y pickle 8-date sweep
 
 ## Walk-Forward Testing Campaign (ACTIVE as of Apr 1 2026)
 - See [wf-ab-test-results.md](wf-ab-test-results.md) for full test log
