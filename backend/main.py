@@ -1702,6 +1702,13 @@ def handler(event, context):
                 print(f"⚠️ Silent-cash detector failed (non-fatal): {_cde}")
 
             # 7c. Signal track record: enter ALL fresh signals + check exits (regime-aware)
+            #
+            # STR is uncapped — every fresh signal enters, no 6-position constraint.
+            # The circuit breaker concept (pause new entries after N same-day
+            # stops) only makes sense for the constrained live portfolio. For
+            # STR, same-day stop cascades are market noise across many
+            # positions, not a signal-failure signal. CB recording/check
+            # removed for STR (June 1 2026); CB remains active on `live`.
             try:
                 from app.services.model_portfolio_service import model_portfolio_service, _get_regime_trailing_stop, SIGNAL_TRACK_RECORD
                 regime_stop = _get_regime_trailing_stop(data)
@@ -1709,17 +1716,6 @@ def handler(event, context):
                     st_exits = await model_portfolio_service.process_signal_track_exits(
                         st_db, trailing_stop_pct=regime_stop
                     )
-                    # CB record/trigger for STR (entries below honor any pause that's set)
-                    try:
-                        from app.services import circuit_breaker_state as cb
-                        from datetime import date as _date
-                        ts_symbols = [c.get("symbol") for c in (st_exits or []) if c.get("exit_reason") == "trailing_stop"]
-                        if ts_symbols:
-                            triggered = cb.record_eod_trailing_stops(SIGNAL_TRACK_RECORD, _date.today(), ts_symbols)
-                            if triggered:
-                                print(f"🛑 [CB] Circuit breaker triggered for signal_track_record: {triggered}")
-                    except Exception as cbe:
-                        print(f"⚠️ CB STR record failed (non-fatal): {cbe}")
                     st_entries = await model_portfolio_service.process_signal_track_entries(st_db)
                     print(f"📊 [SIGNAL-TRACK] exits={len(st_exits)}, entries={st_entries} (stop={regime_stop}%)")
             except Exception as ste:

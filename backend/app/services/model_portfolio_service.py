@@ -1380,19 +1380,13 @@ class ModelPortfolioService:
         """
         Enter EVERY fresh signal into the signal track record.
         No position limit, no cash gating — flat $10K notional per pick.
+
+        CB intentionally NOT consulted here — STR is uncapped, so
+        same-day stop cascades are normal market noise across many
+        positions rather than a signal-failure trigger. CB removed
+        from STR June 1 2026; CB remains in effect for `live`.
         """
         from app.services.data_export import data_export_service
-        from app.services import circuit_breaker_state as cb
-
-        # Circuit Breaker: skip new entries while in pause
-        if cb.is_paused(SIGNAL_TRACK_RECORD):
-            cb_state = cb.get_state(SIGNAL_TRACK_RECORD)
-            return {
-                "entries": 0,
-                "reason": "Circuit breaker pause active",
-                "pause_until": cb_state.get("pause_until"),
-                "pause_source": cb_state.get("pause_source"),
-            }
 
         dashboard = data_export_service.read_dashboard_json()
         if not dashboard:
