@@ -285,7 +285,24 @@ class ScannerService:
             start_date = (cutoff - timedelta(days=2)).strftime('%Y-%m-%d')
             logger.info(f"🔄 Replace mode: re-fetching last {replace_days} days for {len(symbols_to_update)} symbols from {start_date}")
         else:
-            # Normal mode: only fetch new data for stale symbols
+            # Normal mode: only fetch new data for stale symbols.
+            #
+            # Cutoff selection:
+            #   - On a post-close weekday scan (≥4 PM ET, Mon-Fri), today's close
+            #     is the latest available bar. Cache must hold today's date or
+            #     we'd miss the close — that breaks trailing-stop firing in
+            #     process_signal_track_exits (June 1 2026 STR exit bug:
+            #     cache stuck one day behind made 7+ STR positions skip their
+            #     stop levels, including WMT 5/26 close $118.57 below stop $117.34).
+            #   - Otherwise (pre-market, weekends, NYSE holidays) yesterday's
+            #     close is the latest possible — accept cache one day behind.
+            #     Holiday post-4PM falls into the post-close branch and may
+            #     trigger a wasted fetch that returns nothing new; harmless.
+            from zoneinfo import ZoneInfo
+            now_et = datetime.now(ZoneInfo('America/New_York'))
+            post_close_weekday = now_et.hour >= 16 and now_et.weekday() < 5
+            cutoff = today if post_close_weekday else (today - timedelta(days=1))
+
             oldest_last_date = today
             symbols_to_update = []
             for symbol in symbols:
@@ -296,7 +313,7 @@ class ScannerService:
                 if hasattr(last_date, 'tz') and last_date.tz is not None:
                     last_date = last_date.tz_localize(None)
                 last_date = pd.Timestamp(last_date).normalize()
-                if last_date >= today - timedelta(days=1):
+                if last_date >= cutoff:
                     skipped += 1
                     continue
                 symbols_to_update.append(symbol)
