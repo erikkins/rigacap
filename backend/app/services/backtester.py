@@ -239,6 +239,17 @@ class BacktesterService:
         self.breakeven_pct = 0            # Move stop to entry once up X%; 0=disabled
         self.profit_lock_pct = 0          # Tighten trailing stop once up X%; 0=disabled
         self.profit_lock_stop_pct = 5.0   # Tightened trailing stop % from peak
+        # T3 — DD-conditional trailing stop tightening (portfolio-DD lever).
+        # When in-loop portfolio equity falls dd_tighten_threshold_pct below
+        # the all-time portfolio peak, _check_exit_condition substitutes
+        # dd_tighten_stop_pct for the trail width. Peak/equity state is
+        # maintained by run_backtest at daily cadence (line ~1208 area).
+        # Defaults dd_tighten_threshold_pct=0 keep this branch a no-op for
+        # all existing callers.
+        self.dd_tighten_threshold_pct = 0
+        self.dd_tighten_stop_pct = 8.0
+        self._portfolio_peak_equity = 0.0
+        self._portfolio_current_equity = 0.0
         # Pyramiding / doubling down on winners
         self.pyramid_threshold_pct = 0    # Add to position once up X%; 0=disabled
         self.pyramid_size_pct = 0.0       # Size of the add-on position (% of initial capital)
@@ -746,6 +757,21 @@ class BacktesterService:
             if self.profit_lock_pct > 0 and pnl_pct >= self.profit_lock_pct:
                 effective_stop_pct = self.profit_lock_stop_pct
 
+            # T3 — when portfolio equity is dd_tighten_threshold_pct below
+            # the all-time portfolio peak, override the trail width with
+            # dd_tighten_stop_pct on every open position. Stacks with
+            # profit_lock via min() — whichever override is tighter wins.
+            # Peak/equity state is refreshed once per bar at the top of the
+            # run_backtest daily loop.
+            if (self.dd_tighten_threshold_pct > 0
+                    and self._portfolio_peak_equity > 0):
+                portfolio_dd_pct = (
+                    (self._portfolio_peak_equity - self._portfolio_current_equity)
+                    / self._portfolio_peak_equity * 100
+                )
+                if portfolio_dd_pct >= self.dd_tighten_threshold_pct:
+                    effective_stop_pct = min(effective_stop_pct, self.dd_tighten_stop_pct)
+
             stop_trigger_price = high_water * (1 - effective_stop_pct / 100)
 
             if use_intraday:
@@ -1069,6 +1095,11 @@ class BacktesterService:
         trades: List[SimulatedTrade] = []
         equity_curve = []
         position_id = 0
+        # T3 — reset portfolio peak/equity for this run. Per-bar updates happen
+        # at the top of the daily loop using equity_curve[-1]. With
+        # dd_tighten_threshold_pct=0 (default), this state stays unread.
+        self._portfolio_peak_equity = self.initial_capital
+        self._portfolio_current_equity = self.initial_capital
         trade_id = 0
         last_rebalance: Optional[pd.Timestamp] = None
         in_cash_mode = False  # True when market is unfavorable
@@ -1151,6 +1182,17 @@ class BacktesterService:
         # Simulate each trading day
         for i, date in enumerate(dates):
             date_str = date.strftime('%Y-%m-%d')
+
+            # T3 — refresh portfolio equity + peak from prior day's equity_curve
+            # point, so today's exit checks read a stable cumulative DD value.
+            # Updated once per bar (daily cadence). On day 0, equity_curve is
+            # empty and current/peak stay at initial_capital. Default
+            # dd_tighten_threshold_pct=0 makes this a no-op.
+            if self.dd_tighten_threshold_pct > 0:
+                if equity_curve:
+                    self._portfolio_current_equity = equity_curve[-1]['equity']
+                if self._portfolio_current_equity > self._portfolio_peak_equity:
+                    self._portfolio_peak_equity = self._portfolio_current_equity
 
             # Check market regime (momentum, hybrid, and ensemble strategies respect market filter)
             if strategy_type in ("momentum", "dwap_hybrid", "ensemble") and settings.MARKET_FILTER_ENABLED:
