@@ -281,6 +281,12 @@ class BacktesterService:
         self.cb_pause_basket_symbols = ['NVDA', 'TSLA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META']
         self.cb_pause_basket_position_size_pct = 10.0  # % of current cash per basket position
         self.cb_pause_basket_trail_pct = 8.0           # own trail, tighter than main strategy
+        # Alternate basket trigger — VIX cross-up. When > 0, basket also enters
+        # on the bar VIX crosses above this threshold (after being below it the
+        # prior bar). Fires much more often than CB pause trigger (VIX > 30
+        # happens ~5-10× per year vs CB ~once per 3y). One trigger per VIX
+        # spike event because basket only enters when positions_basket is empty.
+        self.cb_pause_basket_vix_trigger = 0.0  # 0 = disabled
         # Pyramiding / doubling down on winners
         self.pyramid_threshold_pct = 0    # Add to position once up X%; 0=disabled
         self.pyramid_size_pct = 0.0       # Size of the add-on position (% of initial capital)
@@ -1163,6 +1169,8 @@ class BacktesterService:
         positions_basket: Dict[str, dict] = {}
         # Capture basket symbols set for fast membership tests
         basket_symbol_set = set(self.cb_pause_basket_symbols) if self.cb_pause_basket_enabled else set()
+        # Track prev-day VIX for VIX cross-up trigger
+        prev_vix = None
         trades: List[SimulatedTrade] = []
         equity_curve = []
         position_id = 0
@@ -1362,6 +1370,55 @@ class BacktesterService:
                         basket_to_close.append(bs_sym)
                 for s in basket_to_close:
                     del positions_basket[s]
+
+            # Alternate basket trigger — VIX cross-up.
+            # When VIX crosses above cb_pause_basket_vix_trigger after being
+            # below it the prior bar, enter the mega-cap basket. One trigger
+            # per VIX spike event (basket already-held positions short-circuit
+            # the re-entry loop). Fires much more often than CB pause trigger.
+            cur_vix_for_trigger = None
+            if self.cb_pause_basket_enabled and self.cb_pause_basket_vix_trigger > 0:
+                _vix_df = scanner_service.data_cache.get('^VIX')
+                if _vix_df is not None:
+                    _vix_row = self._get_row_for_date(_vix_df, date)
+                    if _vix_row is not None:
+                        cur_vix_for_trigger = float(_vix_row['close'])
+                if (cur_vix_for_trigger is not None
+                        and prev_vix is not None
+                        and prev_vix <= self.cb_pause_basket_vix_trigger
+                        and cur_vix_for_trigger > self.cb_pause_basket_vix_trigger):
+                    basket_alloc_per = capital * self.cb_pause_basket_position_size_pct / 100
+                    for basket_sym in self.cb_pause_basket_symbols:
+                        if basket_sym in positions_basket:
+                            continue
+                        if basket_sym not in scanner_service.data_cache:
+                            continue
+                        b_row = self._get_row_for_date(
+                            scanner_service.data_cache[basket_sym], date)
+                        if b_row is None:
+                            continue
+                        b_price = float(b_row['close'])
+                        if b_price <= 0 or basket_alloc_per > capital:
+                            continue
+                        shares = basket_alloc_per / b_price
+                        positions_basket[basket_sym] = {
+                            'entry_date': date_str,
+                            'entry_price': b_price,
+                            'shares': shares,
+                            'high_water_mark': b_price,
+                        }
+                        capital -= basket_alloc_per
+            # Always update prev_vix at end-of-bar (need today's VIX as
+            # prev_vix on the next iteration). Re-fetch if not done above.
+            if self.cb_pause_basket_enabled and self.cb_pause_basket_vix_trigger > 0:
+                if cur_vix_for_trigger is None:
+                    _vix_df2 = scanner_service.data_cache.get('^VIX')
+                    if _vix_df2 is not None:
+                        _vix_row2 = self._get_row_for_date(_vix_df2, date)
+                        if _vix_row2 is not None:
+                            cur_vix_for_trigger = float(_vix_row2['close'])
+                if cur_vix_for_trigger is not None:
+                    prev_vix = cur_vix_for_trigger
 
             # Check existing positions for exits
             symbols_to_close = []

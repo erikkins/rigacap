@@ -4064,6 +4064,11 @@ def handler(event, context):
                     bt.cb_pause_basket_position_size_pct = float(cfg["cb_pause_basket_position_size_pct"])
                 if "cb_pause_basket_trail_pct" in cfg:
                     bt.cb_pause_basket_trail_pct = float(cfg["cb_pause_basket_trail_pct"])
+                if "cb_pause_basket_vix_trigger" in cfg:
+                    bt.cb_pause_basket_vix_trigger = float(cfg["cb_pause_basket_vix_trigger"])
+                # Universe / entry filter overrides
+                if "min_price" in cfg:
+                    bt.min_price = float(cfg["min_price"])
 
                 strategy_type = cfg.get("strategy_type", "ensemble")
                 print(f"[native_backtest] trail={bt.trailing_stop_pct*100:.1f}% baseline, "
@@ -4112,6 +4117,8 @@ def handler(event, context):
                     "cb_pause_basket_symbols": list(bt.cb_pause_basket_symbols),
                     "cb_pause_basket_position_size_pct": bt.cb_pause_basket_position_size_pct,
                     "cb_pause_basket_trail_pct": bt.cb_pause_basket_trail_pct,
+                    "cb_pause_basket_vix_trigger": bt.cb_pause_basket_vix_trigger,
+                    "min_price": bt.min_price,
                     "vix_scale_enabled": bt.vix_scale_enabled,
                     "vix_scale_threshold": bt.vix_scale_threshold,
                     "vix_scale_factor": bt.vix_scale_factor,
