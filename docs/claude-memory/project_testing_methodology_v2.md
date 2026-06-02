@@ -12,13 +12,13 @@ originSessionId: c3d0833d-cb3f-474f-8dd8-e530f3300c60
 
 ## Three tiers
 
-1. **Tier 1 — Hypothesis sweep** on TUNING data only (2019-06 → 2023-05, ~4y). 52 Monday start dates × 3y windows. Variant passes if median hits 20% ann / Sharpe ≥1.0 / MDD ≤20% / Calmar ≥1.0 AND ≥40 of 52 windows individually positive.
-2. **Tier 2 — Out-of-sample validation** on HELD-OUT data (2023-06 → 2026-05, ~3y). Single backtest. Variant cannot ship to prod without passing all four targets here.
+1. **Tier 1 — Hypothesis sweep** on TUNING data only (2019-06 → 2021-12, ~2.5y, bull/COVID era). **26 Monday start dates × 2y windows** (starts 2019-06-03 to 2019-11-25). Variant passes if median hits 20% ann / Sharpe ≥1.0 / MDD ≤20% / Calmar ≥1.0 AND ≥20 of 26 windows individually positive.
+2. **Tier 2 — Out-of-sample validation** on HELD-OUT data (2022-01-03 → 2026-05-29, ~4.4y, INCLUDES 2022 bear). Single backtest. Variant cannot ship to prod without passing all four targets here. **Tier 2 is the real test** — the bear-inclusive validation is the bar.
 3. **Tier 3 — Live shadow** (RECOMMENDED, not required). 4-6 weeks shadow trade comparison. Required when production code path changes (new lever ships); skippable for param-only changes.
 
 ## Locked invariants
 
-- **Cutoff: 2023-06-01.** Do not move later when results disappoint. Moving earlier acceptable only if no tuning has occurred since prior cutoff.
+- **Cutoff: 2022-01-01** (revised Jun 2 2026, ONE-TIME move from 2023-06-01). **Do not move again.** The 2022-01-01 split places the 2022 bear entirely in validation, giving symmetric difficulty and a real bear-survival stress test in held-out data. Reason for the one-time move: original 2023-06-01 cutoff left tuning bear-dominated (every 3y tuning window contained 2022) while validation was bull-only. Found Jun 2 2026 when Tier 1 baseline (9.47% ann) vs Tier 2 baseline (16.73% ann) showed the asymmetry. **Future cutoff moves are prohibited regardless of finding** — under the methodology, you discard the variant or accept results as-is. Moving the cutoff to chase a failed test is the cardinal sin.
 - **Pickle: 7y prod pickle (2019-06-03 → 2026-05-29).** Switching pickles starts a new cycle. Don't switch mid-cycle to chase results.
 - **Test pickle must match prod pickle range**. Otherwise variant is research-only.
 - **Warmup: 26 weeks before each window.** Bar data only, doesn't influence param selection.
