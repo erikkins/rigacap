@@ -3978,6 +3978,134 @@ def handler(event, context):
         result = _run_async(_run_model_portfolio())
         return result
 
+    # Methodology v2 — native standalone backtester invocation. Same code
+    # path as scripts/wf_native_t3_sweep.py but runs in Lambda for true
+    # production-runtime parity. Returns the same JSON shape the local
+    # script writes, including the v2 MANIFEST fields.
+    #
+    # Payload schema:
+    #   {"native_backtest": {
+    #       "start_date": "YYYY-MM-DD",
+    #       "end_date":   "YYYY-MM-DD",
+    #       "max_symbols": 100,                       # required
+    #       "dd_threshold_pct": 10.0,                 # optional, 0=off
+    #       "tight_stop_pct":   8.0,                  # optional
+    #       "baseline_stop_pct": 12.0,                # optional
+    #       "dwap_threshold_pct": 5.0,                # optional override
+    #       "near_50d_high_pct": 3.0,                 # optional override
+    #       "max_positions":     6,                   # optional override
+    #       "position_size_pct": 15.0,                # optional override
+    #       "profit_lock_pct":   0.0,                 # optional, 0=off
+    #       "profit_lock_stop_pct": 6.0,              # optional
+    #       "strategy_type":     "ensemble"           # optional, default "ensemble"
+    #   }}
+    if event.get("native_backtest"):
+        cfg = event["native_backtest"]
+        async def _run_native_backtest():
+            import hashlib, time as _t
+            from app.services.backtester import BacktesterService
+            from app.services.scanner import scanner_service
+            from app.services.walk_forward_service import walk_forward_service
+
+            start_date = datetime.strptime(cfg["start_date"], "%Y-%m-%d")
+            end_date = datetime.strptime(cfg["end_date"], "%Y-%m-%d")
+            max_symbols = int(cfg.get("max_symbols", 100))
+
+            # Filter universe to top-N by liquidity as-of start (matches local script)
+            top_symbols = walk_forward_service._get_top_symbols_as_of(start_date, max_symbols)
+            full_cache = scanner_service.data_cache
+            saved_cache = full_cache  # for restore
+            scanner_service.data_cache = {s: full_cache[s] for s in top_symbols if s in full_cache}
+            if "SPY" in full_cache and "SPY" not in scanner_service.data_cache:
+                scanner_service.data_cache["SPY"] = full_cache["SPY"]
+            scanner_service.universe = list(scanner_service.data_cache.keys())
+            print(f"[native_backtest] {len(scanner_service.data_cache)} symbols (top-{max_symbols})")
+
+            try:
+                bt = BacktesterService()
+                bt.trailing_stop_pct = float(cfg.get("baseline_stop_pct", 12.0)) / 100.0
+                bt.dd_tighten_threshold_pct = float(cfg.get("dd_threshold_pct", 0))
+                bt.dd_tighten_stop_pct = float(cfg.get("tight_stop_pct", 8.0))
+                if "dwap_threshold_pct" in cfg:
+                    bt.dwap_threshold_pct = float(cfg["dwap_threshold_pct"]) / 100.0
+                if "near_50d_high_pct" in cfg:
+                    bt.near_50d_high_pct = float(cfg["near_50d_high_pct"])
+                if "max_positions" in cfg:
+                    bt.max_positions = int(cfg["max_positions"])
+                if "position_size_pct" in cfg:
+                    bt.position_size_pct = float(cfg["position_size_pct"]) / 100.0
+                if "profit_lock_pct" in cfg:
+                    bt.profit_lock_pct = float(cfg["profit_lock_pct"])
+                if "profit_lock_stop_pct" in cfg:
+                    bt.profit_lock_stop_pct = float(cfg["profit_lock_stop_pct"])
+
+                strategy_type = cfg.get("strategy_type", "ensemble")
+                print(f"[native_backtest] trail={bt.trailing_stop_pct*100:.1f}% baseline, "
+                      f"dd_tighten={bt.dd_tighten_threshold_pct}%/{bt.dd_tighten_stop_pct}%, "
+                      f"profit_lock={bt.profit_lock_pct}%/{bt.profit_lock_stop_pct}%, "
+                      f"max_pos={bt.max_positions}, size={bt.position_size_pct*100:.1f}%, "
+                      f"dwap={bt.dwap_threshold_pct*100:.1f}%, near50={bt.near_50d_high_pct}%")
+
+                t0 = _t.time()
+                result = bt.run_backtest(
+                    start_date=start_date,
+                    end_date=end_date,
+                    strategy_type=strategy_type,
+                    force_close_at_end=False,
+                )
+                dur = _t.time() - t0
+
+                years = (end_date - start_date).days / 365.25
+                ann = (1 + result.total_return_pct / 100) ** (1 / years) - 1
+                mdd = result.max_drawdown_pct
+                calmar = (ann * 100) / mdd if mdd else 0
+
+                # Warmup metadata
+                import pandas as pd
+                spy_df = saved_cache.get("SPY")
+                if spy_df is not None and not spy_df.empty:
+                    pickle_first_date = pd.Timestamp(spy_df.index.min()).normalize()
+                    warmup_calendar_days = max(0, (pd.Timestamp(start_date) - pickle_first_date).days)
+                else:
+                    warmup_calendar_days = 0
+                warmup_trading_days_est = int(warmup_calendar_days * 252 / 365)
+
+                return {
+                    "start_date": cfg["start_date"],
+                    "end_date": cfg["end_date"],
+                    "dd_threshold_pct": bt.dd_tighten_threshold_pct,
+                    "tight_stop_pct": bt.dd_tighten_stop_pct,
+                    "baseline_stop_pct": bt.trailing_stop_pct * 100,
+                    "dwap_threshold_pct": bt.dwap_threshold_pct * 100,
+                    "near_50d_high_pct": bt.near_50d_high_pct,
+                    "max_positions": bt.max_positions,
+                    "position_size_pct": bt.position_size_pct * 100,
+                    "profit_lock_pct": bt.profit_lock_pct,
+                    "profit_lock_stop_pct": bt.profit_lock_stop_pct,
+                    "universe_size": max_symbols,
+                    "strategy_type": strategy_type,
+                    "total_return_pct": result.total_return_pct,
+                    "sharpe_ratio": result.sharpe_ratio,
+                    "max_drawdown_pct": mdd,
+                    "calmar": calmar,
+                    "annualized_pct": ann * 100,
+                    "trades_count": len(result.trades),
+                    "duration_sec": dur,
+                    "warmup_calendar_days_available": warmup_calendar_days,
+                    "warmup_trading_days_est": warmup_trading_days_est,
+                    "warmup_v2_target_met": warmup_trading_days_est >= 130,
+                    "methodology_version": "v2",
+                    "runtime": "lambda_worker",
+                    "lambda_function_version": os.environ.get("AWS_LAMBDA_FUNCTION_VERSION", "$LATEST"),
+                }
+            finally:
+                # Restore full data_cache for any subsequent invocations on warm container
+                scanner_service.data_cache = saved_cache
+                scanner_service.universe = list(saved_cache.keys())
+
+        result = _run_async(_run_native_backtest())
+        return result
+
     # Handle async walk-forward jobs (supports self-chaining via wf_state_key)
     if event.get("walk_forward_job"):
         wf_state_key = event.get("wf_state_key")
