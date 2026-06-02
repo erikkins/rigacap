@@ -251,6 +251,22 @@ class BacktesterService:
         self._portfolio_peak_equity = 0.0
         self._portfolio_current_equity = 0.0
 
+        # VIX-conditional sizing (A1) — cut new-position size when VIX > threshold.
+        # When vix_scale_enabled=True and current VIX > vix_scale_threshold, new
+        # entries get position_value × vix_scale_factor (e.g., 0.5 = half size).
+        # Existing positions are unaffected. Applied at entry only.
+        self.vix_scale_enabled = False
+        self.vix_scale_threshold = 25.0
+        self.vix_scale_factor = 0.5
+
+        # Drawdown circuit breaker — cut new-position size when portfolio is in DD.
+        # When dd_cb_enabled=True and current portfolio DD ≥ dd_cb_threshold,
+        # new entries get position_value × dd_cb_size_factor. Reads same
+        # _portfolio_peak_equity / _portfolio_current_equity that T3 uses.
+        self.dd_cb_enabled = False
+        self.dd_cb_threshold = 15.0
+        self.dd_cb_size_factor = 0.5
+
         # Cascade Guard pause basket (universal-rule compound add).
         # When CG pause activates after a 3-stop cascade, enter equal-weighted
         # basket of mega-caps with own trailing stop. Captures post-shock
@@ -496,6 +512,40 @@ class BacktesterService:
             return 0.0
 
         return round((spy_price / spy_ma200 - 1) * 100, 2)
+
+    def _size_multiplier_for(self, date: pd.Timestamp) -> float:
+        """
+        Return position-sizing multiplier ∈ (0, 1] for new entries on a given date.
+
+        Two independent levers:
+          - VIX-scale: if vix_scale_enabled AND VIX(date) > vix_scale_threshold,
+                       multiplier candidate = vix_scale_factor
+          - DD-CB:      if dd_cb_enabled AND portfolio DD ≥ dd_cb_threshold,
+                       multiplier candidate = dd_cb_size_factor
+
+        When both fire, takes min() (uses the smaller factor, doesn't compound
+        — compounding can be too aggressive and over-shrink).
+
+        Returns 1.0 when neither is enabled or triggered. Existing positions
+        are NEVER resized — this only affects new entries' allocated capital.
+        """
+        candidates = [1.0]
+        # VIX-scale
+        if self.vix_scale_enabled:
+            vix_df = scanner_service.data_cache.get('^VIX')
+            if vix_df is not None:
+                vix_row = self._get_row_for_date(vix_df, date)
+                if vix_row is not None:
+                    vix_close = float(vix_row['close'])
+                    if vix_close > self.vix_scale_threshold:
+                        candidates.append(self.vix_scale_factor)
+        # DD-CB
+        if self.dd_cb_enabled and self._portfolio_peak_equity > 0:
+            dd_pct = ((self._portfolio_peak_equity - self._portfolio_current_equity)
+                      / self._portfolio_peak_equity * 100)
+            if dd_pct >= self.dd_cb_threshold:
+                candidates.append(self.dd_cb_size_factor)
+        return min(candidates)
 
     def _check_market_regime(self, date: pd.Timestamp, panic_only: bool = False) -> bool:
         """
@@ -1559,7 +1609,7 @@ class BacktesterService:
                         if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct
+                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date)
                         if position_value > capital:
                             continue
 
@@ -1655,7 +1705,7 @@ class BacktesterService:
                         if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct
+                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date)
                         if position_value > capital:
                             continue
 
@@ -1762,7 +1812,7 @@ class BacktesterService:
                         if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct
+                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date)
                         if position_value > capital:
                             continue
 
@@ -1850,7 +1900,7 @@ class BacktesterService:
                         if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct
+                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date)
                         if position_value > capital:
                             continue
 

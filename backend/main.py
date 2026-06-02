@@ -4038,6 +4038,20 @@ def handler(event, context):
                     bt.profit_lock_pct = float(cfg["profit_lock_pct"])
                 if "profit_lock_stop_pct" in cfg:
                     bt.profit_lock_stop_pct = float(cfg["profit_lock_stop_pct"])
+                # VIX-conditional sizing (A1)
+                if "vix_scale_enabled" in cfg:
+                    bt.vix_scale_enabled = bool(cfg["vix_scale_enabled"])
+                if "vix_scale_threshold" in cfg:
+                    bt.vix_scale_threshold = float(cfg["vix_scale_threshold"])
+                if "vix_scale_factor" in cfg:
+                    bt.vix_scale_factor = float(cfg["vix_scale_factor"])
+                # Drawdown circuit breaker — size cut when portfolio DD ≥ threshold
+                if "dd_cb_enabled" in cfg:
+                    bt.dd_cb_enabled = bool(cfg["dd_cb_enabled"])
+                if "dd_cb_threshold" in cfg:
+                    bt.dd_cb_threshold = float(cfg["dd_cb_threshold"])
+                if "dd_cb_size_factor" in cfg:
+                    bt.dd_cb_size_factor = float(cfg["dd_cb_size_factor"])
                 # Cascade Guard pause basket (M1 — universal-rule compound)
                 if "cb_pause_basket_enabled" in cfg:
                     bt.cb_pause_basket_enabled = bool(cfg["cb_pause_basket_enabled"])
@@ -4095,6 +4109,12 @@ def handler(event, context):
                     "cb_pause_basket_symbols": list(bt.cb_pause_basket_symbols),
                     "cb_pause_basket_position_size_pct": bt.cb_pause_basket_position_size_pct,
                     "cb_pause_basket_trail_pct": bt.cb_pause_basket_trail_pct,
+                    "vix_scale_enabled": bt.vix_scale_enabled,
+                    "vix_scale_threshold": bt.vix_scale_threshold,
+                    "vix_scale_factor": bt.vix_scale_factor,
+                    "dd_cb_enabled": bt.dd_cb_enabled,
+                    "dd_cb_threshold": bt.dd_cb_threshold,
+                    "dd_cb_size_factor": bt.dd_cb_size_factor,
                     "universe_size": max_symbols,
                     "strategy_type": strategy_type,
                     "total_return_pct": result.total_return_pct,
