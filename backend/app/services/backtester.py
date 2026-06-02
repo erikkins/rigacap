@@ -250,6 +250,21 @@ class BacktesterService:
         self.dd_tighten_stop_pct = 8.0
         self._portfolio_peak_equity = 0.0
         self._portfolio_current_equity = 0.0
+
+        # Cascade Guard pause basket (universal-rule compound add).
+        # When CG pause activates after a 3-stop cascade, enter equal-weighted
+        # basket of mega-caps with own trailing stop. Captures post-shock
+        # recovery (12-event evidence per memory project_regime_substrategy_decision:
+        # mega-caps recover better than SPY in every shock, +6-11% avg 14d
+        # post-shock). Basket positions are tracked separately from main
+        # positions dict, don't count against max_positions, and exit only
+        # on their own trail (basket survives regime cash mode by design —
+        # that's exactly when defensive megacaps work).
+        # Defaults cb_pause_basket_enabled=False keep this a no-op.
+        self.cb_pause_basket_enabled = False
+        self.cb_pause_basket_symbols = ['NVDA', 'TSLA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META']
+        self.cb_pause_basket_position_size_pct = 10.0  # % of current cash per basket position
+        self.cb_pause_basket_trail_pct = 8.0           # own trail, tighter than main strategy
         # Pyramiding / doubling down on winners
         self.pyramid_threshold_pct = 0    # Add to position once up X%; 0=disabled
         self.pyramid_size_pct = 0.0       # Size of the add-on position (% of initial capital)
@@ -1092,6 +1107,12 @@ class BacktesterService:
         # Initialize tracking
         capital = self.initial_capital
         positions: Dict[str, dict] = {}  # symbol -> position info
+        # Cascade Guard pause basket — entries fire on CG pause activation,
+        # tracked separately from main positions, exit on own 8% trail.
+        # Empty (and capital-free) unless self.cb_pause_basket_enabled = True.
+        positions_basket: Dict[str, dict] = {}
+        # Capture basket symbols set for fast membership tests
+        basket_symbol_set = set(self.cb_pause_basket_symbols) if self.cb_pause_basket_enabled else set()
         trades: List[SimulatedTrade] = []
         equity_curve = []
         position_id = 0
@@ -1247,6 +1268,48 @@ class BacktesterService:
                     else:
                         in_cash_mode = False
 
+            # Basket exit check (Cascade Guard pause basket).
+            # Each basket position has its own HWM and 8% (configurable) trail.
+            # Basket survives regime cash mode by design — defensive megacaps
+            # are exactly what we want during bear shocks. Closes on own trail.
+            if positions_basket:
+                basket_to_close = []
+                for bs_sym, bs_pos in positions_basket.items():
+                    if bs_sym not in scanner_service.data_cache:
+                        continue
+                    bs_row = self._get_row_for_date(scanner_service.data_cache[bs_sym], date)
+                    if bs_row is None:
+                        continue
+                    bs_close = float(bs_row['close'])
+                    if bs_close > bs_pos['high_water_mark']:
+                        bs_pos['high_water_mark'] = bs_close
+                    trail_level = bs_pos['high_water_mark'] * (1 - self.cb_pause_basket_trail_pct / 100)
+                    if bs_close <= trail_level:
+                        pnl_dollars = (bs_close - bs_pos['entry_price']) * bs_pos['shares']
+                        capital += bs_pos['shares'] * bs_close
+                        trade_id += 1
+                        bs_entry_date = pd.Timestamp(bs_pos['entry_date'])
+                        trades.append(SimulatedTrade(
+                            id=trade_id,
+                            symbol=bs_sym,
+                            entry_date=bs_pos['entry_date'],
+                            exit_date=date_str,
+                            entry_price=bs_pos['entry_price'],
+                            exit_price=bs_close,
+                            shares=bs_pos['shares'],
+                            pnl=round(pnl_dollars, 2),
+                            pnl_pct=round((bs_close / bs_pos['entry_price'] - 1) * 100, 2),
+                            exit_reason='basket_trail',
+                            days_held=self._days_between(date, bs_entry_date),
+                            dwap_at_entry=0, momentum_score=0, momentum_rank=0,
+                            pct_above_dwap_at_entry=0, num_candidates=0, dwap_age=0,
+                            short_mom=0, long_mom=0, volatility=0,
+                            dist_from_high=0, vol_ratio=0, spy_trend=0,
+                        ))
+                        basket_to_close.append(bs_sym)
+                for s in basket_to_close:
+                    del positions_basket[s]
+
             # Check existing positions for exits
             symbols_to_close = []
             for symbol, pos in positions.items():
@@ -1373,9 +1436,53 @@ class BacktesterService:
                         for _sym, _pos in positions.items():
                             _pos['tightened_stop'] = self.circuit_breaker_tighten_pct / 100
 
+                    # CG pause basket — universal-rule defensive entry.
+                    # On the bar CG activates, enter equal-weighted mega-cap basket
+                    # using cb_pause_basket_position_size_pct of current cash per
+                    # symbol. Basket positions are independent of main `positions`
+                    # dict and don't count against max_positions. Exit only on own
+                    # trail (handled at top of next iteration). If basket already
+                    # holds a name (rare — pause re-extended before existing
+                    # basket positions exited), skip re-entry.
+                    if self.cb_pause_basket_enabled and basket_symbol_set:
+                        basket_alloc_per = capital * self.cb_pause_basket_position_size_pct / 100
+                        for basket_sym in self.cb_pause_basket_symbols:
+                            if basket_sym in positions_basket:
+                                continue
+                            if basket_sym not in scanner_service.data_cache:
+                                continue
+                            b_row = self._get_row_for_date(
+                                scanner_service.data_cache[basket_sym], date)
+                            if b_row is None:
+                                continue
+                            b_price = float(b_row['close'])
+                            if b_price <= 0 or basket_alloc_per > capital:
+                                continue
+                            shares = basket_alloc_per / b_price
+                            positions_basket[basket_sym] = {
+                                'entry_date': date_str,
+                                'entry_price': b_price,
+                                'shares': shares,
+                                'high_water_mark': b_price,
+                            }
+                            capital -= basket_alloc_per
+
             # Pause check: skip new entries while any pause source is active.
             # This runs BEFORE the regime cash_mode check below — a regime flip back to bull
             # cannot lift an active pause.
+            # Compute basket value once per bar (used by every equity_curve append below).
+            def _basket_value_now():
+                if not positions_basket:
+                    return 0.0
+                total = 0.0
+                for _bs, _bp in positions_basket.items():
+                    if _bs not in scanner_service.data_cache:
+                        continue
+                    _r = self._get_row_for_date(scanner_service.data_cache[_bs], date)
+                    if _r is not None:
+                        total += _bp['shares'] * _r['close']
+                return total
+
             if self._pause_until is not None and date <= self._pause_until:
                 # Still in pause window — track equity but don't enter
                 position_value = sum(
@@ -1387,7 +1494,7 @@ class BacktesterService:
                 )
                 equity_curve.append({
                     'date': date_str,
-                    'equity': capital + position_value,
+                    'equity': capital + position_value + _basket_value_now(),
                     'pause_source': self._pause_source,
                 })
                 continue
@@ -1401,7 +1508,7 @@ class BacktesterService:
                         sym_row = self._get_row_for_date(scanner_service.data_cache[sym], date)
                         if sym_row is not None:
                             position_value += pos['shares'] * sym_row['close']
-                equity_curve.append({'date': date_str, 'equity': capital + position_value})
+                equity_curve.append({'date': date_str, 'equity': capital + position_value + _basket_value_now()})
                 continue
 
             # Rebalancing logic: momentum=weekly on Fridays, dwap/dwap_hybrid=daily
@@ -1771,9 +1878,10 @@ class BacktesterService:
                     sym_row = self._get_row_for_date(scanner_service.data_cache[sym], date)
                     if sym_row is not None:
                         position_value += pos['shares'] * sym_row['close']
+            # Include CG-pause basket value (zero unless basket is active)
             equity_curve.append({
                 'date': date_str,
-                'equity': capital + position_value
+                'equity': capital + position_value + _basket_value_now()
             })
 
         # Snapshot raw positions BEFORE force close for walk-forward carry-over

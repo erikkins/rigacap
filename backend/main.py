@@ -4038,6 +4038,15 @@ def handler(event, context):
                     bt.profit_lock_pct = float(cfg["profit_lock_pct"])
                 if "profit_lock_stop_pct" in cfg:
                     bt.profit_lock_stop_pct = float(cfg["profit_lock_stop_pct"])
+                # Cascade Guard pause basket (M1 — universal-rule compound)
+                if "cb_pause_basket_enabled" in cfg:
+                    bt.cb_pause_basket_enabled = bool(cfg["cb_pause_basket_enabled"])
+                if "cb_pause_basket_symbols" in cfg:
+                    bt.cb_pause_basket_symbols = list(cfg["cb_pause_basket_symbols"])
+                if "cb_pause_basket_position_size_pct" in cfg:
+                    bt.cb_pause_basket_position_size_pct = float(cfg["cb_pause_basket_position_size_pct"])
+                if "cb_pause_basket_trail_pct" in cfg:
+                    bt.cb_pause_basket_trail_pct = float(cfg["cb_pause_basket_trail_pct"])
 
                 strategy_type = cfg.get("strategy_type", "ensemble")
                 print(f"[native_backtest] trail={bt.trailing_stop_pct*100:.1f}% baseline, "
@@ -4082,6 +4091,10 @@ def handler(event, context):
                     "position_size_pct": bt.position_size_pct * 100,
                     "profit_lock_pct": bt.profit_lock_pct,
                     "profit_lock_stop_pct": bt.profit_lock_stop_pct,
+                    "cb_pause_basket_enabled": bt.cb_pause_basket_enabled,
+                    "cb_pause_basket_symbols": list(bt.cb_pause_basket_symbols),
+                    "cb_pause_basket_position_size_pct": bt.cb_pause_basket_position_size_pct,
+                    "cb_pause_basket_trail_pct": bt.cb_pause_basket_trail_pct,
                     "universe_size": max_symbols,
                     "strategy_type": strategy_type,
                     "total_return_pct": result.total_return_pct,
