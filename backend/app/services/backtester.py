@@ -267,6 +267,27 @@ class BacktesterService:
         self.dd_cb_threshold = 15.0
         self.dd_cb_size_factor = 0.5
 
+        # Hard portfolio-DD exit (active stop, not sizing cut).
+        # When hard_dd_exit_threshold_pct > 0 and portfolio DD ≥ this value,
+        # close ALL main + basket positions at the day's close. Requested
+        # pause carries for hard_dd_exit_pause_days. Re-arm peak from
+        # post-exit equity so future drops trigger from new peak.
+        # Different from dd_cb (which only cuts NEW position size) — this
+        # actively exits existing exposure.
+        self.hard_dd_exit_threshold_pct = 0.0   # 0 = disabled
+        self.hard_dd_exit_pause_days = 10
+
+        # Profit-lock FLOOR — different from B1's profit_lock (trail-tighten).
+        # When position pnl_pct ≥ profit_lock_floor_trigger_pct, the stop is
+        # FLOORED at entry × (1 + profit_lock_floor_pct/100). This GUARANTEES
+        # a minimum profit on the trade — answers "lock in some of the gain
+        # on AMD doubling up" without B1's trail-tighten flaw (which killed
+        # winners that had more to give).
+        # Example: trigger=100, floor=50 → once up +100%, exit price will be
+        # at LEAST entry × 1.5 (50% locked in), with normal trail above that.
+        self.profit_lock_floor_trigger_pct = 0  # 0 = disabled
+        self.profit_lock_floor_pct = 0          # % of entry to floor stop at
+
         # Cascade Guard pause basket (universal-rule compound add).
         # When CG pause activates after a 3-stop cascade, enter equal-weighted
         # basket of mega-caps with own trailing stop. Captures post-shock
@@ -845,6 +866,16 @@ class BacktesterService:
 
             stop_trigger_price = high_water * (1 - effective_stop_pct / 100)
 
+            # Profit-lock FLOOR: once up trigger %, ensure stop ≥ entry × (1+floor%).
+            # Floor the stop_trigger_price up to the lock_floor price. Preserves
+            # trail width but guarantees a minimum exit profit. Different from
+            # profit_lock (B1) which tightened the trail itself.
+            if (self.profit_lock_floor_trigger_pct > 0
+                    and pnl_pct >= self.profit_lock_floor_trigger_pct):
+                floor_price = entry_price * (1 + self.profit_lock_floor_pct / 100)
+                if floor_price > stop_trigger_price:
+                    stop_trigger_price = floor_price
+
             if use_intraday:
                 # Intraday-aware: did the day's LOW cross the trigger?
                 if day_low <= stop_trigger_price:
@@ -1275,6 +1306,86 @@ class BacktesterService:
                 self._portfolio_current_equity = equity_curve[-1]['equity']
             if self._portfolio_current_equity > self._portfolio_peak_equity:
                 self._portfolio_peak_equity = self._portfolio_current_equity
+
+            # Hard portfolio-DD exit. If active and DD ≥ threshold, close ALL
+            # positions (main + basket) at today's close, then request a pause.
+            # Re-arms peak from post-exit equity so future drops trigger fresh.
+            if (self.hard_dd_exit_threshold_pct > 0
+                    and self._portfolio_peak_equity > 0
+                    and (self._pause_until is None or date > self._pause_until)):
+                hard_dd_pct = ((self._portfolio_peak_equity - self._portfolio_current_equity)
+                               / self._portfolio_peak_equity * 100)
+                if hard_dd_pct >= self.hard_dd_exit_threshold_pct:
+                    # Close all main positions at today's close
+                    for symbol, pos in list(positions.items()):
+                        if symbol not in scanner_service.data_cache:
+                            continue
+                        row = self._get_row_for_date(scanner_service.data_cache[symbol], date)
+                        if row is None:
+                            continue
+                        cp = float(row['close'])
+                        pnl_pct = (cp - pos['entry_price']) / pos['entry_price']
+                        trade_id += 1
+                        trades.append(SimulatedTrade(
+                            id=trade_id, symbol=symbol,
+                            entry_date=pos['entry_date'], exit_date=date_str,
+                            entry_price=pos['entry_price'], exit_price=cp,
+                            shares=pos['shares'],
+                            pnl=round((cp - pos['entry_price']) * pos['shares'], 2),
+                            pnl_pct=round(pnl_pct * 100, 2),
+                            exit_reason='hard_dd_exit',
+                            days_held=self._days_between(date, pos['entry_date']),
+                            dwap_at_entry=pos.get('dwap_at_entry', 0),
+                            momentum_score=pos.get('momentum_score', 0),
+                            momentum_rank=pos.get('momentum_rank', 0),
+                            pct_above_dwap_at_entry=pos.get('pct_above_dwap_at_entry', 0),
+                            num_candidates=pos.get('num_candidates', 0),
+                            dwap_age=pos.get('dwap_age', 0),
+                            short_mom=pos.get('short_mom', 0),
+                            long_mom=pos.get('long_mom', 0),
+                            volatility=pos.get('volatility', 0),
+                            dist_from_high=pos.get('dist_from_high', 0),
+                            vol_ratio=pos.get('vol_ratio', 0),
+                            spy_trend=pos.get('spy_trend', 0),
+                        ))
+                        capital += pos['shares'] * cp
+                    positions.clear()
+                    # Close all basket positions too
+                    for bs_sym, bs_pos in list(positions_basket.items()):
+                        if bs_sym not in scanner_service.data_cache:
+                            continue
+                        bs_row = self._get_row_for_date(scanner_service.data_cache[bs_sym], date)
+                        if bs_row is None:
+                            continue
+                        bs_close = float(bs_row['close'])
+                        capital += bs_pos['shares'] * bs_close
+                        trade_id += 1
+                        trades.append(SimulatedTrade(
+                            id=trade_id, symbol=bs_sym,
+                            entry_date=bs_pos['entry_date'], exit_date=date_str,
+                            entry_price=bs_pos['entry_price'], exit_price=bs_close,
+                            shares=bs_pos['shares'],
+                            pnl=round((bs_close - bs_pos['entry_price']) * bs_pos['shares'], 2),
+                            pnl_pct=round((bs_close / bs_pos['entry_price'] - 1) * 100, 2),
+                            exit_reason='hard_dd_exit',
+                            days_held=self._days_between(date, pd.Timestamp(bs_pos['entry_date'])),
+                            dwap_at_entry=0, momentum_score=0, momentum_rank=0,
+                            pct_above_dwap_at_entry=0, num_candidates=0, dwap_age=0,
+                            short_mom=0, long_mom=0, volatility=0,
+                            dist_from_high=0, vol_ratio=0, spy_trend=0,
+                        ))
+                    positions_basket.clear()
+                    # Trigger pause to prevent immediate re-entry
+                    self._request_pause(
+                        current_date=date,
+                        source='hard_dd_exit',
+                        days=self.hard_dd_exit_pause_days,
+                        context={'portfolio_dd_pct': round(hard_dd_pct, 2),
+                                 'threshold': self.hard_dd_exit_threshold_pct},
+                    )
+                    # Re-arm peak from post-exit equity (capital only, positions=0)
+                    self._portfolio_current_equity = capital
+                    self._portfolio_peak_equity = capital
 
             # Check market regime (momentum, hybrid, and ensemble strategies respect market filter)
             if strategy_type in ("momentum", "dwap_hybrid", "ensemble") and settings.MARKET_FILTER_ENABLED:

@@ -4067,6 +4067,16 @@ def handler(event, context):
                     bt.dd_cb_threshold = float(cfg["dd_cb_threshold"])
                 if "dd_cb_size_factor" in cfg:
                     bt.dd_cb_size_factor = float(cfg["dd_cb_size_factor"])
+                # Hard DD-exit (close all on portfolio DD ≥ threshold)
+                if "hard_dd_exit_threshold_pct" in cfg:
+                    bt.hard_dd_exit_threshold_pct = float(cfg["hard_dd_exit_threshold_pct"])
+                if "hard_dd_exit_pause_days" in cfg:
+                    bt.hard_dd_exit_pause_days = int(cfg["hard_dd_exit_pause_days"])
+                # Profit-lock floor (different from B1's profit_lock trail-tighten)
+                if "profit_lock_floor_trigger_pct" in cfg:
+                    bt.profit_lock_floor_trigger_pct = float(cfg["profit_lock_floor_trigger_pct"])
+                if "profit_lock_floor_pct" in cfg:
+                    bt.profit_lock_floor_pct = float(cfg["profit_lock_floor_pct"])
                 # Cascade Guard pause basket (M1 — universal-rule compound)
                 if "cb_pause_basket_enabled" in cfg:
                     bt.cb_pause_basket_enabled = bool(cfg["cb_pause_basket_enabled"])
@@ -4150,6 +4160,10 @@ def handler(event, context):
                     "dd_cb_enabled": bt.dd_cb_enabled,
                     "dd_cb_threshold": bt.dd_cb_threshold,
                     "dd_cb_size_factor": bt.dd_cb_size_factor,
+                    "hard_dd_exit_threshold_pct": bt.hard_dd_exit_threshold_pct,
+                    "hard_dd_exit_pause_days": bt.hard_dd_exit_pause_days,
+                    "profit_lock_floor_trigger_pct": bt.profit_lock_floor_trigger_pct,
+                    "profit_lock_floor_pct": bt.profit_lock_floor_pct,
                     "universe_size": max_symbols,
                     "strategy_type": strategy_type,
                     "total_return_pct": result.total_return_pct,
