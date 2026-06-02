@@ -4021,6 +4021,18 @@ def handler(event, context):
             for ix_sym in ("SPY", "^VIX"):
                 if ix_sym in full_cache and ix_sym not in scanner_service.data_cache:
                     scanner_service.data_cache[ix_sym] = full_cache[ix_sym]
+            # Force-add any cb_pause_basket symbols not in top-N (so defensive
+            # basket symbols like JPM/JNJ/PG that may not always be top-liquidity
+            # are still tradable). Basket symbols come from cfg, fall back to
+            # backtester defaults.
+            basket_syms = cfg.get("cb_pause_basket_symbols")
+            if not basket_syms:
+                # Use defaults from a fresh backtester for force-add purposes
+                from app.services.backtester import BacktesterService as _BS
+                basket_syms = _BS().cb_pause_basket_symbols
+            for bs in basket_syms:
+                if bs in full_cache and bs not in scanner_service.data_cache:
+                    scanner_service.data_cache[bs] = full_cache[bs]
             scanner_service.universe = list(scanner_service.data_cache.keys())
             print(f"[native_backtest] {len(scanner_service.data_cache)} symbols (top-{max_symbols})")
 
