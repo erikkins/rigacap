@@ -4069,6 +4069,15 @@ def handler(event, context):
                 # Universe / entry filter overrides
                 if "min_price" in cfg:
                     bt.min_price = float(cfg["min_price"])
+                # Additive levers — breakeven floor + pyramid (already in backtester)
+                if "breakeven_pct" in cfg:
+                    bt.breakeven_pct = float(cfg["breakeven_pct"])
+                if "pyramid_threshold_pct" in cfg:
+                    bt.pyramid_threshold_pct = float(cfg["pyramid_threshold_pct"])
+                if "pyramid_size_pct" in cfg:
+                    bt.pyramid_size_pct = float(cfg["pyramid_size_pct"])
+                if "pyramid_max_adds" in cfg:
+                    bt.pyramid_max_adds = int(cfg["pyramid_max_adds"])
 
                 strategy_type = cfg.get("strategy_type", "ensemble")
                 print(f"[native_backtest] trail={bt.trailing_stop_pct*100:.1f}% baseline, "
@@ -4119,6 +4128,10 @@ def handler(event, context):
                     "cb_pause_basket_trail_pct": bt.cb_pause_basket_trail_pct,
                     "cb_pause_basket_vix_trigger": bt.cb_pause_basket_vix_trigger,
                     "min_price": bt.min_price,
+                    "breakeven_pct": bt.breakeven_pct,
+                    "pyramid_threshold_pct": bt.pyramid_threshold_pct,
+                    "pyramid_size_pct": bt.pyramid_size_pct,
+                    "pyramid_max_adds": bt.pyramid_max_adds,
                     "vix_scale_enabled": bt.vix_scale_enabled,
                     "vix_scale_threshold": bt.vix_scale_threshold,
                     "vix_scale_factor": bt.vix_scale_factor,
