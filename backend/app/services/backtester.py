@@ -1259,11 +1259,14 @@ class BacktesterService:
             # Updated once per bar (daily cadence). On day 0, equity_curve is
             # empty and current/peak stay at initial_capital. Default
             # dd_tighten_threshold_pct=0 makes this a no-op.
-            if self.dd_tighten_threshold_pct > 0:
-                if equity_curve:
-                    self._portfolio_current_equity = equity_curve[-1]['equity']
-                if self._portfolio_current_equity > self._portfolio_peak_equity:
-                    self._portfolio_peak_equity = self._portfolio_current_equity
+            # Update peak/current for ANY lever that reads them (T3 dd_tighten OR
+            # dd_cb_enabled). Previously gated on T3 only, which silently broke
+            # DD-CB (never saw non-zero DD). Now updates unconditionally — cheap
+            # and avoids the gate-mismatch bug class.
+            if equity_curve:
+                self._portfolio_current_equity = equity_curve[-1]['equity']
+            if self._portfolio_current_equity > self._portfolio_peak_equity:
+                self._portfolio_peak_equity = self._portfolio_current_equity
 
             # Check market regime (momentum, hybrid, and ensemble strategies respect market filter)
             if strategy_type in ("momentum", "dwap_hybrid", "ensemble") and settings.MARKET_FILTER_ENABLED:

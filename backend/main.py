@@ -4016,8 +4016,11 @@ def handler(event, context):
             full_cache = scanner_service.data_cache
             saved_cache = full_cache  # for restore
             scanner_service.data_cache = {s: full_cache[s] for s in top_symbols if s in full_cache}
-            if "SPY" in full_cache and "SPY" not in scanner_service.data_cache:
-                scanner_service.data_cache["SPY"] = full_cache["SPY"]
+            # SPY needed for market_regime check; ^VIX needed for vix_scale lever.
+            # Both are index symbols (not in top-N by liquidity), force-add them.
+            for ix_sym in ("SPY", "^VIX"):
+                if ix_sym in full_cache and ix_sym not in scanner_service.data_cache:
+                    scanner_service.data_cache[ix_sym] = full_cache[ix_sym]
             scanner_service.universe = list(scanner_service.data_cache.keys())
             print(f"[native_backtest] {len(scanner_service.data_cache)} symbols (top-{max_symbols})")
 
