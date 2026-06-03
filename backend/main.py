@@ -4077,6 +4077,33 @@ def handler(event, context):
                     bt.profit_lock_floor_trigger_pct = float(cfg["profit_lock_floor_trigger_pct"])
                 if "profit_lock_floor_pct" in cfg:
                     bt.profit_lock_floor_pct = float(cfg["profit_lock_floor_pct"])
+                # Sector RS (orthogonal alpha — RS1 binary filter + RS3 additive)
+                sector_rs_filter = bool(cfg.get("sector_rs_filter_enabled", False))
+                sector_rs_score = bool(cfg.get("sector_rs_score_enabled", False))
+                if sector_rs_filter or sector_rs_score:
+                    # Load sectors from S3 once per Lambda invocation
+                    try:
+                        import boto3, json as _json
+                        _s3 = boto3.client("s3", region_name="us-east-1")
+                        _obj = _s3.get_object(
+                            Bucket="rigacap-prod-price-data-149218244179",
+                            Key="universe/sectors_cache.json")
+                        _sectors = _json.loads(_obj["Body"].read())
+                        bt.symbol_sectors = {sym: data.get("sector", "")
+                                              for sym, data in _sectors.items()
+                                              if data.get("sector")}
+                        print(f"[native_backtest] Loaded sectors for {len(bt.symbol_sectors)} symbols")
+                    except Exception as e:
+                        print(f"[native_backtest] WARN sector load failed: {e}")
+                        bt.symbol_sectors = {}
+                    bt.sector_rs_filter_enabled = sector_rs_filter
+                    bt.sector_rs_score_enabled = sector_rs_score
+                    if "sector_rs_lookback_days" in cfg:
+                        bt.sector_rs_lookback_days = int(cfg["sector_rs_lookback_days"])
+                    if "sector_rs_min_threshold" in cfg:
+                        bt.sector_rs_min_threshold = float(cfg["sector_rs_min_threshold"])
+                    if "sector_rs_score_weight" in cfg:
+                        bt.sector_rs_score_weight = float(cfg["sector_rs_score_weight"])
                 # Cascade Guard pause basket (M1 — universal-rule compound)
                 if "cb_pause_basket_enabled" in cfg:
                     bt.cb_pause_basket_enabled = bool(cfg["cb_pause_basket_enabled"])
@@ -4164,6 +4191,12 @@ def handler(event, context):
                     "hard_dd_exit_pause_days": bt.hard_dd_exit_pause_days,
                     "profit_lock_floor_trigger_pct": bt.profit_lock_floor_trigger_pct,
                     "profit_lock_floor_pct": bt.profit_lock_floor_pct,
+                    "sector_rs_filter_enabled": bt.sector_rs_filter_enabled,
+                    "sector_rs_score_enabled": bt.sector_rs_score_enabled,
+                    "sector_rs_lookback_days": bt.sector_rs_lookback_days,
+                    "sector_rs_min_threshold": bt.sector_rs_min_threshold,
+                    "sector_rs_score_weight": bt.sector_rs_score_weight,
+                    "sector_count_loaded": len(bt.symbol_sectors),
                     "universe_size": max_symbols,
                     "strategy_type": strategy_type,
                     "total_return_pct": result.total_return_pct,

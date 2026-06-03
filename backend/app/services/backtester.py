@@ -288,6 +288,23 @@ class BacktesterService:
         self.profit_lock_floor_trigger_pct = 0  # 0 = disabled
         self.profit_lock_floor_pct = 0          # % of entry to floor stop at
 
+        # Sector relative-strength (orthogonal alpha, Jun 3 2026 work).
+        # When enabled, candidate symbols are evaluated vs their sector peers
+        # over sector_rs_lookback_days. RS = symbol_return − sector_median_return.
+        # Symbol sector lookup populated by caller (Lambda handler or test) into
+        # self.symbol_sectors {sym → sector_name}. Per-date sector medians are
+        # cached in self._sector_medians_cache.
+        # Two modes — can be enabled independently:
+        #   sector_rs_filter_enabled: BINARY filter — symbol must have RS ≥ threshold
+        #   sector_rs_score_enabled:  ADDITIVE — composite += RS × weight (no rejection)
+        self.symbol_sectors: Dict[str, str] = {}
+        self.sector_rs_filter_enabled = False
+        self.sector_rs_lookback_days = 20
+        self.sector_rs_min_threshold = 0.0      # require strictly positive RS by default
+        self.sector_rs_score_enabled = False
+        self.sector_rs_score_weight = 0.2       # additive weight in composite score
+        self._sector_medians_cache: Dict[str, Dict[str, float]] = {}  # date_str → {sector: median_return}
+
         # Cascade Guard pause basket (universal-rule compound add).
         # When CG pause activates after a 3-stop cascade, enter equal-weighted
         # basket of mega-caps with own trailing stop. Captures post-shock
@@ -573,6 +590,77 @@ class BacktesterService:
             if dd_pct >= self.dd_cb_threshold:
                 candidates.append(self.dd_cb_size_factor)
         return min(candidates)
+
+    def _compute_sector_medians(self, date: pd.Timestamp) -> Dict[str, float]:
+        """
+        Compute per-sector median N-day return for all symbols in scanner_service.data_cache
+        at given date. Cached by date_str.
+        """
+        date_str = date.strftime('%Y-%m-%d')
+        if date_str in self._sector_medians_cache:
+            return self._sector_medians_cache[date_str]
+
+        lookback = self.sector_rs_lookback_days
+        # Group N-day returns by sector
+        by_sector: Dict[str, list] = {}
+        for sym, df in scanner_service.data_cache.items():
+            sector = self.symbol_sectors.get(sym)
+            if not sector:
+                continue
+            row = self._get_row_for_date(df, date)
+            if row is None:
+                continue
+            # Position of `row` in df → look back `lookback` rows
+            try:
+                idx = df.index.get_loc(row.name)
+            except (KeyError, TypeError):
+                continue
+            if idx < lookback:
+                continue
+            cur_price = float(row['close'])
+            past_price = float(df.iloc[idx - lookback]['close'])
+            if past_price <= 0:
+                continue
+            ret = (cur_price / past_price) - 1.0
+            by_sector.setdefault(sector, []).append(ret)
+        # Compute medians
+        import statistics
+        medians = {s: statistics.median(rets) for s, rets in by_sector.items() if rets}
+        self._sector_medians_cache[date_str] = medians
+        return medians
+
+    def _get_sector_rs(self, symbol: str, date: pd.Timestamp) -> Optional[float]:
+        """
+        Return symbol's sector-relative-strength at date.
+        Sector RS = symbol's N-day return − sector median N-day return.
+        Returns None if symbol has no sector, no data, or insufficient history.
+        """
+        sector = self.symbol_sectors.get(symbol)
+        if not sector:
+            return None
+        df = scanner_service.data_cache.get(symbol)
+        if df is None or df.empty:
+            return None
+        row = self._get_row_for_date(df, date)
+        if row is None:
+            return None
+        try:
+            idx = df.index.get_loc(row.name)
+        except (KeyError, TypeError):
+            return None
+        lookback = self.sector_rs_lookback_days
+        if idx < lookback:
+            return None
+        cur_price = float(row['close'])
+        past_price = float(df.iloc[idx - lookback]['close'])
+        if past_price <= 0:
+            return None
+        sym_ret = (cur_price / past_price) - 1.0
+        medians = self._compute_sector_medians(date)
+        sec_median = medians.get(sector)
+        if sec_median is None:
+            return None
+        return sym_ret - sec_median
 
     def _check_market_regime(self, date: pd.Timestamp, panic_only: bool = False) -> bool:
         """
@@ -1023,12 +1111,28 @@ class BacktesterService:
         passes_breakout = dist_from_high >= -self.near_50d_high_pct
         passes_quality = passes_trend and passes_breakout
 
+        # Sector RS computation (used by RS1 filter AND RS3 additive)
+        sector_rs = None
+        if self.sector_rs_filter_enabled or self.sector_rs_score_enabled:
+            sector_rs = self._get_sector_rs(symbol, date)
+
+        # RS1: BINARY filter — reject candidate if sector RS ≤ threshold
+        # (When sector data missing/insufficient → None → SKIP filter, do not reject.
+        # Conservative default: missing data shouldn't disqualify a candidate.)
+        if self.sector_rs_filter_enabled and sector_rs is not None:
+            if sector_rs <= self.sector_rs_min_threshold:
+                passes_quality = False
+
         # Composite score
         composite_score = (
             short_mom * self.short_mom_weight +
             long_mom * self.long_mom_weight -
             volatility * self.volatility_penalty
         )
+
+        # RS3: ADDITIVE — sector RS contributes to composite (no rejection)
+        if self.sector_rs_score_enabled and sector_rs is not None:
+            composite_score += sector_rs * self.sector_rs_score_weight
 
         # Liquidity tier bonus
         if self.tier1_bonus > 0 and symbol in self.tier1_set:
@@ -1042,7 +1146,8 @@ class BacktesterService:
             'volatility': volatility,
             'composite_score': composite_score,
             'passes_quality': passes_quality,
-            'dist_from_high': dist_from_high
+            'dist_from_high': dist_from_high,
+            'sector_rs': sector_rs,
         }
 
     def _request_pause(self, current_date, source: str, days: int, context: Optional[Dict] = None):
