@@ -1,5 +1,8 @@
 # Stocker App - Key Learnings
 
+## CRITICAL — NEVER WASTE PAID/LONG-RUNNING WORK
+- **[Always checkpoint paid/long-running scripts](feedback_never_keep_paid_work_in_memory.md)** — any script that costs money OR runs >5 min MUST write incremental disk checkpoints. Jun 3 2026: Haiku scorer ran 50 min / $2.43, killed mid-run, ALL work lost because results accumulated in memory. Cheap durable saves beat elegant end-of-run writes EVERY TIME.
+
 ## CRITICAL — NEVER COMMIT SECRETS
 - **[Never check in credentials](feedback_never_check_in_secrets.md)** — grep every file for password/postgres://*creds*/api.key/AKIA/sk-/whsec_ BEFORE `git add`. Never `git add .`. RDS master pw was leaked Apr 16 2026 via this exact failure mode; rotated same day. Scripts must read DATABASE_URL from env, never hardcode.
 
