@@ -1030,6 +1030,7 @@ class BacktesterService:
         exit_strategy: ExitStrategyConfig,
         day_high: Optional[float] = None,
         day_low: Optional[float] = None,
+        symbol: Optional[str] = None,
     ) -> Optional[str]:
         """
         Check if position should be exited based on exit strategy.
@@ -1067,9 +1068,10 @@ class BacktesterService:
         # Sentiment-EXIT (Jun 3 2026). Trigger if rolling sentiment mean
         # for this symbol falls below threshold over the lookback window.
         # Uses same cached Haiku scores as entry filter, different window.
-        # Skipped when symbol has no sentiment data (missing → don't trigger).
-        if self.news_sentiment_exit_enabled:
-            sent = self._get_sentiment_for_exit(pos['symbol'], current_date)
+        # Symbol must be passed explicitly — positions dict uses symbol as
+        # key but doesn't always store it in the value dict.
+        if self.news_sentiment_exit_enabled and symbol:
+            sent = self._get_sentiment_for_exit(symbol, current_date)
             if sent is not None and sent < self.news_sentiment_exit_threshold:
                 return 'sentiment_exit'
 
@@ -1898,9 +1900,10 @@ class BacktesterService:
 
                 # Check exit condition using configured strategy.
                 # Pass day_high/day_low so intraday_aware mode can use them.
+                # Pass symbol so sentiment-exit can look up cached scores.
                 exit_reason = self._check_exit_condition(
                     pos, current_price, date, exit_strategy,
-                    day_high=day_high, day_low=day_low,
+                    day_high=day_high, day_low=day_low, symbol=symbol,
                 )
 
                 if exit_reason:
