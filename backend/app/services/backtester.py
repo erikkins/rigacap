@@ -365,6 +365,21 @@ class BacktesterService:
         self.news_sentiment_exit_threshold = -0.3    # exit when mean < -0.3
         self.news_sentiment_exit_lookback_days = 3   # 3-day rolling window
 
+        # Sentiment-AWARE TRAIL (Jun 3 2026, asymmetric — Erik's intuition).
+        # Continuous modifier on effective_stop_pct in the trailing-stop branch.
+        # effective_stop_pct = base − (sentiment_mean × scale), clamped to [min, max].
+        # Positive sentiment → wider trail (let winners run on good news).
+        # Negative sentiment → tighter trail (cut faster on bad news).
+        # Neutral → base unchanged.
+        # Distinct lookback from entry filter and from exit-binary mechanism.
+        # Composes with profit_lock / DD-tighten via min() — whichever stop
+        # is TIGHTER wins (defensive override always preserved).
+        self.news_sentiment_trail_enabled = False
+        self.news_sentiment_trail_scale = 8.0         # each ±0.5 → ±4% trail
+        self.news_sentiment_trail_lookback_days = 3   # rolling sentiment window
+        self.news_sentiment_trail_min_pct = 4.0       # never tighter than 4%
+        self.news_sentiment_trail_max_pct = 25.0      # never looser than 25%
+
         # Cascade Guard pause basket (universal-rule compound add).
         # When CG pause activates after a 3-stop cascade, enter equal-weighted
         # basket of mega-caps with own trailing stop. Captures post-shock
@@ -832,6 +847,21 @@ class BacktesterService:
             return None
         return sum(scores) / len(scores)
 
+    def _get_sentiment_for_trail(self, symbol: str, date: pd.Timestamp) -> Optional[float]:
+        """Trail-side sentiment: rolling mean over news_sentiment_trail_lookback_days."""
+        m = self.symbol_news_sentiment.get(symbol)
+        if not m:
+            return None
+        scores = []
+        for offset in range(1, self.news_sentiment_trail_lookback_days + 1):
+            d = (date - pd.Timedelta(days=offset)).strftime('%Y-%m-%d')
+            v = m.get(d)
+            if v is not None:
+                scores.append(v)
+        if not scores:
+            return None
+        return sum(scores) / len(scores)
+
     def _check_market_regime(self, date: pd.Timestamp, panic_only: bool = False) -> bool:
         """
         Check if market conditions are favorable for holding positions.
@@ -1132,6 +1162,23 @@ class BacktesterService:
                 )
                 if portfolio_dd_pct >= self.dd_tighten_threshold_pct:
                     effective_stop_pct = min(effective_stop_pct, self.dd_tighten_stop_pct)
+
+            # NV-T1 — Sentiment-aware asymmetric trail (Jun 3 2026).
+            # Adjust effective_stop_pct by recent sentiment:
+            #   pos sentiment → wider trail (let winner run on good news)
+            #   neg sentiment → tighter trail (cut faster on bad news)
+            # Composed AFTER profit_lock/DD-tighten so those defensive
+            # overrides still win when conditions warrant — sentiment can
+            # widen the trail back UP, but only within [min, max] clamps.
+            # Missing sentiment data → no-op (preserves baseline behavior).
+            if self.news_sentiment_trail_enabled and symbol:
+                sent = self._get_sentiment_for_trail(symbol, current_date)
+                if sent is not None:
+                    adjusted = effective_stop_pct - (sent * self.news_sentiment_trail_scale)
+                    effective_stop_pct = max(
+                        self.news_sentiment_trail_min_pct,
+                        min(self.news_sentiment_trail_max_pct, adjusted)
+                    )
 
             stop_trigger_price = high_water * (1 - effective_stop_pct / 100)
 

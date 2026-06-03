@@ -4147,7 +4147,8 @@ def handler(event, context):
                 ns_filter = bool(cfg.get("news_sentiment_filter_enabled", False))
                 ns_score = bool(cfg.get("news_sentiment_score_enabled", False))
                 ns_exit = bool(cfg.get("news_sentiment_exit_enabled", False))
-                if ns_filter or ns_score or ns_exit:
+                ns_trail = bool(cfg.get("news_sentiment_trail_enabled", False))
+                if ns_filter or ns_score or ns_exit or ns_trail:
                     try:
                         import boto3, io as _io
                         import pandas as _pd
@@ -4183,6 +4184,16 @@ def handler(event, context):
                             bt.news_sentiment_exit_threshold = float(cfg["news_sentiment_exit_threshold"])
                         if "news_sentiment_exit_lookback_days" in cfg:
                             bt.news_sentiment_exit_lookback_days = int(cfg["news_sentiment_exit_lookback_days"])
+                    if ns_trail:
+                        bt.news_sentiment_trail_enabled = True
+                        if "news_sentiment_trail_scale" in cfg:
+                            bt.news_sentiment_trail_scale = float(cfg["news_sentiment_trail_scale"])
+                        if "news_sentiment_trail_lookback_days" in cfg:
+                            bt.news_sentiment_trail_lookback_days = int(cfg["news_sentiment_trail_lookback_days"])
+                        if "news_sentiment_trail_min_pct" in cfg:
+                            bt.news_sentiment_trail_min_pct = float(cfg["news_sentiment_trail_min_pct"])
+                        if "news_sentiment_trail_max_pct" in cfg:
+                            bt.news_sentiment_trail_max_pct = float(cfg["news_sentiment_trail_max_pct"])
                 # Cascade Guard pause basket (M1 — universal-rule compound)
                 if "cb_pause_basket_enabled" in cfg:
                     bt.cb_pause_basket_enabled = bool(cfg["cb_pause_basket_enabled"])
@@ -4292,6 +4303,11 @@ def handler(event, context):
                     "news_sentiment_exit_enabled": bt.news_sentiment_exit_enabled,
                     "news_sentiment_exit_threshold": bt.news_sentiment_exit_threshold,
                     "news_sentiment_exit_lookback_days": bt.news_sentiment_exit_lookback_days,
+                    "news_sentiment_trail_enabled": bt.news_sentiment_trail_enabled,
+                    "news_sentiment_trail_scale": bt.news_sentiment_trail_scale,
+                    "news_sentiment_trail_lookback_days": bt.news_sentiment_trail_lookback_days,
+                    "news_sentiment_trail_min_pct": bt.news_sentiment_trail_min_pct,
+                    "news_sentiment_trail_max_pct": bt.news_sentiment_trail_max_pct,
                     "news_sentiment_symbol_count_loaded": len(bt.symbol_news_sentiment),
                     "universe_size": max_symbols,
                     "strategy_type": strategy_type,
