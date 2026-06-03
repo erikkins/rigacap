@@ -4104,6 +4104,8 @@ def handler(event, context):
                         bt.sector_rs_min_threshold = float(cfg["sector_rs_min_threshold"])
                     if "sector_rs_score_weight" in cfg:
                         bt.sector_rs_score_weight = float(cfg["sector_rs_score_weight"])
+                    if "sector_rs_regime_gated" in cfg:
+                        bt.sector_rs_regime_gated = bool(cfg["sector_rs_regime_gated"])
                 # Cascade Guard pause basket (M1 — universal-rule compound)
                 if "cb_pause_basket_enabled" in cfg:
                     bt.cb_pause_basket_enabled = bool(cfg["cb_pause_basket_enabled"])
@@ -4196,6 +4198,7 @@ def handler(event, context):
                     "sector_rs_lookback_days": bt.sector_rs_lookback_days,
                     "sector_rs_min_threshold": bt.sector_rs_min_threshold,
                     "sector_rs_score_weight": bt.sector_rs_score_weight,
+                    "sector_rs_regime_gated": bt.sector_rs_regime_gated,
                     "sector_count_loaded": len(bt.symbol_sectors),
                     "universe_size": max_symbols,
                     "strategy_type": strategy_type,

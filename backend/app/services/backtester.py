@@ -303,7 +303,15 @@ class BacktesterService:
         self.sector_rs_min_threshold = 0.0      # require strictly positive RS by default
         self.sector_rs_score_enabled = False
         self.sector_rs_score_weight = 0.2       # additive weight in composite score
+        # Regime gate — use the full 7-regime classifier from market_regime.py
+        # to gate sector RS to bull/rotating/recovery regimes only.
+        self.sector_rs_regime_gated = False
+        # Regimes where sector RS is applied (when gate active).
+        # Blocked: range_bound, weak_bear, panic_crash.
+        self.sector_rs_allowed_regimes = {'strong_bull', 'weak_bull', 'rotating_bull', 'recovery'}
         self._sector_medians_cache: Dict[str, Dict[str, float]] = {}  # date_str → {sector: median_return}
+        self._regime_classifier = None  # lazy-init MarketRegimeService
+        self._regime_cache: Dict[str, Optional[str]] = {}  # date_str → regime_type string
 
         # Cascade Guard pause basket (universal-rule compound add).
         # When CG pause activates after a 3-stop cascade, enter equal-weighted
@@ -661,6 +669,42 @@ class BacktesterService:
         if sec_median is None:
             return None
         return sym_ret - sec_median
+
+    # Sector RS regime gate uses the full 7-regime classifier from
+    # market_regime.py. Sector RS only applies when regime is in
+    # SECTOR_RS_ALLOWED_REGIMES (bullish/rotating/recovery — block in
+    # range-bound, weak-bear, panic-crash).
+    # Cached per-date because detect_regime is moderately expensive.
+    def _get_regime_for(self, date: pd.Timestamp) -> Optional[str]:
+        """
+        Return regime_type string for the given date using the production
+        MarketRegimeService classifier. Cached by date_str.
+        Returns None if SPY data unavailable.
+        """
+        date_str = date.strftime('%Y-%m-%d')
+        if date_str in self._regime_cache:
+            return self._regime_cache[date_str]
+        if self._regime_classifier is None:
+            from app.services.market_regime import MarketRegimeService
+            self._regime_classifier = MarketRegimeService()
+        spy_df = scanner_service.data_cache.get('SPY')
+        if spy_df is None or spy_df.empty:
+            self._regime_cache[date_str] = None
+            return None
+        vix_df = scanner_service.data_cache.get('^VIX')
+        try:
+            # Pass the full data_cache as universe_dfs so breadth metrics work.
+            regime = self._regime_classifier.detect_regime(
+                spy_df=spy_df,
+                universe_dfs=scanner_service.data_cache,
+                vix_df=vix_df,
+                as_of_date=date,
+            )
+            rt = regime.regime_type.value if hasattr(regime.regime_type, 'value') else str(regime.regime_type)
+        except Exception as e:
+            rt = None
+        self._regime_cache[date_str] = rt
+        return rt
 
     def _check_market_regime(self, date: pd.Timestamp, panic_only: bool = False) -> bool:
         """
@@ -1111,10 +1155,20 @@ class BacktesterService:
         passes_breakout = dist_from_high >= -self.near_50d_high_pct
         passes_quality = passes_trend and passes_breakout
 
-        # Sector RS computation (used by RS1 filter AND RS3 additive)
+        # Sector RS computation (used by RS1 filter AND RS3 additive).
+        # When regime-gated, only apply during regimes in
+        # sector_rs_allowed_regimes (default: bull/rotating/recovery).
+        # Uses the prod MarketRegimeService classifier (per-date cached).
+        # Avoids the bull-overfit pattern seen in RS3 yesterday.
         sector_rs = None
         if self.sector_rs_filter_enabled or self.sector_rs_score_enabled:
-            sector_rs = self._get_sector_rs(symbol, date)
+            apply = True
+            if self.sector_rs_regime_gated:
+                rt = self._get_regime_for(date)
+                if rt is None or rt not in self.sector_rs_allowed_regimes:
+                    apply = False
+            if apply:
+                sector_rs = self._get_sector_rs(symbol, date)
 
         # RS1: BINARY filter — reject candidate if sector RS ≤ threshold
         # (When sector data missing/insufficient → None → SKIP filter, do not reject.
