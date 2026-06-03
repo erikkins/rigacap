@@ -313,6 +313,30 @@ class BacktesterService:
         self._regime_classifier = None  # lazy-init MarketRegimeService
         self._regime_cache: Dict[str, Optional[str]] = {}  # date_str → regime_type string
 
+        # News-volume signal (orthogonal alpha, Jun 3 2026).
+        # Article counts per (symbol, date) pulled from Alpaca News API.
+        # news_spike = trailing 7d count / 30d avg count. >1 = elevated attention.
+        # CRITICAL: counts have NO polarity (lawsuit/fraud spike too) — must be
+        # paired with same-day price-direction filter (today_pct > 0). Without
+        # this, NV catches knives on bad-news spikes.
+        # Three modes (mutually compatible):
+        #   filter: hard-reject if news_spike < threshold OR today_pct ≤ 0
+        #   boost:  +score when news_spike ≥ threshold AND today_pct > 0
+        #   regime_gated: filter mode active only in bull/rotational regimes
+        # symbol_news_counts populated by Lambda handler from S3 parquet,
+        # keyed by symbol → {date_iso: count}.
+        self.symbol_news_counts: Dict[str, Dict[str, int]] = {}
+        self.news_volume_filter_enabled = False
+        self.news_volume_score_enabled = False
+        self.news_volume_regime_gated = False
+        self.news_volume_threshold = 1.5         # spike ratio for filter
+        self.news_volume_score_threshold = 2.0   # spike ratio for boost
+        self.news_volume_score_weight = 10.0     # additive bonus to composite
+        self.news_volume_lookback_short = 7      # numerator window (days)
+        self.news_volume_lookback_long = 30      # denominator window (days)
+        self.news_volume_allowed_regimes = {'strong_bull', 'weak_bull', 'rotating_bull', 'recovery'}
+        self._news_spike_cache: Dict[tuple, Optional[float]] = {}  # (symbol, date_str) → spike
+
         # Cascade Guard pause basket (universal-rule compound add).
         # When CG pause activates after a 3-stop cascade, enter equal-weighted
         # basket of mega-caps with own trailing stop. Captures post-shock
@@ -705,6 +729,41 @@ class BacktesterService:
             rt = None
         self._regime_cache[date_str] = rt
         return rt
+
+    def _get_news_spike(self, symbol: str, date: pd.Timestamp) -> Optional[float]:
+        """
+        Return news_spike = (sum of last `news_volume_lookback_short` days)
+        / (avg over last `news_volume_lookback_long` days).
+        Returns None when symbol has no news data at all (skip filter).
+        Returns 1.0 when the long window is empty but short isn't (no spike claim).
+        Date is the bar date; window is [date-long, date-1] (exclusive of today
+        so we don't peek at news that arrived post-decision).
+        """
+        date_str = date.strftime('%Y-%m-%d')
+        cache_key = (symbol, date_str)
+        if cache_key in self._news_spike_cache:
+            return self._news_spike_cache[cache_key]
+        counts = self.symbol_news_counts.get(symbol)
+        if not counts:
+            self._news_spike_cache[cache_key] = None
+            return None
+        short_n = self.news_volume_lookback_short
+        long_n = self.news_volume_lookback_long
+        short_sum = 0
+        long_sum = 0
+        for offset in range(1, long_n + 1):
+            d = (date - pd.Timedelta(days=offset)).strftime('%Y-%m-%d')
+            c = counts.get(d, 0)
+            long_sum += c
+            if offset <= short_n:
+                short_sum += c
+        if long_sum == 0:
+            self._news_spike_cache[cache_key] = None
+            return None
+        long_avg_per_short_window = long_sum * (short_n / long_n)
+        spike = short_sum / long_avg_per_short_window if long_avg_per_short_window > 0 else None
+        self._news_spike_cache[cache_key] = spike
+        return spike
 
     def _check_market_regime(self, date: pd.Timestamp, panic_only: bool = False) -> bool:
         """
@@ -1177,6 +1236,31 @@ class BacktesterService:
             if sector_rs <= self.sector_rs_min_threshold:
                 passes_quality = False
 
+        # News-volume signal (NV1/NV2/NV3). News counts have NO polarity;
+        # require same-day price-direction confirmation (today_pct > 0) to
+        # filter out bad-news spikes (lawsuit, fraud, earnings miss).
+        # Computed once for both filter and score paths.
+        news_spike = None
+        today_pct = None
+        if self.news_volume_filter_enabled or self.news_volume_score_enabled:
+            apply = True
+            if self.news_volume_regime_gated:
+                rt = self._get_regime_for(date)
+                if rt is None or rt not in self.news_volume_allowed_regimes:
+                    apply = False
+            if apply:
+                news_spike = self._get_news_spike(symbol, date)
+                if loc >= 1:
+                    prev_close = df['close'].iloc[loc - 1]
+                    if prev_close > 0:
+                        today_pct = (price / prev_close - 1) * 100
+
+        # NV1: BINARY filter — reject if spike high but price NOT up today,
+        # OR if spike below threshold. Missing news data → skip filter (None).
+        if self.news_volume_filter_enabled and news_spike is not None and today_pct is not None:
+            if news_spike < self.news_volume_threshold or today_pct <= 0:
+                passes_quality = False
+
         # Composite score
         composite_score = (
             short_mom * self.short_mom_weight +
@@ -1187,6 +1271,12 @@ class BacktesterService:
         # RS3: ADDITIVE — sector RS contributes to composite (no rejection)
         if self.sector_rs_score_enabled and sector_rs is not None:
             composite_score += sector_rs * self.sector_rs_score_weight
+
+        # NV2: ADDITIVE boost — only when spike AND price-positive day
+        if (self.news_volume_score_enabled and news_spike is not None
+                and today_pct is not None and today_pct > 0
+                and news_spike >= self.news_volume_score_threshold):
+            composite_score += self.news_volume_score_weight
 
         # Liquidity tier bonus
         if self.tier1_bonus > 0 and symbol in self.tier1_set:
@@ -1202,6 +1292,8 @@ class BacktesterService:
             'passes_quality': passes_quality,
             'dist_from_high': dist_from_high,
             'sector_rs': sector_rs,
+            'news_spike': news_spike,
+            'today_pct': today_pct,
         }
 
     def _request_pause(self, current_date, source: str, days: int, context: Optional[Dict] = None):

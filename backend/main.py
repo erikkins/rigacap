@@ -4106,6 +4106,43 @@ def handler(event, context):
                         bt.sector_rs_score_weight = float(cfg["sector_rs_score_weight"])
                     if "sector_rs_regime_gated" in cfg:
                         bt.sector_rs_regime_gated = bool(cfg["sector_rs_regime_gated"])
+                # News-volume signal (NV1/NV2/NV3 — orthogonal alpha Jun 3 2026)
+                nv_filter = bool(cfg.get("news_volume_filter_enabled", False))
+                nv_score = bool(cfg.get("news_volume_score_enabled", False))
+                if nv_filter or nv_score:
+                    try:
+                        import boto3, io as _io
+                        import pandas as _pd
+                        _s3 = boto3.client("s3", region_name="us-east-1")
+                        _obj = _s3.get_object(
+                            Bucket="rigacap-prod-price-data-149218244179",
+                            Key="research/news_counts/counts.parquet")
+                        _df = _pd.read_parquet(_io.BytesIO(_obj["Body"].read()))
+                        _counts_by_sym = {}
+                        for sym, grp in _df.groupby("symbol"):
+                            _counts_by_sym[sym] = {
+                                d.strftime('%Y-%m-%d') if hasattr(d, 'strftime') else str(d)[:10]: int(c)
+                                for d, c in zip(grp["date"], grp["article_count"])
+                            }
+                        bt.symbol_news_counts = _counts_by_sym
+                        print(f"[native_backtest] Loaded news counts for {len(bt.symbol_news_counts)} symbols")
+                    except Exception as e:
+                        print(f"[native_backtest] WARN news load failed: {e}")
+                        bt.symbol_news_counts = {}
+                    bt.news_volume_filter_enabled = nv_filter
+                    bt.news_volume_score_enabled = nv_score
+                    if "news_volume_threshold" in cfg:
+                        bt.news_volume_threshold = float(cfg["news_volume_threshold"])
+                    if "news_volume_score_threshold" in cfg:
+                        bt.news_volume_score_threshold = float(cfg["news_volume_score_threshold"])
+                    if "news_volume_score_weight" in cfg:
+                        bt.news_volume_score_weight = float(cfg["news_volume_score_weight"])
+                    if "news_volume_lookback_short" in cfg:
+                        bt.news_volume_lookback_short = int(cfg["news_volume_lookback_short"])
+                    if "news_volume_lookback_long" in cfg:
+                        bt.news_volume_lookback_long = int(cfg["news_volume_lookback_long"])
+                    if "news_volume_regime_gated" in cfg:
+                        bt.news_volume_regime_gated = bool(cfg["news_volume_regime_gated"])
                 # Cascade Guard pause basket (M1 — universal-rule compound)
                 if "cb_pause_basket_enabled" in cfg:
                     bt.cb_pause_basket_enabled = bool(cfg["cb_pause_basket_enabled"])
@@ -4200,6 +4237,13 @@ def handler(event, context):
                     "sector_rs_score_weight": bt.sector_rs_score_weight,
                     "sector_rs_regime_gated": bt.sector_rs_regime_gated,
                     "sector_count_loaded": len(bt.symbol_sectors),
+                    "news_volume_filter_enabled": bt.news_volume_filter_enabled,
+                    "news_volume_score_enabled": bt.news_volume_score_enabled,
+                    "news_volume_threshold": bt.news_volume_threshold,
+                    "news_volume_score_threshold": bt.news_volume_score_threshold,
+                    "news_volume_score_weight": bt.news_volume_score_weight,
+                    "news_volume_regime_gated": bt.news_volume_regime_gated,
+                    "news_symbol_count_loaded": len(bt.symbol_news_counts),
                     "universe_size": max_symbols,
                     "strategy_type": strategy_type,
                     "total_return_pct": result.total_return_pct,
