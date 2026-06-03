@@ -4143,6 +4143,39 @@ def handler(event, context):
                         bt.news_volume_lookback_long = int(cfg["news_volume_lookback_long"])
                     if "news_volume_regime_gated" in cfg:
                         bt.news_volume_regime_gated = bool(cfg["news_volume_regime_gated"])
+                # News-SENTIMENT (Path B — Haiku-scored polarity)
+                ns_filter = bool(cfg.get("news_sentiment_filter_enabled", False))
+                ns_score = bool(cfg.get("news_sentiment_score_enabled", False))
+                if ns_filter or ns_score:
+                    try:
+                        import boto3, io as _io
+                        import pandas as _pd
+                        _s3 = boto3.client("s3", region_name="us-east-1")
+                        _obj = _s3.get_object(
+                            Bucket="rigacap-prod-price-data-149218244179",
+                            Key="research/news_sentiment/sentiment_daily.parquet")
+                        _df = _pd.read_parquet(_io.BytesIO(_obj["Body"].read()))
+                        _sent_by_sym = {}
+                        for sym, grp in _df.groupby("symbol"):
+                            _sent_by_sym[sym] = {
+                                d.strftime('%Y-%m-%d') if hasattr(d, 'strftime') else str(d)[:10]: float(s)
+                                for d, s in zip(grp["date"], grp["sentiment_mean"])
+                            }
+                        bt.symbol_news_sentiment = _sent_by_sym
+                        print(f"[native_backtest] Loaded sentiment for {len(bt.symbol_news_sentiment)} symbols")
+                    except Exception as e:
+                        print(f"[native_backtest] WARN sentiment load failed: {e}")
+                        bt.symbol_news_sentiment = {}
+                    bt.news_sentiment_filter_enabled = ns_filter
+                    bt.news_sentiment_score_enabled = ns_score
+                    if "news_sentiment_threshold" in cfg:
+                        bt.news_sentiment_threshold = float(cfg["news_sentiment_threshold"])
+                    if "news_sentiment_score_weight" in cfg:
+                        bt.news_sentiment_score_weight = float(cfg["news_sentiment_score_weight"])
+                    if "news_sentiment_lookback_days" in cfg:
+                        bt.news_sentiment_lookback_days = int(cfg["news_sentiment_lookback_days"])
+                    if "news_sentiment_regime_gated" in cfg:
+                        bt.news_sentiment_regime_gated = bool(cfg["news_sentiment_regime_gated"])
                 # Cascade Guard pause basket (M1 — universal-rule compound)
                 if "cb_pause_basket_enabled" in cfg:
                     bt.cb_pause_basket_enabled = bool(cfg["cb_pause_basket_enabled"])
@@ -4244,6 +4277,12 @@ def handler(event, context):
                     "news_volume_score_weight": bt.news_volume_score_weight,
                     "news_volume_regime_gated": bt.news_volume_regime_gated,
                     "news_symbol_count_loaded": len(bt.symbol_news_counts),
+                    "news_sentiment_filter_enabled": bt.news_sentiment_filter_enabled,
+                    "news_sentiment_score_enabled": bt.news_sentiment_score_enabled,
+                    "news_sentiment_threshold": bt.news_sentiment_threshold,
+                    "news_sentiment_score_weight": bt.news_sentiment_score_weight,
+                    "news_sentiment_regime_gated": bt.news_sentiment_regime_gated,
+                    "news_sentiment_symbol_count_loaded": len(bt.symbol_news_sentiment),
                     "universe_size": max_symbols,
                     "strategy_type": strategy_type,
                     "total_return_pct": result.total_return_pct,

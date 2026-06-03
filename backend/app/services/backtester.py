@@ -337,6 +337,24 @@ class BacktesterService:
         self.news_volume_allowed_regimes = {'strong_bull', 'weak_bull', 'rotating_bull', 'recovery'}
         self._news_spike_cache: Dict[tuple, Optional[float]] = {}  # (symbol, date_str) → spike
 
+        # News-SENTIMENT signal (Path B, Jun 3 2026). Replaces the today_pct
+        # polarity proxy from Path A. Pre-scored via Claude Haiku per article,
+        # aggregated to per-(symbol, date) mean in [-1, +1].
+        # symbol_news_sentiment populated by Lambda from sentiment_daily.parquet,
+        # keyed by symbol → {date_iso: mean_sentiment_score}.
+        # Modes (compatible with news_volume above):
+        #   sentiment_filter: hard-reject if mean_sentiment < threshold
+        #   sentiment_score:  +composite_score = weight × sentiment (continuous)
+        #   sentiment_regime_gated: filter applies only in bull/rotational regimes
+        # When BOTH sentiment_filter and news_volume_filter are on, BOTH must pass.
+        self.symbol_news_sentiment: Dict[str, Dict[str, float]] = {}
+        self.news_sentiment_filter_enabled = False
+        self.news_sentiment_score_enabled = False
+        self.news_sentiment_regime_gated = False
+        self.news_sentiment_threshold = 0.0          # minimum mean_sentiment for filter
+        self.news_sentiment_score_weight = 10.0      # additive composite contribution
+        self.news_sentiment_lookback_days = 1        # use [date-N, date-1] mean
+
         # Cascade Guard pause basket (universal-rule compound add).
         # When CG pause activates after a 3-stop cascade, enter equal-weighted
         # basket of mega-caps with own trailing stop. Captures post-shock
@@ -764,6 +782,26 @@ class BacktesterService:
         spike = short_sum / long_avg_per_short_window if long_avg_per_short_window > 0 else None
         self._news_spike_cache[cache_key] = spike
         return spike
+
+    def _get_news_sentiment(self, symbol: str, date: pd.Timestamp) -> Optional[float]:
+        """
+        Return mean sentiment score in [-1, +1] for the previous trading day(s).
+        Uses [date - lookback_days, date - 1] (exclusive of today so we never
+        peek at post-decision news). Returns None when no scored articles in window.
+        """
+        m = self.symbol_news_sentiment.get(symbol)
+        if not m:
+            return None
+        lookback = self.news_sentiment_lookback_days
+        scores = []
+        for offset in range(1, lookback + 1):
+            d = (date - pd.Timedelta(days=offset)).strftime('%Y-%m-%d')
+            v = m.get(d)
+            if v is not None:
+                scores.append(v)
+        if not scores:
+            return None
+        return sum(scores) / len(scores)
 
     def _check_market_regime(self, date: pd.Timestamp, panic_only: bool = False) -> bool:
         """
@@ -1261,6 +1299,22 @@ class BacktesterService:
             if news_spike < self.news_volume_threshold or today_pct <= 0:
                 passes_quality = False
 
+        # NV-P1: SENTIMENT filter (Path B). Replaces today_pct proxy with
+        # Claude-scored mean sentiment of prior days' articles. Missing data
+        # → skip filter (None — same conservative default as NV1/RS1).
+        sentiment_mean = None
+        if self.news_sentiment_filter_enabled or self.news_sentiment_score_enabled:
+            apply_p = True
+            if self.news_sentiment_regime_gated:
+                rt = self._get_regime_for(date)
+                if rt is None or rt not in self.news_volume_allowed_regimes:
+                    apply_p = False
+            if apply_p:
+                sentiment_mean = self._get_news_sentiment(symbol, date)
+        if self.news_sentiment_filter_enabled and sentiment_mean is not None:
+            if sentiment_mean < self.news_sentiment_threshold:
+                passes_quality = False
+
         # Composite score
         composite_score = (
             short_mom * self.short_mom_weight +
@@ -1278,6 +1332,10 @@ class BacktesterService:
                 and news_spike >= self.news_volume_score_threshold):
             composite_score += self.news_volume_score_weight
 
+        # NV-P2: SENTIMENT boost — continuous, weighted by sentiment magnitude
+        if self.news_sentiment_score_enabled and sentiment_mean is not None:
+            composite_score += sentiment_mean * self.news_sentiment_score_weight
+
         # Liquidity tier bonus
         if self.tier1_bonus > 0 and symbol in self.tier1_set:
             composite_score += self.tier1_bonus
@@ -1294,6 +1352,7 @@ class BacktesterService:
             'sector_rs': sector_rs,
             'news_spike': news_spike,
             'today_pct': today_pct,
+            'sentiment_mean': sentiment_mean,
         }
 
     def _request_pause(self, current_date, source: str, days: int, context: Optional[Dict] = None):
