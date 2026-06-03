@@ -355,6 +355,16 @@ class BacktesterService:
         self.news_sentiment_score_weight = 10.0      # additive composite contribution
         self.news_sentiment_lookback_days = 1        # use [date-N, date-1] mean
 
+        # Sentiment-as-EXIT (Jun 3 2026, after entry-filter exhausted v2).
+        # Trigger a position exit when rolling sentiment_mean for that symbol
+        # falls below `news_sentiment_exit_threshold` over the last
+        # `news_sentiment_exit_lookback_days`. Independent of entry filter —
+        # uses the same cached sentiment data via _get_news_sentiment().
+        # exit_reason = 'sentiment_exit'.
+        self.news_sentiment_exit_enabled = False
+        self.news_sentiment_exit_threshold = -0.3    # exit when mean < -0.3
+        self.news_sentiment_exit_lookback_days = 3   # 3-day rolling window
+
         # Cascade Guard pause basket (universal-rule compound add).
         # When CG pause activates after a 3-stop cascade, enter equal-weighted
         # basket of mega-caps with own trailing stop. Captures post-shock
@@ -803,6 +813,25 @@ class BacktesterService:
             return None
         return sum(scores) / len(scores)
 
+    def _get_sentiment_for_exit(self, symbol: str, date: pd.Timestamp) -> Optional[float]:
+        """
+        Exit-side sentiment: rolling mean over `news_sentiment_exit_lookback_days`.
+        Uses [date - lookback, date - 1] (exclusive of today). Distinct lookback
+        from entry filter so the two can be tuned independently.
+        """
+        m = self.symbol_news_sentiment.get(symbol)
+        if not m:
+            return None
+        scores = []
+        for offset in range(1, self.news_sentiment_exit_lookback_days + 1):
+            d = (date - pd.Timedelta(days=offset)).strftime('%Y-%m-%d')
+            v = m.get(d)
+            if v is not None:
+                scores.append(v)
+        if not scores:
+            return None
+        return sum(scores) / len(scores)
+
     def _check_market_regime(self, date: pd.Timestamp, panic_only: bool = False) -> bool:
         """
         Check if market conditions are favorable for holding positions.
@@ -1034,6 +1063,15 @@ class BacktesterService:
         if exit_strategy.stop_loss_pct > 0:
             if pnl_pct <= -exit_strategy.stop_loss_pct:
                 return 'stop_loss'
+
+        # Sentiment-EXIT (Jun 3 2026). Trigger if rolling sentiment mean
+        # for this symbol falls below threshold over the lookback window.
+        # Uses same cached Haiku scores as entry filter, different window.
+        # Skipped when symbol has no sentiment data (missing → don't trigger).
+        if self.news_sentiment_exit_enabled:
+            sent = self._get_sentiment_for_exit(pos['symbol'], current_date)
+            if sent is not None and sent < self.news_sentiment_exit_threshold:
+                return 'sentiment_exit'
 
         strategy_type = exit_strategy.strategy_type
 
