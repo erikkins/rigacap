@@ -380,6 +380,19 @@ class BacktesterService:
         self.news_sentiment_trail_min_pct = 4.0       # never tighter than 4%
         self.news_sentiment_trail_max_pct = 25.0      # never looser than 25%
 
+        # Sentiment-AS-SIZING at entry (Jun 3 2026, last news mechanism).
+        # Scale position_size_pct by recent sentiment momentum:
+        #   effective_size = base × (1 + sentiment_mean × scale)
+        # Clamped to [min_factor, max_factor] to bound risk per position.
+        # Hypothesis: overweight high-conviction (pos sentiment) entries,
+        # underweight low-conviction (neg sentiment). Same position COUNT,
+        # smarter allocation.
+        self.news_sentiment_sizing_enabled = False
+        self.news_sentiment_sizing_scale = 0.5        # ±0.5 sent → ±25% size
+        self.news_sentiment_sizing_lookback_days = 3
+        self.news_sentiment_sizing_min_factor = 0.5   # never less than 50% of base
+        self.news_sentiment_sizing_max_factor = 1.5   # never more than 150% of base
+
         # Cascade Guard pause basket (universal-rule compound add).
         # When CG pause activates after a 3-stop cascade, enter equal-weighted
         # basket of mega-caps with own trailing stop. Captures post-shock
@@ -861,6 +874,30 @@ class BacktesterService:
         if not scores:
             return None
         return sum(scores) / len(scores)
+
+    def _sentiment_size_factor(self, symbol: str, date: pd.Timestamp) -> float:
+        """
+        Return multiplicative factor for position_size_pct at entry, based on
+        recent sentiment momentum. Returns 1.0 when sizing disabled or no data
+        (no change to base size).
+        """
+        if not self.news_sentiment_sizing_enabled:
+            return 1.0
+        m = self.symbol_news_sentiment.get(symbol)
+        if not m:
+            return 1.0
+        scores = []
+        for offset in range(1, self.news_sentiment_sizing_lookback_days + 1):
+            d = (date - pd.Timedelta(days=offset)).strftime('%Y-%m-%d')
+            v = m.get(d)
+            if v is not None:
+                scores.append(v)
+        if not scores:
+            return 1.0
+        sent = sum(scores) / len(scores)
+        factor = 1.0 + (sent * self.news_sentiment_sizing_scale)
+        return max(self.news_sentiment_sizing_min_factor,
+                   min(self.news_sentiment_sizing_max_factor, factor))
 
     def _check_market_regime(self, date: pd.Timestamp, panic_only: bool = False) -> bool:
         """
@@ -2178,7 +2215,7 @@ class BacktesterService:
                         if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date)
+                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date) * self._sentiment_size_factor(cand['symbol'], date)
                         if position_value > capital:
                             continue
 
@@ -2274,7 +2311,7 @@ class BacktesterService:
                         if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date)
+                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date) * self._sentiment_size_factor(cand['symbol'], date)
                         if position_value > capital:
                             continue
 
@@ -2381,7 +2418,7 @@ class BacktesterService:
                         if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date)
+                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date) * self._sentiment_size_factor(cand['symbol'], date)
                         if position_value > capital:
                             continue
 
@@ -2469,7 +2506,7 @@ class BacktesterService:
                         if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date)
+                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date) * self._sentiment_size_factor(cand['symbol'], date)
                         if position_value > capital:
                             continue
 
