@@ -48,4 +48,13 @@ Recent looks amazing but is April-2025 recovery luck. Through 2022 grinding bear
 
 **PRODUCT DECISION (Erik, Jun 4 — supersedes the add-on framing):** Don't nickel-and-dime full users — basket INCLUDED in full Momentum Strategy (M3). Erik floated a cheaper "lite" tier = VB-alone, but data says NO (fair-weather 30% bear MDD; would hand least-risk-tolerant users the riskiest product). Recommendation on the table: ONE clean product = full Momentum Strategy (basket included, ~21% MDD acceptable). If a cheap tier is still wanted, make it a LIMITED version of the full strategy (delayed signals / top-3 positions), NOT the standalone basket. Awaiting Erik's call.
 
-**Net:** VB is excellent AS AN OVERLAY (base book tames it), dangerous STANDALONE. M3 = the flagship. Supersedes both the wrong "+5.7pp / worsens MDD everywhere" claim AND the "base is the clean core / VB is premium add-on" framing.
+**Confirmation-gate hypothesis TESTED & REJECTED (Jun 4):** Erik asked if a structural fix could salvage VB-alone as a standalone. Implemented an arm-and-wait gate in backtester.py (on VIX cross, ARM symbols; buy each only once it closes > its 5d MA within 20 bars; else drop = falling-knife guard). Local gated-vs-ungated VB-alone (max_positions=0):
+| window | variant | ann | sharpe | mdd | calmar |
+|---|---|---|---|---|---|
+| bear-incl | ungated | 4.4 | 0.29 | 45.0 | 0.10 |
+| bear-incl | GATED | 0.8 | 0.15 | 24.8 | 0.03 |
+| recent 2y | ungated | 28.3 | 2.38 | 6.3 | 4.46 |
+| recent 2y | GATED | 15.7 | 2.23 | 5.8 | 2.71 |
+Gate cuts MDD but cuts RETURN more → **Sharpe AND Calmar WORSE in both windows.** Reason: the basket's edge IS catching the violent V-bottom snapback; waiting for confirmation forfeits exactly that move, and in choppy 2022 "close>5d MA" fires on dead-cat bounces anyway. **You can't separate the upside from the falling-knife risk — same trade.** Clean negative; backtester.py edit REVERTED (git checkout, not shipped). Do NOT TPE-sweep VB: only ~12-20 fire events in 7y = too few to optimize without overfitting; M3-local-max already found param-mining exhausted.
+
+**Net:** VB is excellent AS AN OVERLAY (base book tames it), dangerous/unfixable STANDALONE. M3 = the single flagship, basket included. Supersedes the wrong "+5.7pp" claim, the "base is clean core / VB premium add-on" framing, AND the "cheaper VB-alone lite tier" idea. If a cheap tier is wanted: limited version of full strategy (delayed signals / top-3), not the basket.
