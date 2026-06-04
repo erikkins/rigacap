@@ -413,6 +413,10 @@ class BacktesterService:
         # happens ~5-10× per year vs CB ~once per 3y). One trigger per VIX
         # spike event because basket only enters when positions_basket is empty.
         self.cb_pause_basket_vix_trigger = 0.0  # 0 = disabled
+        # Optional point-in-time basket: sorted [(Timestamp, [syms])]; when set,
+        # the fire selects the snapshot effective as-of the fire date (research
+        # look-ahead check vs the static list). None = use cb_pause_basket_symbols.
+        self.cb_pause_basket_dynamic = None
         # Pyramiding / doubling down on winners
         self.pyramid_threshold_pct = 0    # Add to position once up X%; 0=disabled
         self.pyramid_size_pct = 0.0       # Size of the add-on position (% of initial capital)
@@ -545,6 +549,22 @@ class BacktesterService:
         except (KeyError, IndexError):
             pass
         return None
+
+    def _basket_syms_asof(self, date) -> list:
+        """Basket symbols effective as-of `date`. With a point-in-time mapping
+        (cb_pause_basket_dynamic) set, pick the latest snapshot on/before date;
+        else the static list. Used for the look-ahead validation."""
+        dyn = getattr(self, 'cb_pause_basket_dynamic', None)
+        if not dyn:
+            return self.cb_pause_basket_symbols
+        d = pd.Timestamp(date)
+        chosen = dyn[0][1]
+        for snap_date, syms in dyn:
+            if snap_date <= d:
+                chosen = syms
+            else:
+                break
+        return chosen
 
     def _days_between(self, date1: pd.Timestamp, date2) -> int:
         """
@@ -1933,7 +1953,7 @@ class BacktesterService:
                         and prev_vix <= self.cb_pause_basket_vix_trigger
                         and cur_vix_for_trigger > self.cb_pause_basket_vix_trigger):
                     basket_alloc_per = capital * self.cb_pause_basket_position_size_pct / 100
-                    for basket_sym in self.cb_pause_basket_symbols:
+                    for basket_sym in self._basket_syms_asof(date):
                         if basket_sym in positions_basket:
                             continue
                         if basket_sym not in scanner_service.data_cache:

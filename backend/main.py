@@ -4030,6 +4030,12 @@ def handler(event, context):
                 # Use defaults from a fresh backtester for force-add purposes
                 from app.services.backtester import BacktesterService as _BS
                 basket_syms = _BS().cb_pause_basket_symbols
+            basket_syms = list(basket_syms)
+            # Point-in-time basket: force-add the union of all snapshot symbols
+            # so names that drop out of the live universe (BRK-B, JPM, ...) are
+            # still tradable when a historical snapshot calls for them.
+            for _d, _syms in (cfg.get("cb_pause_basket_dynamic") or []):
+                basket_syms.extend(_syms)
             for bs in basket_syms:
                 if bs in full_cache and bs not in scanner_service.data_cache:
                     scanner_service.data_cache[bs] = full_cache[bs]
@@ -4210,6 +4216,13 @@ def handler(event, context):
                     bt.cb_pause_basket_enabled = bool(cfg["cb_pause_basket_enabled"])
                 if "cb_pause_basket_symbols" in cfg:
                     bt.cb_pause_basket_symbols = list(cfg["cb_pause_basket_symbols"])
+                if cfg.get("cb_pause_basket_dynamic"):
+                    # Point-in-time basket: [[date_str, [syms]], ...] -> sorted
+                    # [(Timestamp, [syms])]. Research look-ahead validation.
+                    import pandas as _pd
+                    bt.cb_pause_basket_dynamic = sorted(
+                        [(_pd.Timestamp(_d), list(_syms)) for _d, _syms in cfg["cb_pause_basket_dynamic"]],
+                        key=lambda x: x[0])
                 if "cb_pause_basket_position_size_pct" in cfg:
                     bt.cb_pause_basket_position_size_pct = float(cfg["cb_pause_basket_position_size_pct"])
                 if "cb_pause_basket_trail_pct" in cfg:
