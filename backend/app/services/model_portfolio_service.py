@@ -68,6 +68,16 @@ POSITION_SIZE_PCT = 0.15  # 15% of available cash per position
 TRAILING_STOP_PCT = 12.0
 STARTING_CAPITAL = 100_000.0
 
+# Volatility Basket overlay (M3). On a VIX>30 cross-up, buy a fixed mega-cap
+# basket at 10% of cash each with an 8% trail, tracked as position_kind='basket'
+# — parallel to the core book (does NOT consume the 6 core slots), exits only on
+# its own trail (survives regime cash mode + biweekly rebalance). Mirrors the
+# backtester cb_pause_basket_* VIX-trigger overlay validated as M3.
+VB_VIX_TRIGGER = 30.0
+VB_BASKET_SYMBOLS = ("NVDA", "TSLA", "AAPL", "MSFT", "AMZN", "GOOGL", "META")
+VB_BASKET_SIZE_PCT = 0.10   # 10% of current cash per basket position
+VB_BASKET_TRAIL_PCT = 8.0   # own trail, tighter than the core 12%
+
 # Intraday-stop kill switch (May 3 2026):
 # b-full WF validation showed intraday trailing stops cost ~17 pp annualized
 # vs EOD-only over 7y (Lambda jobs 1226 vs 1227). Production decision: switch
@@ -126,14 +136,19 @@ class ModelPortfolioService:
         return state
 
     async def _get_open_positions(
-        self, db: AsyncSession, portfolio_type: str
+        self, db: AsyncSession, portfolio_type: str,
+        position_kinds: Optional[List[str]] = None,
     ) -> List[ModelPosition]:
-        result = await db.execute(
-            select(ModelPosition).where(
-                ModelPosition.portfolio_type == portfolio_type,
-                ModelPosition.status == "open",
-            )
+        """Open positions for a portfolio. position_kinds=None returns ALL
+        (core + basket) — used by summary/snapshot. Core entry/exit pass
+        ['core']; the Volatility Basket methods pass ['basket']."""
+        q = select(ModelPosition).where(
+            ModelPosition.portfolio_type == portfolio_type,
+            ModelPosition.status == "open",
         )
+        if position_kinds is not None:
+            q = q.where(ModelPosition.position_kind.in_(position_kinds))
+        result = await db.execute(q)
         return list(result.scalars().all())
 
     # ------------------------------------------------------------------
@@ -174,7 +189,9 @@ class ModelPortfolioService:
                 return {"entries": 0, "reason": "Not a WF period boundary"}
 
         state = await self._get_or_create_state(db, portfolio_type)
-        open_positions = await self._get_open_positions(db, portfolio_type)
+        # Core slots only — basket positions run in parallel and must NOT count
+        # against the 6-slot core limit.
+        open_positions = await self._get_open_positions(db, portfolio_type, position_kinds=["core"])
         open_count = len(open_positions)
 
         if open_count >= MAX_POSITIONS:
@@ -271,8 +288,11 @@ class ModelPortfolioService:
         — when set, the trailing-stop fire happens regardless of the
         INTRADAY_TRAILING_STOP_ENABLED kill switch (b-full validation showed
         EOD trailing stops are positive; only intraday firing was negative).
+
+        Core positions only — Volatility Basket positions exit via
+        process_basket_exits (own 8% trail, no regime exit).
         """
-        positions = await self._get_open_positions(db, "live")
+        positions = await self._get_open_positions(db, "live", position_kinds=["core"])
         if not positions:
             return []
 
@@ -334,8 +354,11 @@ class ModelPortfolioService:
         Called once daily after market close.
         Checks all open WF positions using daily close prices.
         Force-closes all if today is a biweekly boundary (rebalance_exit).
+
+        Core positions only — the Volatility Basket survives rebalance
+        boundaries and exits via process_basket_exits (own 8% trail).
         """
-        positions = await self._get_open_positions(db, "walkforward")
+        positions = await self._get_open_positions(db, "walkforward", position_kinds=["core"])
         if not positions:
             return []
 
@@ -381,6 +404,98 @@ class ModelPortfolioService:
         if is_boundary:
             self._last_wf_period_processed = current_period
 
+        return closed
+
+    # ------------------------------------------------------------------
+    # Volatility Basket overlay (M3) — VIX>30 mega-cap basket
+    # ------------------------------------------------------------------
+
+    async def process_basket_entries(
+        self, db: AsyncSession, portfolio_type: str,
+        vix_today: Optional[float], vix_prev: Optional[float],
+        basket_prices: Dict[str, float],
+    ) -> dict:
+        """Volatility Basket entry. On a VIX>30 cross-up (today > trigger, prior
+        <= trigger), buy each basket mega-cap not already held as an open basket
+        position, at VB_BASKET_SIZE_PCT of current cash. Parallel to the core
+        book (position_kind='basket') — does NOT consume core slots. The
+        already-held skip makes a same-day re-invoke idempotent, and the cross
+        condition fires once per spike (next day prev_vix > trigger). Mirrors the
+        backtester cb_pause_basket VIX-trigger overlay."""
+        if portfolio_type not in PORTFOLIO_TYPES:
+            return {"entries": 0, "reason": f"Invalid portfolio type: {portfolio_type}"}
+        if vix_today is None or vix_prev is None:
+            return {"entries": 0, "reason": "VIX unavailable"}
+        if not (vix_prev <= VB_VIX_TRIGGER and vix_today > VB_VIX_TRIGGER):
+            return {"entries": 0, "reason": f"No VIX cross-up (prev={vix_prev}, today={vix_today})"}
+
+        state = await self._get_or_create_state(db, portfolio_type)
+        open_basket = await self._get_open_positions(db, portfolio_type, position_kinds=["basket"])
+        held = {p.symbol for p in open_basket}
+
+        entries = 0
+        fired_at = datetime.utcnow()
+        for symbol in VB_BASKET_SYMBOLS:
+            if symbol in held:
+                continue
+            price = basket_prices.get(symbol)
+            if not price or price <= 0:
+                continue
+            alloc = state.current_cash * VB_BASKET_SIZE_PCT
+            if alloc < 100:
+                break
+            db.add(ModelPosition(
+                portfolio_type=portfolio_type,
+                symbol=symbol,
+                entry_date=fired_at,
+                entry_price=price,
+                shares=alloc / price,
+                cost_basis=alloc,
+                highest_price=price,
+                status="open",
+                position_kind="basket",
+                signal_data_json=json.dumps({
+                    "source": "volatility_basket",
+                    "vix_trigger": VB_VIX_TRIGGER,
+                    "vix_at_entry": round(vix_today, 2),
+                    "trail_pct": VB_BASKET_TRAIL_PCT,
+                }),
+            ))
+            state.current_cash -= alloc
+            entries += 1
+            logger.warning(
+                f"[VB-{portfolio_type.upper()}] Basket BUY {symbol} @ ${price:.2f} "
+                f"(${alloc:,.0f}) — VIX {vix_today:.1f} cross-up above {VB_VIX_TRIGGER}"
+            )
+
+        if entries:
+            state.updated_at = fired_at
+            await db.commit()
+        return {"entries": entries, "vix": vix_today, "cash_remaining": round(state.current_cash, 2)}
+
+    async def process_basket_exits(
+        self, db: AsyncSession, portfolio_type: str,
+        prices: Dict[str, float], day_highs: Optional[Dict[str, float]] = None,
+    ) -> List[dict]:
+        """Volatility Basket exit — own VB_BASKET_TRAIL_PCT (8%) trailing stop on
+        EOD closes. Basket positions are exempt from regime exits and rebalance
+        force-close (they survive cash mode), so this trail is their only exit
+        path. Mirrors the backtester's basket_trail."""
+        positions = await self._get_open_positions(db, portfolio_type, position_kinds=["basket"])
+        if not positions:
+            return []
+        closed = []
+        for pos in positions:
+            price = prices.get(pos.symbol)
+            if price is None:
+                continue
+            hwm_price = max(price, (day_highs or {}).get(pos.symbol, price))
+            if hwm_price > (pos.highest_price or pos.entry_price):
+                pos.highest_price = hwm_price
+            hwm = pos.highest_price or pos.entry_price
+            if price <= hwm * (1 - VB_BASKET_TRAIL_PCT / 100):
+                closed.append(await self._close_position(db, pos, price, "basket_trail"))
+        await db.commit()
         return closed
 
     # ------------------------------------------------------------------

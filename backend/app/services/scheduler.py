@@ -27,6 +27,30 @@ from app.services.stock_universe import MUST_INCLUDE
 
 logger = logging.getLogger(__name__)
 
+
+def _vb_market_data():
+    """Read the data the Volatility Basket needs from the warm scanner cache
+    (populated by the daily scan): ^VIX last-two closes for the cross-up test,
+    plus each basket mega-cap's latest close + day-high. ^VIX is a scanner
+    REQUIRED_SYMBOL so it's always present. Returns (vix_today, vix_prev,
+    prices, day_highs); VIX values are None if unavailable (basket no-ops)."""
+    from app.services.model_portfolio_service import VB_BASKET_SYMBOLS
+    cache = scanner_service.data_cache
+    vix_today = vix_prev = None
+    vdf = cache.get('^VIX')
+    if vdf is not None and len(vdf) >= 2:
+        vix_today = float(vdf['close'].iloc[-1])
+        vix_prev = float(vdf['close'].iloc[-2])
+    prices, highs = {}, {}
+    for s in VB_BASKET_SYMBOLS:
+        df = cache.get(s)
+        if df is not None and len(df) >= 1:
+            prices[s] = float(df['close'].iloc[-1])
+            if 'high' in df.columns:
+                highs[s] = float(df['high'].iloc[-1])
+    return vix_today, vix_prev, prices, highs
+
+
 # Admin email for alerts
 ADMIN_EMAIL = "erik@rigacap.com"
 
@@ -194,6 +218,21 @@ class SchedulerService:
                         entry_result = await model_portfolio_service.process_entries(mp_db, ptype)
                         if entry_result.get("entries"):
                             logger.info(f"[MODEL-{ptype.upper()}] Entered {entry_result['entries']} position(s)")
+
+                    # Volatility Basket (M3): VIX>30 cross-up entry + 8% trail exit (EOD).
+                    # Runs AFTER core entries so the basket sizes off remaining cash.
+                    vb_vix_today, vb_vix_prev, vb_prices, vb_highs = _vb_market_data()
+                    for ptype in ("live", "walkforward"):
+                        vb_entry = await model_portfolio_service.process_basket_entries(
+                            mp_db, ptype, vb_vix_today, vb_vix_prev, vb_prices)
+                        if vb_entry.get("entries"):
+                            logger.warning(
+                                f"[VB-{ptype.upper()}] Basket FIRED: {vb_entry['entries']} "
+                                f"position(s) on VIX {vb_entry.get('vix')} cross-up")
+                        vb_exit = await model_portfolio_service.process_basket_exits(
+                            mp_db, ptype, vb_prices, vb_highs)
+                        if vb_exit:
+                            logger.warning(f"[VB-{ptype.upper()}] Basket trail closed {len(vb_exit)} position(s)")
 
                     # WF daily close exit check (trailing stop + rebalance boundary)
                     wf_closed = await model_portfolio_service.process_wf_exits(

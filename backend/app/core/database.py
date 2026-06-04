@@ -433,6 +433,10 @@ class ModelPosition(Base):
     pnl_pct = Column(Float, nullable=True)
     signal_data_json = Column(Text, nullable=True)
     status = Column(String(20), default="open", index=True)
+    # 'core' = main ensemble book; 'basket' = Volatility Basket overlay
+    # (VIX>30 mega-cap basket, own 8% trail, doesn't consume core slots).
+    # Column added DB-first via run_migration; server_default keeps inserts safe.
+    position_kind = Column(String(20), nullable=False, default="core", server_default="core")
     social_post_generated = Column(Boolean, default=False)
     autopsy_json = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
