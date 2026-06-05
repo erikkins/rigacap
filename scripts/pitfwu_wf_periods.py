@@ -21,17 +21,23 @@ import pitfwu_veneer as v
 from app.services.scanner import scanner_service, _EXCLUDED_SET
 from app.services.walk_forward_service import walk_forward_service
 from app.core.database import async_session
-from app.services.backtester import BacktesterService
+from app.services.strategy_analyzer import CustomBacktester
 
-# max_hold_days isn't a WF-call param — patch the backtester default so we can
-# sweep the hold horizon (the edge is measured at 60d; does holding longer to
-# capture the right tail help?). Research-only; prod default stays 60.
+# The WF path instantiates CustomBacktester, whose configure() sets
+# max_hold_days + profit_lock from the strategy params (overriding any default).
+# trail/size DO apply (set as direct attrs after configure), but max_hold +
+# profit_lock are ONLY set inside configure — so patch CustomBacktester.configure
+# to set our values AFTER it runs. Research-only; prod default unchanged.
 _MAX_HOLD = 60
-_orig_bt_init = BacktesterService.__init__
-def _bt_init(self, *a, **k):
-    _orig_bt_init(self, *a, **k)
+_PLOCK = 0.0
+_PLOCK_STOP = 8.0
+_orig_configure = CustomBacktester.configure
+def _patched_configure(self, params):
+    _orig_configure(self, params)
     self.max_hold_days = _MAX_HOLD
-BacktesterService.__init__ = _bt_init
+    self.profit_lock_pct = _PLOCK
+    self.profit_lock_stop_pct = _PLOCK_STOP
+CustomBacktester.configure = _patched_configure
 
 _CA = v.load_corp_actions()
 _RAW = {}  # symbol -> raw bars, loaded once and reused across windows
@@ -73,8 +79,8 @@ def _bars(sym, end):
 
 
 async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.0, plock_stop=8.0):
-    global _MAX_HOLD
-    _MAX_HOLD = max_hold
+    global _MAX_HOLD, _PLOCK, _PLOCK_STOP
+    _MAX_HOLD, _PLOCK, _PLOCK_STOP = max_hold, plock, plock_stop
     periods = walk_forward_service._get_period_dates(start, end, "biweekly")
     union = set()
     for ps, pe in periods:
@@ -113,13 +119,16 @@ async def main():
     if len(sys.argv) > 1 and sys.argv[1] == "exit":
         # exit refinement at 20x4.5: trail tightness x hold horizon x profit-lock
         # (label, max_pos, size, trail, max_hold, plock, plock_stop)
+        # trail width is the real exit lever (hold-horizon is moot — 25% trail
+        # already runs winners ~7-8mo). Sweep trail; one plock config to test if
+        # profit-lock binds at all in this path.
         CONFIGS = [
-            ("t12 mh60",            20, 4.5, 12, 60,  0,  8),
-            ("t18 mh60",            20, 4.5, 18, 60,  0,  8),
-            ("t25 mh60 (current)",  20, 4.5, 25, 60,  0,  8),
-            ("t25 mh120",           20, 4.5, 25, 120, 0,  8),
-            ("t25 mh250 (run)",     20, 4.5, 25, 250, 0,  8),
-            ("t25 mh250 plock20-10", 20, 4.5, 25, 250, 20, 10),
+            ("t18",          20, 4.5, 18, 60, 0,  8),
+            ("t25",          20, 4.5, 25, 60, 0,  8),
+            ("t30",          20, 4.5, 30, 60, 0,  8),
+            ("t35",          20, 4.5, 35, 60, 0,  8),
+            ("t40",          20, 4.5, 40, 60, 0,  8),
+            ("t30 plock15-8", 20, 4.5, 30, 60, 15, 8),
         ]
         se = _starts_ends()
         print(f"=== EXIT REFINEMENT (20x4.5) across {len(se)} starts ===")
