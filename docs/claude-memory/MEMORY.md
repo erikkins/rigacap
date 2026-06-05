@@ -1,5 +1,8 @@
 # Stocker App - Key Learnings
 
+## CRITICAL — BACKTEST PICKLE NOT SPLIT-ADJUSTED (Jun 4 2026)
+- **[Backtest pickle has RAW unadjusted splits](project_pickle_split_bug_jun4.md)** — the prod backtest pickle (`prices/all_data.pkl.gz`, Jun-3 pull) has raw stock-split discontinuities (AMZN/GOOGL 20:1, NVDA 10:1, TSLA 3:1, etc.). Any backtest HOLDING a position across a split books a phantom −67% to −95% loss + corrupted indicators. Caused a bogus "M3 bear MDD 38%"; split-adjusting → MDD back to **20.6%** (the cited 21.5% was RIGHT). **PROD live data IS adjusted — pickle only, pull-time dependent.** ALL bear-inclusive/split-window research numbers suspect until re-run on adjusted data (the recurring "M3+addon → 38-40% MDD" pattern may also be this artifact, not the addon). Fix: rebuild pickle `adjustment='all'` + build PITFWU (point-in-time forward-walking universe). Marketing FROZEN until clean re-run.
+
 ## CRITICAL — NEVER WASTE PAID/LONG-RUNNING WORK
 - **[Always checkpoint paid/long-running scripts](feedback_never_keep_paid_work_in_memory.md)** — any script that costs money OR runs >5 min MUST write incremental disk checkpoints. Jun 3 2026: Haiku scorer ran 50 min / $2.43, killed mid-run, ALL work lost because results accumulated in memory. Cheap durable saves beat elegant end-of-run writes EVERY TIME.
 - **[Smoke backtester.py edits locally before pushing](feedback_smoke_locally_before_deploy.md)** — Lambda deploy is auto-CI/CD; a buggy hot-path commit triggers prod-worker error alarms on next invocation. 30 sec local smoke catches 90% of trivial bugs. Jun 3 2026: sentiment-exit `pos['symbol']` KeyError.
