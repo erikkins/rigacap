@@ -61,7 +61,7 @@ def _bars(sym, end):
     return _ind(df)
 
 
-async def wf(start, end):
+async def wf(start, end, max_pos=6, size=15.0, trail=12.0):
     periods = walk_forward_service._get_period_dates(start, end, "biweekly")
     union = set()
     for ps, pe in periods:
@@ -75,16 +75,47 @@ async def wf(start, end):
     walk_forward_service._get_top_symbols_as_of = lambda asof, maxn: _clean(v.universe_asof_prod(asof, maxn * 3, 15.0))[:maxn]
     async with async_session() as db:
         r = await walk_forward_service.run_walk_forward_simulation(
-            db, start, end, enable_ai_optimization=False, fixed_strategy_id=5, max_symbols=100,
+            db, start, end, enable_ai_optimization=False, fixed_strategy_id=6, max_symbols=100,
             reoptimization_frequency="biweekly", carry_positions=True, n_trials=0,
-            max_positions=6, position_size_pct=15.0, dwap_threshold_pct=5.0,
-            near_50d_high_pct=3.0, trailing_stop_pct=12.0)
+            max_positions=max_pos, position_size_pct=size, dwap_threshold_pct=5.0,
+            near_50d_high_pct=3.0, trailing_stop_pct=trail)
     yrs = (end - start).days / 365.25
     return {"ann": ((1 + r.total_return_pct / 100) ** (1 / yrs) - 1) * 100,
             "sharpe": r.sharpe_ratio, "mdd": r.max_drawdown_pct, "total": r.total_return_pct}
 
 
+def _starts_ends():
+    starts = [datetime(y, m, 3) for y in (2022, 2023) for m in (1, 4, 7, 10)] + \
+             [datetime(2024, m, 3) for m in (1, 4)]
+    out = []
+    for s in starts:
+        e = datetime(2026, 5, 29) if s.year + 2 > 2026 else datetime(s.year + 2, s.month, 28)
+        out.append((s, e))
+    return out
+
+
 async def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "sweep":
+        # size + exit sweep, each config through the full start-date distribution
+        CONFIGS = [
+            ("6x15  trail12  (T3 baseline)", 6, 15.0, 12.0),
+            ("12x7.5 trail12 (mid)",         12, 7.5, 12.0),
+            ("20x4.5 trail12 (broad)",       20, 4.5, 12.0),
+            ("20x4.5 trail25 (broad+hold)",  20, 4.5, 25.0),
+            ("30x3.0 trail25 (max diversify)", 30, 3.0, 25.0),
+        ]
+        se = _starts_ends()
+        print(f"=== SIZE+EXIT SWEEP — each config across {len(se)} start dates (2y windows) ===")
+        for label, mp, sz, tr in CONFIGS:
+            anns, mdds, shps = [], [], []
+            for s, e in se:
+                r = await wf(s, e, mp, sz, tr)
+                anns.append(r["ann"]); mdds.append(r["mdd"]); shps.append(r["sharpe"])
+            A = pd.Series(anns); M = pd.Series(mdds); S = pd.Series(shps)
+            print(f"  {label:32} ann mean={A.mean():5.1f}% std={A.std():4.1f}%  "
+                  f"sharpe={S.mean():5.2f}  mdd mean={M.mean():4.1f}% worst={M.max():4.1f}%  "
+                  f"min_ann={A.min():+5.1f}%", flush=True)
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "dist":
         # start-date distribution: 2y forward windows, quarterly starts
         starts = [datetime(y, m, 3) for y in (2022, 2023) for m in (1, 4, 7, 10)] + \
