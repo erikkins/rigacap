@@ -21,6 +21,17 @@ import pitfwu_veneer as v
 from app.services.scanner import scanner_service, _EXCLUDED_SET
 from app.services.walk_forward_service import walk_forward_service
 from app.core.database import async_session
+from app.services.backtester import BacktesterService
+
+# max_hold_days isn't a WF-call param — patch the backtester default so we can
+# sweep the hold horizon (the edge is measured at 60d; does holding longer to
+# capture the right tail help?). Research-only; prod default stays 60.
+_MAX_HOLD = 60
+_orig_bt_init = BacktesterService.__init__
+def _bt_init(self, *a, **k):
+    _orig_bt_init(self, *a, **k)
+    self.max_hold_days = _MAX_HOLD
+BacktesterService.__init__ = _bt_init
 
 _CA = v.load_corp_actions()
 _RAW = {}  # symbol -> raw bars, loaded once and reused across windows
@@ -61,7 +72,9 @@ def _bars(sym, end):
     return _ind(df)
 
 
-async def wf(start, end, max_pos=6, size=15.0, trail=12.0):
+async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.0, plock_stop=8.0):
+    global _MAX_HOLD
+    _MAX_HOLD = max_hold
     periods = walk_forward_service._get_period_dates(start, end, "biweekly")
     union = set()
     for ps, pe in periods:
@@ -78,7 +91,8 @@ async def wf(start, end, max_pos=6, size=15.0, trail=12.0):
             db, start, end, enable_ai_optimization=False, fixed_strategy_id=6, max_symbols=100,
             reoptimization_frequency="biweekly", carry_positions=True, n_trials=0,
             max_positions=max_pos, position_size_pct=size, dwap_threshold_pct=5.0,
-            near_50d_high_pct=3.0, trailing_stop_pct=trail)
+            near_50d_high_pct=3.0, trailing_stop_pct=trail,
+            profit_lock_pct=plock, profit_lock_stop_pct=plock_stop)
     yrs = (end - start).days / 365.25
     return {"ann": ((1 + r.total_return_pct / 100) ** (1 / yrs) - 1) * 100,
             "sharpe": r.sharpe_ratio, "mdd": r.max_drawdown_pct, "total": r.total_return_pct,
@@ -96,6 +110,29 @@ def _starts_ends():
 
 
 async def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "exit":
+        # exit refinement at 20x4.5: trail tightness x hold horizon x profit-lock
+        # (label, max_pos, size, trail, max_hold, plock, plock_stop)
+        CONFIGS = [
+            ("t12 mh60",            20, 4.5, 12, 60,  0,  8),
+            ("t18 mh60",            20, 4.5, 18, 60,  0,  8),
+            ("t25 mh60 (current)",  20, 4.5, 25, 60,  0,  8),
+            ("t25 mh120",           20, 4.5, 25, 120, 0,  8),
+            ("t25 mh250 (run)",     20, 4.5, 25, 250, 0,  8),
+            ("t25 mh250 plock20-10", 20, 4.5, 25, 250, 20, 10),
+        ]
+        se = _starts_ends()
+        print(f"=== EXIT REFINEMENT (20x4.5) across {len(se)} starts ===")
+        for label, mp, sz, tr, mh, pl, pls in CONFIGS:
+            anns, mdds, shps, mins = [], [], [], []
+            for s, e in se:
+                r = await wf(s, e, mp, sz, tr, mh, pl, pls)
+                anns.append(r["ann"]); mdds.append(r["mdd"]); shps.append(r["sharpe"])
+            A = pd.Series(anns); M = pd.Series(mdds); S = pd.Series(shps)
+            cal = A.mean() / M.mean() if M.mean() > 0 else 0
+            print(f"  {label:22} ann={A.mean():5.1f}% std={A.std():4.1f}% sharpe={S.mean():5.2f} "
+                  f"calmar={cal:4.2f} mdd={M.mean():4.1f}%/{M.max():4.1f}% min={A.min():+5.1f}%", flush=True)
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "cost":
         # net-of-cost: annual drag = (trades/yr) * round_trip_cost * size_pct
         CONFIGS = [
