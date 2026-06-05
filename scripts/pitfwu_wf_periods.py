@@ -81,7 +81,8 @@ async def wf(start, end, max_pos=6, size=15.0, trail=12.0):
             near_50d_high_pct=3.0, trailing_stop_pct=trail)
     yrs = (end - start).days / 365.25
     return {"ann": ((1 + r.total_return_pct / 100) ** (1 / yrs) - 1) * 100,
-            "sharpe": r.sharpe_ratio, "mdd": r.max_drawdown_pct, "total": r.total_return_pct}
+            "sharpe": r.sharpe_ratio, "mdd": r.max_drawdown_pct, "total": r.total_return_pct,
+            "trades": len(r.trades), "yrs": yrs, "size": size}
 
 
 def _starts_ends():
@@ -95,6 +96,27 @@ def _starts_ends():
 
 
 async def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "cost":
+        # net-of-cost: annual drag = (trades/yr) * round_trip_cost * size_pct
+        CONFIGS = [
+            ("20x4.5 t12 (broad)",  20, 4.5, 12.0),
+            ("20x4.5 t25 (b+hold)", 20, 4.5, 25.0),
+            ("30x3.0 t25 (maxdiv)", 30, 3.0, 25.0),
+        ]
+        se = _starts_ends()
+        print(f"=== NET-OF-COST — gross vs net at 10bps / 20bps round-trip, across {len(se)} starts ===")
+        for label, mp, sz, tr in CONFIGS:
+            anns, tpy = [], []
+            for s, e in se:
+                r = await wf(s, e, mp, sz, tr)
+                anns.append(r["ann"]); tpy.append(r["trades"] / r["yrs"])
+            A = pd.Series(anns); tradesyr = pd.Series(tpy).mean()
+            # drag(pp) = trades/yr * cost_rt(frac) * size_pct(frac) * 100
+            d10 = tradesyr * 0.0010 * (sz / 100) * 100
+            d20 = tradesyr * 0.0020 * (sz / 100) * 100
+            print(f"  {label:22} gross_ann={A.mean():5.1f}%  trades/yr={tradesyr:5.0f}  "
+                  f"net@10bps={A.mean()-d10:5.1f}%  net@20bps={A.mean()-d20:5.1f}%  (drag 10/20 = {d10:.1f}/{d20:.1f}pp)", flush=True)
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "sweep":
         # size + exit sweep, each config through the full start-date distribution
         CONFIGS = [
