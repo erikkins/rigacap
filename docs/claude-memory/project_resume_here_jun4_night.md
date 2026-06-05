@@ -9,8 +9,10 @@ metadata:
 
 **Sign-off:** Jun 4 2026 ~7:26 PM PDT. Erik done for the night; ping with backfill result next session.
 
-## IN FLIGHT AT SIGN-OFF
-- **PITFWU raw-bar backfill RUNNING in background** (bash id bfwbhuw5s; script /tmp/pitfwu_bars.py with FULL=1). Fetches `adjustment=raw` (point-in-time) daily bars 2015→2026 for all 31,373 master symbols → per-symbol parquet `s3://rigacap-prod-price-data-149218244179/pitfwu/bars/{symbol}.parquet`. **Resumable** (skips already-saved). If interrupted, re-run `FULL=1 ... /tmp/pitfwu_bars.py` (or recreate script from this memory). On completion: verify ~31k objects in pitfwu/bars/, note any HTTP failures.
+## BAR BACKFILL — COMPLETED (Jun 4 ~late PM, exit 0)
+- **21,163 symbol parquets** (~1.2 GB) at `s3://rigacap-prod-price-data-149218244179/pitfwu/bars/{symbol}.parquet`. Raw/point-in-time daily bars 2015→2026. Dead names captured (SIVB→2023-03-09, FRC→2023-04-28, ATVI, VMW confirmed).
+- **Coverage gap: 21,163 of 31,373 master symbols got bars (~10k missing).** Two causes: (1) non-equity instruments in the master list (warrants/units/foreign/never-traded — no bars, fine); (2) **BATCH-POISONING BUG** — Alpaca returns HTTP 400 for the WHOLE 50-symbol batch if ONE symbol is invalid (e.g. "invalid symbol: XZW0"), so valid symbols sharing a poisoned batch got skipped. **FIX for re-run:** on a 400, retry the batch symbol-by-symbol (or smaller chunks) to isolate the bad one and salvage the rest. Gap is mostly immaterial for top-100 (core + major delistings all captured), but close it before claiming "complete".
+- Re-run to fill gaps: recreate the backfill script (it's resumable — skips the 21k already done) with the symbol-by-symbol 400-retry fix.
 
 ## DATA FOUNDATION BUILT THIS SESSION (all on S3, durable)
 - `pitfwu/corp_actions/calendar.parquet` — 367k Alpaca corp-actions (CUSIP-keyed: splits/reverse/dividends/mergers/name_changes/spinoffs/worthless_removals) + raw/ + by_year/.
