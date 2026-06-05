@@ -116,6 +116,27 @@ def _starts_ends():
 
 
 async def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "validate":
+        # Tier-2: HELD-OUT start dates (off the quarterly tuning grid: Mar/Jun/Sep/Dec)
+        # + per-window so bull (2024 starts) vs bear (2022-23 starts) is visible.
+        held = [(2022, 3), (2022, 6), (2022, 9), (2022, 12),
+                (2023, 3), (2023, 6), (2023, 9), (2023, 12), (2024, 3), (2024, 6)]
+        se = [(datetime(y, m, 3), datetime(2026, 5, 29) if y + 2 > 2026 else datetime(y + 2, m, 28))
+              for y, m in held]
+        print(f"=== TIER-2 HELD-OUT ({len(se)} off-grid starts) — does it replicate out-of-sample? ===")
+        for label, mp, sz, tr in [("t25 (suspect)", 20, 4.5, 25), ("t30 (robust)", 20, 4.5, 30), ("t40", 20, 4.5, 40)]:
+            rows = []
+            for s, e in se:
+                rows.append((s, e, await wf(s, e, mp, sz, tr, 60, 0, 8)))
+            A = pd.Series([r["ann"] for _, _, r in rows]); M = pd.Series([r["mdd"] for _, _, r in rows])
+            S = pd.Series([r["sharpe"] for _, _, r in rows])
+            print(f"  {label:14} ann mean={A.mean():5.1f}% std={A.std():4.1f}% sharpe={S.mean():5.2f} "
+                  f"mdd={M.mean():4.1f}%/{M.max():4.1f}% min={A.min():+5.1f}%", flush=True)
+            if "robust" in label:
+                print("    per-window (bull 2024 starts run into the AI bull; 2022-23 are bear-starts):")
+                for s, e, r in rows:
+                    print(f"      {s.date()} -> {e.date()}:  ann={r['ann']:+6.1f}%  sharpe={r['sharpe']:5.2f}  mdd={r['mdd']:4.1f}%")
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "exit":
         # exit refinement at 20x4.5: trail tightness x hold horizon x profit-lock
         # (label, max_pos, size, trail, max_hold, plock, plock_stop)
