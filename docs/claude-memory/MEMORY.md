@@ -1,5 +1,8 @@
 # Stocker App - Key Learnings
 
+## ▶ RESUME HERE (Jun 4 2026 night)
+- **[Resume pointer — PITFWU build in flight](project_resume_here_jun4_night.md)** — marathon session: stale-numbers task → found the research pickle is silently corrupted (splits + survivorship) → building a parquet-native point-in-time data foundation (PITFWU) on Alpaca + free SEC EDGAR. Bar backfill running in background at sign-off. Marketing FROZEN until clean re-validation. Read this first next session.
+
 ## CRITICAL — BACKTEST PICKLE NOT SPLIT-ADJUSTED (Jun 4 2026)
 - **[Backtest pickle has RAW unadjusted splits](project_pickle_split_bug_jun4.md)** — the prod backtest pickle (`prices/all_data.pkl.gz`, Jun-3 pull) has raw stock-split discontinuities (AMZN/GOOGL 20:1, NVDA 10:1, TSLA 3:1, etc.). Any backtest HOLDING a position across a split books a phantom −67% to −95% loss + corrupted indicators. Caused a bogus "M3 bear MDD 38%"; split-adjusting → MDD back to **20.6%** (the cited 21.5% was RIGHT). **PROD live data IS adjusted — pickle only, pull-time dependent.** ALL bear-inclusive/split-window research numbers suspect until re-run on adjusted data (the recurring "M3+addon → 38-40% MDD" pattern may also be this artifact, not the addon). Fix: rebuild pickle `adjustment='all'` + build PITFWU (point-in-time forward-walking universe). Marketing FROZEN until clean re-run.
 
