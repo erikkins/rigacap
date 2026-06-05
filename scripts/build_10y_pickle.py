@@ -95,6 +95,7 @@ async def fetch_bars_alpaca(symbols: list) -> dict:
     from alpaca.data import StockHistoricalDataClient
     from alpaca.data.requests import StockBarsRequest
     from alpaca.data.timeframe import TimeFrame
+    from alpaca.data.enums import Adjustment
 
     client = StockHistoricalDataClient(api_key=ALPACA_API_KEY, secret_key=ALPACA_SECRET_KEY)
 
@@ -130,6 +131,7 @@ async def fetch_bars_alpaca(symbols: list) -> dict:
                 timeframe=TimeFrame.Day,
                 start=START_DATE,
                 feed="sip",
+                adjustment=Adjustment.SPLIT,  # was RAW default — source of unadjusted-split artifacts (AMZN/GOOGL/NVDA). Splits only; PITFWU handles point-in-time properly.
             )
 
             # Run in executor to avoid blocking
