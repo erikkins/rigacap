@@ -23,6 +23,11 @@ metadata:
 - Costs negligible: 65-103 trades/yr, 0.3-0.9pp drag at 10-20bps (liquid top-100 names).
 - t25's 13.6% was OVERFIT — collapsed to 11.4% held-out (non-monotonic trail sweep + std anomaly were the tell). t30 firmed up out-of-sample.
 
+## MULTI-REGIME validated (Jun 5, longhist 2017-2026, 16 windows, 3 downturns)
+- **ann 13.1% / Sharpe 0.81 / MDD mean 12.3% (worst 24.1%) / Calmar 1.07 / 94% positive / floor -2.2%.** MATCHES the held-out 13.3%/0.80 → robust across a decade, not a 2022 fluke.
+- **COVID handled, not survived:** the window with the full -34% crash (2018-07→2020-07) = 12.6% MDD / +5% ann; windows starting into COVID = +21-29% / Sharpe 1.2-1.8. Diversification + 200MA filter + V-recovery did it. NO fast-crash circuit-breaker needed.
+- Clears North Star on RISK (MDD≤20 mean, Calmar≥1); short on return (13 vs 20) + Sharpe (0.81 vs 1.0). Regime-dependence is in the RETURN FLOOR (chop windows +3-9%, trend windows +20-28%), NOT crashes — so regime work targets chop-return (subtle, overfit-prone), not crash defense. N=1-bear problem largely gone (3 downturns now).
+
 ## How we got here (the arc)
 1. Entry has a REAL but THIN edge (median +0.5-2%/60d, hit-rate 52-58% vs ~50%, high N) — NOT noise. But it caps upside (avoids the lottery tail; that tail isn't reachable by entry tuning — near-high sweep refuted).
 2. **Concentration was the disease.** Broad equal-weight captures the qualifier MEAN (~15-23% raw); 6×15% realized only 2.4%. Going 6→20 positions: 2.4%→9.7%, Sharpe 0.30→0.69, worst MDD 31%→20%, erased losing windows. Diversification is the single biggest lever proven.
