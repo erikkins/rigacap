@@ -120,7 +120,7 @@ async def main():
         # t30 across the FULL 2016-2026 span (2018-Q4 + 2020-COVID + 2022 bear),
         # semi-annual starts, 2y windows (>=1.5y). Free regime extension.
         se = []
-        for y in range(2016, 2025):
+        for y in range(2017, 2025):  # 2017+ = full 200d indicator warmup after 2016-01 bar start
             for m in (1, 7):
                 s = datetime(y, m, 3)
                 e = datetime(2026, 5, 29) if datetime(y + 2, m, 28) > datetime(2026, 5, 29) else datetime(y + 2, m, 28)
