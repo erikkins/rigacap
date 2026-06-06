@@ -116,6 +116,26 @@ def _starts_ends():
 
 
 async def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "longhist":
+        # t30 across the FULL 2016-2026 span (2018-Q4 + 2020-COVID + 2022 bear),
+        # semi-annual starts, 2y windows (>=1.5y). Free regime extension.
+        se = []
+        for y in range(2016, 2025):
+            for m in (1, 7):
+                s = datetime(y, m, 3)
+                e = datetime(2026, 5, 29) if datetime(y + 2, m, 28) > datetime(2026, 5, 29) else datetime(y + 2, m, 28)
+                if (e - s).days >= 540:
+                    se.append((s, e))
+        print(f"=== t30 LONG-HISTORY ({len(se)} windows, 2016-2026; covers 2018-Q4, 2020-COVID, 2022) ===")
+        rows = []
+        for s, e in se:
+            r = await wf(s, e, 20, 4.5, 30, 60, 0, 8)
+            rows.append(r)
+            print(f"  {s.date()} -> {e.date()}:  ann={r['ann']:+6.1f}%  sharpe={r['sharpe']:5.2f}  mdd={r['mdd']:4.1f}%", flush=True)
+        A = pd.Series([r["ann"] for r in rows]); M = pd.Series([r["mdd"] for r in rows]); S = pd.Series([r["sharpe"] for r in rows])
+        print(f"\n  ALL {len(rows)} windows: ann mean={A.mean():.1f}% std={A.std():.1f}% sharpe={S.mean():.2f} "
+              f"mdd mean={M.mean():.1f}%/worst={M.max():.1f}% min_ann={A.min():+.1f}% pos={100*(A>0).mean():.0f}%")
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "validate":
         # Tier-2: HELD-OUT start dates (off the quarterly tuning grid: Mar/Jun/Sep/Dec)
         # + per-window so bull (2024 starts) vs bear (2022-23 starts) is visible.
