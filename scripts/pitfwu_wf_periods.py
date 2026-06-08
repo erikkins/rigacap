@@ -35,6 +35,19 @@ _DISP = False
 _DISP_MARGIN = 0.0
 _DGATE = None
 _CONV = 0.0
+_SAMESEC = False
+_SECMAP = {}
+
+
+def _load_sectors():
+    global _SECMAP
+    if not _SECMAP:
+        import json
+        raw = json.loads(v.s3().get_object(Bucket=v.BUCKET, Key="universe/sectors_cache.json")["Body"].read())
+        _SECMAP = {k: (val.get("sector") if isinstance(val, dict) else val) for k, val in raw.items()}
+    return _SECMAP
+
+
 _orig_configure = CustomBacktester.configure
 def _patched_configure(self, params):
     _orig_configure(self, params)
@@ -45,6 +58,8 @@ def _patched_configure(self, params):
     self.displacement_margin = _DISP_MARGIN
     self.displacement_regime_gate = _DGATE
     self.conviction_tilt = _CONV
+    self.displacement_same_sector = _SAMESEC
+    self.symbol_sectors = _SECMAP
 CustomBacktester.configure = _patched_configure
 
 _CA = v.load_corp_actions()
@@ -87,11 +102,14 @@ def _bars(sym, end):
 
 
 async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.0, plock_stop=8.0,
-             disp=False, disp_margin=0.0, dgate=None, conv=0.0):
-    global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN, _DGATE, _CONV
+             disp=False, disp_margin=0.0, dgate=None, conv=0.0, samesec=False):
+    global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN, _DGATE, _CONV, _SAMESEC
     _MAX_HOLD, _PLOCK, _PLOCK_STOP = max_hold, plock, plock_stop
     _DISP, _DISP_MARGIN, _DGATE = disp, disp_margin, dgate
     _CONV = conv
+    _SAMESEC = samesec
+    if samesec:
+        _load_sectors()
     periods = walk_forward_service._get_period_dates(start, end, "biweekly")
     union = set()
     for ps, pe in periods:
@@ -127,6 +145,29 @@ def _starts_ends():
 
 
 async def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "secdisp":
+        # same-sector displacement (sector-neutral "hold the sector leader") +/- trend gate
+        CONFIGS = [
+            ("no-disp",            False, 0,  None,     False),
+            ("global m10 trend2",  True,  10, "trend2", False),
+            ("samesec m10",        True,  10, None,     True),
+            ("samesec m10 trend2", True,  10, "trend2", True),
+            ("samesec m5",         True,  5,  None,     True),
+            ("samesec m20",        True,  20, None,     True),
+        ]
+        se = _starts_ends()
+        sm = _load_sectors()
+        print(f"=== SAME-SECTOR DISPLACEMENT (t30), {len(se)} starts | sector map: {len(sm)} symbols ===")
+        for label, dp, dm, gt, ss in CONFIGS:
+            anns, mdds, shps, tpy = [], [], [], []
+            for s, e in se:
+                r = await wf(s, e, 20, 4.5, 30, 60, 0, 8, disp=dp, disp_margin=dm, dgate=gt, samesec=ss)
+                anns.append(r["ann"]); mdds.append(r["mdd"]); shps.append(r["sharpe"]); tpy.append(r["trades"] / r["yrs"])
+            A = pd.Series(anns); M = pd.Series(mdds); S = pd.Series(shps); T = pd.Series(tpy).mean()
+            d20 = T * 0.002 * 0.045 * 100
+            print(f"  {label:20} gross={A.mean():5.1f}% net@20bps={A.mean()-d20:5.1f}% std={A.std():4.1f}% "
+                  f"sharpe={S.mean():.2f} mdd={M.mean():4.1f}%/{M.max():4.1f}% trd/yr={T:4.0f} min={A.min():+5.1f}%", flush=True)
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "size":
         # conviction-weighted sizing sweep on t30 (tilt 0 = equal-weight baseline)
         se = _starts_ends()

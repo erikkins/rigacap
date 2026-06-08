@@ -425,6 +425,10 @@ class BacktesterService:
         # (by CURRENT momentum score). Closes the vacancy-only entry gap. 0=disabled.
         self.allow_displacement = False
         self.displacement_margin = 0.0    # candidate must beat weakest incumbent score by this
+        # Same-sector displacement: only bump the weakest incumbent IN THE CANDIDATE'S
+        # SECTOR (sector-neutral "hold the sector leader") — removes sector-chasing churn.
+        # Requires self.symbol_sectors populated by the caller.
+        self.displacement_same_sector = False
         # Causal regime gate: only displace when "risk-on" (displacement whipsaws in
         # bears). None=always. 'spy200'/'spy50' (SPY>MA), 'vix25' (VIX<25), 'spy60ret' (60d>0).
         self.displacement_regime_gate = None
@@ -2546,9 +2550,18 @@ class BacktesterService:
                         for cand in candidates:
                             if cand['symbol'] in entered or not inc_scores:
                                 continue
-                            weakest = min(inc_scores, key=inc_scores.get)
+                            if self.displacement_same_sector:
+                                _csec = self.symbol_sectors.get(cand['symbol'])
+                                _pool = {s: v for s, v in inc_scores.items() if _csec and self.symbol_sectors.get(s) == _csec}
+                                if not _pool:
+                                    continue  # no same-sector incumbent to bump
+                                weakest = min(_pool, key=_pool.get)
+                            else:
+                                weakest = min(inc_scores, key=inc_scores.get)
                             if cand['momentum_score'] <= inc_scores[weakest] + self.displacement_margin:
-                                break  # candidates sorted desc — nothing below will beat it
+                                if self.displacement_same_sector:
+                                    continue  # a later candidate in another sector may still qualify
+                                break  # global: candidates sorted desc — nothing below will beat it
                             wpos = positions[weakest]
                             wrow = self._get_row_for_date(scanner_service.data_cache[weakest], date)
                             if wrow is None:
