@@ -39,6 +39,10 @@ metadata:
 ## Honest marketing frame
 NOT "20% annualized." Something like "double-digit through the cycle, market-beating risk-adjusted, no losing 2-year window in clean backtest; stronger in trending markets." True + defensible under the publisher's exemption.
 
+## Levers tested (Jun 8)
+- **DISPLACEMENT — DEAD (parked, do not re-run).** Let a strong fresh signal bump the weakest incumbent (closes the vacancy-only/PLTR-lockout gap). Implemented in backtester (`allow_displacement`, default off). Smoke: +9pp on a bull window — BUT across the distribution it LOSES decisively to baseline at every margin (best ~6% vs 11.3%), worse Sharpe/MDD/min. Bull/bear regime gates are REDUNDANT (displacement only fires when full = already risk-on; verified). Trend/chop gates (the right axis) help directionally (2.5%→6.6%) but still lose. Lesson: "let winners run, don't churn" beats "always hold the strongest current signal" — vacancy-only entry is a FEATURE (patience/low-turnover), not a bug. Churn cost > lockout cost. Code kept (default-off) for reference.
+- NEXT lever: conviction-weighted sizing, then universe breadth.
+
 ## Next (Erik's call Jun 5)
 - **Build longer history FIRST, then regimes.** Regime-switching on N=1 bear (2022) is the boss-level overfit; needs multiple cycles. Existing PITFWU bars reach ~2016 → 2018-Q4 + 2020-COVID windows are FREE (just run earlier start dates). Pre-2016 (2008/2011) needs yfinance (Alpaca SIP stops ~2016). [[t30-validated-strategy-jun5-2026]]
 - Open: total-return vs price-return (~0.5%/yr for div payers); universe breadth (top-100 vs 150).
