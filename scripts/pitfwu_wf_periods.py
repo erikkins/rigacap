@@ -195,16 +195,19 @@ async def main():
                 (2023, 3), (2023, 6), (2023, 9), (2023, 12), (2024, 3), (2024, 6)]
         se = [(datetime(y, m, 3), datetime(2026, 5, 29) if y + 2 > 2026 else datetime(y + 2, m, 28))
               for y, m in held]
-        print(f"=== CONVICTION TIER-2 (held-out, {len(se)} off-grid starts) — does it replicate + stay <20% MDD? ===")
-        for tilt in [0.0, 0.3, 0.5, 0.8]:
+        print(f"=== SIZING TIER-2 (held-out, {len(se)} off-grid starts) — replicate + stay <20% MDD? ===")
+        # (label, conv, volw)
+        for label, cv, vw in [("conv0.5 t30c", 0.5, 0.0), ("conv0.3", 0.3, 0.0),
+                              ("vol1.0 t30v", 0.0, 1.0), ("vol0.5", 0.0, 0.5)]:
             anns, mdds, shps = [], [], []
             for s, e in se:
-                r = await wf(s, e, 20, 4.5, 30, 60, 0, 8, conv=tilt)
+                r = await wf(s, e, 20, 4.5, 30, 60, 0, 8, conv=cv, volw=vw)
                 anns.append(r["ann"]); mdds.append(r["mdd"]); shps.append(r["sharpe"])
             A = pd.Series(anns); M = pd.Series(mdds); S = pd.Series(shps)
             cal = A.mean() / M.mean() if M.mean() > 0 else 0
             flag = "  <-- worst MDD > 20%" if M.max() > 20 else ""
-            print(f"  tilt={tilt:.1f}  ann={A.mean():5.1f}% std={A.std():4.1f}% sharpe={S.mean():.2f} "
+            star = " ★1.0" if S.mean() >= 1.0 else ""
+            print(f"  {label:14} ann={A.mean():5.1f}% std={A.std():4.1f}% sharpe={S.mean():.2f}{star} "
                   f"calmar={cal:4.2f} mdd_mean={M.mean():4.1f}% WORST={M.max():4.1f}% min={A.min():+5.1f}%{flag}", flush=True)
         return
     if len(sys.argv) > 1 and sys.argv[1] == "secdisp":
