@@ -102,7 +102,7 @@ def _bars(sym, end):
 
 
 async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.0, plock_stop=8.0,
-             disp=False, disp_margin=0.0, dgate=None, conv=0.0, samesec=False):
+             disp=False, disp_margin=0.0, dgate=None, conv=0.0, samesec=False, uni_n=100):
     global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN, _DGATE, _CONV, _SAMESEC
     _MAX_HOLD, _PLOCK, _PLOCK_STOP = max_hold, plock, plock_stop
     _DISP, _DISP_MARGIN, _DGATE = disp, disp_margin, dgate
@@ -113,7 +113,7 @@ async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.
     periods = walk_forward_service._get_period_dates(start, end, "biweekly")
     union = set()
     for ps, pe in periods:
-        union |= set(_clean(v.universe_asof_prod(ps, 300, 15.0))[:100])
+        union |= set(_clean(v.universe_asof_prod(ps, uni_n * 3, 15.0))[:uni_n])
     cache = {}
     for sym in union | {"SPY"}:
         try: cache[sym] = _bars(sym, end)
@@ -123,7 +123,7 @@ async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.
     walk_forward_service._get_top_symbols_as_of = lambda asof, maxn: _clean(v.universe_asof_prod(asof, maxn * 3, 15.0))[:maxn]
     async with async_session() as db:
         r = await walk_forward_service.run_walk_forward_simulation(
-            db, start, end, enable_ai_optimization=False, fixed_strategy_id=6, max_symbols=100,
+            db, start, end, enable_ai_optimization=False, fixed_strategy_id=6, max_symbols=uni_n,
             reoptimization_frequency="biweekly", carry_positions=True, n_trials=0,
             max_positions=max_pos, position_size_pct=size, dwap_threshold_pct=5.0,
             near_50d_high_pct=3.0, trailing_stop_pct=trail,
@@ -145,6 +145,22 @@ def _starts_ends():
 
 
 async def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "breadth":
+        # universe breadth on t30c (20 positions, conviction 0.5): does a wider
+        # candidate pool give the book more strong names to hold (esp. in chop)?
+        se = _starts_ends()
+        print(f"=== UNIVERSE BREADTH (t30c: 20x conv0.5/trail30), {len(se)} starts ===")
+        for un in [100, 150, 200, 300]:
+            anns, mdds, shps = [], [], []
+            for s, e in se:
+                r = await wf(s, e, 20, 4.5, 30, 60, 0, 8, conv=0.5, uni_n=un)
+                anns.append(r["ann"]); mdds.append(r["mdd"]); shps.append(r["sharpe"])
+            A = pd.Series(anns); M = pd.Series(mdds); S = pd.Series(shps)
+            cal = A.mean() / M.mean() if M.mean() > 0 else 0
+            tag = " (=t30c baseline ~12.8%)" if un == 100 else ""
+            print(f"  top-{un:<4} ann={A.mean():5.1f}% std={A.std():4.1f}% sharpe={S.mean():.2f} "
+                  f"calmar={cal:4.2f} mdd={M.mean():4.1f}%/{M.max():4.1f}% min={A.min():+5.1f}%{tag}", flush=True)
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "sizet2":
         # Tier-2: conviction tilt on HELD-OUT off-grid start dates. worst-MDD is the
         # binding constraint (>20% = North Star fail), so it's the decision column.
