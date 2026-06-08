@@ -428,6 +428,9 @@ class BacktesterService:
         # Causal regime gate: only displace when "risk-on" (displacement whipsaws in
         # bears). None=always. 'spy200'/'spy50' (SPY>MA), 'vix25' (VIX<25), 'spy60ret' (60d>0).
         self.displacement_regime_gate = None
+        # Conviction sizing: >0 tilts position size by momentum rank at entry (rank1
+        # bigger, last slot smaller), symmetric so total exposure ~unchanged. 0=equal.
+        self.conviction_tilt = 0.0
         self.pyramid_max_adds = 0         # Max times to pyramid into one position; 0=disabled
         # Circuit breaker (Lever 10): halt new entries when stops cascade
         self.circuit_breaker_stops = 3    # N stops SAME DAY triggers pause; grid-search winner
@@ -713,6 +716,18 @@ class BacktesterService:
                 return True
             return spy['close'].iloc[idx] > spy['close'].iloc[idx - 20] * 1.02
         return True
+
+    def _conviction_mult(self, cand) -> float:
+        """Conviction sizing: tilt position size by momentum rank at entry. Symmetric
+        about the median slot so total exposure is ~unchanged. rank1 -> 1+tilt,
+        last slot -> 1-tilt. 0 tilt = equal-weight (unchanged)."""
+        t = getattr(self, 'conviction_tilt', 0.0)
+        if t <= 0:
+            return 1.0
+        rank = cand.get('momentum_rank', 1)
+        n = max(2, self.max_positions)
+        frac = 1 - 2 * (min(rank, n) - 1) / (n - 1)  # +1 (best) .. -1 (last slot)
+        return max(0.1, 1 + t * frac)
 
     def _size_multiplier_for(self, date: pd.Timestamp) -> float:
         """
@@ -2487,7 +2502,7 @@ class BacktesterService:
                         if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date) * self._sentiment_size_factor(cand['symbol'], date)
+                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date) * self._sentiment_size_factor(cand['symbol'], date) * self._conviction_mult(cand)
                         if position_value > capital:
                             continue
 

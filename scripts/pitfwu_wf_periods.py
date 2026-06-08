@@ -34,6 +34,7 @@ _PLOCK_STOP = 8.0
 _DISP = False
 _DISP_MARGIN = 0.0
 _DGATE = None
+_CONV = 0.0
 _orig_configure = CustomBacktester.configure
 def _patched_configure(self, params):
     _orig_configure(self, params)
@@ -43,6 +44,7 @@ def _patched_configure(self, params):
     self.allow_displacement = _DISP
     self.displacement_margin = _DISP_MARGIN
     self.displacement_regime_gate = _DGATE
+    self.conviction_tilt = _CONV
 CustomBacktester.configure = _patched_configure
 
 _CA = v.load_corp_actions()
@@ -85,10 +87,11 @@ def _bars(sym, end):
 
 
 async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.0, plock_stop=8.0,
-             disp=False, disp_margin=0.0, dgate=None):
-    global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN, _DGATE
+             disp=False, disp_margin=0.0, dgate=None, conv=0.0):
+    global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN, _DGATE, _CONV
     _MAX_HOLD, _PLOCK, _PLOCK_STOP = max_hold, plock, plock_stop
     _DISP, _DISP_MARGIN, _DGATE = disp, disp_margin, dgate
+    _CONV = conv
     periods = walk_forward_service._get_period_dates(start, end, "biweekly")
     union = set()
     for ps, pe in periods:
@@ -124,6 +127,21 @@ def _starts_ends():
 
 
 async def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "size":
+        # conviction-weighted sizing sweep on t30 (tilt 0 = equal-weight baseline)
+        se = _starts_ends()
+        print(f"=== CONVICTION SIZING (t30 20x4.5/trail30), {len(se)} starts ===")
+        for tilt in [0.0, 0.3, 0.5, 0.8, 1.0]:
+            anns, mdds, shps = [], [], []
+            for s, e in se:
+                r = await wf(s, e, 20, 4.5, 30, 60, 0, 8, conv=tilt)
+                anns.append(r["ann"]); mdds.append(r["mdd"]); shps.append(r["sharpe"])
+            A = pd.Series(anns); M = pd.Series(mdds); S = pd.Series(shps)
+            cal = A.mean() / M.mean() if M.mean() > 0 else 0
+            tag = " (equal-weight=baseline)" if tilt == 0 else ""
+            print(f"  tilt={tilt:.1f}  ann={A.mean():5.1f}% std={A.std():4.1f}% sharpe={S.mean():.2f} "
+                  f"calmar={cal:4.2f} mdd={M.mean():4.1f}%/{M.max():4.1f}% min={A.min():+5.1f}%{tag}", flush=True)
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "tdisp":
         # TREND-gated displacement: only displace when SPY is genuinely trending (not chop)
         CONFIGS = [
