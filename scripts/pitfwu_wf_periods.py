@@ -317,10 +317,11 @@ async def main():
                 if (e - s).days >= 540:
                     se.append((s, e))
         _tilt = float(sys.argv[2]) if len(sys.argv) > 2 else 0.0
-        print(f"=== t30 LONG-HISTORY (conv tilt={_tilt}) ({len(se)} windows, 2017-2026; 2018-Q4, COVID, 2022) ===")
+        _vw = float(sys.argv[3]) if len(sys.argv) > 3 else 0.0
+        print(f"=== t30 LONG-HISTORY (conv={_tilt} vol={_vw}) ({len(se)} windows, 2017-2026; 2018-Q4, COVID, 2022) ===")
         rows = []
         for s, e in se:
-            r = await wf(s, e, 20, 4.5, 30, 60, 0, 8, conv=_tilt)
+            r = await wf(s, e, 20, 4.5, 30, 60, 0, 8, conv=_tilt, volw=_vw)
             rows.append(r)
             print(f"  {s.date()} -> {e.date()}:  ann={r['ann']:+6.1f}%  sharpe={r['sharpe']:5.2f}  mdd={r['mdd']:4.1f}%", flush=True)
         A = pd.Series([r["ann"] for r in rows]); M = pd.Series([r["mdd"] for r in rows]); S = pd.Series([r["sharpe"] for r in rows])
