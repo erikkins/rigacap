@@ -37,6 +37,7 @@ _DGATE = None
 _CONV = 0.0
 _SAMESEC = False
 _SECMAP = {}
+_VOLW = 0.0
 
 
 def _load_sectors():
@@ -60,6 +61,7 @@ def _patched_configure(self, params):
     self.conviction_tilt = _CONV
     self.displacement_same_sector = _SAMESEC
     self.symbol_sectors = _SECMAP
+    self.vol_weight = _VOLW
 CustomBacktester.configure = _patched_configure
 
 _CA = v.load_corp_actions()
@@ -102,12 +104,13 @@ def _bars(sym, end):
 
 
 async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.0, plock_stop=8.0,
-             disp=False, disp_margin=0.0, dgate=None, conv=0.0, samesec=False, uni_n=100):
-    global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN, _DGATE, _CONV, _SAMESEC
+             disp=False, disp_margin=0.0, dgate=None, conv=0.0, samesec=False, uni_n=100, volw=0.0):
+    global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN, _DGATE, _CONV, _SAMESEC, _VOLW
     _MAX_HOLD, _PLOCK, _PLOCK_STOP = max_hold, plock, plock_stop
     _DISP, _DISP_MARGIN, _DGATE = disp, disp_margin, dgate
     _CONV = conv
     _SAMESEC = samesec
+    _VOLW = volw
     if samesec:
         _load_sectors()
     periods = walk_forward_service._get_period_dates(start, end, "biweekly")
@@ -145,6 +148,30 @@ def _starts_ends():
 
 
 async def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "vol":
+        # inverse-vol (risk-parity) sizing, alone and combined with conviction. SHARPE focus.
+        CONFIGS = [
+            ("conv0.5 (t30c)",   0.5, 0.0),
+            ("conv0.3",          0.3, 0.0),
+            ("vol0.5 only",      0.0, 0.5),
+            ("vol1.0 only",      0.0, 1.0),
+            ("conv0.5+vol0.5",   0.5, 0.5),
+            ("conv0.5+vol1.0",   0.5, 1.0),
+            ("conv0.3+vol0.5",   0.3, 0.5),
+        ]
+        se = _starts_ends()
+        print(f"=== INVERSE-VOL SIZING (t30c base), {len(se)} starts — SHARPE focus ===")
+        for label, cv, vw in CONFIGS:
+            anns, mdds, shps = [], [], []
+            for s, e in se:
+                r = await wf(s, e, 20, 4.5, 30, 60, 0, 8, conv=cv, volw=vw)
+                anns.append(r["ann"]); mdds.append(r["mdd"]); shps.append(r["sharpe"])
+            A = pd.Series(anns); M = pd.Series(mdds); S = pd.Series(shps)
+            cal = A.mean() / M.mean() if M.mean() > 0 else 0
+            star = " ★" if S.mean() >= 1.0 else ""
+            print(f"  {label:18} SHARPE={S.mean():.2f}{star}  ann={A.mean():5.1f}% std={A.std():4.1f}% "
+                  f"calmar={cal:4.2f} mdd={M.mean():4.1f}%/{M.max():4.1f}% min={A.min():+5.1f}%", flush=True)
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "breadth":
         # universe breadth on t30c (20 positions, conviction 0.5): does a wider
         # candidate pool give the book more strong names to hold (esp. in chop)?

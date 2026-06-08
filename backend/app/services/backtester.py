@@ -435,6 +435,10 @@ class BacktesterService:
         # Conviction sizing: >0 tilts position size by momentum rank at entry (rank1
         # bigger, last slot smaller), symmetric so total exposure ~unchanged. 0=equal.
         self.conviction_tilt = 0.0
+        # Inverse-vol (risk-parity) sizing: >0 down-weights high-vol names by
+        # (median_vol/vol)^vol_weight, centered at the cross-sectional median so
+        # exposure stays ~constant. Composes with conviction. 0=off. Targets Sharpe.
+        self.vol_weight = 0.0
         self.pyramid_max_adds = 0         # Max times to pyramid into one position; 0=disabled
         # Circuit breaker (Lever 10): halt new entries when stops cascade
         self.circuit_breaker_stops = 3    # N stops SAME DAY triggers pause; grid-search winner
@@ -732,6 +736,19 @@ class BacktesterService:
         n = max(2, self.max_positions)
         frac = 1 - 2 * (min(rank, n) - 1) / (n - 1)  # +1 (best) .. -1 (last slot)
         return max(0.1, 1 + t * frac)
+
+    def _vol_mult(self, cand) -> float:
+        """Inverse-vol (risk-parity) sizing: down-weight high-vol names by
+        (median_vol/vol)^vol_weight, centered at the cross-sectional median so
+        exposure stays ~constant. Composes with conviction. 0 weight = unchanged."""
+        w = getattr(self, 'vol_weight', 0.0)
+        if w <= 0:
+            return 1.0
+        cv = cand.get('volatility', 0)
+        mv = cand.get('med_vol', 0)
+        if cv <= 0 or mv <= 0:
+            return 1.0
+        return max(0.3, min(2.5, (mv / cv) ** w))
 
     def _size_multiplier_for(self, date: pd.Timestamp) -> float:
         """
@@ -2498,15 +2515,19 @@ class BacktesterService:
                     # Sort by momentum score (best first), then DWAP strength
                     candidates.sort(key=lambda x: (-x['momentum_score'], -x['pct_above_dwap']))
                     num_cands = len(candidates)
+                    # cross-sectional median vol — reference for inverse-vol sizing
+                    _vsorted = sorted(c.get('volatility', 0) for c in candidates if c.get('volatility', 0) > 0)
+                    _medvol = _vsorted[len(_vsorted) // 2] if _vsorted else 0
                     for rank_idx, cand in enumerate(candidates, 1):
                         cand['momentum_rank'] = rank_idx
                         cand['num_candidates'] = num_cands
+                        cand['med_vol'] = _medvol
 
                     for cand in candidates:
                         if len(positions) >= self.max_positions:
                             break
 
-                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date) * self._sentiment_size_factor(cand['symbol'], date) * self._conviction_mult(cand)
+                        position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date) * self._sentiment_size_factor(cand['symbol'], date) * self._conviction_mult(cand) * self._vol_mult(cand)
                         if position_value > capital:
                             continue
 
