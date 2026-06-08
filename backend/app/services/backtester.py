@@ -420,6 +420,11 @@ class BacktesterService:
         # Pyramiding / doubling down on winners
         self.pyramid_threshold_pct = 0    # Add to position once up X%; 0=disabled
         self.pyramid_size_pct = 0.0       # Size of the add-on position (% of initial capital)
+
+        # Displacement: when full, a strong fresh signal bumps the weakest incumbent
+        # (by CURRENT momentum score). Closes the vacancy-only entry gap. 0=disabled.
+        self.allow_displacement = False
+        self.displacement_margin = 0.0    # candidate must beat weakest incumbent score by this
         self.pyramid_max_adds = 0         # Max times to pyramid into one position; 0=disabled
         # Circuit breaker (Lever 10): halt new entries when stops cascade
         self.circuit_breaker_stops = 3    # N stops SAME DAY triggers pause; grid-search winner
@@ -2195,7 +2200,7 @@ class BacktesterService:
             )
 
             # Look for new entries if we have room and it's rebalance time
-            if len(positions) < self.max_positions and should_rebalance:
+            if should_rebalance and (len(positions) < self.max_positions or self.allow_displacement):
                 candidates = []
 
                 if strategy_type == "momentum":
@@ -2468,6 +2473,67 @@ class BacktesterService:
                             'vol_ratio': round(cand.get('vol_ratio', 0), 2),
                             'spy_trend': round(cand.get('spy_trend', 0), 2),
                         }
+
+                    # DISPLACEMENT: when full, a strong fresh signal bumps the WEAKEST
+                    # incumbent (by CURRENT momentum score). Closes the vacancy-only gap
+                    # (the PLTR-lockout finding). Score incumbents once, then walk the
+                    # sorted candidates bumping while the best remaining beats the weakest.
+                    if self.allow_displacement and len(positions) >= self.max_positions:
+                        entered = set(positions.keys())
+                        inc_scores = {}
+                        for _isym in list(positions.keys()):
+                            _sd = self._calculate_momentum_score(_isym, date)
+                            inc_scores[_isym] = _sd['composite_score'] if _sd else -1e18
+                        for cand in candidates:
+                            if cand['symbol'] in entered or not inc_scores:
+                                continue
+                            weakest = min(inc_scores, key=inc_scores.get)
+                            if cand['momentum_score'] <= inc_scores[weakest] + self.displacement_margin:
+                                break  # candidates sorted desc — nothing below will beat it
+                            wpos = positions[weakest]
+                            wrow = self._get_row_for_date(scanner_service.data_cache[weakest], date)
+                            if wrow is None:
+                                del inc_scores[weakest]
+                                continue
+                            wpx = wrow['close']
+                            trade_id += 1
+                            trades.append(SimulatedTrade(
+                                id=trade_id, symbol=weakest, entry_date=wpos['entry_date'], exit_date=date_str,
+                                entry_price=wpos['entry_price'], exit_price=wpx, shares=wpos['shares'],
+                                pnl=round((wpx - wpos['entry_price']) * wpos['shares'], 2),
+                                pnl_pct=round((wpx - wpos['entry_price']) / wpos['entry_price'] * 100, 2),
+                                exit_reason='displaced', days_held=self._days_between(date, wpos['entry_date']),
+                                dwap_at_entry=wpos.get('dwap_at_entry', 0), momentum_score=wpos.get('momentum_score', 0),
+                                momentum_rank=wpos.get('momentum_rank', 0),
+                                pct_above_dwap_at_entry=wpos.get('pct_above_dwap_at_entry', 0),
+                                num_candidates=wpos.get('num_candidates', 0), dwap_age=wpos.get('dwap_age', 0),
+                                short_mom=wpos.get('short_mom', 0), long_mom=wpos.get('long_mom', 0),
+                                volatility=wpos.get('volatility', 0), dist_from_high=wpos.get('dist_from_high', 0),
+                                vol_ratio=wpos.get('vol_ratio', 0), spy_trend=wpos.get('spy_trend', 0),
+                            ))
+                            capital += wpos['shares'] * wpx
+                            del positions[weakest]; del inc_scores[weakest]
+                            # open the displacing candidate (mirror the entry above)
+                            position_value = self.initial_capital * self.position_size_pct * self._size_multiplier_for(date) * self._sentiment_size_factor(cand['symbol'], date)
+                            if position_value > capital:
+                                continue
+                            shares = position_value / cand['price']
+                            capital -= shares * cand['price']
+                            position_id += 1
+                            entry_price = cand['price']
+                            positions[cand['symbol']] = {
+                                'id': position_id, 'entry_price': entry_price, 'entry_date': date_str,
+                                'shares': round(shares, 2), 'high_water_mark': entry_price,
+                                'trailing_stop': round(entry_price * (1 - self.trailing_stop_pct), 2),
+                                'dwap_at_entry': round(cand['dwap'], 2),
+                                'pct_above_dwap_at_entry': round(cand['pct_above_dwap'] * 100, 1),
+                                'momentum_score': cand['momentum_score'], 'momentum_rank': cand.get('momentum_rank', 0),
+                                'num_candidates': cand.get('num_candidates', 0), 'dwap_age': cand.get('dwap_age', 0),
+                                'short_mom': round(cand.get('short_mom', 0), 2), 'long_mom': round(cand.get('long_mom', 0), 2),
+                                'volatility': round(cand.get('volatility', 0), 2), 'dist_from_high': round(cand.get('dist_from_high', 0), 2),
+                                'vol_ratio': round(cand.get('vol_ratio', 0), 2), 'spy_trend': round(cand.get('spy_trend', 0), 2),
+                            }
+                            inc_scores[cand['symbol']] = cand['momentum_score']
 
                     if candidates:
                         last_rebalance = date
