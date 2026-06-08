@@ -425,6 +425,9 @@ class BacktesterService:
         # (by CURRENT momentum score). Closes the vacancy-only entry gap. 0=disabled.
         self.allow_displacement = False
         self.displacement_margin = 0.0    # candidate must beat weakest incumbent score by this
+        # Causal regime gate: only displace when "risk-on" (displacement whipsaws in
+        # bears). None=always. 'spy200'/'spy50' (SPY>MA), 'vix25' (VIX<25), 'spy60ret' (60d>0).
+        self.displacement_regime_gate = None
         self.pyramid_max_adds = 0         # Max times to pyramid into one position; 0=disabled
         # Circuit breaker (Lever 10): halt new entries when stops cascade
         self.circuit_breaker_stops = 3    # N stops SAME DAY triggers pause; grid-search winner
@@ -669,6 +672,47 @@ class BacktesterService:
             return 0.0
 
         return round((spy_price / spy_ma200 - 1) * 100, 2)
+
+    def _displacement_regime_ok(self, date: pd.Timestamp) -> bool:
+        """Causal regime gate for displacement — True = risk-on (displace allowed).
+        Uses only data <= date. None gate = always allowed."""
+        gate = getattr(self, 'displacement_regime_gate', None)
+        if not gate:
+            return True
+        spy = scanner_service.data_cache.get('SPY')
+        row = self._get_row_for_date(spy, date) if spy is not None else None
+        if row is None:
+            return True  # no SPY data → don't block
+        px = row['close']
+        if gate == 'spy200':
+            ma = row.get('ma_200', np.nan)
+            return pd.isna(ma) or px > ma
+        if gate == 'spy50':
+            ma = row.get('ma_50', np.nan)
+            return pd.isna(ma) or px > ma
+        if gate == 'vix25':
+            vix = scanner_service.data_cache.get('^VIX')
+            vrow = self._get_row_for_date(vix, date) if vix is not None else None
+            return vrow is None or vrow['close'] < 25
+        if gate == 'spy60ret':
+            idx = spy.index.get_indexer([pd.Timestamp(date)], method='ffill')[0]
+            if idx < 60:
+                return True
+            return spy['close'].iloc[idx] > spy['close'].iloc[idx - 60]
+        # TREND/CHOP gates (the right axis: displacement helps in trends, whipsaws in chop)
+        if gate in ('trend', 'trend2'):
+            idx = spy.index.get_indexer([pd.Timestamp(date)], method='ffill')[0]
+            ma = spy.get('ma_50')
+            if ma is None or idx < 20 or pd.isna(ma.iloc[idx]) or pd.isna(ma.iloc[idx - 20]):
+                return True
+            slope = ma.iloc[idx] / ma.iloc[idx - 20] - 1  # 50MA slope over 20d
+            return slope > (0.0 if gate == 'trend' else 0.02)
+        if gate == 'spy20':  # SPY up >2% over 20 days = trending, not chopping
+            idx = spy.index.get_indexer([pd.Timestamp(date)], method='ffill')[0]
+            if idx < 20:
+                return True
+            return spy['close'].iloc[idx] > spy['close'].iloc[idx - 20] * 1.02
+        return True
 
     def _size_multiplier_for(self, date: pd.Timestamp) -> float:
         """
@@ -2478,7 +2522,7 @@ class BacktesterService:
                     # incumbent (by CURRENT momentum score). Closes the vacancy-only gap
                     # (the PLTR-lockout finding). Score incumbents once, then walk the
                     # sorted candidates bumping while the best remaining beats the weakest.
-                    if self.allow_displacement and len(positions) >= self.max_positions:
+                    if self.allow_displacement and len(positions) >= self.max_positions and self._displacement_regime_ok(date):
                         entered = set(positions.keys())
                         inc_scores = {}
                         for _isym in list(positions.keys()):

@@ -33,6 +33,7 @@ _PLOCK = 0.0
 _PLOCK_STOP = 8.0
 _DISP = False
 _DISP_MARGIN = 0.0
+_DGATE = None
 _orig_configure = CustomBacktester.configure
 def _patched_configure(self, params):
     _orig_configure(self, params)
@@ -41,6 +42,7 @@ def _patched_configure(self, params):
     self.profit_lock_stop_pct = _PLOCK_STOP
     self.allow_displacement = _DISP
     self.displacement_margin = _DISP_MARGIN
+    self.displacement_regime_gate = _DGATE
 CustomBacktester.configure = _patched_configure
 
 _CA = v.load_corp_actions()
@@ -83,10 +85,10 @@ def _bars(sym, end):
 
 
 async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.0, plock_stop=8.0,
-             disp=False, disp_margin=0.0):
-    global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN
+             disp=False, disp_margin=0.0, dgate=None):
+    global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN, _DGATE
     _MAX_HOLD, _PLOCK, _PLOCK_STOP = max_hold, plock, plock_stop
-    _DISP, _DISP_MARGIN = disp, disp_margin
+    _DISP, _DISP_MARGIN, _DGATE = disp, disp_margin, dgate
     periods = walk_forward_service._get_period_dates(start, end, "biweekly")
     union = set()
     for ps, pe in periods:
@@ -122,6 +124,51 @@ def _starts_ends():
 
 
 async def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "tdisp":
+        # TREND-gated displacement: only displace when SPY is genuinely trending (not chop)
+        CONFIGS = [
+            ("no-disp",        False, 0,  None),
+            ("m10 nogate",     True,  10, None),
+            ("m10 trend",      True,  10, "trend"),
+            ("m10 trend2",     True,  10, "trend2"),
+            ("m5  trend2",     True,  5,  "trend2"),
+            ("m10 spy20",      True,  10, "spy20"),
+        ]
+        se = _starts_ends()
+        print(f"=== TREND-GATED DISPLACEMENT (t30), {len(se)} starts ===")
+        for label, dp, dm, gt in CONFIGS:
+            anns, mdds, shps, tpy = [], [], [], []
+            for s, e in se:
+                r = await wf(s, e, 20, 4.5, 30, 60, 0, 8, disp=dp, disp_margin=dm, dgate=gt)
+                anns.append(r["ann"]); mdds.append(r["mdd"]); shps.append(r["sharpe"]); tpy.append(r["trades"] / r["yrs"])
+            A = pd.Series(anns); M = pd.Series(mdds); S = pd.Series(shps); T = pd.Series(tpy).mean()
+            d20 = T * 0.002 * 0.045 * 100
+            print(f"  {label:12} gross={A.mean():5.1f}% net@20bps={A.mean()-d20:5.1f}% std={A.std():4.1f}% "
+                  f"sharpe={S.mean():.2f} mdd={M.mean():4.1f}%/{M.max():4.1f}% trd/yr={T:4.0f} min={A.min():+5.1f}%", flush=True)
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == "gdisp":
+        # regime-GATED displacement at fixed margin: lagging vs timely gates head-to-head
+        # (label, disp, margin, gate)
+        CONFIGS = [
+            ("no-disp",      False, 0,  None),
+            ("m10 nogate",   True,  10, None),
+            ("m10 spy200",   True,  10, "spy200"),
+            ("m10 spy50",    True,  10, "spy50"),
+            ("m10 vix25",    True,  10, "vix25"),
+            ("m10 spy60ret", True,  10, "spy60ret"),
+        ]
+        se = _starts_ends()
+        print(f"=== GATED DISPLACEMENT (t30, margin=10), {len(se)} starts — lagging vs timely gate ===")
+        for label, dp, dm, gt in CONFIGS:
+            anns, mdds, shps, tpy = [], [], [], []
+            for s, e in se:
+                r = await wf(s, e, 20, 4.5, 30, 60, 0, 8, disp=dp, disp_margin=dm, dgate=gt)
+                anns.append(r["ann"]); mdds.append(r["mdd"]); shps.append(r["sharpe"]); tpy.append(r["trades"] / r["yrs"])
+            A = pd.Series(anns); M = pd.Series(mdds); S = pd.Series(shps); T = pd.Series(tpy).mean()
+            d20 = T * 0.002 * 0.045 * 100
+            print(f"  {label:12} gross={A.mean():5.1f}% net@20bps={A.mean()-d20:5.1f}% std={A.std():4.1f}% "
+                  f"sharpe={S.mean():.2f} mdd={M.mean():4.1f}%/{M.max():4.1f}% trd/yr={T:4.0f} min={A.min():+5.1f}%", flush=True)
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "disp":
         # displacement margin sweep on t30, across the distribution, net-of-cost + turnover
         CONFIGS = [("no-disp", False, 0), ("m=5", True, 5), ("m=10", True, 10),
