@@ -137,6 +137,58 @@ async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.
             "trades": len(r.trades), "yrs": yrs, "size": size}
 
 
+_ADJ = {}  # symbol -> adjusted close series, cached
+
+
+def _adj_close(sym, end):
+    if sym not in _ADJ:
+        _ADJ[sym] = v.split_adjusted(sym, asof=end, ca=_CA)["close"]
+    return _ADJ[sym]
+
+
+def naive_momentum(start, end, lookback=120, hold=21, topk=20):
+    """Pure momentum factor: top-K by trailing `lookback`-day return, equal-weight,
+    rebalance every `hold` trading days, NO DWAP/stop/sizing/regime. Survivorship-free.
+    Delisting handled by the price series simply ending (close at last traded)."""
+    cal = _adj_close("SPY", end).loc[pd.Timestamp(start):pd.Timestamp(end)].index
+    if len(cal) < lookback + hold:
+        return None
+    ridx = list(range(0, len(cal) - 1, hold))
+    eq = [1.0]
+    for i in range(len(ridx) - 1):
+        d, nd = cal[ridx[i]], cal[ridx[i + 1]]
+        uni = [s for s in v.universe_asof_prod(d, 300, 15.0) if s not in _EXCLUDED_SET and not s.startswith("^")][:100]
+        scored = []
+        for sym in uni:
+            try:
+                ps = _adj_close(sym, end).loc[:d]
+            except Exception:
+                continue
+            if len(ps) < lookback + 1:
+                continue
+            scored.append((ps.iloc[-1] / ps.iloc[-1 - lookback] - 1, sym))
+        scored.sort(reverse=True)
+        top = [s for _, s in scored[:topk]]
+        if not top:
+            eq.append(eq[-1]); continue
+        rets = []
+        for sym in top:
+            ps = _adj_close(sym, end)
+            p0 = ps.loc[:d].iloc[-1]
+            seg = ps.loc[d:nd]
+            p1 = seg.iloc[-1] if len(seg) else p0
+            rets.append(p1 / p0 - 1)
+        eq.append(eq[-1] * (1 + sum(rets) / len(rets)))
+    s = pd.Series(eq)
+    yrs = (end - start).days / 365.25
+    ann = (s.iloc[-1] ** (1 / yrs) - 1) * 100
+    pr = s.pct_change().dropna()
+    ppy = len(pr) / yrs
+    sharpe = (pr.mean() / pr.std()) * (ppy ** 0.5) if pr.std() > 0 else 0
+    mdd = (1 - s / s.cummax()).max() * 100
+    return {"ann": ann, "sharpe": sharpe, "mdd": mdd}
+
+
 def _starts_ends():
     starts = [datetime(y, m, 3) for y in (2022, 2023) for m in (1, 4, 7, 10)] + \
              [datetime(2024, m, 3) for m in (1, 4)]
@@ -148,6 +200,27 @@ def _starts_ends():
 
 
 async def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "naive":
+        # factor decomposition: pure momentum factor vs t30v (implementation edge = the gap)
+        se = []
+        for y in range(2017, 2025):
+            for mo in (1, 7):
+                s = datetime(y, mo, 3)
+                e = datetime(2026, 5, 29) if datetime(y + 2, mo, 28) > datetime(2026, 5, 29) else datetime(y + 2, mo, 28)
+                if (e - s).days >= 540:
+                    se.append((s, e))
+        print(f"=== FACTOR DECOMP: naive momentum vs t30v, {len(se)} windows (2017-2026) ===")
+        print(f"  {'config':22} {'ann':>6} {'sharpe':>7} {'worst_mdd':>10}")
+        print(f"  {'t30v (full strategy)':22} {'14.0%':>6} {'0.92':>7} {'17.0%':>10}  <- reference")
+        for lb in [60, 120, 250]:
+            anns, shps, mdds = [], [], []
+            for s, e in se:
+                r = naive_momentum(s, e, lookback=lb)
+                if r:
+                    anns.append(r["ann"]); shps.append(r["sharpe"]); mdds.append(r["mdd"])
+            A = pd.Series(anns); S = pd.Series(shps); M = pd.Series(mdds)
+            print(f"  naive mom {lb}d{'':<11} {A.mean():5.1f}% {S.mean():6.2f} {M.max():9.1f}%", flush=True)
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "vol":
         # inverse-vol (risk-parity) sizing, alone and combined with conviction. SHARPE focus.
         CONFIGS = [
