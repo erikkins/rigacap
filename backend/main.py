@@ -4983,11 +4983,13 @@ def handler(event, context):
 
             min_pnl = config.get("min_pnl_pct", 5.0)
             platforms = config.get("platforms", ["twitter", "instagram", "threads"])
-            # loss_review is intentionally NOT in the default post_types — see
-            # the gate below. Callers opt in explicitly OR it activates once the
-            # winner threshold is reached. trade_result and we_called_it remain
-            # the default because they only fire on winners.
-            post_types = config.get("post_types", ["trade_result", "we_called_it"])
+            # Discipline-led default (Jun 2026 repositioning): lead with the
+            # process, not hot picks. trade_result is reframed to lead with the
+            # discipline behind a trade; discipline_win is the pure-process angle.
+            # we_called_it (big-winner-vs-news) is now OPT-IN — fine for the
+            # occasional social splash, but no longer the default story.
+            # loss_review activates via the winner-threshold gate below.
+            post_types = config.get("post_types", ["trade_result", "discipline_win"])
             max_trades = config.get("max_trades", 5)
             # loss_review gate: don't post about losses until the track record
             # has at least N winners. Posting "system was wrong but trailing
