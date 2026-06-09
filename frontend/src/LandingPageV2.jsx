@@ -440,7 +440,7 @@ const Footer = () => (
         <div>
           <h4 className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink mb-4">Product</h4>
           <ul className="space-y-2">
-            {[['Methodology', '/methodology'], ['Track Record', '/track-record'], ['Pricing', '#pricing']].map(([label, href]) => (
+            {[['Methodology', '/methodology'], ['Track Record', '/track-record'], ['For Advisers', '/for-advisers'], ['Pricing', '#pricing']].map(([label, href]) => (
               <li key={label}><a href={href} className="text-ink-mute text-[0.92rem] no-underline hover:text-ink transition-colors">{label}</a></li>
             ))}
           </ul>

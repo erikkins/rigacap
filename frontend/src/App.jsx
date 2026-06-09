@@ -38,6 +38,7 @@ const BlogWalkForwardResultsPage = lazy(() => import('./BlogWalkForwardResultsPa
 const BlogWeCalledItMRNAPage = lazy(() => import('./BlogWeCalledItMRNAPage'));
 const BlogWeCalledItTGTXPage = lazy(() => import('./BlogWeCalledItTGTXPage'));
 const BlogIndexPage = lazy(() => import('./BlogIndexPage'));
+const ForAdvisersPage = lazy(() => import('./ForAdvisersPage'));
 const NewsletterPage = lazy(() => import('./NewsletterPage'));
 const NewsletterIssuePage = lazy(() => import('./NewsletterPage').then(m => ({ default: m.NewsletterIssuePage })));
 const SymbolTriagePage = lazy(() => import('./SymbolTriagePage'));
@@ -4742,6 +4743,7 @@ export default function App() {
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/track-record" element={<TrackRecordPageV2 />} />
+        <Route path="/for-advisers" element={<ForAdvisersPage />} />
         <Route path="/track-record-v1" element={<TrackRecordPage />} />
         <Route path="/track-record-10y" element={<TrackRecord10YPage />} />
         <Route path="/methodology" element={<MethodologyPageV2 />} />
