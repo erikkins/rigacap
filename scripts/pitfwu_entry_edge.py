@@ -62,25 +62,25 @@ def measure(start, end, label):
     for s in union:
         try: frames[s] = _frame(s, end)
         except Exception: pass
-    # gather qualifier vs universe forward returns, by date
-    rows_q = {h: [] for h in HORIZONS}     # qualifier forward returns
-    rows_u = {h: [] for h in HORIZONS}     # ALL-member forward returns (baseline)
-    dates = pd.date_range(start, end, freq="B")
+    # qualified vs NOT-qualified forward returns (fat-tail-robust: report MEDIAN)
+    rows_q = {h: [] for h in HORIZONS}      # qualifier forward returns
+    rows_nq = {h: [] for h in HORIZONS}     # NON-qualifier forward returns (proper baseline)
     for s, df in frames.items():
         sub = df.loc[(df.index >= pd.Timestamp(start)) & (df.index <= pd.Timestamp(end))]
         for h in HORIZONS:
-            fv = sub[f"f{h}"].dropna()
-            rows_u[h].extend(fv.tolist())
-            qv = sub.loc[sub["qual"], f"f{h}"].dropna()
-            rows_q[h].extend(qv.tolist())
+            qmask = sub["qual"]
+            rows_q[h].extend(sub.loc[qmask, f"f{h}"].dropna().tolist())
+            rows_nq[h].extend(sub.loc[~qmask, f"f{h}"].dropna().tolist())
     print(f"\n=== ENTRY EDGE — {label} ({start.date()}..{end.date()}), {len(frames)} names ===")
-    print(f"  {'horiz':>6} {'n_signals':>10} {'signal_ret':>11} {'univ_ret':>10} {'EDGE':>8} {'win_vs_univ':>12}")
+    print(f"  qualified vs NOT-qualified, MEDIAN forward return (robust to lottery tail)")
+    print(f"  {'horiz':>6} {'n_sig':>8} {'med_QUAL':>9} {'med_notQ':>9} {'EDGE_med':>9} {'%pos_QUAL':>10} {'%pos_notQ':>10} {'mean_edge':>10}")
     for h in HORIZONS:
-        q = np.array(rows_q[h]); u = np.array(rows_u[h])
+        q = np.array(rows_q[h]); nq = np.array(rows_nq[h])
         if len(q) == 0: continue
-        sig = q.mean() * 100; uni = u.mean() * 100; edge = sig - uni
-        win = (q > u.mean()).mean() * 100
-        print(f"  {h:>6} {len(q):>10} {sig:>10.2f}% {uni:>9.2f}% {edge:>+7.2f}% {win:>11.1f}%")
+        mq, mnq = np.median(q) * 100, np.median(nq) * 100
+        pq, pnq = (q > 0).mean() * 100, (nq > 0).mean() * 100
+        mean_edge = (q.mean() - nq.mean()) * 100
+        print(f"  {h:>6} {len(q):>8} {mq:>8.2f}% {mnq:>8.2f}% {mq-mnq:>+8.2f}% {pq:>9.1f}% {pnq:>9.1f}% {mean_edge:>+9.2f}%")
 
 
 if __name__ == "__main__":

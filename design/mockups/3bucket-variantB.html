@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>3-Bucket — Variant B (Columns)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{--paper:#F5F1E8;--paper-deep:#EDE7D8;--paper-card:#FAF7F0;--ink:#141210;--ink-mute:#5A544E;--ink-light:#8A8279;--claret:#7A2430;--claret-light:#9A3444;--rule:#DDD5C7;--rule-dark:#C9BFAC;--positive:#2D5F3F;--negative:#8F2D3D;--gold:#B8923D;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-feature-settings:'tnum';}
+.display{font-family:'Fraunces',Georgia,serif;}
+.mono{font-family:'IBM Plex Mono',Menlo,monospace;}
+.eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.eyebrow .tick{display:inline-block;width:24px;height:1px;background:var(--claret);}
+.eyebrow .txt{font-size:.74rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:.66rem;font-weight:600;}
+.pill.pos{background:rgba(45,95,63,.1);color:var(--positive);}
+.pill.claret{background:rgba(122,36,48,.1);color:var(--claret);}
+.pill.gold{background:rgba(184,146,61,.14);color:#8A6A1F;}
+
+.wrap{max-width:1240px;margin:0 auto;padding:40px 32px 56px;}
+h1.page{font-size:2.1rem;font-weight:400;letter-spacing:-.02em;font-variation-settings:"opsz" 96;margin-bottom:6px;}
+.page-sub{color:var(--ink-mute);font-size:.95rem;max-width:640px;margin-bottom:30px;}
+
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+.col{background:var(--paper-card);border:1px solid var(--rule);border-radius:12px;border-top:3px solid var(--accent);display:flex;flex-direction:column;}
+.col-head{padding:18px 20px 16px;border-bottom:1px solid var(--rule);}
+.col-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.col-name{display:flex;align-items:center;gap:9px;}
+.col-name .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);}
+.col-name .nm{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:500;font-variation-settings:"opsz" 36;}
+.count{font-family:'IBM Plex Mono',monospace;font-size:1.5rem;font-weight:500;color:var(--accent);line-height:1;}
+.helper{font-size:.84rem;color:var(--ink-mute);line-height:1.45;font-style:italic;font-family:'Fraunces',serif;font-variation-settings:"opsz" 16;}
+.action-chip{display:inline-block;margin-top:10px;font-size:.6rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:#fff;background:var(--accent);padding:4px 10px;border-radius:5px;}
+
+.col-body{padding:8px 10px 14px;flex:1;}
+.tk{display:flex;align-items:center;justify-content:space-between;padding:10px 10px;border-radius:8px;}
+.tk:hover{background:var(--paper-deep);}
+.tk + .tk{border-top:1px solid var(--rule);}
+.tk .l{display:flex;flex-direction:column;gap:2px;}
+.tk .sym{font-weight:600;font-size:1rem;display:flex;align-items:center;gap:7px;}
+.tk .co{color:var(--ink-light);font-size:.78rem;}
+.tk .r{text-align:right;display:flex;flex-direction:column;gap:2px;}
+.tk .px{font-family:'IBM Plex Mono',monospace;font-size:.92rem;}
+.tk .da{font-family:'IBM Plex Mono',monospace;font-size:.8rem;color:var(--positive);}
+.tk .da.gold{color:#8A6A1F;}
+.foot{padding:0 14px 14px;}
+.foot a{font-size:.8rem;color:var(--claret);font-weight:500;text-decoration:none;}
+
+footer{max-width:1240px;margin:0 auto;padding:24px 32px 40px;color:var(--ink-light);font-size:.78rem;}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="eyebrow"><span class="tick"></span><span class="txt">Today's Signals &middot; Jun 4, 2026</span></div>
+  <h1 class="page display">Where every name stands</h1>
+  <p class="page-sub">Three states, side by side. Scan left to right: building up, ready to buy, already running.</p>
+
+  <div class="cols">
+    <!-- APPROACHING -->
+    <div class="col" style="--accent:var(--gold);">
+      <div class="col-head">
+        <div class="col-top"><div class="col-name"><span class="dot"></span><span class="nm display">Approaching</span></div><span class="count">4</span></div>
+        <div class="helper">Climbing toward a buy but not there yet. Add to your watchlist — no action needed.</div>
+        <span class="action-chip">Watch · don't buy</span>
+      </div>
+      <div class="col-body">
+        <div class="tk"><div class="l"><span class="sym">PANW</span><span class="co">Palo Alto</span></div><div class="r"><span class="px mono">$382.40</span><span class="da gold mono">+3.8%</span></div></div>
+        <div class="tk"><div class="l"><span class="sym">SHOP</span><span class="co">Shopify</span></div><div class="r"><span class="px mono">$104.85</span><span class="da gold mono">+4.5%</span></div></div>
+        <div class="tk"><div class="l"><span class="sym">UBER</span><span class="co">Uber</span></div><div class="r"><span class="px mono">$81.20</span><span class="da gold mono">+3.1%</span></div></div>
+        <div class="tk"><div class="l"><span class="sym">SNOW</span><span class="co">Snowflake</span></div><div class="r"><span class="px mono">$158.30</span><span class="da gold mono">+4.9%</span></div></div>
+      </div>
+      <div class="foot"><a href="#">View all approaching →</a></div>
+    </div>
+
+    <!-- NEW -->
+    <div class="col" style="--accent:var(--claret);">
+      <div class="col-head">
+        <div class="col-top"><div class="col-name"><span class="dot"></span><span class="nm display">New</span></div><span class="count">3</span></div>
+        <div class="helper">Fresh buys — all criteria passed within the last 5 days. These are the ones to act on.</div>
+        <span class="action-chip">Actionable buy</span>
+      </div>
+      <div class="col-body">
+        <div class="tk"><div class="l"><span class="sym">NVDA <span class="pill claret">2d</span></span><span class="co">NVIDIA</span></div><div class="r"><span class="px mono">$132.10</span><span class="da mono">+6.4%</span></div></div>
+        <div class="tk"><div class="l"><span class="sym">AVGO <span class="pill claret">1d</span></span><span class="co">Broadcom</span></div><div class="r"><span class="px mono">$1,684.00</span><span class="da mono">+5.9%</span></div></div>
+        <div class="tk"><div class="l"><span class="sym">CRWD <span class="pill claret">4d</span></span><span class="co">CrowdStrike</span></div><div class="r"><span class="px mono">$368.55</span><span class="da mono">+7.2%</span></div></div>
+      </div>
+      <div class="foot"></div>
+    </div>
+
+    <!-- OPEN -->
+    <div class="col" style="--accent:var(--positive);">
+      <div class="col-head">
+        <div class="col-top"><div class="col-name"><span class="dot"></span><span class="nm display">Open</span></div><span class="count">5</span></div>
+        <div class="helper">Still valid but already running. If you're in, hold — too late for a fresh entry.</div>
+        <span class="action-chip">Hold if you own it</span>
+      </div>
+      <div class="col-body">
+        <div class="tk"><div class="l"><span class="sym">AAPL <span class="pill pos">18d</span></span><span class="co">Apple</span></div><div class="r"><span class="px mono">$224.30</span><span class="da mono">+11.8%</span></div></div>
+        <div class="tk"><div class="l"><span class="sym">META <span class="pill pos">26d</span></span><span class="co">Meta</span></div><div class="r"><span class="px mono">$598.10</span><span class="da mono">+14.2%</span></div></div>
+        <div class="tk"><div class="l"><span class="sym">MSFT <span class="pill pos">9d</span></span><span class="co">Microsoft</span></div><div class="r"><span class="px mono">$441.70</span><span class="da mono">+8.6%</span></div></div>
+        <div class="tk"><div class="l"><span class="sym">GOOGL <span class="pill pos">12d</span></span><span class="co">Alphabet</span></div><div class="r"><span class="px mono">$178.95</span><span class="da mono">+9.4%</span></div></div>
+        <div class="tk"><div class="l"><span class="sym">AMZN <span class="pill pos">7d</span></span><span class="co">Amazon</span></div><div class="r"><span class="px mono">$201.40</span><span class="da mono">+6.1%</span></div></div>
+      </div>
+      <div class="foot"></div>
+    </div>
+  </div>
+</div>
+<footer>Signals only — execute via your broker. RigaCap does not place trades on your behalf.</footer>
+</body></html>

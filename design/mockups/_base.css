@@ -1,0 +1,63 @@
+/* Shared brand base — mirrors frontend/tailwind.config.js + LandingPageV2.jsx */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --paper: #F5F1E8;
+  --paper-deep: #EDE7D8;
+  --paper-card: #FAF7F0;
+  --ink: #141210;
+  --ink-mute: #5A544E;
+  --ink-light: #8A8279;
+  --claret: #7A2430;
+  --claret-light: #9A3444;
+  --rule: #DDD5C7;
+  --rule-dark: #C9BFAC;
+  --positive: #2D5F3F;
+  --negative: #8F2D3D;
+  --gold: #B8923D;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'tnum';
+}
+
+.display { font-family: 'Fraunces', Georgia, serif; }
+.mono { font-family: 'IBM Plex Mono', Menlo, monospace; }
+
+/* Section eyebrow label — claret tick + tracked uppercase */
+.eyebrow {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+}
+.eyebrow .tick { display: inline-block; width: 24px; height: 1px; background: var(--claret); }
+.eyebrow .txt {
+  font-size: 0.74rem; font-weight: 500; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-mute);
+}
+
+.kicker {
+  font-size: 0.64rem; font-weight: 500; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--ink-mute);
+}
+
+.card {
+  background: var(--paper-card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 9px; border-radius: 999px;
+  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em;
+}
+.pill.pos { background: rgba(45,95,63,0.10); color: var(--positive); }
+.pill.neg { background: rgba(143,45,61,0.10); color: var(--negative); }
+.pill.claret { background: rgba(122,36,48,0.10); color: var(--claret); }
+.pill.gold { background: rgba(184,146,61,0.14); color: #8A6A1F; }
+.pill.mute { background: var(--paper-deep); color: var(--ink-mute); }

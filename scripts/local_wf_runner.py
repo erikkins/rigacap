@@ -142,6 +142,8 @@ def parse_args():
     p.add_argument('--disable-cg', action='store_true', help='Ablation flag: disable Cascade Guard / circuit breaker entirely (force circuit_breaker_stops=0). Used to compute the no-CG baseline for CG-impact analysis.')
     p.add_argument('--intraday-aware', action='store_true', help='b-full validation: trailing-stop check uses day H/L instead of close-only. Matches production intraday-monitor logic. Default off (legacy EOD-only) for reproducibility.')
     p.add_argument('--rs-slots', type=int, default=0, help='RS Leaders slots (0=disabled, default: 0)')
+    p.add_argument('--min-score-diff', type=float, default=10.0, help='Hysteresis: only switch to TPE-best params if score beats current by this many points (default: 10)')
+    p.add_argument('--oos-hysteresis', action='store_true', help='Approach B hysteresis: re-evaluate best_params AND current_params on the PRIOR period (OOS); only switch if best wins out-of-sample too')
     p.add_argument('--rs-stop', type=float, default=0, help='RS trailing stop pct (0=same as primary, e.g. 20 for 20%%)')
     p.add_argument('--dry-run', action='store_true', help='Print config and exit without running')
     p.add_argument('--precomputed-params', type=str, default='', help='Path to dir of period_NNN.json files (skip TPE, replay saved params)')
@@ -255,7 +257,7 @@ async def run_simulation(args):
                 start_date=start,
                 end_date=end,
                 reoptimization_frequency='biweekly',
-                min_score_diff=10.0,
+                min_score_diff=args.min_score_diff,
                 enable_ai_optimization=not args.no_ai,
                 max_symbols=args.max_symbols,
                 fixed_strategy_id=args.strategy_id,
@@ -278,6 +280,7 @@ async def run_simulation(args):
                 cb_pause_carries_periods=(not args.cb_pause_no_carry_periods),
                 disable_circuit_breaker=args.disable_cg,
                 intraday_aware=args.intraday_aware,
+                oos_hysteresis=args.oos_hysteresis,
             )
         _current_result_ref["result"] = result
     except Exception as e:

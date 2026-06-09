@@ -71,6 +71,12 @@ def score_batch(batch, api_key, model, max_retries=3):
             if r.status_code == 429 or r.status_code >= 500:
                 time.sleep(2 ** attempt + 1)
                 continue
+            if r.status_code == 400:
+                # Permanent failure (token overflow, malformed, content filter).
+                # Skip with neutral score rather than retry — saves time + cost.
+                err_msg = r.text[:200].replace('\n', ' ')
+                print(f'  batch 400 (skipping, scoring as neutral): {err_msg}', file=sys.stderr)
+                return [0] * len(batch), {}
             r.raise_for_status()
             j = r.json()
             text = j['content'][0]['text'].strip()
@@ -140,10 +146,24 @@ def main():
         print(f'  {len(batches):,} batches of {args.batch_size} '
               f'(parallel workers: {args.workers})')
 
-        # Score in parallel
+        # Score in parallel with checkpoint every CHECKPOINT_BATCHES
+        CHECKPOINT_BATCHES = 100
         all_results = []
         total_in_tok = total_out_tok = 0
         t0 = time.time()
+        os.makedirs(os.path.dirname(args.out), exist_ok=True)
+
+        def checkpoint():
+            scored_df = pd.DataFrame(all_results)
+            partial = unique_articles[['id', 'symbol', 'date', 'headline']].merge(
+                scored_df, on='id', how='inner')
+            if args.resume and len(done_ids) > 0:
+                if os.path.exists(args.out):
+                    existing = pd.read_parquet(args.out)
+                    partial = pd.concat([existing, partial], ignore_index=True)
+                    partial = partial.drop_duplicates(subset=['id'])
+            partial.to_parquet(args.out, index=False)
+
         with ThreadPoolExecutor(max_workers=args.workers) as exe:
             futures = {exe.submit(score_batch, batch, api_key, args.model): batch
                        for batch in batches}
@@ -162,19 +182,18 @@ def main():
                     print(f'  [{j:>4}/{len(batches)}] {elapsed/60:.1f}min  '
                           f'tokens in={total_in_tok:,} out={total_out_tok:,}  '
                           f'cost so far=${cost:.2f}  ETA {eta_sec/60:.0f}min')
+                if j % CHECKPOINT_BATCHES == 0:
+                    checkpoint()
+                    print(f'  [CHECKPOINT] saved {len(all_results):,} scored articles')
 
+        # Final write
         scored_df = pd.DataFrame(all_results)
-        # Re-join headline info for the output
         out_df = unique_articles[['id', 'symbol', 'date', 'headline']].merge(
             scored_df, on='id', how='left')
-
-        # Merge with existing if resume
-        if args.resume and len(done_ids) > 0:
+        if args.resume and len(done_ids) > 0 and os.path.exists(args.out):
             existing = pd.read_parquet(args.out)
             out_df = pd.concat([existing, out_df], ignore_index=True)
             out_df = out_df.drop_duplicates(subset=['id'])
-
-        os.makedirs(os.path.dirname(args.out), exist_ok=True)
         out_df.to_parquet(args.out, index=False)
         print(f'\nWrote {len(out_df):,} scored articles to {args.out}')
 

@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap — Circle Beacon v3 (Middle Ground)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f1f5f9;
+    padding: 40px;
+    color: #0f172a;
+  }
+  h1 { text-align: center; font-size: 28px; margin-bottom: 6px; }
+  .subtitle { text-align: center; color: #64748b; margin-bottom: 48px; font-size: 15px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .card h3 { font-size: 17px; margin-bottom: 4px; }
+  .card .tag { display: inline-block; font-size: 11px; color: #6366f1; background: #eef2ff; padding: 2px 8px; border-radius: 99px; margin-bottom: 8px; font-weight: 600; }
+  .card .desc { color: #64748b; font-size: 13px; margin-bottom: 24px; line-height: 1.5; }
+  .row { display: flex; gap: 16px; margin-bottom: 16px; }
+  .preview {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 28px 20px; border-radius: 12px; background: #fafbfc; border: 1px solid #e2e8f0;
+  }
+  .preview-dark {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 28px 20px; border-radius: 12px; background: #0f172a;
+  }
+  .sizes {
+    display: flex; align-items: flex-end; justify-content: center; gap: 20px;
+    padding: 16px; background: #fafbfc; border-radius: 12px; border: 1px solid #e2e8f0;
+  }
+  .size-item { text-align: center; }
+  .size-label { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+  .wordmark-row { display: flex; gap: 16px; margin-top: 16px; }
+  .wordmark {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    gap: 12px; padding: 20px; border-radius: 12px;
+  }
+  .wordmark-light { background: #fafbfc; border: 1px solid #e2e8f0; }
+  .wordmark-dark { background: #0f172a; }
+  .wm-text { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .wm-text-dark { color: #0f172a; }
+  .wm-text-light { color: #ffffff; }
+  .ref { max-width: 1000px; margin: 48px auto 0; padding: 24px; background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .ref h3 { font-size: 15px; margin-bottom: 12px; }
+  .ref-row { display: flex; align-items: center; justify-content: center; gap: 48px; }
+  .ref-item { text-align: center; }
+  .ref-label { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<h1>RigaCap — Finding the Middle Ground</h1>
+<p class="subtitle">Between hard geometric juts and genie lamp — softened steps that still read as a spire</p>
+
+<!-- Reference comparison -->
+<div class="ref">
+  <h3 style="text-align:center; color: #64748b;">Reference: Too Angular vs Too Organic vs Goal</h3>
+  <div class="ref-row">
+    <div class="ref-item">
+      <svg width="50" height="50" viewBox="0 0 100 100">
+        <defs><linearGradient id="refbg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+        <circle cx="50" cy="50" r="50" fill="url(#refbg1)"/>
+        <path d="M 50 15 L 46.5 40 L 40 40 L 40 45.5 L 46.5 45.5 L 43 70 L 35 70 L 35 76.5 L 43 76.5 L 43 92 L 57 92 L 57 76.5 L 65 76.5 L 65 70 L 57 70 L 53.5 45.5 L 60 45.5 L 60 40 L 53.5 40 Z" fill="#fff"/>
+      </svg>
+      <div class="ref-label">v1: Too sharp</div>
+    </div>
+    <div class="ref-item">
+      <svg width="50" height="50" viewBox="0 0 100 100">
+        <defs><linearGradient id="refbg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+        <circle cx="50" cy="50" r="50" fill="url(#refbg2)"/>
+        <path d="M 50 14 C 48 18, 42 22, 38 30 C 34 38, 36 42, 38 44 C 40 46, 44 47, 45 49 C 46 51, 38 55, 33 63 C 28 71, 31 78, 34 81 C 37 84, 41 85, 42 86 L 42 92 L 58 92 L 58 86 C 59 85, 63 84, 66 81 C 69 78, 72 71, 67 63 C 62 55, 54 51, 55 49 C 56 47, 60 46, 62 44 C 64 42, 66 38, 62 30 C 58 22, 52 18, 50 14 Z" fill="#fff"/>
+      </svg>
+      <div class="ref-label">v2: Too blobby</div>
+    </div>
+    <div class="ref-item" style="font-size: 28px;">&#x2192;</div>
+    <div class="ref-item">
+      <svg width="50" height="50" viewBox="0 0 100 100">
+        <defs><linearGradient id="refbg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+        <circle cx="50" cy="50" r="50" fill="url(#refbg3)"/>
+        <text x="50" y="58" text-anchor="middle" fill="#a5b4fc" font-size="20">?</text>
+      </svg>
+      <div class="ref-label">v3: Sweet spot</div>
+    </div>
+  </div>
+</div>
+
+<div style="height: 32px;"></div>
+
+<div class="grid">
+
+  <!-- ========== A: SOFTENED STEPS ========== -->
+  <div class="card">
+    <span class="tag">A</span>
+    <h3>Softened Steps</h3>
+    <p class="desc">The original stepped geometry but with rounded corners at each transition. The galleries are still clearly horizontal platforms — just with a 3px radius at the edges instead of knife-sharp 90&deg; corners.</p>
+
+    <div class="row">
+      <div class="preview">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="abg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient>
+            <clipPath id="ac"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#abg)"/>
+          <g clip-path="url(#ac)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 31 20 A 22 22 0 0 1 31 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 69 20 A 22 22 0 0 0 69 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <!-- Stepped spire with rounded corners -->
+            <path d="
+              M 50 15
+              L 46.5 38
+              Q 46.5 40, 44 40
+              L 41 40
+              Q 39 40, 39 42
+              L 39 44
+              Q 39 46, 41 46
+              L 44 46
+              Q 46.5 46, 46.5 48
+              L 43 69
+              Q 43 71, 40 71
+              L 36 71
+              Q 34 71, 34 73
+              L 34 76
+              Q 34 78, 36 78
+              L 40 78
+              Q 42 78, 42 80
+              L 42 92
+              L 58 92
+              L 58 80
+              Q 58 78, 60 78
+              L 64 78
+              Q 66 78, 66 76
+              L 66 73
+              Q 66 71, 64 71
+              L 60 71
+              Q 57 71, 57 69
+              L 53.5 48
+              Q 53.5 46, 56 46
+              L 59 46
+              Q 61 46, 61 44
+              L 61 42
+              Q 61 40, 59 40
+              L 56 40
+              Q 53.5 40, 53.5 38
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="15" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="abd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient>
+            <clipPath id="acd"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#abd)"/>
+          <g clip-path="url(#acd)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+            <circle cx="50" cy="15" r="2.5" fill="#c7d2fe"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-item">
+        <svg width="64" height="64" viewBox="0 0 100 100"><defs><linearGradient id="as1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="acs1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#as1)"/><g clip-path="url(#acs1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="2.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">64px</div>
+      </div>
+      <div class="size-item">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="as2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="acs2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#as2)"/><g clip-path="url(#acs2)"><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="3.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">40px</div>
+      </div>
+      <div class="size-item">
+        <svg width="24" height="24" viewBox="0 0 100 100"><defs><linearGradient id="as3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#as3)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg>
+        <div class="size-label">24px</div>
+      </div>
+      <div class="size-item">
+        <svg width="16" height="16" viewBox="0 0 100 100"><defs><linearGradient id="as4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#as4)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg>
+        <div class="size-label">16px</div>
+      </div>
+    </div>
+
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="aw1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="acw1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#aw1)"/><g clip-path="url(#acw1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="2.5" fill="#a5b4fc"/></g></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="aw2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient><clipPath id="acw2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#aw2)"/><g clip-path="url(#acw2)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="2.5" fill="#c7d2fe"/></g></svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== B: TAPERED GALLERIES ========== -->
+  <div class="card">
+    <span class="tag">B</span>
+    <h3>Tapered Galleries</h3>
+    <p class="desc">The galleries slope slightly inward instead of being flat horizontal. Combined with rounded corners, this gives a subtle organic quality while keeping the stepped read. The taper hints at the church's octagonal form.</p>
+
+    <div class="row">
+      <div class="preview">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="bbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient>
+            <clipPath id="bc"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#bbg)"/>
+          <g clip-path="url(#bc)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 31 20 A 22 22 0 0 1 31 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 69 20 A 22 22 0 0 0 69 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <!-- Tapered galleries with rounded transitions -->
+            <path d="
+              M 50 15
+              L 46.5 37
+              Q 45 40, 40 40.5
+              L 39.5 43
+              Q 39 46, 44 46.5
+              L 43 68
+              Q 41.5 71, 35 72
+              L 34.5 76
+              Q 34 79, 40 79.5
+              L 42 92
+              L 58 92
+              L 60 79.5
+              Q 66 79, 65.5 76
+              L 65 72
+              Q 58.5 71, 57 68
+              L 56 46.5
+              Q 61 46, 60.5 43
+              L 60 40.5
+              Q 55 40, 53.5 37
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="15" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="bbd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient>
+            <clipPath id="bcd"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#bbd)"/>
+          <g clip-path="url(#bcd)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 50 15 L 46.5 37 Q 45 40, 40 40.5 L 39.5 43 Q 39 46, 44 46.5 L 43 68 Q 41.5 71, 35 72 L 34.5 76 Q 34 79, 40 79.5 L 42 92 L 58 92 L 60 79.5 Q 66 79, 65.5 76 L 65 72 Q 58.5 71, 57 68 L 56 46.5 Q 61 46, 60.5 43 L 60 40.5 Q 55 40, 53.5 37 Z" fill="#ffffff"/>
+            <circle cx="50" cy="15" r="2.5" fill="#c7d2fe"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-item">
+        <svg width="64" height="64" viewBox="0 0 100 100"><defs><linearGradient id="bs1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="bcs1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#bs1)"/><g clip-path="url(#bcs1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 15 L 46.5 37 Q 45 40, 40 40.5 L 39.5 43 Q 39 46, 44 46.5 L 43 68 Q 41.5 71, 35 72 L 34.5 76 Q 34 79, 40 79.5 L 42 92 L 58 92 L 60 79.5 Q 66 79, 65.5 76 L 65 72 Q 58.5 71, 57 68 L 56 46.5 Q 61 46, 60.5 43 L 60 40.5 Q 55 40, 53.5 37 Z" fill="#fff"/><circle cx="50" cy="15" r="2.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">64px</div>
+      </div>
+      <div class="size-item">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="bs2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="bcs2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#bs2)"/><g clip-path="url(#bcs2)"><path d="M 50 15 L 46.5 37 Q 45 40, 40 40.5 L 39.5 43 Q 39 46, 44 46.5 L 43 68 Q 41.5 71, 35 72 L 34.5 76 Q 34 79, 40 79.5 L 42 92 L 58 92 L 60 79.5 Q 66 79, 65.5 76 L 65 72 Q 58.5 71, 57 68 L 56 46.5 Q 61 46, 60.5 43 L 60 40.5 Q 55 40, 53.5 37 Z" fill="#fff"/><circle cx="50" cy="15" r="3.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">40px</div>
+      </div>
+      <div class="size-item">
+        <svg width="24" height="24" viewBox="0 0 100 100"><defs><linearGradient id="bs3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#bs3)"/><path d="M 50 15 L 46.5 37 Q 45 40, 40 40.5 L 39.5 43 Q 39 46, 44 46.5 L 43 68 Q 41.5 71, 35 72 L 34.5 76 Q 34 79, 40 79.5 L 42 92 L 58 92 L 60 79.5 Q 66 79, 65.5 76 L 65 72 Q 58.5 71, 57 68 L 56 46.5 Q 61 46, 60.5 43 L 60 40.5 Q 55 40, 53.5 37 Z" fill="#fff"/></svg>
+        <div class="size-label">24px</div>
+      </div>
+      <div class="size-item">
+        <svg width="16" height="16" viewBox="0 0 100 100"><defs><linearGradient id="bs4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#bs4)"/><path d="M 50 15 L 46.5 37 Q 45 40, 40 40.5 L 39.5 43 Q 39 46, 44 46.5 L 43 68 Q 41.5 71, 35 72 L 34.5 76 Q 34 79, 40 79.5 L 42 92 L 58 92 L 60 79.5 Q 66 79, 65.5 76 L 65 72 Q 58.5 71, 57 68 L 56 46.5 Q 61 46, 60.5 43 L 60 40.5 Q 55 40, 53.5 37 Z" fill="#fff"/></svg>
+        <div class="size-label">16px</div>
+      </div>
+    </div>
+
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="bw1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="bcw1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#bw1)"/><g clip-path="url(#bcw1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 15 L 46.5 37 Q 45 40, 40 40.5 L 39.5 43 Q 39 46, 44 46.5 L 43 68 Q 41.5 71, 35 72 L 34.5 76 Q 34 79, 40 79.5 L 42 92 L 58 92 L 60 79.5 Q 66 79, 65.5 76 L 65 72 Q 58.5 71, 57 68 L 56 46.5 Q 61 46, 60.5 43 L 60 40.5 Q 55 40, 53.5 37 Z" fill="#fff"/><circle cx="50" cy="15" r="2.5" fill="#a5b4fc"/></g></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="bw2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient><clipPath id="bcw2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#bw2)"/><g clip-path="url(#bcw2)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 50 15 L 46.5 37 Q 45 40, 40 40.5 L 39.5 43 Q 39 46, 44 46.5 L 43 68 Q 41.5 71, 35 72 L 34.5 76 Q 34 79, 40 79.5 L 42 92 L 58 92 L 60 79.5 Q 66 79, 65.5 76 L 65 72 Q 58.5 71, 57 68 L 56 46.5 Q 61 46, 60.5 43 L 60 40.5 Q 55 40, 53.5 37 Z" fill="#fff"/><circle cx="50" cy="15" r="2.5" fill="#c7d2fe"/></g></svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== C: CHAMFERED ========== -->
+  <div class="card">
+    <span class="tag">C</span>
+    <h3>Chamfered</h3>
+    <p class="desc">45-degree cuts at each corner instead of curves or right angles. All straight lines, no curves at all — but the angled transitions feel softer than 90&deg;. Clean, precise, modern. Almost Art Deco.</p>
+
+    <div class="row">
+      <div class="preview">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="cbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient>
+            <clipPath id="cc"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#cbg)"/>
+          <g clip-path="url(#cc)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 31 20 A 22 22 0 0 1 31 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 69 20 A 22 22 0 0 0 69 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <!-- Chamfered spire: 45-degree cuts at corners -->
+            <path d="
+              M 50 15
+              L 47 38
+              L 44 40
+              L 40 40
+              L 39 41
+              L 39 45
+              L 40 46
+              L 44 46
+              L 47 48
+              L 43.5 69
+              L 40 71
+              L 35 71
+              L 34 72
+              L 34 77
+              L 35 78
+              L 40 78
+              L 42 80
+              L 42 92
+              L 58 92
+              L 58 80
+              L 60 78
+              L 65 78
+              L 66 77
+              L 66 72
+              L 65 71
+              L 60 71
+              L 56.5 69
+              L 53 48
+              L 56 46
+              L 60 46
+              L 61 45
+              L 61 41
+              L 60 40
+              L 56 40
+              L 53 38
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="15" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="cbd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient>
+            <clipPath id="ccd"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#cbd)"/>
+          <g clip-path="url(#ccd)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 50 15 L 47 38 L 44 40 L 40 40 L 39 41 L 39 45 L 40 46 L 44 46 L 47 48 L 43.5 69 L 40 71 L 35 71 L 34 72 L 34 77 L 35 78 L 40 78 L 42 80 L 42 92 L 58 92 L 58 80 L 60 78 L 65 78 L 66 77 L 66 72 L 65 71 L 60 71 L 56.5 69 L 53 48 L 56 46 L 60 46 L 61 45 L 61 41 L 60 40 L 56 40 L 53 38 Z" fill="#ffffff"/>
+            <circle cx="50" cy="15" r="2.5" fill="#c7d2fe"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-item">
+        <svg width="64" height="64" viewBox="0 0 100 100"><defs><linearGradient id="cs1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="ccs1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#cs1)"/><g clip-path="url(#ccs1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 15 L 47 38 L 44 40 L 40 40 L 39 41 L 39 45 L 40 46 L 44 46 L 47 48 L 43.5 69 L 40 71 L 35 71 L 34 72 L 34 77 L 35 78 L 40 78 L 42 80 L 42 92 L 58 92 L 58 80 L 60 78 L 65 78 L 66 77 L 66 72 L 65 71 L 60 71 L 56.5 69 L 53 48 L 56 46 L 60 46 L 61 45 L 61 41 L 60 40 L 56 40 L 53 38 Z" fill="#fff"/><circle cx="50" cy="15" r="2.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">64px</div>
+      </div>
+      <div class="size-item">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="cs2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="ccs2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#cs2)"/><g clip-path="url(#ccs2)"><path d="M 50 15 L 47 38 L 44 40 L 40 40 L 39 41 L 39 45 L 40 46 L 44 46 L 47 48 L 43.5 69 L 40 71 L 35 71 L 34 72 L 34 77 L 35 78 L 40 78 L 42 80 L 42 92 L 58 92 L 58 80 L 60 78 L 65 78 L 66 77 L 66 72 L 65 71 L 60 71 L 56.5 69 L 53 48 L 56 46 L 60 46 L 61 45 L 61 41 L 60 40 L 56 40 L 53 38 Z" fill="#fff"/><circle cx="50" cy="15" r="3.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">40px</div>
+      </div>
+      <div class="size-item">
+        <svg width="24" height="24" viewBox="0 0 100 100"><defs><linearGradient id="cs3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#cs3)"/><path d="M 50 15 L 47 38 L 44 40 L 40 40 L 39 41 L 39 45 L 40 46 L 44 46 L 47 48 L 43.5 69 L 40 71 L 35 71 L 34 72 L 34 77 L 35 78 L 40 78 L 42 80 L 42 92 L 58 92 L 58 80 L 60 78 L 65 78 L 66 77 L 66 72 L 65 71 L 60 71 L 56.5 69 L 53 48 L 56 46 L 60 46 L 61 45 L 61 41 L 60 40 L 56 40 L 53 38 Z" fill="#fff"/></svg>
+        <div class="size-label">24px</div>
+      </div>
+      <div class="size-item">
+        <svg width="16" height="16" viewBox="0 0 100 100"><defs><linearGradient id="cs4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#cs4)"/><path d="M 50 15 L 47 38 L 44 40 L 40 40 L 39 41 L 39 45 L 40 46 L 44 46 L 47 48 L 43.5 69 L 40 71 L 35 71 L 34 72 L 34 77 L 35 78 L 40 78 L 42 80 L 42 92 L 58 92 L 58 80 L 60 78 L 65 78 L 66 77 L 66 72 L 65 71 L 60 71 L 56.5 69 L 53 48 L 56 46 L 60 46 L 61 45 L 61 41 L 60 40 L 56 40 L 53 38 Z" fill="#fff"/></svg>
+        <div class="size-label">16px</div>
+      </div>
+    </div>
+
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="cw1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="ccw1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#cw1)"/><g clip-path="url(#ccw1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 15 L 47 38 L 44 40 L 40 40 L 39 41 L 39 45 L 40 46 L 44 46 L 47 48 L 43.5 69 L 40 71 L 35 71 L 34 72 L 34 77 L 35 78 L 40 78 L 42 80 L 42 92 L 58 92 L 58 80 L 60 78 L 65 78 L 66 77 L 66 72 L 65 71 L 60 71 L 56.5 69 L 53 48 L 56 46 L 60 46 L 61 45 L 61 41 L 60 40 L 56 40 L 53 38 Z" fill="#fff"/><circle cx="50" cy="15" r="2.5" fill="#a5b4fc"/></g></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="cw2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient><clipPath id="ccw2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#cw2)"/><g clip-path="url(#ccw2)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 50 15 L 47 38 L 44 40 L 40 40 L 39 41 L 39 45 L 40 46 L 44 46 L 47 48 L 43.5 69 L 40 71 L 35 71 L 34 72 L 34 77 L 35 78 L 40 78 L 42 80 L 42 92 L 58 92 L 58 80 L 60 78 L 65 78 L 66 77 L 66 72 L 65 71 L 60 71 L 56.5 69 L 53 48 L 56 46 L 60 46 L 61 45 L 61 41 L 60 40 L 56 40 L 53 38 Z" fill="#fff"/><circle cx="50" cy="15" r="2.5" fill="#c7d2fe"/></g></svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== D: SINGLE GALLERY ========== -->
+  <div class="card">
+    <span class="tag">D</span>
+    <h3>Single Gallery</h3>
+    <p class="desc">Simplified to one main gallery tier with rounded corners. Reduces complexity — reads cleaner at tiny sizes. The single swell is enough to say "spire" without needing two steps. Strongest at favicon scale.</p>
+
+    <div class="row">
+      <div class="preview">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="dbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient>
+            <clipPath id="dc"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#dbg)"/>
+          <g clip-path="url(#dc)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 31 20 A 22 22 0 0 1 31 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 69 20 A 22 22 0 0 0 69 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <!-- Single gallery, rounded corners -->
+            <path d="
+              M 50 14
+              L 44 55
+              Q 43 58, 38 58.5
+              L 34 59
+              Q 32 59, 32 61
+              L 32 66
+              Q 32 68, 34 68
+              L 38 68
+              Q 42 68, 42 72
+              L 42 92
+              L 58 92
+              L 58 72
+              Q 58 68, 62 68
+              L 66 68
+              Q 68 68, 68 66
+              L 68 61
+              Q 68 59, 66 59
+              L 62 59
+              Q 57 58, 56 55
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="14" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="dbd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient>
+            <clipPath id="dcd"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#dbd)"/>
+          <g clip-path="url(#dcd)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 50 14 L 44 55 Q 43 58, 38 58.5 L 34 59 Q 32 59, 32 61 L 32 66 Q 32 68, 34 68 L 38 68 Q 42 68, 42 72 L 42 92 L 58 92 L 58 72 Q 58 68, 62 68 L 66 68 Q 68 68, 68 66 L 68 61 Q 68 59, 66 59 L 62 59 Q 57 58, 56 55 Z" fill="#ffffff"/>
+            <circle cx="50" cy="14" r="2.5" fill="#c7d2fe"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-item">
+        <svg width="64" height="64" viewBox="0 0 100 100"><defs><linearGradient id="ds1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="dcs1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#ds1)"/><g clip-path="url(#dcs1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 14 L 44 55 Q 43 58, 38 58.5 L 34 59 Q 32 59, 32 61 L 32 66 Q 32 68, 34 68 L 38 68 Q 42 68, 42 72 L 42 92 L 58 92 L 58 72 Q 58 68, 62 68 L 66 68 Q 68 68, 68 66 L 68 61 Q 68 59, 66 59 L 62 59 Q 57 58, 56 55 Z" fill="#fff"/><circle cx="50" cy="14" r="2.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">64px</div>
+      </div>
+      <div class="size-item">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="ds2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="dcs2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#ds2)"/><g clip-path="url(#dcs2)"><path d="M 50 14 L 44 55 Q 43 58, 38 58.5 L 34 59 Q 32 59, 32 61 L 32 66 Q 32 68, 34 68 L 38 68 Q 42 68, 42 72 L 42 92 L 58 92 L 58 72 Q 58 68, 62 68 L 66 68 Q 68 68, 68 66 L 68 61 Q 68 59, 66 59 L 62 59 Q 57 58, 56 55 Z" fill="#fff"/><circle cx="50" cy="14" r="3.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">40px</div>
+      </div>
+      <div class="size-item">
+        <svg width="24" height="24" viewBox="0 0 100 100"><defs><linearGradient id="ds3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#ds3)"/><path d="M 50 14 L 44 55 Q 43 58, 38 58.5 L 34 59 Q 32 59, 32 61 L 32 66 Q 32 68, 34 68 L 38 68 Q 42 68, 42 72 L 42 92 L 58 92 L 58 72 Q 58 68, 62 68 L 66 68 Q 68 68, 68 66 L 68 61 Q 68 59, 66 59 L 62 59 Q 57 58, 56 55 Z" fill="#fff"/></svg>
+        <div class="size-label">24px</div>
+      </div>
+      <div class="size-item">
+        <svg width="16" height="16" viewBox="0 0 100 100"><defs><linearGradient id="ds4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#ds4)"/><path d="M 50 14 L 44 55 Q 43 58, 38 58.5 L 34 59 Q 32 59, 32 61 L 32 66 Q 32 68, 34 68 L 38 68 Q 42 68, 42 72 L 42 92 L 58 92 L 58 72 Q 58 68, 62 68 L 66 68 Q 68 68, 68 66 L 68 61 Q 68 59, 66 59 L 62 59 Q 57 58, 56 55 Z" fill="#fff"/></svg>
+        <div class="size-label">16px</div>
+      </div>
+    </div>
+
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="dw1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="dcw1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#dw1)"/><g clip-path="url(#dcw1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 14 L 44 55 Q 43 58, 38 58.5 L 34 59 Q 32 59, 32 61 L 32 66 Q 32 68, 34 68 L 38 68 Q 42 68, 42 72 L 42 92 L 58 92 L 58 72 Q 58 68, 62 68 L 66 68 Q 68 68, 68 66 L 68 61 Q 68 59, 66 59 L 62 59 Q 57 58, 56 55 Z" fill="#fff"/><circle cx="50" cy="14" r="2.5" fill="#a5b4fc"/></g></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="dw2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient><clipPath id="dcw2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#dw2)"/><g clip-path="url(#dcw2)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 50 14 L 44 55 Q 43 58, 38 58.5 L 34 59 Q 32 59, 32 61 L 32 66 Q 32 68, 34 68 L 38 68 Q 42 68, 42 72 L 42 92 L 58 92 L 58 72 Q 58 68, 62 68 L 66 68 Q 68 68, 68 66 L 68 61 Q 68 59, 66 59 L 62 59 Q 57 58, 56 55 Z" fill="#fff"/><circle cx="50" cy="14" r="2.5" fill="#c7d2fe"/></g></svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="max-width: 1000px; margin: 48px auto 0; text-align: center; color: #94a3b8; font-size: 13px; line-height: 1.6;">
+  <p><strong>Spectrum:</strong> A is the original with border-radius. B adds slight taper to the galleries. C uses 45&deg; chamfers (all straight lines, no curves). D simplifies to a single gallery for maximum clarity at small sizes. All keep the stepped silhouette recognizable without going genie lamp.</p>
+</div>
+
+</body>
+</html>

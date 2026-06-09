@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap — Final Polish</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f1f5f9;
+    padding: 40px;
+    color: #0f172a;
+  }
+  h1 { text-align: center; font-size: 28px; margin-bottom: 6px; }
+  .subtitle { text-align: center; color: #64748b; margin-bottom: 48px; font-size: 15px; }
+  .section-title { text-align: center; font-size: 18px; color: #475569; margin: 40px 0 20px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    max-width: 740px;
+    margin: 0 auto;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .card h3 { font-size: 15px; margin-bottom: 4px; }
+  .card .tag { display: inline-block; font-size: 10px; color: #6366f1; background: #eef2ff; padding: 2px 8px; border-radius: 99px; margin-bottom: 6px; font-weight: 600; }
+  .card .desc { color: #94a3b8; font-size: 12px; margin-bottom: 16px; line-height: 1.4; }
+  .row { display: flex; gap: 12px; margin-bottom: 12px; }
+  .preview {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 20px; border-radius: 10px; background: #fafbfc; border: 1px solid #e2e8f0;
+  }
+  .preview-dark {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 20px; border-radius: 10px; background: #0f172a;
+  }
+  .sizes {
+    display: flex; align-items: flex-end; justify-content: center; gap: 16px;
+    padding: 12px; background: #fafbfc; border-radius: 10px; border: 1px solid #e2e8f0;
+  }
+  .size-item { text-align: center; }
+  .size-label { font-size: 9px; color: #94a3b8; margin-top: 3px; }
+  .wordmark-row { display: flex; gap: 12px; margin-top: 12px; }
+  .wordmark {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    gap: 10px; padding: 16px; border-radius: 10px;
+  }
+  .wordmark-light { background: #fafbfc; border: 1px solid #e2e8f0; }
+  .wordmark-dark { background: #0f172a; }
+  .wm-text { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .wm-text-dark { color: #0f172a; }
+  .wm-text-light { color: #ffffff; }
+</style>
+</head>
+<body>
+
+<h1>RigaCap — Softened Steps, Final Polish</h1>
+<p class="subtitle">Color options, with and without signal arcs</p>
+
+<!-- ======================== SPIRE PATH (reused everywhere) ======================== -->
+<!--
+  Softened Steps spire path (for copy-paste reference):
+  M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z
+-->
+
+<h2 class="section-title">Without Signal Arcs (Clean)</h2>
+
+<div class="grid">
+
+  <!-- 1: PURE WHITE ON NAVY -->
+  <div class="card">
+    <span class="tag">1</span>
+    <h3>Pure Monochrome</h3>
+    <p class="desc">White spire, no dot, no arcs. Maximum simplicity. The shape speaks for itself.</p>
+    <div class="row">
+      <div class="preview">
+        <svg width="90" height="90" viewBox="0 0 100 100">
+          <defs><linearGradient id="p1bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#p1bg)"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="90" height="90" viewBox="0 0 100 100">
+          <defs><linearGradient id="p1bgb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#p1bgb)"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+        </svg>
+      </div>
+    </div>
+    <div class="sizes">
+      <div class="size-item"><svg width="48" height="48" viewBox="0 0 100 100"><defs><linearGradient id="p1s1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p1s1)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg><div class="size-label">48</div></div>
+      <div class="size-item"><svg width="32" height="32" viewBox="0 0 100 100"><defs><linearGradient id="p1s2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p1s2)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg><div class="size-label">32</div></div>
+      <div class="size-item"><svg width="20" height="20" viewBox="0 0 100 100"><defs><linearGradient id="p1s3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p1s3)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg><div class="size-label">20</div></div>
+      <div class="size-item"><svg width="16" height="16" viewBox="0 0 100 100"><defs><linearGradient id="p1s4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p1s4)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg><div class="size-label">16</div></div>
+    </div>
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="34" height="34" viewBox="0 0 100 100"><defs><linearGradient id="p1w1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p1w1)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="34" height="34" viewBox="0 0 100 100"><defs><linearGradient id="p1w2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p1w2)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2: GOLD TIP -->
+  <div class="card">
+    <span class="tag">2</span>
+    <h3>Gold Tip</h3>
+    <p class="desc">White spire with a gold beacon dot at the peak. The weathercock reference. Adds warmth without clutter.</p>
+    <div class="row">
+      <div class="preview">
+        <svg width="90" height="90" viewBox="0 0 100 100">
+          <defs><linearGradient id="p2bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#p2bg)"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+          <circle cx="50" cy="15" r="3" fill="#f59e0b"/>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="90" height="90" viewBox="0 0 100 100">
+          <defs><linearGradient id="p2bgb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#p2bgb)"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#e2e8f0"/>
+          <circle cx="50" cy="15" r="3" fill="#fbbf24"/>
+        </svg>
+      </div>
+    </div>
+    <div class="sizes">
+      <div class="size-item"><svg width="48" height="48" viewBox="0 0 100 100"><defs><linearGradient id="p2s1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p2s1)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="3.5" fill="#f59e0b"/></svg><div class="size-label">48</div></div>
+      <div class="size-item"><svg width="32" height="32" viewBox="0 0 100 100"><defs><linearGradient id="p2s2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p2s2)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="4" fill="#f59e0b"/></svg><div class="size-label">32</div></div>
+      <div class="size-item"><svg width="20" height="20" viewBox="0 0 100 100"><defs><linearGradient id="p2s3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p2s3)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="5" fill="#f59e0b"/></svg><div class="size-label">20</div></div>
+      <div class="size-item"><svg width="16" height="16" viewBox="0 0 100 100"><defs><linearGradient id="p2s4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p2s4)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg><div class="size-label">16</div></div>
+    </div>
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="34" height="34" viewBox="0 0 100 100"><defs><linearGradient id="p2w1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p2w1)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="3" fill="#f59e0b"/></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="34" height="34" viewBox="0 0 100 100"><defs><linearGradient id="p2w2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p2w2)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#e2e8f0"/><circle cx="50" cy="15" r="3" fill="#fbbf24"/></svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3: EMERALD TIP -->
+  <div class="card">
+    <span class="tag">3</span>
+    <h3>Emerald Tip</h3>
+    <p class="desc">Green dot = "buy signal active." Ties the logo to the product's core value prop. Fresh, energetic.</p>
+    <div class="row">
+      <div class="preview">
+        <svg width="90" height="90" viewBox="0 0 100 100">
+          <defs><linearGradient id="p3bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#p3bg)"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+          <circle cx="50" cy="15" r="3" fill="#34d399"/>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="90" height="90" viewBox="0 0 100 100">
+          <defs><linearGradient id="p3bgb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#p3bgb)"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#e2e8f0"/>
+          <circle cx="50" cy="15" r="3" fill="#6ee7b7"/>
+        </svg>
+      </div>
+    </div>
+    <div class="sizes">
+      <div class="size-item"><svg width="48" height="48" viewBox="0 0 100 100"><defs><linearGradient id="p3s1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p3s1)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="3.5" fill="#34d399"/></svg><div class="size-label">48</div></div>
+      <div class="size-item"><svg width="32" height="32" viewBox="0 0 100 100"><defs><linearGradient id="p3s2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p3s2)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="4" fill="#34d399"/></svg><div class="size-label">32</div></div>
+      <div class="size-item"><svg width="20" height="20" viewBox="0 0 100 100"><defs><linearGradient id="p3s3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p3s3)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="5" fill="#34d399"/></svg><div class="size-label">20</div></div>
+      <div class="size-item"><svg width="16" height="16" viewBox="0 0 100 100"><defs><linearGradient id="p3s4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p3s4)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg><div class="size-label">16</div></div>
+    </div>
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="34" height="34" viewBox="0 0 100 100"><defs><linearGradient id="p3w1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p3w1)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="3" fill="#34d399"/></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="34" height="34" viewBox="0 0 100 100"><defs><linearGradient id="p3w2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p3w2)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#e2e8f0"/><circle cx="50" cy="15" r="3" fill="#6ee7b7"/></svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<h2 class="section-title">Background Color Variants (All Pure Monochrome, No Arcs)</h2>
+
+<div class="grid">
+
+  <!-- 4: SLATE/DARK -->
+  <div class="card">
+    <span class="tag">4</span>
+    <h3>Slate</h3>
+    <p class="desc">Darker, less purple. More corporate/serious.</p>
+    <div class="row">
+      <div class="preview">
+        <svg width="90" height="90" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="50" fill="#0f172a"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+        </svg>
+      </div>
+      <div class="preview" style="background:#0f172a;border-color:#1e293b;">
+        <svg width="90" height="90" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="50" fill="#1e293b"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+        </svg>
+      </div>
+    </div>
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="34" height="34" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#0f172a"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5: VIBRANT INDIGO -->
+  <div class="card">
+    <span class="tag">5</span>
+    <h3>Vibrant Indigo</h3>
+    <p class="desc">Brighter, more energetic. Pops on social feeds.</p>
+    <div class="row">
+      <div class="preview">
+        <svg width="90" height="90" viewBox="0 0 100 100">
+          <defs><linearGradient id="p5bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#p5bg)"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+        </svg>
+      </div>
+      <div class="preview">
+        <svg width="90" height="90" viewBox="0 0 100 100">
+          <defs><linearGradient id="p5bg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#p5bg2)"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+        </svg>
+      </div>
+    </div>
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="34" height="34" viewBox="0 0 100 100"><defs><linearGradient id="p5w1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p5w1)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6: NAVY + GOLD TIP -->
+  <div class="card">
+    <span class="tag">6</span>
+    <h3>Navy + Gold</h3>
+    <p class="desc">The "premium" combo. Navy authority + gold wealth signal.</p>
+    <div class="row">
+      <div class="preview">
+        <svg width="90" height="90" viewBox="0 0 100 100">
+          <defs><linearGradient id="p6bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#172554"/><stop offset="100%" stop-color="#1e3a5f"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#p6bg)"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+          <circle cx="50" cy="15" r="3" fill="#f59e0b"/>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="90" height="90" viewBox="0 0 100 100">
+          <defs><linearGradient id="p6bgb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#172554"/><stop offset="100%" stop-color="#1e3a5f"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#p6bgb)"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#e2e8f0"/>
+          <circle cx="50" cy="15" r="3" fill="#fbbf24"/>
+        </svg>
+      </div>
+    </div>
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="34" height="34" viewBox="0 0 100 100"><defs><linearGradient id="p6w" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#172554"/><stop offset="100%" stop-color="#1e3a5f"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#p6w)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="3" fill="#f59e0b"/></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<h2 class="section-title">My Recommendation</h2>
+
+<div class="grid-2">
+  <div class="card" style="border: 2px solid #6366f1;">
+    <span class="tag">PRIMARY</span>
+    <h3>Deep Indigo + Gold Tip</h3>
+    <p class="desc">The indigo-navy gradient is premium and matches the existing app. The gold dot adds just enough warmth and references the gilded weathercock. Clean enough for 16px, distinctive enough for billboards.</p>
+    <div class="row">
+      <div class="preview" style="padding:32px;">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs><linearGradient id="recbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#recbg)"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+          <circle cx="50" cy="15" r="3" fill="#f59e0b"/>
+        </svg>
+      </div>
+      <div class="preview-dark" style="padding:32px;">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs><linearGradient id="recbgd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#recbgd)"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+          <circle cx="50" cy="15" r="3" fill="#fbbf24"/>
+        </svg>
+      </div>
+    </div>
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light" style="padding:24px;">
+        <svg width="44" height="44" viewBox="0 0 100 100"><defs><linearGradient id="recw1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#recw1)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="3" fill="#f59e0b"/></svg>
+        <span class="wm-text wm-text-dark" style="font-size:28px;">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark" style="padding:24px;">
+        <svg width="44" height="44" viewBox="0 0 100 100"><defs><linearGradient id="recw2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#recw2)"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/><circle cx="50" cy="15" r="3" fill="#fbbf24"/></svg>
+        <span class="wm-text wm-text-light" style="font-size:28px;">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="border: 2px solid #e2e8f0;">
+    <span class="tag" style="color:#475569;background:#f1f5f9;">FALLBACK</span>
+    <h3>Pure Monochrome</h3>
+    <p class="desc">For single-color contexts: fax headers, embossing, single-ink print, dark mode favicons. Always have a monochrome version in the brand kit.</p>
+    <div class="row">
+      <div class="preview" style="padding:32px;">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="50" fill="#0f172a"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#ffffff"/>
+        </svg>
+      </div>
+      <div class="preview-dark" style="padding:32px;">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="50" fill="#ffffff"/>
+          <path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#0f172a"/>
+        </svg>
+      </div>
+    </div>
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light" style="padding:24px;">
+        <svg width="44" height="44" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#0f172a"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#fff"/></svg>
+        <span class="wm-text wm-text-dark" style="font-size:28px;">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark" style="padding:24px;">
+        <svg width="44" height="44" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#fff"/><path d="M 50 15 L 46.5 38 Q 46.5 40, 44 40 L 41 40 Q 39 40, 39 42 L 39 44 Q 39 46, 41 46 L 44 46 Q 46.5 46, 46.5 48 L 43 69 Q 43 71, 40 71 L 36 71 Q 34 71, 34 73 L 34 76 Q 34 78, 36 78 L 40 78 Q 42 78, 42 80 L 42 92 L 58 92 L 58 80 Q 58 78, 60 78 L 64 78 Q 66 78, 66 76 L 66 73 Q 66 71, 64 71 L 60 71 Q 57 71, 57 69 L 53.5 48 Q 53.5 46, 56 46 L 59 46 Q 61 46, 61 44 L 61 42 Q 61 40, 59 40 L 56 40 Q 53.5 40, 53.5 38 Z" fill="#0f172a"/></svg>
+        <span class="wm-text wm-text-light" style="font-size:28px;">RigaCap</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="max-width: 740px; margin: 32px auto 0; text-align: center; color: #94a3b8; font-size: 12px; line-height: 1.6;">
+  <p>All variants use the same <strong>softened steps</strong> spire path. No signal arcs. The spire SVG path is documented in the HTML source for easy extraction. A designer can refine optical balance and proportion — these are solid starting points.</p>
+</div>
+
+</body>
+</html>

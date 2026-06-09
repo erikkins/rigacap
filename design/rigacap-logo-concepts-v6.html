@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap Logo Concepts v6 — Broadcast Tower Variations</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f172a; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; }
+  h1 { text-align: center; font-size: 28px; margin-bottom: 10px; color: #fff; }
+  .subtitle { text-align: center; color: #94a3b8; margin-bottom: 50px; font-size: 14px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+  .concepts { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto; }
+  .concept { background: #1e293b; border-radius: 16px; padding: 30px; border: 1px solid #334155; }
+  .concept h2 { font-size: 20px; color: #f59e0b; margin-bottom: 6px; }
+  .concept .rationale { color: #94a3b8; font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+  .previews { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .preview-box { text-align: center; }
+  .preview-box .label { font-size: 11px; color: #64748b; margin-top: 6px; }
+  canvas { border-radius: 8px; }
+  .context-row { display: flex; gap: 20px; align-items: center; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+  .context-card { background: #0f172a; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+  .context-card .name { font-size: 18px; font-weight: 700; color: #fff; }
+  .winner { border: 2px solid #f59e0b; }
+  .winner h2::after { content: ' (Original)'; font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+
+<h1>RigaCap Logo v6 — Broadcast Tower Riffs</h1>
+<p class="subtitle">Six variations on the tower concept. Different proportions, structure, and personality — same "we send the signal" story.</p>
+
+<div class="concepts">
+
+  <!-- 0: Original for reference -->
+  <div class="concept winner">
+    <h2>0. Original</h2>
+    <p class="rationale">The v3 broadcast tower for reference. Tapered body, horizontal bars, antenna with symmetric wave arcs, gold base line.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="orig-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="orig-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="orig-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="orig-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 1: Tall & Sleek -->
+  <div class="concept">
+    <h2>1. Tall & Sleek</h2>
+    <p class="rationale">Taller, thinner tower with no horizontal bars. Just a clean tapered line. The waves are larger and asymmetric — one side stronger. More elegant, less industrial.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="tall-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="tall-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="tall-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="tall-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 2: Lattice Tower -->
+  <div class="concept">
+    <h2>2. Lattice Tower</h2>
+    <p class="rationale">Open lattice/truss structure like a real broadcast tower. X-bracing visible. More technical, more structural. The kind of tower that means business. Waves emanate from a gold antenna tip.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="lattice-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="lattice-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="lattice-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="lattice-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 3: Bold Geometric -->
+  <div class="concept">
+    <h2>3. Bold Geometric</h2>
+    <p class="rationale">Chunky, confident, geometric. A wide triangular base tapering to a sharp point. Gold waves are thick and bold. Feels like a logo you'd see on a premium app icon. Strong at small sizes.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="bold-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="bold-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="bold-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="bold-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 4: Minimal Line -->
+  <div class="concept">
+    <h2>4. Minimal Line</h2>
+    <p class="rationale">Stripped to the absolute essentials. A single vertical line, a dot at top, three arc pairs. That's it. Maximum signal, minimum noise. Like the philosophy behind the product itself.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="mini-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="mini-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="mini-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="mini-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 5: Art Deco Tower -->
+  <div class="concept">
+    <h2>5. Art Deco Tower</h2>
+    <p class="rationale">Inspired by 1920s–30s skyscraper aesthetics. Stepped tiers narrowing upward, symmetrical, ornamental gold accents. Chrysler Building meets broadcast antenna. Heritage meets technology.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="deco-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="deco-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="deco-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="deco-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 6: Upward Burst -->
+  <div class="concept">
+    <h2>6. Upward Burst</h2>
+    <p class="rationale">The tower is just implied — a vertical gold core with waves bursting upward and outward like an antenna firing. Dynamic, energetic. The moment the signal goes live. Less structure, more energy.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="burst-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="burst-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="burst-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="burst-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const NAVY = '#172554';
+const NAVY_MID = '#1e3a5f';
+const GOLD = '#f59e0b';
+const GOLD_LIGHT = '#fbbf24';
+const WHITE = '#ffffff';
+const LIGHT_BG = '#f1f5f9';
+
+function drawOnAll(prefix, drawFn) {
+  ['lg','sm','dark','ctx'].forEach(suffix => {
+    const c = document.getElementById(`${prefix}-${suffix}`);
+    if (!c) return;
+    drawFn(c, c.width, suffix === 'dark');
+  });
+}
+
+function bgCircle(ctx, s, lightBg) {
+  if (lightBg) { ctx.fillStyle = LIGHT_BG; ctx.fillRect(0, 0, s, s); }
+  const g = ctx.createLinearGradient(0, 0, s, s);
+  g.addColorStop(0, NAVY); g.addColorStop(1, NAVY_MID);
+  ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fillStyle = g; ctx.fill();
+}
+
+// ── 0. ORIGINAL ─────────────────────────────────────────────────
+drawOnAll('orig', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s); bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+  const tW = s*0.06, tTop = cy - s*0.18, tBot = cy + s*0.28;
+  ctx.beginPath();
+  ctx.moveTo(cx-tW*1.3,tBot); ctx.lineTo(cx-tW*0.5,tTop);
+  ctx.lineTo(cx+tW*0.5,tTop); ctx.lineTo(cx+tW*1.3,tBot);
+  ctx.closePath(); ctx.fillStyle = WHITE; ctx.fill();
+  for(let i=1;i<=3;i++){const y=tTop+(tBot-tTop)*(i/4),w=tW*(0.6+i*0.25);
+    ctx.strokeStyle=NAVY;ctx.lineWidth=s*0.012;ctx.beginPath();ctx.moveTo(cx-w,y);ctx.lineTo(cx+w,y);ctx.stroke();}
+  ctx.beginPath();ctx.moveTo(cx,tTop);ctx.lineTo(cx,tTop-s*0.1);
+  ctx.strokeStyle=WHITE;ctx.lineWidth=s*0.015;ctx.lineCap='round';ctx.stroke();
+  const wc={x:cx,y:tTop-s*0.1};
+  for(let i=1;i<=3;i++){const r=s*0.06*i;ctx.strokeStyle=GOLD;ctx.lineWidth=s*0.012;ctx.globalAlpha=1-(i-1)*0.25;
+    ctx.beginPath();ctx.arc(wc.x,wc.y,r,-Math.PI*0.8,-Math.PI*0.2);ctx.stroke();
+    ctx.beginPath();ctx.arc(wc.x,wc.y,r,Math.PI*0.2,Math.PI*0.8);ctx.stroke();}
+  ctx.globalAlpha=1;
+  ctx.beginPath();ctx.arc(wc.x,wc.y,s*0.02,0,Math.PI*2);ctx.fillStyle=GOLD;ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx-tW*2,tBot);ctx.lineTo(cx+tW*2,tBot);
+  ctx.strokeStyle=GOLD;ctx.lineWidth=s*0.015;ctx.lineCap='round';ctx.stroke();
+});
+
+// ── 1. TALL & SLEEK ─────────────────────────────────────────────
+drawOnAll('tall', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s); bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  const tTop = cy - s * 0.3;
+  const tBot = cy + s * 0.32;
+  const tipY = tTop - s * 0.06;
+
+  // Sleek tapered tower — just two lines converging
+  ctx.strokeStyle = WHITE;
+  ctx.lineWidth = s * 0.018;
+  ctx.lineCap = 'round';
+  // Left edge
+  ctx.beginPath();
+  ctx.moveTo(cx - s * 0.06, tBot);
+  ctx.lineTo(cx, tTop);
+  ctx.stroke();
+  // Right edge
+  ctx.beginPath();
+  ctx.moveTo(cx + s * 0.06, tBot);
+  ctx.lineTo(cx, tTop);
+  ctx.stroke();
+
+  // Antenna line
+  ctx.lineWidth = s * 0.012;
+  ctx.beginPath();
+  ctx.moveTo(cx, tTop);
+  ctx.lineTo(cx, tipY);
+  ctx.stroke();
+
+  // Asymmetric waves — stronger on right
+  for (let i = 1; i <= 4; i++) {
+    const r = s * 0.05 * i;
+    // Right side (stronger)
+    ctx.beginPath();
+    ctx.arc(cx, tipY, r, -Math.PI * 0.65, -Math.PI * 0.1);
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = s * 0.013;
+    ctx.globalAlpha = 1 - (i - 1) * 0.2;
+    ctx.stroke();
+    // Left side (lighter)
+    ctx.beginPath();
+    ctx.arc(cx, tipY, r * 0.8, Math.PI * 0.15, Math.PI * 0.6);
+    ctx.globalAlpha = (1 - (i - 1) * 0.2) * 0.5;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Gold tip
+  ctx.beginPath();
+  ctx.arc(cx, tipY, s * 0.022, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+
+  // Small base mark
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = s * 0.01;
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(cx - s * 0.1, tBot);
+  ctx.lineTo(cx + s * 0.1, tBot);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+});
+
+// ── 2. LATTICE TOWER ────────────────────────────────────────────
+drawOnAll('lattice', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s); bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  const tTop = cy - s * 0.2;
+  const tBot = cy + s * 0.3;
+  const topW = s * 0.03;
+  const botW = s * 0.1;
+  const tipY = tTop - s * 0.08;
+  const sections = 4;
+
+  ctx.strokeStyle = WHITE;
+  ctx.lineWidth = s * 0.01;
+  ctx.lineCap = 'round';
+
+  // Outer edges
+  ctx.beginPath();
+  ctx.moveTo(cx - botW, tBot);
+  ctx.lineTo(cx - topW, tTop);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + botW, tBot);
+  ctx.lineTo(cx + topW, tTop);
+  ctx.stroke();
+
+  // Horizontal rungs + X-bracing
+  for (let i = 0; i <= sections; i++) {
+    const t = i / sections;
+    const y = tTop + (tBot - tTop) * t;
+    const w = topW + (botW - topW) * t;
+
+    // Horizontal
+    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = s * 0.006;
+    ctx.beginPath();
+    ctx.moveTo(cx - w, y);
+    ctx.lineTo(cx + w, y);
+    ctx.stroke();
+
+    // X-bracing (between this rung and next)
+    if (i < sections) {
+      const nextT = (i + 1) / sections;
+      const nextY = tTop + (tBot - tTop) * nextT;
+      const nextW = topW + (botW - topW) * nextT;
+      ctx.globalAlpha = 0.25;
+      ctx.lineWidth = s * 0.005;
+      ctx.beginPath();
+      ctx.moveTo(cx - w, y); ctx.lineTo(cx + nextW, nextY); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + w, y); ctx.lineTo(cx - nextW, nextY); ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // Antenna
+  ctx.strokeStyle = WHITE;
+  ctx.lineWidth = s * 0.012;
+  ctx.beginPath();
+  ctx.moveTo(cx, tTop);
+  ctx.lineTo(cx, tipY);
+  ctx.stroke();
+
+  // Waves
+  for (let i = 1; i <= 3; i++) {
+    const r = s * 0.055 * i;
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = s * 0.012;
+    ctx.globalAlpha = 1 - (i - 1) * 0.25;
+    ctx.beginPath(); ctx.arc(cx, tipY, r, -Math.PI*0.75, -Math.PI*0.25); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, tipY, r, Math.PI*0.25, Math.PI*0.75); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Gold tip
+  ctx.beginPath();
+  ctx.arc(cx, tipY, s * 0.018, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+
+  // Base
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = s * 0.012;
+  ctx.beginPath();
+  ctx.moveTo(cx - botW - s*0.02, tBot);
+  ctx.lineTo(cx + botW + s*0.02, tBot);
+  ctx.stroke();
+});
+
+// ── 3. BOLD GEOMETRIC ───────────────────────────────────────────
+drawOnAll('bold', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s); bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  const tipY = cy - s * 0.28;
+  const baseY = cy + s * 0.28;
+  const baseW = s * 0.16;
+
+  // Solid triangular tower
+  ctx.beginPath();
+  ctx.moveTo(cx, tipY);
+  ctx.lineTo(cx + baseW, baseY);
+  ctx.lineTo(cx - baseW, baseY);
+  ctx.closePath();
+  ctx.fillStyle = WHITE;
+  ctx.globalAlpha = 0.85;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Inner cutout (negative space triangle)
+  const innerTop = tipY + s * 0.15;
+  const innerBot = baseY - s * 0.06;
+  const innerW = baseW * 0.45;
+  ctx.beginPath();
+  ctx.moveTo(cx, innerTop);
+  ctx.lineTo(cx + innerW, innerBot);
+  ctx.lineTo(cx - innerW, innerBot);
+  ctx.closePath();
+  // Fill with background to create cutout effect
+  const bgGrad = ctx.createLinearGradient(0, 0, s, s);
+  bgGrad.addColorStop(0, NAVY); bgGrad.addColorStop(1, NAVY_MID);
+  ctx.fillStyle = bgGrad;
+  ctx.fill();
+
+  // Bold waves from tip
+  for (let i = 1; i <= 3; i++) {
+    const r = s * 0.07 * i;
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = s * 0.02;
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = 1 - (i - 1) * 0.25;
+    ctx.beginPath(); ctx.arc(cx, tipY, r, -Math.PI*0.8, -Math.PI*0.2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, tipY, r, Math.PI*0.2, Math.PI*0.8); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Gold tip dot
+  ctx.beginPath();
+  ctx.arc(cx, tipY, s * 0.025, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+});
+
+// ── 4. MINIMAL LINE ─────────────────────────────────────────────
+drawOnAll('mini', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s); bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  const lineTop = cy - s * 0.05;
+  const lineBot = cy + s * 0.28;
+  const dotY = lineTop - s * 0.02;
+
+  // Single vertical line
+  ctx.strokeStyle = WHITE;
+  ctx.lineWidth = s * 0.02;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, lineBot);
+  ctx.lineTo(cx, lineTop);
+  ctx.stroke();
+
+  // Gold dot at top
+  ctx.beginPath();
+  ctx.arc(cx, dotY, s * 0.03, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+
+  // Three pairs of arcs — clean and even
+  for (let i = 1; i <= 3; i++) {
+    const r = s * 0.065 * i;
+    const waveY = dotY;
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = s * 0.015;
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = 1 - (i - 1) * 0.28;
+    ctx.beginPath();
+    ctx.arc(cx, waveY, r, -Math.PI * 0.72, -Math.PI * 0.28);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, waveY, r, Math.PI * 0.28, Math.PI * 0.72);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Tiny base dot
+  ctx.beginPath();
+  ctx.arc(cx, lineBot, s * 0.012, 0, Math.PI * 2);
+  ctx.fillStyle = WHITE;
+  ctx.globalAlpha = 0.4;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+});
+
+// ── 5. ART DECO TOWER ───────────────────────────────────────────
+drawOnAll('deco', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s); bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  // Stepped tiers narrowing upward
+  const tiers = [
+    { y: cy + s*0.28, w: s*0.14, h: s*0.1 },
+    { y: cy + s*0.18, w: s*0.11, h: s*0.1 },
+    { y: cy + s*0.06, w: s*0.085, h: s*0.12 },
+    { y: cy - s*0.08, w: s*0.06, h: s*0.14 },
+    { y: cy - s*0.22, w: s*0.035, h: s*0.14 },
+  ];
+
+  tiers.forEach((t, i) => {
+    const isTop = i === tiers.length - 1;
+    // Main block
+    ctx.fillStyle = WHITE;
+    ctx.globalAlpha = isTop ? 0.9 : 0.3 + i * 0.12;
+    ctx.fillRect(cx - t.w, t.y, t.w * 2, t.h);
+
+    // Gold accent line at top of each tier
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = s * 0.008;
+    ctx.globalAlpha = isTop ? 1 : 0.4 + i * 0.1;
+    ctx.beginPath();
+    ctx.moveTo(cx - t.w, t.y);
+    ctx.lineTo(cx + t.w, t.y);
+    ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+
+  // Antenna spire from top tier
+  const spireBase = tiers[tiers.length - 1].y;
+  const spireTop = spireBase - s * 0.1;
+
+  ctx.strokeStyle = WHITE;
+  ctx.lineWidth = s * 0.012;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, spireBase);
+  ctx.lineTo(cx, spireTop);
+  ctx.stroke();
+
+  // Waves from spire tip
+  for (let i = 1; i <= 3; i++) {
+    const r = s * 0.05 * i;
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = s * 0.01;
+    ctx.globalAlpha = 1 - (i - 1) * 0.28;
+    ctx.beginPath(); ctx.arc(cx, spireTop, r, -Math.PI*0.75, -Math.PI*0.25); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, spireTop, r, Math.PI*0.25, Math.PI*0.75); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Gold spire tip
+  ctx.beginPath();
+  ctx.arc(cx, spireTop, s * 0.018, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+
+  // Art deco sunburst accents on the widest tier
+  const baseY = tiers[0].y + tiers[0].h * 0.5;
+  const baseW = tiers[0].w;
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = s * 0.004;
+  ctx.globalAlpha = 0.3;
+  for (let i = -2; i <= 2; i++) {
+    const x = cx + i * baseW * 0.35;
+    ctx.beginPath();
+    ctx.moveTo(x, tiers[0].y + s*0.01);
+    ctx.lineTo(x, tiers[0].y + tiers[0].h - s*0.01);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+});
+
+// ── 6. UPWARD BURST ─────────────────────────────────────────────
+drawOnAll('burst', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s); bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  // Implied tower — just a gold vertical core
+  const coreTop = cy - s * 0.08;
+  const coreBot = cy + s * 0.3;
+
+  // Gradient core line
+  const coreGrad = ctx.createLinearGradient(cx, coreBot, cx, coreTop);
+  coreGrad.addColorStop(0, 'rgba(255,255,255,0.15)');
+  coreGrad.addColorStop(0.5, WHITE);
+  coreGrad.addColorStop(1, GOLD);
+  ctx.strokeStyle = coreGrad;
+  ctx.lineWidth = s * 0.025;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, coreBot);
+  ctx.lineTo(cx, coreTop);
+  ctx.stroke();
+
+  // Upward burst — waves that go UP and out, not just sideways
+  const burstOrigin = { x: cx, y: coreTop };
+
+  // Upward-angled wave arcs
+  for (let i = 1; i <= 4; i++) {
+    const r = s * 0.06 * i;
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = s * (0.018 - i * 0.002);
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = 1 - (i - 1) * 0.2;
+
+    // Upper-right arc
+    ctx.beginPath();
+    ctx.arc(burstOrigin.x, burstOrigin.y, r, -Math.PI * 0.85, -Math.PI * 0.35);
+    ctx.stroke();
+
+    // Upper-left arc
+    ctx.beginPath();
+    ctx.arc(burstOrigin.x, burstOrigin.y, r, Math.PI * 0.35, Math.PI * 0.85);
+    ctx.stroke();
+  }
+
+  // Top energy arc — wide, connecting the outer waves
+  ctx.globalAlpha = 0.2;
+  ctx.strokeStyle = GOLD_LIGHT;
+  ctx.lineWidth = s * 0.008;
+  ctx.beginPath();
+  ctx.arc(burstOrigin.x, burstOrigin.y, s * 0.32, -Math.PI * 0.78, -Math.PI * 0.22);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Bright burst point
+  const glowGrad = ctx.createRadialGradient(cx, coreTop, 0, cx, coreTop, s * 0.08);
+  glowGrad.addColorStop(0, 'rgba(251,191,36,0.5)');
+  glowGrad.addColorStop(1, 'rgba(251,191,36,0)');
+  ctx.beginPath();
+  ctx.arc(cx, coreTop, s * 0.08, 0, Math.PI * 2);
+  ctx.fillStyle = glowGrad;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(cx, coreTop, s * 0.025, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, coreTop, s * 0.012, 0, Math.PI * 2);
+  ctx.fillStyle = WHITE;
+  ctx.fill();
+
+  // Base fade
+  ctx.beginPath();
+  ctx.arc(cx, coreBot, s * 0.008, 0, Math.PI * 2);
+  ctx.fillStyle = WHITE;
+  ctx.globalAlpha = 0.3;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+});
+</script>
+
+</body>
+</html>

@@ -162,6 +162,15 @@ class CustomBacktester(BacktesterService):
         self.max_recent_return_pct = params.max_recent_return_pct
         self.price_velocity_cap_pct = params.price_velocity_cap_pct
 
+        # V2 lever 10: Circuit breaker — these were in StrategyParams + the V2
+        # search space but were NOT propagated here. TPE would tune CB stops /
+        # pause_days / tighten_pct, but the backtester silently used its
+        # __init__ defaults instead. Found during May 20 2026 param-flow audit
+        # before honest-TPE-on-clean-pickle campaign.
+        self.circuit_breaker_stops = params.circuit_breaker_stops
+        self.circuit_breaker_pause_days = params.circuit_breaker_pause_days
+        self.circuit_breaker_tighten_pct = params.circuit_breaker_tighten_pct
+
 
 class StrategyAnalyzerService:
     """

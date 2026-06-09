@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>Volatility Basket Card</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{--paper:#F5F1E8;--paper-deep:#EDE7D8;--paper-card:#FAF7F0;--ink:#141210;--ink-mute:#5A544E;--ink-light:#8A8279;--claret:#7A2430;--claret-light:#9A3444;--rule:#DDD5C7;--rule-dark:#C9BFAC;--positive:#2D5F3F;--negative:#8F2D3D;--gold:#B8923D;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-feature-settings:'tnum';padding:40px 32px;}
+.display{font-family:'Fraunces',Georgia,serif;}
+.mono{font-family:'IBM Plex Mono',Menlo,monospace;}
+.eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.eyebrow .tick{display:inline-block;width:24px;height:1px;background:var(--claret);}
+.eyebrow .txt{font-size:.74rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:.68rem;font-weight:600;}
+.pill.pos{background:rgba(45,95,63,.1);color:var(--positive);}
+.pill.neg{background:rgba(143,45,61,.1);color:var(--negative);}
+.pill.gold{background:rgba(184,146,61,.16);color:#8A6A1F;}
+.pill.dormant{background:var(--paper-deep);color:var(--ink-mute);}
+
+.wrap{max-width:720px;margin:0 auto;}
+
+.card{background:var(--paper-card);border:1px solid var(--rule);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(20,18,16,.04);}
+
+/* Top band — claret editorial header signals "special overlay" */
+.band{background:linear-gradient(180deg,#7A2430,#5e1b25);color:#F5F1E8;padding:22px 26px 20px;}
+.band-top{display:flex;align-items:flex-start;justify-content:space-between;}
+.band .ttl{display:flex;align-items:center;gap:12px;}
+.spark{width:34px;height:34px;border:1px solid rgba(245,241,232,.4);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.band h2{font-family:'Fraunces',serif;font-weight:500;font-size:1.5rem;font-variation-settings:"opsz" 48;letter-spacing:-.01em;line-height:1.1;}
+.band .sub{font-size:.82rem;color:rgba(245,241,232,.78);margin-top:3px;}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:.68rem;font-weight:600;letter-spacing:.04em;background:rgba(245,241,232,.12);color:#F5F1E8;border:1px solid rgba(245,241,232,.22);}
+.status-pill .glow{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px var(--gold);}
+
+.explain{padding:16px 26px;border-bottom:1px solid var(--rule);background:var(--paper-card);}
+.explain p{font-size:.9rem;color:var(--ink-mute);line-height:1.55;font-family:'Fraunces',serif;font-style:italic;font-variation-settings:"opsz" 18;}
+
+/* meta strip */
+.meta{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--rule);}
+.meta .m{padding:14px 20px;border-right:1px solid var(--rule);}
+.meta .m:last-child{border-right:none;}
+.meta .lab{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;}
+.meta .val{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:500;font-variation-settings:"opsz" 24;color:var(--ink);}
+.meta .val small{font-size:.7rem;color:var(--ink-mute);font-family:'IBM Plex Sans';font-weight:400;}
+
+/* trigger banner */
+.trigger{display:flex;align-items:center;gap:10px;padding:12px 26px;background:rgba(184,146,61,.08);border-bottom:1px solid var(--rule);font-size:.84rem;color:var(--ink);}
+.trigger b{color:#8A6A1F;}
+
+/* holdings */
+.holdings{padding:8px 16px 16px;}
+.hd{display:grid;grid-template-columns:1.4fr 1fr 1fr 90px;padding:10px 12px 8px;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-light);}
+.hr{display:grid;grid-template-columns:1.4fr 1fr 1fr 90px;align-items:center;padding:10px 12px;border-radius:8px;}
+.hr:hover{background:var(--paper-deep);}
+.hr + .hr{border-top:1px solid var(--rule);}
+.hr .sym{display:flex;align-items:center;gap:8px;}
+.hr .sym .t{font-weight:600;font-size:.98rem;}
+.hr .sym .co{color:var(--ink-light);font-size:.76rem;}
+.hr .mono{font-family:'IBM Plex Mono',monospace;font-size:.9rem;}
+.hr .pct{justify-self:end;}
+
+.summary{display:flex;align-items:center;justify-content:space-between;padding:14px 26px;border-top:1px solid var(--rule);background:var(--paper-deep);}
+.summary .lab{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mute);}
+.summary .big{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:500;font-variation-settings:"opsz" 48;color:var(--positive);}
+
+footer{max-width:720px;margin:18px auto 0;color:var(--ink-light);font-size:.76rem;text-align:center;}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="eyebrow"><span class="tick"></span><span class="txt">Opportunistic Overlay</span></div>
+  <div class="card">
+    <div class="band">
+      <div class="band-top">
+        <div class="ttl">
+          <div class="spark">✦</div>
+          <div>
+            <h2 class="display">Volatility Basket</h2>
+            <div class="sub">Triggered when VIX crosses above 30</div>
+          </div>
+        </div>
+        <div class="status-pill"><span class="glow"></span>ACTIVE · Fired Apr 7</div>
+      </div>
+    </div>
+
+    <div class="explain">
+      <p>A special panic-buying overlay that sits dormant most of the year. When fear spikes and the VIX clears 30, it sweeps the seven largest mega-caps at a discount — parallel to your main signals, on its own 8% trailing stop.</p>
+    </div>
+
+    <div class="meta">
+      <div class="m"><div class="lab">Holdings</div><div class="val">7 <small>mega-caps</small></div></div>
+      <div class="m"><div class="lab">Size each</div><div class="val">~10% <small>of cash</small></div></div>
+      <div class="m"><div class="lab">Trailing stop</div><div class="val">8%</div></div>
+      <div class="m"><div class="lab">VIX at trigger</div><div class="val">34.2</div></div>
+    </div>
+
+    <div class="trigger">⚡ Last triggered <b>Apr 7, 2026</b> — VIX spiked to 34.2 during the tariff selloff. Basket has been open 58 days.</div>
+
+    <div class="holdings">
+      <div class="hd"><div>Holding</div><div>Entry</div><div>Current</div><div style="text-align:right;">P/L</div></div>
+      <div class="hr"><div class="sym"><span class="t">NVDA</span><span class="co">NVIDIA</span></div><div class="mono">$98.40</div><div class="mono">$132.10</div><div class="pct"><span class="pill pos">+34.2%</span></div></div>
+      <div class="hr"><div class="sym"><span class="t">TSLA</span><span class="co">Tesla</span></div><div class="mono">$214.60</div><div class="mono">$248.30</div><div class="pct"><span class="pill pos">+15.7%</span></div></div>
+      <div class="hr"><div class="sym"><span class="t">AAPL</span><span class="co">Apple</span></div><div class="mono">$188.20</div><div class="mono">$224.30</div><div class="pct"><span class="pill pos">+19.2%</span></div></div>
+      <div class="hr"><div class="sym"><span class="t">MSFT</span><span class="co">Microsoft</span></div><div class="mono">$372.10</div><div class="mono">$441.70</div><div class="pct"><span class="pill pos">+18.7%</span></div></div>
+      <div class="hr"><div class="sym"><span class="t">AMZN</span><span class="co">Amazon</span></div><div class="mono">$176.30</div><div class="mono">$201.40</div><div class="pct"><span class="pill pos">+14.2%</span></div></div>
+      <div class="hr"><div class="sym"><span class="t">GOOGL</span><span class="co">Alphabet</span></div><div class="mono">$152.80</div><div class="mono">$178.95</div><div class="pct"><span class="pill pos">+17.1%</span></div></div>
+      <div class="hr"><div class="sym"><span class="t">META</span><span class="co">Meta</span></div><div class="mono">$512.40</div><div class="mono">$598.10</div><div class="pct"><span class="pill pos">+16.7%</span></div></div>
+    </div>
+
+    <div class="summary">
+      <div class="lab">Basket return since Apr 7</div>
+      <div class="big mono">+19.4%</div>
+    </div>
+  </div>
+  <footer>Dormant overlay — fires only in market panics. Signals only; execute via your broker.</footer>
+</div>
+</body></html>

@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap Logo Concepts v3 — Signal/Beacon Family</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f172a; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; }
+  h1 { text-align: center; font-size: 28px; margin-bottom: 10px; color: #fff; }
+  .subtitle { text-align: center; color: #94a3b8; margin-bottom: 50px; font-size: 14px; }
+  .concepts { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto; }
+  .concept { background: #1e293b; border-radius: 16px; padding: 30px; border: 1px solid #334155; }
+  .concept h2 { font-size: 20px; color: #f59e0b; margin-bottom: 6px; }
+  .concept .rationale { color: #94a3b8; font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+  .previews { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .preview-box { text-align: center; }
+  .preview-box .label { font-size: 11px; color: #64748b; margin-top: 6px; }
+  canvas { border-radius: 8px; }
+  .context-row { display: flex; gap: 20px; align-items: center; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+  .context-card { background: #0f172a; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+  .context-card .name { font-size: 18px; font-weight: 700; color: #fff; }
+  .winner { border: 2px solid #f59e0b; }
+  .winner h2::after { content: ' (Current Favorite)'; font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+
+<h1>RigaCap Logo Concepts v3</h1>
+<p class="subtitle">Signal / Beacon family — 7 variations on "We send the signal, you make the trade."</p>
+
+<div class="concepts">
+
+  <!-- 0: Original Beacon (the favorite) -->
+  <div class="concept winner">
+    <h2>0. Broadcast Tower</h2>
+    <p class="rationale">The original favorite from v2. Minimal radio tower with broadcast waves. Tech-forward, clean, directly says "signal."</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="orig-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="orig-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="orig-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="orig-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 1: Lighthouse -->
+  <div class="concept">
+    <h2>1. The Lighthouse</h2>
+    <p class="rationale">Classic lighthouse silhouette with a sweeping gold beam. Iconic, instantly recognizable. "Guiding you through 7 market conditions." More nautical/heritage feel than the tower.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="light-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="light-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="light-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="light-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 2: Radar Sweep -->
+  <div class="concept">
+    <h2>2. The Radar</h2>
+    <p class="rationale">Radar screen with a gold sweep line and detected signal dots. "We scan the entire market so you don't have to." Tech/military precision feel. Very fintech-appropriate.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="radar-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="radar-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="radar-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="radar-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 3: Pulse Ring -->
+  <div class="concept">
+    <h2>3. The Pulse</h2>
+    <p class="rationale">Concentric signal rings emanating from a center point — like a sonar ping or broadcast pulse. Minimal, dynamic, feels like something just fired. "Signal detected."</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="pulse-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="pulse-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="pulse-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="pulse-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 4: Signal Bolt -->
+  <div class="concept">
+    <h2>4. The Signal Bolt</h2>
+    <p class="rationale">An upward lightning bolt / signal arrow inside a rounded shield. Conveys speed, precision, and protection simultaneously. Bold, punchy, works great at small sizes.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="bolt-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="bolt-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="bolt-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="bolt-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 5: Antenna Array -->
+  <div class="concept">
+    <h2>5. The Array</h2>
+    <p class="rationale">Three ascending signal bars with broadcast arcs at the top. Three bars = three factors (DWAP, Momentum, Regime). Modern, geometric. Like a cell signal icon evolved into a brand.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="array-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="array-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="array-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="array-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 6: Satellite -->
+  <div class="concept">
+    <h2>6. The Satellite</h2>
+    <p class="rationale">Orbiting satellite with solar panels and a downlink beam. "Always watching, always scanning." High-tech, space-age, implies comprehensive market surveillance from above.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="sat-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="sat-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="sat-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="sat-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const NAVY = '#172554';
+const NAVY_MID = '#1e3a5f';
+const GOLD = '#f59e0b';
+const WHITE = '#ffffff';
+const LIGHT_BG = '#f1f5f9';
+
+function drawOnAll(prefix, drawFn) {
+  ['lg','sm','dark','ctx'].forEach(suffix => {
+    const c = document.getElementById(`${prefix}-${suffix}`);
+    if (!c) return;
+    const s = c.width;
+    drawFn(c, s, suffix === 'dark');
+  });
+}
+
+function bgCircle(ctx, s, lightBg) {
+  if (lightBg) {
+    ctx.fillStyle = LIGHT_BG;
+    ctx.fillRect(0, 0, s, s);
+  }
+  const g = ctx.createLinearGradient(0, 0, s, s);
+  g.addColorStop(0, NAVY);
+  g.addColorStop(1, NAVY_MID);
+  ctx.beginPath();
+  ctx.arc(s/2, s/2, s/2, 0, Math.PI * 2);
+  ctx.fillStyle = g;
+  ctx.fill();
+}
+
+// ── 0. ORIGINAL BEACON ──────────────────────────────────────────
+drawOnAll('orig', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  const towerW = s * 0.06;
+  const towerTop = cy - s * 0.18;
+  const towerBot = cy + s * 0.28;
+
+  ctx.beginPath();
+  ctx.moveTo(cx - towerW * 1.3, towerBot);
+  ctx.lineTo(cx - towerW * 0.5, towerTop);
+  ctx.lineTo(cx + towerW * 0.5, towerTop);
+  ctx.lineTo(cx + towerW * 1.3, towerBot);
+  ctx.closePath();
+  ctx.fillStyle = WHITE;
+  ctx.fill();
+
+  for (let i = 1; i <= 3; i++) {
+    const y = towerTop + (towerBot - towerTop) * (i / 4);
+    const w = towerW * (0.6 + i * 0.25);
+    ctx.strokeStyle = NAVY; ctx.lineWidth = s * 0.012;
+    ctx.beginPath(); ctx.moveTo(cx - w, y); ctx.lineTo(cx + w, y); ctx.stroke();
+  }
+
+  ctx.beginPath(); ctx.moveTo(cx, towerTop); ctx.lineTo(cx, towerTop - s * 0.1);
+  ctx.strokeStyle = WHITE; ctx.lineWidth = s * 0.015; ctx.lineCap = 'round'; ctx.stroke();
+
+  const wc = { x: cx, y: towerTop - s * 0.1 };
+  for (let i = 1; i <= 3; i++) {
+    const r = s * 0.06 * i;
+    ctx.strokeStyle = GOLD; ctx.lineWidth = s * 0.012; ctx.globalAlpha = 1 - (i-1)*0.25;
+    ctx.beginPath(); ctx.arc(wc.x, wc.y, r, -Math.PI*0.8, -Math.PI*0.2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(wc.x, wc.y, r, Math.PI*0.2, Math.PI*0.8); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.beginPath(); ctx.arc(wc.x, wc.y, s*0.02, 0, Math.PI*2); ctx.fillStyle = GOLD; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx - towerW*2, towerBot); ctx.lineTo(cx + towerW*2, towerBot);
+  ctx.strokeStyle = GOLD; ctx.lineWidth = s*0.015; ctx.lineCap = 'round'; ctx.stroke();
+});
+
+// ── 1. LIGHTHOUSE ───────────────────────────────────────────────
+drawOnAll('light', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  // Lighthouse body — tapered
+  const baseW = s * 0.1;
+  const topW = s * 0.055;
+  const bodyTop = cy - s * 0.12;
+  const bodyBot = cy + s * 0.3;
+
+  // Body
+  ctx.beginPath();
+  ctx.moveTo(cx - baseW, bodyBot);
+  ctx.lineTo(cx - topW, bodyTop);
+  ctx.lineTo(cx + topW, bodyTop);
+  ctx.lineTo(cx + baseW, bodyBot);
+  ctx.closePath();
+  ctx.fillStyle = WHITE;
+  ctx.fill();
+
+  // Horizontal stripes
+  for (let i = 0; i < 3; i++) {
+    const t = 0.25 + i * 0.25;
+    const y = bodyTop + (bodyBot - bodyTop) * t;
+    const w = topW + (baseW - topW) * t;
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(cx - w, y, w * 2, s * 0.025);
+  }
+
+  // Lantern room
+  const lanternH = s * 0.06;
+  const lanternW = topW * 1.3;
+  ctx.fillStyle = GOLD;
+  ctx.fillRect(cx - lanternW, bodyTop - lanternH, lanternW * 2, lanternH);
+
+  // Lantern cap (dome)
+  ctx.beginPath();
+  ctx.moveTo(cx - lanternW * 1.1, bodyTop - lanternH);
+  ctx.lineTo(cx, bodyTop - lanternH - s * 0.06);
+  ctx.lineTo(cx + lanternW * 1.1, bodyTop - lanternH);
+  ctx.closePath();
+  ctx.fillStyle = WHITE;
+  ctx.fill();
+
+  // Gallery railing
+  ctx.strokeStyle = WHITE;
+  ctx.lineWidth = s * 0.008;
+  ctx.beginPath();
+  ctx.moveTo(cx - topW * 1.6, bodyTop);
+  ctx.lineTo(cx + topW * 1.6, bodyTop);
+  ctx.stroke();
+
+  // Light beam — sweeping right
+  ctx.save();
+  ctx.globalAlpha = 0.15;
+  ctx.beginPath();
+  ctx.moveTo(cx, bodyTop - lanternH / 2);
+  ctx.lineTo(s * 0.95, bodyTop - lanternH - s * 0.2);
+  ctx.lineTo(s * 0.95, bodyTop + s * 0.05);
+  ctx.closePath();
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+  ctx.globalAlpha = 0.08;
+  ctx.beginPath();
+  ctx.moveTo(cx, bodyTop - lanternH / 2);
+  ctx.lineTo(s * 0.05, bodyTop - lanternH - s * 0.15);
+  ctx.lineTo(s * 0.05, bodyTop + s * 0.02);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Gold tip
+  ctx.beginPath();
+  ctx.arc(cx, bodyTop - lanternH - s * 0.06, s * 0.015, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+
+  // Base
+  ctx.fillStyle = '#475569';
+  ctx.beginPath();
+  ctx.moveTo(cx - baseW * 1.5, bodyBot);
+  ctx.lineTo(cx + baseW * 1.5, bodyBot);
+  ctx.lineTo(cx + baseW * 1.3, bodyBot + s * 0.03);
+  ctx.lineTo(cx - baseW * 1.3, bodyBot + s * 0.03);
+  ctx.closePath();
+  ctx.fill();
+});
+
+// ── 2. RADAR ────────────────────────────────────────────────────
+drawOnAll('radar', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+  const maxR = s * 0.36;
+
+  // Grid rings
+  for (let i = 1; i <= 3; i++) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, maxR * (i / 3), 0, Math.PI * 2);
+    ctx.strokeStyle = WHITE;
+    ctx.globalAlpha = 0.12;
+    ctx.lineWidth = s * 0.006;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Crosshairs
+  ctx.globalAlpha = 0.1;
+  ctx.strokeStyle = WHITE;
+  ctx.lineWidth = s * 0.004;
+  ctx.beginPath(); ctx.moveTo(cx, cy - maxR); ctx.lineTo(cx, cy + maxR); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - maxR, cy); ctx.lineTo(cx + maxR, cy); ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Sweep line (gold, angled at ~45 degrees)
+  const sweepAngle = -Math.PI * 0.3;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(sweepAngle) * maxR, cy + Math.sin(sweepAngle) * maxR);
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = s * 0.015;
+  ctx.stroke();
+
+  // Sweep glow trail
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.arc(cx, cy, maxR, sweepAngle - 0.5, sweepAngle);
+  ctx.closePath();
+  const sweepGrad = ctx.createConicGradient(sweepAngle - 0.5, cx, cy);
+  sweepGrad.addColorStop(0, 'rgba(245,158,11,0)');
+  sweepGrad.addColorStop(1, 'rgba(245,158,11,0.2)');
+  ctx.fillStyle = sweepGrad;
+  ctx.fill();
+  ctx.restore();
+
+  // Detected signal dots
+  const dots = [
+    { angle: -0.8, dist: 0.6, size: 1 },
+    { angle: -0.4, dist: 0.85, size: 0.8 },
+    { angle: -1.2, dist: 0.45, size: 0.7 },
+    { angle: -0.1, dist: 0.7, size: 0.9 },
+    { angle: -0.6, dist: 0.3, size: 0.6 },
+  ];
+  dots.forEach(d => {
+    const x = cx + Math.cos(d.angle) * maxR * d.dist;
+    const y = cy + Math.sin(d.angle) * maxR * d.dist;
+    ctx.beginPath();
+    ctx.arc(x, y, s * 0.015 * d.size, 0, Math.PI * 2);
+    ctx.fillStyle = GOLD;
+    ctx.globalAlpha = 0.9;
+    ctx.fill();
+    // Glow
+    ctx.beginPath();
+    ctx.arc(x, y, s * 0.03 * d.size, 0, Math.PI * 2);
+    ctx.fillStyle = GOLD;
+    ctx.globalAlpha = 0.15;
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Center dot
+  ctx.beginPath();
+  ctx.arc(cx, cy, s * 0.02, 0, Math.PI * 2);
+  ctx.fillStyle = WHITE;
+  ctx.fill();
+});
+
+// ── 3. PULSE ────────────────────────────────────────────────────
+drawOnAll('pulse', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  // Concentric pulse rings
+  const rings = 5;
+  for (let i = 1; i <= rings; i++) {
+    const r = s * 0.06 * i;
+    const alpha = 1 - (i - 1) * 0.18;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = i <= 2 ? GOLD : WHITE;
+    ctx.globalAlpha = alpha * (i <= 2 ? 0.9 : 0.3);
+    ctx.lineWidth = s * (0.02 - i * 0.002);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Upward signal arrow emerging from center
+  const arrowTip = cy - s * 0.32;
+  const arrowBase = cy - s * 0.08;
+  ctx.beginPath();
+  ctx.moveTo(cx, arrowTip);
+  ctx.lineTo(cx - s * 0.06, arrowBase - s * 0.06);
+  ctx.lineTo(cx - s * 0.02, arrowBase - s * 0.06);
+  ctx.lineTo(cx - s * 0.02, arrowBase);
+  ctx.lineTo(cx + s * 0.02, arrowBase);
+  ctx.lineTo(cx + s * 0.02, arrowBase - s * 0.06);
+  ctx.lineTo(cx + s * 0.06, arrowBase - s * 0.06);
+  ctx.closePath();
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+
+  // Center solid dot
+  ctx.beginPath();
+  ctx.arc(cx, cy, s * 0.035, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+});
+
+// ── 4. SIGNAL BOLT ──────────────────────────────────────────────
+drawOnAll('bolt', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+  const r = s * 0.35;
+
+  // Rounded shield outline
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r);
+  ctx.bezierCurveTo(cx + r * 0.9, cy - r, cx + r, cy - r * 0.5, cx + r * 0.85, cy + r * 0.1);
+  ctx.bezierCurveTo(cx + r * 0.6, cy + r * 0.7, cx, cy + r * 1.05, cx, cy + r * 1.05);
+  ctx.bezierCurveTo(cx, cy + r * 1.05, cx - r * 0.6, cy + r * 0.7, cx - r * 0.85, cy + r * 0.1);
+  ctx.bezierCurveTo(cx - r, cy - r * 0.5, cx - r * 0.9, cy - r, cx, cy - r);
+  ctx.closePath();
+  ctx.strokeStyle = WHITE;
+  ctx.lineWidth = s * 0.015;
+  ctx.globalAlpha = 0.5;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Lightning bolt / upward signal
+  const bw = s * 0.07;
+  ctx.beginPath();
+  ctx.moveTo(cx + bw * 0.3, cy - r * 0.7);  // top
+  ctx.lineTo(cx - bw * 0.8, cy + r * 0.05);  // mid-left
+  ctx.lineTo(cx + bw * 0.1, cy + r * 0.05);  // mid-center
+  ctx.lineTo(cx - bw * 0.3, cy + r * 0.7);   // bottom
+  ctx.lineTo(cx + bw * 0.8, cy - r * 0.05);  // mid-right
+  ctx.lineTo(cx - bw * 0.1, cy - r * 0.05);  // mid-center
+  ctx.closePath();
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+
+  // Small glow at top
+  ctx.beginPath();
+  ctx.arc(cx + bw * 0.3, cy - r * 0.7, s * 0.025, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.globalAlpha = 0.3;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+});
+
+// ── 5. THE ARRAY ────────────────────────────────────────────────
+drawOnAll('array', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  // Three ascending bars
+  const barW = s * 0.065;
+  const gap = s * 0.04;
+  const baseY = cy + s * 0.25;
+  const heights = [s * 0.22, s * 0.32, s * 0.42]; // ascending
+
+  const totalW = barW * 3 + gap * 2;
+  const startX = cx - totalW / 2;
+
+  heights.forEach((h, i) => {
+    const x = startX + i * (barW + gap);
+    const y = baseY - h;
+
+    // Bar with rounded top
+    const radius = barW / 2;
+    ctx.beginPath();
+    ctx.moveTo(x, baseY);
+    ctx.lineTo(x, y + radius);
+    ctx.arc(x + radius, y + radius, radius, Math.PI, 0);
+    ctx.lineTo(x + barW, baseY);
+    ctx.closePath();
+    ctx.fillStyle = i === 2 ? GOLD : WHITE;
+    ctx.globalAlpha = i === 2 ? 1 : (0.5 + i * 0.15);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Broadcast arcs from the tallest bar
+  const arcCx = startX + 2 * (barW + gap) + barW / 2;
+  const arcCy = baseY - heights[2];
+
+  for (let i = 1; i <= 3; i++) {
+    const r = s * 0.05 * i;
+    ctx.beginPath();
+    ctx.arc(arcCx, arcCy, r, -Math.PI * 0.85, -Math.PI * 0.15);
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = s * 0.012;
+    ctx.globalAlpha = 1 - (i - 1) * 0.25;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Base line
+  ctx.beginPath();
+  ctx.moveTo(startX - s * 0.04, baseY);
+  ctx.lineTo(startX + totalW + s * 0.04, baseY);
+  ctx.strokeStyle = WHITE;
+  ctx.globalAlpha = 0.3;
+  ctx.lineWidth = s * 0.008;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+});
+
+// ── 6. SATELLITE ────────────────────────────────────────────────
+drawOnAll('sat', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  // Orbit ring (tilted ellipse)
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-0.3);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, s * 0.38, s * 0.12, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = WHITE;
+  ctx.globalAlpha = 0.15;
+  ctx.lineWidth = s * 0.005;
+  ctx.stroke();
+  ctx.restore();
+  ctx.globalAlpha = 1;
+
+  // Satellite body (centered)
+  const bodyW = s * 0.06;
+  const bodyH = s * 0.05;
+  ctx.save();
+  ctx.translate(cx, cy - s * 0.02);
+  ctx.rotate(-0.15);
+
+  // Central body
+  ctx.fillStyle = WHITE;
+  ctx.beginPath();
+  ctx.roundRect(-bodyW / 2, -bodyH / 2, bodyW, bodyH, s * 0.008);
+  ctx.fill();
+
+  // Solar panels (left)
+  ctx.fillStyle = '#3b82f6';
+  ctx.globalAlpha = 0.7;
+  ctx.fillRect(-bodyW / 2 - s * 0.14, -s * 0.035, s * 0.12, s * 0.07);
+  ctx.strokeStyle = WHITE;
+  ctx.globalAlpha = 0.4;
+  ctx.lineWidth = s * 0.004;
+  ctx.strokeRect(-bodyW / 2 - s * 0.14, -s * 0.035, s * 0.12, s * 0.07);
+  // Panel grid
+  ctx.beginPath();
+  ctx.moveTo(-bodyW / 2 - s * 0.08, -s * 0.035);
+  ctx.lineTo(-bodyW / 2 - s * 0.08, s * 0.035);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Solar panels (right)
+  ctx.fillStyle = '#3b82f6';
+  ctx.globalAlpha = 0.7;
+  ctx.fillRect(bodyW / 2 + s * 0.02, -s * 0.035, s * 0.12, s * 0.07);
+  ctx.strokeStyle = WHITE;
+  ctx.globalAlpha = 0.4;
+  ctx.lineWidth = s * 0.004;
+  ctx.strokeRect(bodyW / 2 + s * 0.02, -s * 0.035, s * 0.12, s * 0.07);
+  ctx.beginPath();
+  ctx.moveTo(bodyW / 2 + s * 0.08, -s * 0.035);
+  ctx.lineTo(bodyW / 2 + s * 0.08, s * 0.035);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Panel arms
+  ctx.strokeStyle = WHITE;
+  ctx.lineWidth = s * 0.008;
+  ctx.beginPath();
+  ctx.moveTo(-bodyW / 2, 0);
+  ctx.lineTo(-bodyW / 2 - s * 0.02, 0);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(bodyW / 2, 0);
+  ctx.lineTo(bodyW / 2 + s * 0.02, 0);
+  ctx.stroke();
+
+  ctx.restore();
+
+  // Downlink beam (gold, pointing down-right)
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + s * 0.25, cy + s * 0.35);
+  ctx.lineTo(cx - s * 0.05, cy + s * 0.35);
+  ctx.closePath();
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+  ctx.restore();
+
+  // Downlink pulse arcs
+  for (let i = 1; i <= 3; i++) {
+    const dist = s * 0.06 * i;
+    const arcX = cx + dist * 0.35;
+    const arcY = cy + dist;
+    ctx.beginPath();
+    ctx.arc(arcX, arcY, s * 0.03 * i, -0.3, Math.PI * 0.7);
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = s * 0.008;
+    ctx.globalAlpha = 0.7 - (i - 1) * 0.2;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Gold antenna dot on body
+  ctx.beginPath();
+  ctx.arc(cx, cy - s * 0.04, s * 0.015, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+});
+</script>
+
+</body>
+</html>

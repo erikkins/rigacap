@@ -38,7 +38,6 @@ class _SkipDBWrite(Exception):
     write paths without re-indenting the body or restructuring the try."""
     pass
 
-
 from app.core.database import StrategyDefinition, WalkForwardSimulation, WalkForwardPeriodResult
 from app.services.backtester import BacktesterService
 from app.services.strategy_analyzer import StrategyAnalyzerService, CustomBacktester, StrategyParams, get_top_liquid_symbols
@@ -364,8 +363,17 @@ class WalkForwardService:
         If max_symbols=0, returns the full production universe (no filtering).
 
         Uses same _EXCLUDED_SET as daily scan for consistency (stocks only).
+
+        Applies MIN_PRICE floor at the as-of date — otherwise penny stocks
+        with high share counts (PTON, OPEN, HTZ, FUBO, etc.) burn top-N
+        slots they'll be rejected from at entry, displacing legitimate
+        $15+ candidates and starving the strategy of quality picks.
+        Discovered May 19 2026 during canonical-baseline parity audit.
         """
         from app.services.scanner import _EXCLUDED_SET
+        from app.core.config import settings
+
+        min_price = settings.MIN_PRICE
 
         if max_symbols == 0:
             # Full production universe — all symbols meeting basic eligibility
@@ -384,6 +392,11 @@ class WalkForwardService:
             if len(hist) < 60:  # Need 60 days for volume average; backtester handles indicator minimums
                 continue
             if 'volume' not in hist.columns or 'close' not in hist.columns:
+                continue
+            # Enforce MIN_PRICE at as-of date so penny stocks don't displace
+            # legitimate candidates in the top-N-by-volume cut.
+            last_close = hist['close'].iloc[-1]
+            if last_close is None or last_close < min_price:
                 continue
             # 60-day avg volume as of this date
             avg_vol = hist['volume'].tail(60).mean()
@@ -1184,6 +1197,7 @@ class WalkForwardService:
         disable_circuit_breaker: bool = False,  # Ablation: force circuit_breaker_stops=0 so CB never fires. Used to compute the true CG-impact baseline against canonical (with-CG) runs.
         intraday_aware: bool = False,  # Match production intraday-stop logic: HWM tracks day's HIGH, trigger checks day's LOW. Default False keeps existing WF results bit-for-bit reproducible.
         hwm_from_day_high: bool = False,  # Path B (May 15 2026): asymmetric mode — HWM from day_high, trigger from close. Untangles the b-full -17pp result: was the cost in the HWM update or the day-low trigger? Test isolates the HWM half.
+        oos_hysteresis: bool = False,  # Approach B hysteresis (May 23 2026): after TPE picks best_params for period N, re-evaluate both best_params AND current_params on period N-1's window (out-of-sample). Only switch if best_params beats current on BOTH in-sample AND out-of-sample. Damps per-period TPE thrash.
     ) -> WalkForwardResult:
         # Stash on self so per-period sim methods (_simulate_period_with_params,
         # _simulate_period_trading) can read it without changing every signature.
@@ -1621,9 +1635,14 @@ class WalkForwardService:
                     should_switch = True
                     switch_reason = "initial_selection"
                 elif optimizer_version in ("v2", "v2c", "v2m") and best.get("is_ai"):
-                    # V2: always re-adopt fresh AI params every period
-                    should_switch = True
-                    switch_reason = f"v2_reoptimize_{score_diff:+.1f}pts"
+                    # V2: re-adopt fresh AI params each period — BUT honour
+                    # min_score_diff as a hysteresis gate. Original behavior was
+                    # unconditional re-adoption (full per-period thrash). Setting
+                    # min_score_diff > 0 enables hysteresis: only switch when
+                    # the new TPE-best beats current by >= min_score_diff points.
+                    if min_score_diff <= 0 or score_diff >= min_score_diff:
+                        should_switch = True
+                        switch_reason = f"v2_reoptimize_{score_diff:+.1f}pts"
                 elif score_diff >= min_score_diff:
                     # Score improvement meets threshold
                     if best.get("is_ai"):
@@ -1633,6 +1652,52 @@ class WalkForwardService:
                     elif best["strategy_id"] != (active_strategy.id if active_strategy else None):
                         should_switch = True
                         switch_reason = f"strategy_switch_+{score_diff:.1f}pts"
+
+                # OOS hysteresis gate (Approach B, May 23 2026): re-evaluate
+                # best_params AND current_params on the PRIOR period's window.
+                # Only switch if best beats current OUT-OF-SAMPLE too. Damps
+                # per-period overfit thrash. Only fires for AI→AI transitions
+                # where we have both param sets to compare.
+                if (should_switch and oos_hysteresis and i > 0
+                        and best.get("is_ai") and using_ai_params and active_params):
+                    try:
+                        prior_start, prior_end = periods[i - 1]
+                        best_oos = self._simulate_period_with_params(
+                            best["ai_params"], best.get("strategy_type", active_strategy_type),
+                            prior_start, prior_end, 100000.0,
+                            ticker_list=top_symbols, strategy_name="oos_check_new",
+                            initial_positions=None, force_close_at_end=True,
+                            max_positions_override=max_positions,
+                            position_size_pct_override=position_size_pct,
+                            dwap_threshold_pct_override=dwap_threshold_pct,
+                            near_50d_high_pct_override=near_50d_high_pct,
+                            trailing_stop_pct_override=trailing_stop_pct,
+                        )
+                        current_oos = self._simulate_period_with_params(
+                            active_params, active_strategy_type,
+                            prior_start, prior_end, 100000.0,
+                            ticker_list=top_symbols, strategy_name="oos_check_cur",
+                            initial_positions=None, force_close_at_end=True,
+                            max_positions_override=max_positions,
+                            position_size_pct_override=position_size_pct,
+                            dwap_threshold_pct_override=dwap_threshold_pct,
+                            near_50d_high_pct_override=near_50d_high_pct,
+                            trailing_stop_pct_override=trailing_stop_pct,
+                        )
+                        if best_oos.period_return_pct <= current_oos.period_return_pct:
+                            should_switch = False
+                            switch_reason = (f"oos_hysteresis_rejected "
+                                            f"(new_oos={best_oos.period_return_pct:.2f}% "
+                                            f"<= cur_oos={current_oos.period_return_pct:.2f}%)")
+                            print(f"[WF-SERVICE] OOS hysteresis REJECT period {i+1}: "
+                                  f"new_oos={best_oos.period_return_pct:.2f}% "
+                                  f"<= cur_oos={current_oos.period_return_pct:.2f}%")
+                        else:
+                            print(f"[WF-SERVICE] OOS hysteresis APPROVE period {i+1}: "
+                                  f"new_oos={best_oos.period_return_pct:.2f}% "
+                                  f"> cur_oos={current_oos.period_return_pct:.2f}%")
+                    except Exception as e:
+                        print(f"[WF-SERVICE] OOS hysteresis check error (allowing switch): {e}")
 
                 if should_switch:
                     if best.get("is_ai"):

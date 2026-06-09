@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap — Circle Beacon v2 (Rounded Spire)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f1f5f9;
+    padding: 40px;
+    color: #0f172a;
+  }
+  h1 { text-align: center; font-size: 28px; margin-bottom: 6px; }
+  .subtitle { text-align: center; color: #64748b; margin-bottom: 48px; font-size: 15px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .card h3 { font-size: 17px; margin-bottom: 4px; }
+  .card .tag { display: inline-block; font-size: 11px; color: #6366f1; background: #eef2ff; padding: 2px 8px; border-radius: 99px; margin-bottom: 8px; font-weight: 600; }
+  .card .desc { color: #64748b; font-size: 13px; margin-bottom: 24px; line-height: 1.5; }
+  .row { display: flex; gap: 16px; margin-bottom: 16px; }
+  .preview {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 20px;
+    border-radius: 12px;
+    background: #fafbfc;
+    border: 1px solid #e2e8f0;
+  }
+  .preview-dark {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 20px;
+    border-radius: 12px;
+    background: #0f172a;
+  }
+  .sizes {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px;
+    background: #fafbfc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+  }
+  .size-item { text-align: center; }
+  .size-label { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+  .wordmark-row { display: flex; gap: 16px; margin-top: 16px; }
+  .wordmark {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+    border-radius: 12px;
+  }
+  .wordmark-light { background: #fafbfc; border: 1px solid #e2e8f0; }
+  .wordmark-dark { background: #0f172a; }
+  .wm-text { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .wm-text-dark { color: #0f172a; }
+  .wm-text-light { color: #ffffff; }
+</style>
+</head>
+<body>
+
+<h1>RigaCap — Rounded Spire Explorations</h1>
+<p class="subtitle">Bulbous lantern tiers inspired by St. Peter's Church, Riga — gentle nod, not literal</p>
+
+<div class="grid">
+
+  <!-- ========== V1: FLOWING SILHOUETTE ========== -->
+  <div class="card">
+    <span class="tag">V1</span>
+    <h3>Flowing Silhouette</h3>
+    <p class="desc">Smooth continuous curves with two gentle swells. The bulges taper naturally like the actual spire lantern tiers. Elegant and organic — reads as "spire" without screaming "church."</p>
+
+    <div class="row">
+      <div class="preview">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="v1bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1e1b4b"/>
+              <stop offset="100%" stop-color="#312e81"/>
+            </linearGradient>
+            <clipPath id="v1clip"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#v1bg)"/>
+          <g clip-path="url(#v1clip)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 31 20 A 22 22 0 0 1 31 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 69 20 A 22 22 0 0 0 69 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <!-- Flowing spire with two gentle bulges -->
+            <path d="
+              M 50 14
+              C 49 20, 41 26, 38 34
+              C 35 42, 43 46, 44 49
+              C 45 52, 34 60, 32 70
+              C 30 80, 41 83, 42 85
+              L 42 92
+              L 58 92
+              L 58 85
+              C 59 83, 70 80, 68 70
+              C 66 60, 55 52, 56 49
+              C 57 46, 65 42, 62 34
+              C 59 26, 51 20, 50 14
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="14" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="v1bgd" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#4338ca"/>
+              <stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+            <clipPath id="v1clipd"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#v1bgd)"/>
+          <g clip-path="url(#v1clipd)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 31 20 A 22 22 0 0 1 31 44" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.15"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 69 20 A 22 22 0 0 0 69 44" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.15"/>
+            <path d="
+              M 50 14
+              C 49 20, 41 26, 38 34
+              C 35 42, 43 46, 44 49
+              C 45 52, 34 60, 32 70
+              C 30 80, 41 83, 42 85
+              L 42 92
+              L 58 92
+              L 58 85
+              C 59 83, 70 80, 68 70
+              C 66 60, 55 52, 56 49
+              C 57 46, 65 42, 62 34
+              C 59 26, 51 20, 50 14
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="14" r="2.5" fill="#c7d2fe"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-item">
+        <svg width="64" height="64" viewBox="0 0 100 100"><defs><linearGradient id="v1s1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="v1cs1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v1s1)"/><g clip-path="url(#v1cs1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 14 C 49 20, 41 26, 38 34 C 35 42, 43 46, 44 49 C 45 52, 34 60, 32 70 C 30 80, 41 83, 42 85 L 42 92 L 58 92 L 58 85 C 59 83, 70 80, 68 70 C 66 60, 55 52, 56 49 C 57 46, 65 42, 62 34 C 59 26, 51 20, 50 14 Z" fill="#fff"/><circle cx="50" cy="14" r="2.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">64px</div>
+      </div>
+      <div class="size-item">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="v1s2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="v1cs2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v1s2)"/><g clip-path="url(#v1cs2)"><path d="M 50 14 C 49 20, 41 26, 38 34 C 35 42, 43 46, 44 49 C 45 52, 34 60, 32 70 C 30 80, 41 83, 42 85 L 42 92 L 58 92 L 58 85 C 59 83, 70 80, 68 70 C 66 60, 55 52, 56 49 C 57 46, 65 42, 62 34 C 59 26, 51 20, 50 14 Z" fill="#fff"/><circle cx="50" cy="14" r="3.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">40px</div>
+      </div>
+      <div class="size-item">
+        <svg width="24" height="24" viewBox="0 0 100 100"><defs><linearGradient id="v1s3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#v1s3)"/><path d="M 50 14 C 49 20, 41 26, 38 34 C 35 42, 43 46, 44 49 C 45 52, 34 60, 32 70 C 30 80, 41 83, 42 85 L 42 92 L 58 92 L 58 85 C 59 83, 70 80, 68 70 C 66 60, 55 52, 56 49 C 57 46, 65 42, 62 34 C 59 26, 51 20, 50 14 Z" fill="#fff"/></svg>
+        <div class="size-label">24px</div>
+      </div>
+      <div class="size-item">
+        <svg width="16" height="16" viewBox="0 0 100 100"><defs><linearGradient id="v1s4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#v1s4)"/><path d="M 50 14 C 49 20, 41 26, 38 34 C 35 42, 43 46, 44 49 C 45 52, 34 60, 32 70 C 30 80, 41 83, 42 85 L 42 92 L 58 92 L 58 85 C 59 83, 70 80, 68 70 C 66 60, 55 52, 56 49 C 57 46, 65 42, 62 34 C 59 26, 51 20, 50 14 Z" fill="#fff"/></svg>
+        <div class="size-label">16px</div>
+      </div>
+    </div>
+
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="v1w1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="v1cw1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v1w1)"/><g clip-path="url(#v1cw1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 14 C 49 20, 41 26, 38 34 C 35 42, 43 46, 44 49 C 45 52, 34 60, 32 70 C 30 80, 41 83, 42 85 L 42 92 L 58 92 L 58 85 C 59 83, 70 80, 68 70 C 66 60, 55 52, 56 49 C 57 46, 65 42, 62 34 C 59 26, 51 20, 50 14 Z" fill="#fff"/><circle cx="50" cy="14" r="2.5" fill="#a5b4fc"/></g></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="v1w2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient><clipPath id="v1cw2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v1w2)"/><g clip-path="url(#v1cw2)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 50 14 C 49 20, 41 26, 38 34 C 35 42, 43 46, 44 49 C 45 52, 34 60, 32 70 C 30 80, 41 83, 42 85 L 42 92 L 58 92 L 58 85 C 59 83, 70 80, 68 70 C 66 60, 55 52, 56 49 C 57 46, 65 42, 62 34 C 59 26, 51 20, 50 14 Z" fill="#fff"/><circle cx="50" cy="14" r="2.5" fill="#c7d2fe"/></g></svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== V2: PRONOUNCED LANTERNS ========== -->
+  <div class="card">
+    <span class="tag">V2</span>
+    <h3>Pronounced Lanterns</h3>
+    <p class="desc">Fuller, more pronounced bulges — closer to the actual onion-tier profile of the church. Each tier clearly swells outward then pinches back. Bolder, more distinctive at small sizes.</p>
+
+    <div class="row">
+      <div class="preview">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="v2bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1e1b4b"/>
+              <stop offset="100%" stop-color="#312e81"/>
+            </linearGradient>
+            <clipPath id="v2clip"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#v2bg)"/>
+          <g clip-path="url(#v2clip)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 31 20 A 22 22 0 0 1 31 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 69 20 A 22 22 0 0 0 69 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <!-- Pronounced bulbous tiers -->
+            <path d="
+              M 50 14
+              C 48 18, 42 22, 38 30
+              C 34 38, 36 42, 38 44
+              C 40 46, 44 47, 45 49
+              C 46 51, 38 55, 33 63
+              C 28 71, 31 78, 34 81
+              C 37 84, 41 85, 42 86
+              L 42 92
+              L 58 92
+              L 58 86
+              C 59 85, 63 84, 66 81
+              C 69 78, 72 71, 67 63
+              C 62 55, 54 51, 55 49
+              C 56 47, 60 46, 62 44
+              C 64 42, 66 38, 62 30
+              C 58 22, 52 18, 50 14
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="14" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="v2bgd" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#4338ca"/>
+              <stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+            <clipPath id="v2clipd"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#v2bgd)"/>
+          <g clip-path="url(#v2clipd)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 31 20 A 22 22 0 0 1 31 44" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.15"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 69 20 A 22 22 0 0 0 69 44" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.15"/>
+            <path d="
+              M 50 14
+              C 48 18, 42 22, 38 30
+              C 34 38, 36 42, 38 44
+              C 40 46, 44 47, 45 49
+              C 46 51, 38 55, 33 63
+              C 28 71, 31 78, 34 81
+              C 37 84, 41 85, 42 86
+              L 42 92
+              L 58 92
+              L 58 86
+              C 59 85, 63 84, 66 81
+              C 69 78, 72 71, 67 63
+              C 62 55, 54 51, 55 49
+              C 56 47, 60 46, 62 44
+              C 64 42, 66 38, 62 30
+              C 58 22, 52 18, 50 14
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="14" r="2.5" fill="#c7d2fe"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-item">
+        <svg width="64" height="64" viewBox="0 0 100 100"><defs><linearGradient id="v2s1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="v2cs1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v2s1)"/><g clip-path="url(#v2cs1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 14 C 48 18, 42 22, 38 30 C 34 38, 36 42, 38 44 C 40 46, 44 47, 45 49 C 46 51, 38 55, 33 63 C 28 71, 31 78, 34 81 C 37 84, 41 85, 42 86 L 42 92 L 58 92 L 58 86 C 59 85, 63 84, 66 81 C 69 78, 72 71, 67 63 C 62 55, 54 51, 55 49 C 56 47, 60 46, 62 44 C 64 42, 66 38, 62 30 C 58 22, 52 18, 50 14 Z" fill="#fff"/><circle cx="50" cy="14" r="2.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">64px</div>
+      </div>
+      <div class="size-item">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="v2s2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="v2cs2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v2s2)"/><g clip-path="url(#v2cs2)"><path d="M 50 14 C 48 18, 42 22, 38 30 C 34 38, 36 42, 38 44 C 40 46, 44 47, 45 49 C 46 51, 38 55, 33 63 C 28 71, 31 78, 34 81 C 37 84, 41 85, 42 86 L 42 92 L 58 92 L 58 86 C 59 85, 63 84, 66 81 C 69 78, 72 71, 67 63 C 62 55, 54 51, 55 49 C 56 47, 60 46, 62 44 C 64 42, 66 38, 62 30 C 58 22, 52 18, 50 14 Z" fill="#fff"/><circle cx="50" cy="14" r="3.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">40px</div>
+      </div>
+      <div class="size-item">
+        <svg width="24" height="24" viewBox="0 0 100 100"><defs><linearGradient id="v2s3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#v2s3)"/><path d="M 50 14 C 48 18, 42 22, 38 30 C 34 38, 36 42, 38 44 C 40 46, 44 47, 45 49 C 46 51, 38 55, 33 63 C 28 71, 31 78, 34 81 C 37 84, 41 85, 42 86 L 42 92 L 58 92 L 58 86 C 59 85, 63 84, 66 81 C 69 78, 72 71, 67 63 C 62 55, 54 51, 55 49 C 56 47, 60 46, 62 44 C 64 42, 66 38, 62 30 C 58 22, 52 18, 50 14 Z" fill="#fff"/></svg>
+        <div class="size-label">24px</div>
+      </div>
+      <div class="size-item">
+        <svg width="16" height="16" viewBox="0 0 100 100"><defs><linearGradient id="v2s4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#v2s4)"/><path d="M 50 14 C 48 18, 42 22, 38 30 C 34 38, 36 42, 38 44 C 40 46, 44 47, 45 49 C 46 51, 38 55, 33 63 C 28 71, 31 78, 34 81 C 37 84, 41 85, 42 86 L 42 92 L 58 92 L 58 86 C 59 85, 63 84, 66 81 C 69 78, 72 71, 67 63 C 62 55, 54 51, 55 49 C 56 47, 60 46, 62 44 C 64 42, 66 38, 62 30 C 58 22, 52 18, 50 14 Z" fill="#fff"/></svg>
+        <div class="size-label">16px</div>
+      </div>
+    </div>
+
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="v2w1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="v2cw1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v2w1)"/><g clip-path="url(#v2cw1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 14 C 48 18, 42 22, 38 30 C 34 38, 36 42, 38 44 C 40 46, 44 47, 45 49 C 46 51, 38 55, 33 63 C 28 71, 31 78, 34 81 C 37 84, 41 85, 42 86 L 42 92 L 58 92 L 58 86 C 59 85, 63 84, 66 81 C 69 78, 72 71, 67 63 C 62 55, 54 51, 55 49 C 56 47, 60 46, 62 44 C 64 42, 66 38, 62 30 C 58 22, 52 18, 50 14 Z" fill="#fff"/><circle cx="50" cy="14" r="2.5" fill="#a5b4fc"/></g></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="v2w2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient><clipPath id="v2cw2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v2w2)"/><g clip-path="url(#v2cw2)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 50 14 C 48 18, 42 22, 38 30 C 34 38, 36 42, 38 44 C 40 46, 44 47, 45 49 C 46 51, 38 55, 33 63 C 28 71, 31 78, 34 81 C 37 84, 41 85, 42 86 L 42 92 L 58 92 L 58 86 C 59 85, 63 84, 66 81 C 69 78, 72 71, 67 63 C 62 55, 54 51, 55 49 C 56 47, 60 46, 62 44 C 64 42, 66 38, 62 30 C 58 22, 52 18, 50 14 Z" fill="#fff"/><circle cx="50" cy="14" r="2.5" fill="#c7d2fe"/></g></svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== V3: SLEEK TAPER ========== -->
+  <div class="card">
+    <span class="tag">V3</span>
+    <h3>Sleek Taper</h3>
+    <p class="desc">Most abstract — a smooth, elongated teardrop with just a hint of the two tier swells. Reads more like a modern fintech mark that happens to have architectural DNA. Minimal and clean.</p>
+
+    <div class="row">
+      <div class="preview">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="v3bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1e1b4b"/>
+              <stop offset="100%" stop-color="#312e81"/>
+            </linearGradient>
+            <clipPath id="v3clip"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#v3bg)"/>
+          <g clip-path="url(#v3clip)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 31 20 A 22 22 0 0 1 31 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 69 20 A 22 22 0 0 0 69 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <!-- Sleek taper with subtle swells -->
+            <path d="
+              M 50 14
+              C 49 22, 43 28, 41 35
+              C 39 42, 43 45, 44 48
+              C 45 51, 38 58, 36 67
+              C 34 76, 39 82, 42 85
+              L 42 92
+              L 58 92
+              L 58 85
+              C 61 82, 66 76, 64 67
+              C 62 58, 55 51, 56 48
+              C 57 45, 61 42, 59 35
+              C 57 28, 51 22, 50 14
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="14" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="v3bgd" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#4338ca"/>
+              <stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+            <clipPath id="v3clipd"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#v3bgd)"/>
+          <g clip-path="url(#v3clipd)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 31 20 A 22 22 0 0 1 31 44" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.15"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 69 20 A 22 22 0 0 0 69 44" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.15"/>
+            <path d="
+              M 50 14
+              C 49 22, 43 28, 41 35
+              C 39 42, 43 45, 44 48
+              C 45 51, 38 58, 36 67
+              C 34 76, 39 82, 42 85
+              L 42 92
+              L 58 92
+              L 58 85
+              C 61 82, 66 76, 64 67
+              C 62 58, 55 51, 56 48
+              C 57 45, 61 42, 59 35
+              C 57 28, 51 22, 50 14
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="14" r="2.5" fill="#c7d2fe"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-item">
+        <svg width="64" height="64" viewBox="0 0 100 100"><defs><linearGradient id="v3s1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="v3cs1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v3s1)"/><g clip-path="url(#v3cs1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 14 C 49 22, 43 28, 41 35 C 39 42, 43 45, 44 48 C 45 51, 38 58, 36 67 C 34 76, 39 82, 42 85 L 42 92 L 58 92 L 58 85 C 61 82, 66 76, 64 67 C 62 58, 55 51, 56 48 C 57 45, 61 42, 59 35 C 57 28, 51 22, 50 14 Z" fill="#fff"/><circle cx="50" cy="14" r="2.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">64px</div>
+      </div>
+      <div class="size-item">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="v3s2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="v3cs2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v3s2)"/><g clip-path="url(#v3cs2)"><path d="M 50 14 C 49 22, 43 28, 41 35 C 39 42, 43 45, 44 48 C 45 51, 38 58, 36 67 C 34 76, 39 82, 42 85 L 42 92 L 58 92 L 58 85 C 61 82, 66 76, 64 67 C 62 58, 55 51, 56 48 C 57 45, 61 42, 59 35 C 57 28, 51 22, 50 14 Z" fill="#fff"/><circle cx="50" cy="14" r="3.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">40px</div>
+      </div>
+      <div class="size-item">
+        <svg width="24" height="24" viewBox="0 0 100 100"><defs><linearGradient id="v3s3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#v3s3)"/><path d="M 50 14 C 49 22, 43 28, 41 35 C 39 42, 43 45, 44 48 C 45 51, 38 58, 36 67 C 34 76, 39 82, 42 85 L 42 92 L 58 92 L 58 85 C 61 82, 66 76, 64 67 C 62 58, 55 51, 56 48 C 57 45, 61 42, 59 35 C 57 28, 51 22, 50 14 Z" fill="#fff"/></svg>
+        <div class="size-label">24px</div>
+      </div>
+      <div class="size-item">
+        <svg width="16" height="16" viewBox="0 0 100 100"><defs><linearGradient id="v3s4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#v3s4)"/><path d="M 50 14 C 49 22, 43 28, 41 35 C 39 42, 43 45, 44 48 C 45 51, 38 58, 36 67 C 34 76, 39 82, 42 85 L 42 92 L 58 92 L 58 85 C 61 82, 66 76, 64 67 C 62 58, 55 51, 56 48 C 57 45, 61 42, 59 35 C 57 28, 51 22, 50 14 Z" fill="#fff"/></svg>
+        <div class="size-label">16px</div>
+      </div>
+    </div>
+
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="v3w1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="v3cw1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v3w1)"/><g clip-path="url(#v3cw1)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 14 C 49 22, 43 28, 41 35 C 39 42, 43 45, 44 48 C 45 51, 38 58, 36 67 C 34 76, 39 82, 42 85 L 42 92 L 58 92 L 58 85 C 61 82, 66 76, 64 67 C 62 58, 55 51, 56 48 C 57 45, 61 42, 59 35 C 57 28, 51 22, 50 14 Z" fill="#fff"/><circle cx="50" cy="14" r="2.5" fill="#a5b4fc"/></g></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="v3w2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient><clipPath id="v3cw2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v3w2)"/><g clip-path="url(#v3cw2)"><path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 50 14 C 49 22, 43 28, 41 35 C 39 42, 43 45, 44 48 C 45 51, 38 58, 36 67 C 34 76, 39 82, 42 85 L 42 92 L 58 92 L 58 85 C 61 82, 66 76, 64 67 C 62 58, 55 51, 56 48 C 57 45, 61 42, 59 35 C 57 28, 51 22, 50 14 Z" fill="#fff"/><circle cx="50" cy="14" r="2.5" fill="#c7d2fe"/></g></svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== V4: THREE TIERS ========== -->
+  <div class="card">
+    <span class="tag">V4</span>
+    <h3>Three Tiers</h3>
+    <p class="desc">The actual St. Peter's spire has three lantern levels. This version captures all three with a small upper bulge, medium middle, and larger base tier. Most faithful to the real architecture.</p>
+
+    <div class="row">
+      <div class="preview">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="v4bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1e1b4b"/>
+              <stop offset="100%" stop-color="#312e81"/>
+            </linearGradient>
+            <clipPath id="v4clip"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#v4bg)"/>
+          <g clip-path="url(#v4clip)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 31 17 A 22 22 0 0 1 31 41" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 69 17 A 22 22 0 0 0 69 41" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <!-- Three-tier spire -->
+            <path d="
+              M 50 12
+              C 49 16, 46 20, 44 26
+              C 42 32, 45 34, 46 36
+              C 47 38, 42 42, 39 48
+              C 36 54, 40 58, 42 60
+              C 44 62, 36 66, 33 74
+              C 30 82, 38 86, 42 87
+              L 42 92
+              L 58 92
+              L 58 87
+              C 62 86, 70 82, 67 74
+              C 64 66, 56 62, 58 60
+              C 60 58, 64 54, 61 48
+              C 58 42, 53 38, 54 36
+              C 55 34, 58 32, 56 26
+              C 54 20, 51 16, 50 12
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="v4bgd" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#4338ca"/>
+              <stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+            <clipPath id="v4clipd"><circle cx="50" cy="50" r="50"/></clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#v4bgd)"/>
+          <g clip-path="url(#v4clipd)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 31 17 A 22 22 0 0 1 31 41" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.15"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 69 17 A 22 22 0 0 0 69 41" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.15"/>
+            <path d="
+              M 50 12
+              C 49 16, 46 20, 44 26
+              C 42 32, 45 34, 46 36
+              C 47 38, 42 42, 39 48
+              C 36 54, 40 58, 42 60
+              C 44 62, 36 66, 33 74
+              C 30 82, 38 86, 42 87
+              L 42 92
+              L 58 92
+              L 58 87
+              C 62 86, 70 82, 67 74
+              C 64 66, 56 62, 58 60
+              C 60 58, 64 54, 61 48
+              C 58 42, 53 38, 54 36
+              C 55 34, 58 32, 56 26
+              C 54 20, 51 16, 50 12
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#c7d2fe"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-item">
+        <svg width="64" height="64" viewBox="0 0 100 100"><defs><linearGradient id="v4s1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="v4cs1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v4s1)"/><g clip-path="url(#v4cs1)"><path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 12 C 49 16, 46 20, 44 26 C 42 32, 45 34, 46 36 C 47 38, 42 42, 39 48 C 36 54, 40 58, 42 60 C 44 62, 36 66, 33 74 C 30 82, 38 86, 42 87 L 42 92 L 58 92 L 58 87 C 62 86, 70 82, 67 74 C 64 66, 56 62, 58 60 C 60 58, 64 54, 61 48 C 58 42, 53 38, 54 36 C 55 34, 58 32, 56 26 C 54 20, 51 16, 50 12 Z" fill="#fff"/><circle cx="50" cy="12" r="2.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">64px</div>
+      </div>
+      <div class="size-item">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="v4s2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="v4cs2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v4s2)"/><g clip-path="url(#v4cs2)"><path d="M 50 12 C 49 16, 46 20, 44 26 C 42 32, 45 34, 46 36 C 47 38, 42 42, 39 48 C 36 54, 40 58, 42 60 C 44 62, 36 66, 33 74 C 30 82, 38 86, 42 87 L 42 92 L 58 92 L 58 87 C 62 86, 70 82, 67 74 C 64 66, 56 62, 58 60 C 60 58, 64 54, 61 48 C 58 42, 53 38, 54 36 C 55 34, 58 32, 56 26 C 54 20, 51 16, 50 12 Z" fill="#fff"/><circle cx="50" cy="12" r="3.5" fill="#a5b4fc"/></g></svg>
+        <div class="size-label">40px</div>
+      </div>
+      <div class="size-item">
+        <svg width="24" height="24" viewBox="0 0 100 100"><defs><linearGradient id="v4s3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#v4s3)"/><path d="M 50 12 C 49 16, 46 20, 44 26 C 42 32, 45 34, 46 36 C 47 38, 42 42, 39 48 C 36 54, 40 58, 42 60 C 44 62, 36 66, 33 74 C 30 82, 38 86, 42 87 L 42 92 L 58 92 L 58 87 C 62 86, 70 82, 67 74 C 64 66, 56 62, 58 60 C 60 58, 64 54, 61 48 C 58 42, 53 38, 54 36 C 55 34, 58 32, 56 26 C 54 20, 51 16, 50 12 Z" fill="#fff"/></svg>
+        <div class="size-label">24px</div>
+      </div>
+      <div class="size-item">
+        <svg width="16" height="16" viewBox="0 0 100 100"><defs><linearGradient id="v4s4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#v4s4)"/><path d="M 50 12 C 49 16, 46 20, 44 26 C 42 32, 45 34, 46 36 C 47 38, 42 42, 39 48 C 36 54, 40 58, 42 60 C 44 62, 36 66, 33 74 C 30 82, 38 86, 42 87 L 42 92 L 58 92 L 58 87 C 62 86, 70 82, 67 74 C 64 66, 56 62, 58 60 C 60 58, 64 54, 61 48 C 58 42, 53 38, 54 36 C 55 34, 58 32, 56 26 C 54 20, 51 16, 50 12 Z" fill="#fff"/></svg>
+        <div class="size-label">16px</div>
+      </div>
+    </div>
+
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="v4w1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="v4cw1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v4w1)"/><g clip-path="url(#v4cw1)"><path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M 50 12 C 49 16, 46 20, 44 26 C 42 32, 45 34, 46 36 C 47 38, 42 42, 39 48 C 36 54, 40 58, 42 60 C 44 62, 36 66, 33 74 C 30 82, 38 86, 42 87 L 42 92 L 58 92 L 58 87 C 62 86, 70 82, 67 74 C 64 66, 56 62, 58 60 C 60 58, 64 54, 61 48 C 58 42, 53 38, 54 36 C 55 34, 58 32, 56 26 C 54 20, 51 16, 50 12 Z" fill="#fff"/><circle cx="50" cy="12" r="2.5" fill="#a5b4fc"/></g></svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="40" height="40" viewBox="0 0 100 100"><defs><linearGradient id="v4w2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient><clipPath id="v4cw2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="url(#v4w2)"/><g clip-path="url(#v4cw2)"><path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 63 22 A 15 15 0 0 0 63 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/><path d="M 50 12 C 49 16, 46 20, 44 26 C 42 32, 45 34, 46 36 C 47 38, 42 42, 39 48 C 36 54, 40 58, 42 60 C 44 62, 36 66, 33 74 C 30 82, 38 86, 42 87 L 42 92 L 58 92 L 58 87 C 62 86, 70 82, 67 74 C 64 66, 56 62, 58 60 C 60 58, 64 54, 61 48 C 58 42, 53 38, 54 36 C 55 34, 58 32, 56 26 C 54 20, 51 16, 50 12 Z" fill="#fff"/><circle cx="50" cy="12" r="2.5" fill="#c7d2fe"/></g></svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="max-width: 1000px; margin: 48px auto 0; text-align: center; color: #94a3b8; font-size: 13px; line-height: 1.6;">
+  <p><strong>All use cubic bezier curves</strong> for the spire silhouette instead of straight lines. V1 &amp; V3 have two tiers (more abstract), V2 has pronounced two tiers, V4 has all three lantern levels from the actual church. The bulges taper organically — no hard horizontal edges.</p>
+</div>
+
+</body>
+</html>

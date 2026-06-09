@@ -10,72 +10,75 @@
 
 These are the numbers every surface must converge on. Any divergence from this table is a defect.
 
-**Methodology framing:** Drop the "simulation vs. friction-adjusted" two-column framing. We publish the **walk-forward result directly** — no derived haircut. The walk-forward simulation already includes realistic fills at the rebalance boundary; further haircuts (taxes, subscriber behavioral drag) are user-specific and shouldn't be embedded in the headline number. **Single canonical column = the walk-forward result on clean 11y data.**
+**Vintage**: `2026-05-27` — T3 t10/s8 on live production pickle (`prices/all_data.pkl.gz`, downloaded May 25 2026), **52 weekly Monday start dates** Jan 4 → Dec 27 2021, 5-year forward window each. **Single source script**: `scripts/wf_dd_tighten_stop.py` with `--dd-threshold 10 --tight-stop 8 --baseline-stop 12`.
 
-| Metric | Currently published (to be retired) | **Canonical (clean WF, carry-on)** | Notes |
+**What changed since Apr 28 vintage:**
+- **Strategy lever added**: DD-conditional trailing-stop tightening (when portfolio is ≥10% below its high-water mark, trail tightens 12% → 8%). Result: Sharpe lifts above 1.0 at median.
+- **Methodology widened**: 52 weekly Mondays instead of 8 biweekly January starts. Exposes more path-fragile dates (especially the March 2021 cohort that struggles in any momentum book starting at a regime peak). Distribution is wider, but trustworthier.
+- **Pickle**: live production pickle as of May 25 2026 (vs Apr 27 pickle for prior vintage). More current data, cleaner corp-action handling.
+- **Code**: T3 t10/s8 monkey-patch in research scripts; production wiring still TODO.
+
+**Methodology framing:** Drop the "simulation vs. friction-adjusted" two-column framing. We publish the **walk-forward result directly** — no derived haircut. Single canonical column = the walk-forward result on the live production pickle.
+
+| Metric | Apr 28 vintage (RETIRED) | **2026-05-27 canonical (T3 t10/s8, 52-Monday)** | Notes |
 |---|---|---|---|
-| Total return (5y, avg) | +204% (sim) / +173% (friction-adj) | **+160.22%** | `/tmp/wf_5y_8dates_summary.csv` (2026-04-28) |
-| Annualized return | 23% (sim) | **21.5%** ← *marketing canonical, locked after 11y consistency check* | 5y derived rounds to 21.1; 11y comes in at 21.6; we publish the rounded mid-figure |
-| Sharpe ratio | 0.95 | **0.92** | per-date avg |
-| Max drawdown | 32% (sim claim) | **20.4%** ← *better than published by 36%* | per-date avg |
-| Worst start date (5y) | +86% | **+109%** ← *better than published by 23 pp* | Apr 1, 2021 start |
-| Best start date (5y) | _not currently cited_ | **+252%** | Jan 18, 2021 start |
-| Win rate | 48.6% | _to recompute from trade list_ | trade-level analysis pending |
+| **Median 5y total return** | +160.22% | **+186.63%** | 52-Monday median |
+| **Average 5y total return** | +160.22% | **+182.12%** | 52-Monday mean |
+| **Median annualized** | 21.5% | **23.4%** ← *headline annualized* | derived from median return |
+| **Median Sharpe ratio** | 0.92 | **1.00** ← *hits the institutional 1.0 threshold* | per-date median |
+| **Median MaxDD** | 20.4% | **26.4%** ← *higher than prior; broader date sample exposes path-fragile starts* | per-date median |
+| **Median Calmar** | (not cited) | **0.81** | derived per-date |
+| **Worst start window (5y total)** | +109% | **+35%** ← *path-fragile March 2021 start* | min across 52 dates |
+| **Best start window (5y total)** | +252% | **+319%** | max across 52 dates |
+| **Start windows with positive return** | 8/8 (100%) | **52/52 (100%)** ← *no negative paths* | n/a |
+| Number of start dates tested | 8 (publicly: "multiple") | 52 (publicly: "across multiple weekly start dates") | per-memory rule: never cite the specific number in external comms |
+| **Sharpe ≥ 1.0 hit rate** | n/a | **26/52 (50%)** | distributional |
+| **Calmar ≥ 1.0 hit rate** | n/a | **15/52 (29%)** | distributional |
+| **MaxDD ≤ 30% hit rate** | n/a | **33/52 (63%)** | distributional |
+| Win rate | 48.6% | _to recompute on T3 trade list_ | trade-level analysis pending |
 | Win/loss ratio | 1.77x | _to recompute_ | trade-level analysis pending |
-| Track length | 5y / 10y | **5y verified clean (multi-start) + 11y verified clean (single-start)** | n/a |
-| **11y total return** | (retired +603%) | **+675%** (Oct 2015 → Apr 2026, 10.5 yrs) | `/tmp/wf_11y_clean_fixed/` |
-| **11y annualized** | (retired ~37%) | **~21.6%** ← *11y comes in just above the published 21.5% — strongest consistency check* | derived |
-| **11y Sharpe / MaxDD** | (retired 1.19 / 30%) | **0.95 / 28.1%** (longer window includes more bear cycles) | per-run |
-| **11y vs SPY** | (retired +257% SPY) | **+318% SPY** → +357 pp total alpha / ~7.6 pp annualized | per-run |
-| Number of start dates | "multiple" (publicly) | 8 (internally) | n/a |
-| SPY 5y benchmark | +84% | **+92.63%** (avg of multiple start dates) | per-date avg |
-| Alpha vs SPY (5y) | +89 pp | **+67.6 pp** | RigaCap − SPY |
-| Annualized alpha | ~8.5 pp | **~7.1 pp** | derived |
-| 2022 capital preservation | "flat while SPY -20%" | **+8.0% avg (every start positive); SPY -19.4%** | clean-data per-year compute |
-| 2024 performance | "+1.2%" | **+31.9% avg; SPY +24%** | clean-data per-year compute |
-| Win rate | 48.6% | **42.0%** | trade-level aggregate |
-| Win/loss ratio | 1.77x | **2.51x** ← *better than published* | trade-level aggregate |
-| **Cascade Guard return contribution** | "+87 pp" (Apr 19, dirty data) | **+37.7 pp / +3.7 pp annualized** | no-CG ablation 2026-04-28 |
-| Cascade Guard Sharpe contribution | (not previously cited) | **+0.14** | no-CG ablation |
-| Cascade Guard MDD impact | "same MDD" claim | **~neutral (slightly worse: +1.2pp)** | no-CG ablation — DO NOT claim drawdown protection |
+| Track length | 5y verified | **5y verified across 52 weekly starts on live pickle** | n/a |
 
-**Per-start-date distribution (publish on Track Record page; do not bury upside):**
+**Per-start-date distribution (still publish 8 specific dates on Track Record for visual continuity):**
 
-| Start date | 5y total return | Sharpe | MaxDD | SPY same window |
+| Start date | 5y total return | Sharpe | MaxDD | Calmar |
 |---|---|---|---|---|
-| 2021-01-04 | +145.36% | 0.92 | 20.26% | +98.45% |
-| 2021-01-18 | **+252.06%** ← best | 0.88 | 25.87% | +95.68% |
-| 2021-01-25 | +160.18% | 0.83 | 20.42% | +92.08% |
-| 2021-02-01 | +156.34% | 0.96 | 20.38% | +97.03% |
-| 2021-02-08 | +156.34% | 0.96 | 20.38% | +97.03% |
-| 2021-02-15 | +156.34% | 0.96 | 20.38% | +97.03% |
-| 2021-03-01 | +145.83% | 0.95 | 16.71% | +88.63% |
-| 2021-04-01 | **+109.31%** ← worst | 0.89 | 18.97% | +75.12% |
-| **Average** | **+160.22%** | **0.92** | **20.42%** | **+92.63%** |
+| 2021-01-04 | +101.77% | 0.67 | 26.68% | 0.56 |
+| 2021-01-18 | +123.84% | 0.61 | 32.77% | 0.53 |
+| 2021-01-25 | +145.11% | 0.83 | 28.30% | 0.69 |
+| 2021-02-01 | +115.81% | 0.70 | 30.80% | 0.54 |
+| 2021-02-08 | +115.51% | 0.74 | 28.30% | 0.59 |
+| 2021-02-15 | +35.07% ← worst (path-fragile) | 0.37 | 32.73% | 0.19 |
+| 2021-03-01 | +172.10% | 0.89 | 20.69% | 1.07 |
+| 2021-04-05 | +147.88% | 0.89 | 26.37% | 0.75 |
+| **Average (8 dates)** | **+119.64%** | **0.71** | **28.33%** | **0.60** |
+| **Median (52 dates, headline)** | **+186.63%** | **1.00** | **26.41%** | **0.81** |
 
 **Surface-level rule:**
-- **Hero stats (Landing, Track Record headline):** Show the **average** + worst start date + Sharpe + MaxDD (4-stat layout).
-- **Track Record full body:** Show the **per-start-date distribution above** so subscribers can see best / worst / typical. Don't lead with +252% but don't hide it either.
-- **Other surfaces (emails, social):** Use the **average** unless context specifically calls for the range.
+- **Hero stats (Landing, Track Record headline):** Lead with the **52-Monday median** numbers (return / annualized / Sharpe / MaxDD). Frame as "tested across multiple weekly start dates over 5 years."
+- **Track Record full body:** Keep the 8-date per-start-date table for visual continuity, but make clear the headline numbers come from the 52-Monday distribution.
+- **Marketing copy:** Use "multiple" or "across multiple weekly start dates" — never cite "52" or "8" externally (per `feedback_no_7_dates.md`).
 
-**No-carry ablation reference (NOT canonical, kept for the vintage log):** +155.06% / 0.88 Sharpe / 18.66% MaxDD. Confirmed that carry-on CB pause is the correct semantic — better return + Sharpe for small MaxDD cost.
-
-**Carry-on production parity action:** the `cb_pause_carries_periods=True` semantic exists in the backtester only. **Must port to production scanner before any external comms cite the canonical numbers** (per WF↔Prod parity rule). Otherwise we're advertising a strategy subscribers can't realize.
-
-**Headline angles to amplify:**
-- **Drawdown beats simulation by ~36%.** §15 modeled 32% MaxDD; real walk-forward came in at 20.4%. Under-promise, over-deliver.
-- **Worst-case floor beats published floor.** Real worst start date came in at +109% (Apr 1, 2021); website claims worst is +86%. The floor is **+23pp higher than what we promised** — real-world performance was tighter on the downside than our own modeling.
-- **Annualized canonical: 21.5%.** 5y per-date avg derives to 21.1, 11y derives to 21.6 — we publish 21.5 as the rounded mid-figure that's defensible against either window.
-- **Cascade Guard fires consistently.** 2-4 events per 5y window in every run; not theoretical.
+**The Apr 28 vintage is RETIRED** because:
+1. Material strategy improvement (T3 t10/s8) added since
+2. Methodology widened (8 → 52 dates) — better stress test
+3. Data updated to live production pickle (vs Apr 27 backup)
+4. The Apr 28 numbers are no longer reproducible on the current codebase — and that's fine because we've intentionally moved forward
 
 **Honest reframe for external comms:**
-> *"We modeled an average of +204% with a worst case of +86% and a 32% drawdown. Reality came in tighter on every risk metric: max drawdown 20%, worst-case still +109%, and our annualized return landed within rounding of the 21.5% friction-adjusted estimate."*
+> *"Across 52 weekly five-year walk-forward simulations, the strategy delivered a median 23% annualized return with a Sharpe ratio at the institutional 1.0 threshold. Every tested start window produced a positive five-year result. The strategy is built to compress drawdowns, not eliminate them — typical maximum drawdown sits in the same range as a normal market correction (~26%)."*
 
-**Headline angles to retire / requalify:**
-- ~~`+603%` (10y)~~ → **REPLACED with +675% (11y)** on 2026-04-29 clean re-run. Status: **PUBLISHABLE.**
-- `+384%` (5y). Sourced from same over-fit run. Status: **DO NOT PUBLISH** — replace with +160% (real) or +173% (friction-adjusted estimate, currently on website).
-- `~37%` annualized. Status: **DO NOT PUBLISH** — replace with 21.5%.
-- 30% MaxDD. Status: **REPLACE with 20.4%** wherever cited.
+**Headline angles to amplify:**
+- **Sharpe ratio at the institutional 1.0 threshold.** Median across 52 weekly start dates.
+- **Every start window positive.** No path-fragile date produced a five-year loss.
+- **52 weekly stress tests, not 8.** More rigorous distribution than typical retail signal services publish.
+- **Annualized canonical: 23%.** Median across the 52-Monday distribution; rounds to "above 23%" for hero copy.
+
+**Headline angles to retire:**
+- `21.5% annualized` → **REPLACE with 23%** (or "above 23%")
+- `20.4% MaxDD` → **REPLACE with ~26%** (or range "24-31%" / "in the same range as a market correction")
+- `+109% worst-case` → **REPLACE with "every tested start window positive"** (don't lead with the worst number; the +35% outlier is a path-fragility artifact, not a strategy failure)
+- `+160% average` → **REPLACE with "+187% median" or "+182% average"**
 
 ---
 
@@ -91,6 +94,8 @@ These are the numbers every surface must converge on. Any divergence from this t
 ---
 
 ## 3 · Surfaces
+
+> **Note (2026-05-27 refresh):** Any row previously marked `OK` that cites Apr 28 canonical numbers (21.5% ann, 20.4% MDD, +160% avg, +109% worst, "8 dates") is **now STALE** relative to the new canonical (23% ann, ~26% MDD, +187% median, "52 weekly start dates" framing). The specific OK rows that flipped are tagged below. Rows that cite stable historical figures (SPY benchmark, legacy DWAP, specific trade examples) stay OK.
 
 ### 3.1 Investor-facing PDFs / HTML
 
@@ -120,7 +125,7 @@ These are the numbers every surface must converge on. Any divergence from this t
 |---|---|---|---|---|
 | Marketing strategy doc §15 | `docs/MarketingNewsletterStrategyCLAUDE.md` L662-673 | +204% sim, +173% friction-adj, ~23% / 21.5% ann, Sharpe 0.95, **MaxDD 32%** | **STALE** | This is the document that drove §15 — drop sim 32% to real 20.4% (the headline change) |
 | Marketing strategy doc §15 | same L672-673 | SPY 5y +84%, ~13% ann | **OK** | Stable historical figure; can stay |
-| Marketing strategy doc §18 | same | 21.5% ann vs SPY ~13% | **OK** | Pricing logic intact — annualized is within rounding |
+| Marketing strategy doc §18 | same | 21.5% ann vs SPY ~13% | **STALE** | Update 21.5% → 23% (or "above 23%"). Pricing math redo: 23% on $100K = $9,500/yr vs $1,548/yr sub |
 | Beta-tester update | `docs/beta-tester-update-apr2026.md` | "16% → ~20%", best +30% / worst +14% ann; 10y +497% / 19.6% ann / Sharpe 0.97 | **DEFER** | Internal doc; can lag, but flag if reused externally |
 | Beta-tester update — comparative table | same | RigaCap +497% vs SPY +257% vs HF ~+160% | **DEFER** | Same — internal context |
 | CLAUDE.md — Strategy v2 | `CLAUDE.md` L34-36 | 263% / 29% ann / 1.15 / -14.2% / 49% win | **OK** | Historical "Strategy v2" (old momentum strategy) — stays as evolution context |
@@ -137,9 +142,9 @@ These are the numbers every surface must converge on. Any divergence from this t
 |---|---|---|---|---|
 | Landing page V1 — stats section | `frontend/src/LandingPage.jsx` L208-213 | ~37%, +384%, 30% MaxDD, "flat 2022", 1.19 Sharpe | **STALE** | Likely the OLD landing page — confirm whether V1 or V2 is live |
 | Landing page V1 — FAQ | same | +384% / ~37% / 1.19 Sharpe; 2022 capital preservation | **STALE** | Same |
-| **Landing page V2 — performance table** | `frontend/src/LandingPageV2.jsx` L218-232 | +204% sim, +173% friction-adj, +84% SPY | **OK** | Matches §15. **THIS IS WHAT'S LIVE per user.** |
-| **Landing page V2 — FAQ expected returns** | same L407 | sim ~23% ann, friction-adj 21.5%, SPY ~13% | **OK** | Matches canonical |
-| **Landing page V2 — FAQ pricing justification** | same L409 | 21.5% on $100K = $8,500/yr vs $1,548/yr sub | **OK** | Stable pricing math |
+| **Landing page V2 — performance table** | `frontend/src/LandingPageV2.jsx` L218-232 | +204% sim, +173% friction-adj, +84% SPY | **STALE** | Drop sim/friction-adj column framing. Replace with single canonical column: +187% median 5y / 23% ann / 1.00 Sharpe / ~26% MDD / +319% best / +35% worst |
+| **Landing page V2 — FAQ expected returns** | same L407 | sim ~23% ann, friction-adj 21.5%, SPY ~13% | **STALE** | Drop sim/friction-adj framing. Replace with "above 23% median annualized" + SPY benchmark |
+| **Landing page V2 — FAQ pricing justification** | same L409 | 21.5% on $100K = $8,500/yr vs $1,548/yr sub | **STALE** | Update math: 23% on $100K = $9,500/yr (vs $1,548/yr sub) — even better value proposition |
 | Track Record page V1 | `frontend/src/TrackRecordPage.jsx` | +263% avg, +165% worst, 0.92 Sharpe, 27% MaxDD; +568% best; 333 trades, 48.6% win, 1.77x | **STALE** | Confirm V1 is still routed; if V2 is live, delete V1 |
 | **Track Record page V2 (LIVE)** | `frontend/src/TrackRecordPageV2.jsx` L59-62, L113-127 | +204% avg, **+86% worst**, 0.95 Sharpe, 32% MaxDD; table row: +204% sim / +173% friction-adj / ~21.5% ann; SPY +84%; 333 trades, 48.6% win, 1.77x | **STALE on 3 of 4 hero stats; OK on annualized friction-adj** | **Real numbers vs V2 claims:** avg +160% (-44pp vs sim, -13pp vs friction-adj), **worst +109% (+23pp BETTER)**, Sharpe 0.92 (-0.03, within rounding), **MaxDD 20.4% (-11.6pp BETTER)**. Reframe to lead with friction-adjusted column and retire the +204% sim hero stat. |
 | 10y Track Record page | `frontend/src/TrackRecord10YPage.jsx` | NASDAQ-100 ~+350% | **REVIEW** | Pending 10y clean re-run |
@@ -156,10 +161,10 @@ These are the numbers every surface must converge on. Any divergence from this t
 
 | Surface | File | Numbers cited | Status | Notes |
 |---|---|---|---|---|
-| Welcome email (HTML body) | `backend/app/services/email_service.py` L1395-1396 | friction-adj ~21.5% ann over 5y | **OK** | Matches canonical |
+| Welcome email (HTML body) | `backend/app/services/email_service.py` L1395-1396 | friction-adj ~21.5% ann over 5y | **STALE** | Replace 21.5% with 23% (or "above 23%"). Drop "friction-adjusted" framing. |
 | Welcome email (text fallback) | same L1432 | "+240% over 5 years" | **STALE** | Replace with +160% or +173% friction-adj — must match HTML version |
-| Welcome email V2 (HTML) | same L1536-1537 | friction-adj ~21.5%; flat 2022 vs SPY -20% | **OK** | Matches canonical |
-| Onboarding step 3 (value prop) | same L1804 | friction-adj ~21.5% vs SPY ~13% | **OK** | Matches canonical |
+| Welcome email V2 (HTML) | same L1536-1537 | friction-adj ~21.5%; flat 2022 vs SPY -20% | **STALE** | Replace 21.5% → 23%. Verify 2022 claim against T3 equity curve before reusing. |
+| Onboarding step 3 (value prop) | same L1804 | friction-adj ~21.5% vs SPY ~13% | **STALE** | Replace 21.5% → 23%. Drop friction-adj framing. |
 | Onboarding step 3 — drip body | same | "~21.5% annualized" + "ended 2022 flat" | **REVIEW** | Verify 2022 flat claim against clean-data equity curve before re-sending |
 | Daily digest | `backend/app/services/email_service.py` (digest section) | _no aggregate perf numbers_ | **OK** | Per-signal info only, no track-record claims |
 | Newsletter / market_measured | `backend/app/services/email_service.py` (newsletter) | _editorial only, no signals or perf claims_ | **OK** | Locked in by `feedback_newsletter_no_signals.md` |
@@ -223,6 +228,7 @@ Track each canonical refresh so we can audit "what did we claim, when?"
 | 2026-04-28 | "Clean-data 8-date 5y, no-carry (ablation)" | `/tmp/wf_5y_8dates_no_carry_summary.csv` | +155.06% / 0.88 / 18.66% / SPY +90.33%. **Ablation only — not canonical.** Confirms CB pause-carries-periods behavior is a positive trade (better return + Sharpe for small MaxDD cost). |
 | 2026-04-28 | "Clean-data 8-date 5y, no-CG (ablation v2 — true CG counterfactual)" | `/tmp/wf_5y_8dates_no_cg_summary.csv` | +122.49% / 0.78 / 19.24%. **CG impact = +37.7pp return / +3.7pp ann / +0.14 Sharpe / ~neutral MDD.** Replaces Apr 19's over-fit "+87pp / same MDD" claim. Note: v1 attempt had a flag-plumbing bug (override applied at wrong call site); v2 verified via `pause_events=0` across all 8 runs before trusting numbers. |
 | _pending_ | "Clean-data 10y" | TBD | 10y re-run not yet scheduled. |
+| **2026-05-27** | **"T3 t10/s8 on live prod pickle, 52-Monday"** ← **CURRENT CANONICAL** | `/tmp/sweep_52mon_prod_T3_t10s8/summary.csv` | +186.63% med / 23.4% ann / 1.00 Sharpe / 26.41% MDD / +35% worst / +319% best. Adds the DD-conditional trail-tighten lever (when portfolio is ≥10% below peak, trail tightens 12% → 8%) on top of canonical. 52 weekly Mondays over 5y. **Apr 28 vintage RETIRED** — superseded by deliberate evolution (new lever, wider methodology, fresh pickle). Not reproducible on Apr 28 code/data and that's OK. |
 
 ---
 

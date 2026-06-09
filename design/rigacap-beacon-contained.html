@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap — Beacon Contained</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f1f5f9;
+    padding: 40px;
+    color: #0f172a;
+  }
+  h1 { text-align: center; font-size: 28px; margin-bottom: 6px; }
+  .subtitle { text-align: center; color: #64748b; margin-bottom: 48px; font-size: 15px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .card h3 { font-size: 17px; margin-bottom: 4px; }
+  .card .tag { display: inline-block; font-size: 11px; color: #6366f1; background: #eef2ff; padding: 2px 8px; border-radius: 99px; margin-bottom: 8px; font-weight: 600; }
+  .card .desc { color: #64748b; font-size: 13px; margin-bottom: 24px; line-height: 1.5; }
+  .row { display: flex; gap: 16px; margin-bottom: 16px; }
+  .preview {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 20px;
+    border-radius: 12px;
+    background: #fafbfc;
+    border: 1px solid #e2e8f0;
+  }
+  .preview-dark {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 20px;
+    border-radius: 12px;
+    background: #0f172a;
+  }
+  .sizes {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px;
+    background: #fafbfc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+  }
+  .size-item { text-align: center; }
+  .size-label { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+  .wordmark-row { display: flex; gap: 16px; margin-top: 16px; }
+  .wordmark {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+    border-radius: 12px;
+  }
+  .wordmark-light { background: #fafbfc; border: 1px solid #e2e8f0; }
+  .wordmark-dark { background: #0f172a; }
+  .wm-text { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .wm-text-dark { color: #0f172a; }
+  .wm-text-light { color: #ffffff; }
+</style>
+</head>
+<body>
+
+<h1>RigaCap — Beacon Contained</h1>
+<p class="subtitle">Signal arcs + spire inside a contained mark</p>
+
+<div class="grid">
+
+  <!-- ========== VARIANT 1: DEEP NAVY ========== -->
+  <div class="card">
+    <span class="tag">VARIANT 1</span>
+    <h3>Deep Navy</h3>
+    <p class="desc">Dark indigo container, white spire, subtle signal arcs. Authoritative and premium. The arcs are clipped inside the container for a clean edge.</p>
+
+    <div class="row">
+      <div class="preview">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1e1b4b"/>
+              <stop offset="100%" stop-color="#312e81"/>
+            </linearGradient>
+            <clipPath id="clip1">
+              <rect x="0" y="0" width="100" height="100" rx="22"/>
+            </clipPath>
+          </defs>
+          <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#bg1)"/>
+          <g clip-path="url(#clip1)">
+            <!-- Signal arcs -->
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 31 17 A 22 22 0 0 1 31 41" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 69 17 A 22 22 0 0 0 69 41" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <!-- Spire -->
+            <path d="
+              M 50 12
+              L 46 40
+              L 39 40
+              L 39 46
+              L 46 46
+              L 42 72
+              L 33 72
+              L 33 79
+              L 42 79
+              L 42 90
+              L 58 90
+              L 58 79
+              L 67 79
+              L 67 72
+              L 58 72
+              L 54 46
+              L 61 46
+              L 61 40
+              L 54 40
+              Z
+            " fill="#ffffff"/>
+            <!-- Beacon dot -->
+            <circle cx="50" cy="12" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="bg1b" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#4338ca"/>
+              <stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+            <clipPath id="clip1b">
+              <rect x="0" y="0" width="100" height="100" rx="22"/>
+            </clipPath>
+          </defs>
+          <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#bg1b)"/>
+          <g clip-path="url(#clip1b)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 31 17 A 22 22 0 0 1 31 41" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.15"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 69 17 A 22 22 0 0 0 69 41" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.15"/>
+            <path d="
+              M 50 12
+              L 46 40
+              L 39 40
+              L 39 46
+              L 46 46
+              L 42 72
+              L 33 72
+              L 33 79
+              L 42 79
+              L 42 90
+              L 58 90
+              L 58 79
+              L 67 79
+              L 67 72
+              L 58 72
+              L 54 46
+              L 61 46
+              L 61 40
+              L 54 40
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#c7d2fe"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-item">
+        <svg width="64" height="64" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg1s" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="clip1s"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg1s)"/>
+          <g clip-path="url(#clip1s)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+        <div class="size-label">64px</div>
+      </div>
+      <div class="size-item">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg1m" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="clip1m"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg1m)"/>
+          <g clip-path="url(#clip1m)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#a5b4fc" stroke-width="3.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#a5b4fc" stroke-width="3.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="12" r="3.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+        <div class="size-label">40px</div>
+      </div>
+      <div class="size-item">
+        <svg width="24" height="24" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg1t" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="clip1t"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg1t)"/>
+          <g clip-path="url(#clip1t)">
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="12" r="5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+        <div class="size-label">24px</div>
+      </div>
+      <div class="size-item">
+        <svg width="16" height="16" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg1f" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg1f)"/>
+          <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+        </svg>
+        <div class="size-label">16px</div>
+      </div>
+    </div>
+
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg1w" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="clip1w"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg1w)"/>
+          <g clip-path="url(#clip1w)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg1wd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient><clipPath id="clip1wd"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg1wd)"/>
+          <g clip-path="url(#clip1wd)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#e0e7ff"/>
+          </g>
+        </svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== VARIANT 2: GOLD ACCENT ========== -->
+  <div class="card">
+    <span class="tag">VARIANT 2</span>
+    <h3>Gold Signal</h3>
+    <p class="desc">Same contained spire, but the beacon dot and signal arcs are gold/amber. Adds warmth and a premium "wealth" signal. The gold pops against the deep navy.</p>
+
+    <div class="row">
+      <div class="preview">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1e1b4b"/>
+              <stop offset="100%" stop-color="#312e81"/>
+            </linearGradient>
+            <clipPath id="clip2">
+              <rect x="0" y="0" width="100" height="100" rx="22"/>
+            </clipPath>
+          </defs>
+          <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#bg2)"/>
+          <g clip-path="url(#clip2)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 31 17 A 22 22 0 0 1 31 41" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 69 17 A 22 22 0 0 0 69 41" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+            <path d="
+              M 50 12
+              L 46 40
+              L 39 40
+              L 39 46
+              L 46 46
+              L 42 72
+              L 33 72
+              L 33 79
+              L 42 79
+              L 42 90
+              L 58 90
+              L 58 79
+              L 67 79
+              L 67 72
+              L 58 72
+              L 54 46
+              L 61 46
+              L 61 40
+              L 54 40
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#fbbf24"/>
+          </g>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="bg2b" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#0f172a"/>
+              <stop offset="100%" stop-color="#1e293b"/>
+            </linearGradient>
+            <clipPath id="clip2b">
+              <rect x="0" y="0" width="100" height="100" rx="22"/>
+            </clipPath>
+          </defs>
+          <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#bg2b)"/>
+          <g clip-path="url(#clip2b)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 31 17 A 22 22 0 0 1 31 41" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 69 17 A 22 22 0 0 0 69 41" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+            <path d="
+              M 50 12
+              L 46 40
+              L 39 40
+              L 39 46
+              L 46 46
+              L 42 72
+              L 33 72
+              L 33 79
+              L 42 79
+              L 42 90
+              L 58 90
+              L 58 79
+              L 67 79
+              L 67 72
+              L 58 72
+              L 54 46
+              L 61 46
+              L 61 40
+              L 54 40
+              Z
+            " fill="#e2e8f0"/>
+            <circle cx="50" cy="12" r="2.5" fill="#f59e0b"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-item">
+        <svg width="64" height="64" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg2s" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="clip2s"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg2s)"/>
+          <g clip-path="url(#clip2s)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#fbbf24"/>
+          </g>
+        </svg>
+        <div class="size-label">64px</div>
+      </div>
+      <div class="size-item">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg2m" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="clip2m"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg2m)"/>
+          <g clip-path="url(#clip2m)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#fbbf24" stroke-width="3.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#fbbf24" stroke-width="3.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="12" r="3.5" fill="#fbbf24"/>
+          </g>
+        </svg>
+        <div class="size-label">40px</div>
+      </div>
+      <div class="size-item">
+        <svg width="24" height="24" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg2t" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg2t)"/>
+          <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+          <circle cx="50" cy="12" r="5" fill="#fbbf24"/>
+        </svg>
+        <div class="size-label">24px</div>
+      </div>
+      <div class="size-item">
+        <svg width="16" height="16" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg2f" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg2f)"/>
+          <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+        </svg>
+        <div class="size-label">16px</div>
+      </div>
+    </div>
+
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg2w" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="clip2w"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg2w)"/>
+          <g clip-path="url(#clip2w)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#fbbf24"/>
+          </g>
+        </svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg2wd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient><clipPath id="clip2wd"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg2wd)"/>
+          <g clip-path="url(#clip2wd)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#e2e8f0"/>
+            <circle cx="50" cy="12" r="2.5" fill="#f59e0b"/>
+          </g>
+        </svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== VARIANT 3: EMERALD SIGNAL ========== -->
+  <div class="card">
+    <span class="tag">VARIANT 3</span>
+    <h3>Green Signal</h3>
+    <p class="desc">Emerald beacon — the universal color of "buy" and "go". Signal arcs in green suggest profitable signals being broadcast. Matches the app's buy signal color language.</p>
+
+    <div class="row">
+      <div class="preview">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#0f172a"/>
+              <stop offset="100%" stop-color="#1e293b"/>
+            </linearGradient>
+            <clipPath id="clip3">
+              <rect x="0" y="0" width="100" height="100" rx="22"/>
+            </clipPath>
+          </defs>
+          <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#bg3)"/>
+          <g clip-path="url(#clip3)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 31 17 A 22 22 0 0 1 31 41" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 69 17 A 22 22 0 0 0 69 41" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+            <path d="
+              M 50 12
+              L 46 40
+              L 39 40
+              L 39 46
+              L 46 46
+              L 42 72
+              L 33 72
+              L 33 79
+              L 42 79
+              L 42 90
+              L 58 90
+              L 58 79
+              L 67 79
+              L 67 72
+              L 58 72
+              L 54 46
+              L 61 46
+              L 61 40
+              L 54 40
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#34d399"/>
+          </g>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="bg3b" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#064e3b"/>
+              <stop offset="100%" stop-color="#065f46"/>
+            </linearGradient>
+            <clipPath id="clip3b">
+              <rect x="0" y="0" width="100" height="100" rx="22"/>
+            </clipPath>
+          </defs>
+          <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#bg3b)"/>
+          <g clip-path="url(#clip3b)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 31 17 A 22 22 0 0 1 31 41" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 69 17 A 22 22 0 0 0 69 41" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="
+              M 50 12
+              L 46 40
+              L 39 40
+              L 39 46
+              L 46 46
+              L 42 72
+              L 33 72
+              L 33 79
+              L 42 79
+              L 42 90
+              L 58 90
+              L 58 79
+              L 67 79
+              L 67 72
+              L 58 72
+              L 54 46
+              L 61 46
+              L 61 40
+              L 54 40
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#6ee7b7"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-item">
+        <svg width="64" height="64" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg3s" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient><clipPath id="clip3s"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg3s)"/>
+          <g clip-path="url(#clip3s)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#34d399"/>
+          </g>
+        </svg>
+        <div class="size-label">64px</div>
+      </div>
+      <div class="size-item">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg3m" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient><clipPath id="clip3m"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg3m)"/>
+          <g clip-path="url(#clip3m)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#34d399" stroke-width="3.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#34d399" stroke-width="3.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="12" r="3.5" fill="#34d399"/>
+          </g>
+        </svg>
+        <div class="size-label">40px</div>
+      </div>
+      <div class="size-item">
+        <svg width="24" height="24" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg3t" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg3t)"/>
+          <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+          <circle cx="50" cy="12" r="5" fill="#34d399"/>
+        </svg>
+        <div class="size-label">24px</div>
+      </div>
+      <div class="size-item">
+        <svg width="16" height="16" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg3f" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg3f)"/>
+          <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+        </svg>
+        <div class="size-label">16px</div>
+      </div>
+    </div>
+
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg3w" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient><clipPath id="clip3w"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg3w)"/>
+          <g clip-path="url(#clip3w)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#34d399"/>
+          </g>
+        </svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg3wd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#064e3b"/><stop offset="100%" stop-color="#065f46"/></linearGradient><clipPath id="clip3wd"><rect x="0" y="0" width="100" height="100" rx="22"/></clipPath></defs>
+          <rect width="100" height="100" rx="22" fill="url(#bg3wd)"/>
+          <g clip-path="url(#clip3wd)">
+            <path d="M 37 22 A 15 15 0 0 1 37 36" fill="none" stroke="#6ee7b7" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 63 22 A 15 15 0 0 0 63 36" fill="none" stroke="#6ee7b7" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 50 12 L 46 40 L 39 40 L 39 46 L 46 46 L 42 72 L 33 72 L 33 79 L 42 79 L 42 90 L 58 90 L 58 79 L 67 79 L 67 72 L 58 72 L 54 46 L 61 46 L 61 40 L 54 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="12" r="2.5" fill="#6ee7b7"/>
+          </g>
+        </svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== VARIANT 4: CIRCLE MARK ========== -->
+  <div class="card">
+    <span class="tag">VARIANT 4</span>
+    <h3>Circle Beacon</h3>
+    <p class="desc">Circular container instead of rounded square. Softer, more approachable. The signal arcs integrate naturally with the circle's curvature. Works great as a social avatar.</p>
+
+    <div class="row">
+      <div class="preview">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="bg4" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1e1b4b"/>
+              <stop offset="100%" stop-color="#312e81"/>
+            </linearGradient>
+            <clipPath id="clip4">
+              <circle cx="50" cy="50" r="50"/>
+            </clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#bg4)"/>
+          <g clip-path="url(#clip4)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 31 20 A 22 22 0 0 1 31 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 69 20 A 22 22 0 0 0 69 44" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+            <path d="
+              M 50 15
+              L 46.5 40
+              L 40 40
+              L 40 45.5
+              L 46.5 45.5
+              L 43 70
+              L 35 70
+              L 35 76.5
+              L 43 76.5
+              L 43 92
+              L 57 92
+              L 57 76.5
+              L 65 76.5
+              L 65 70
+              L 57 70
+              L 53.5 45.5
+              L 60 45.5
+              L 60 40
+              L 53.5 40
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="15" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+      </div>
+      <div class="preview-dark">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="bg4b" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#4338ca"/>
+              <stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+            <clipPath id="clip4b">
+              <circle cx="50" cy="50" r="50"/>
+            </clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="50" fill="url(#bg4b)"/>
+          <g clip-path="url(#clip4b)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 31 20 A 22 22 0 0 1 31 44" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.15"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 69 20 A 22 22 0 0 0 69 44" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.15"/>
+            <path d="
+              M 50 15
+              L 46.5 40
+              L 40 40
+              L 40 45.5
+              L 46.5 45.5
+              L 43 70
+              L 35 70
+              L 35 76.5
+              L 43 76.5
+              L 43 92
+              L 57 92
+              L 57 76.5
+              L 65 76.5
+              L 65 70
+              L 57 70
+              L 53.5 45.5
+              L 60 45.5
+              L 60 40
+              L 53.5 40
+              Z
+            " fill="#ffffff"/>
+            <circle cx="50" cy="15" r="2.5" fill="#c7d2fe"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-item">
+        <svg width="64" height="64" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg4s" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="clip4s"><circle cx="50" cy="50" r="50"/></clipPath></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#bg4s)"/>
+          <g clip-path="url(#clip4s)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 50 15 L 46.5 40 L 40 40 L 40 45.5 L 46.5 45.5 L 43 70 L 35 70 L 35 76.5 L 43 76.5 L 43 92 L 57 92 L 57 76.5 L 65 76.5 L 65 70 L 57 70 L 53.5 45.5 L 60 45.5 L 60 40 L 53.5 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="15" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+        <div class="size-label">64px</div>
+      </div>
+      <div class="size-item">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg4m" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="clip4m"><circle cx="50" cy="50" r="50"/></clipPath></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#bg4m)"/>
+          <g clip-path="url(#clip4m)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="3.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="3.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 50 15 L 46.5 40 L 40 40 L 40 45.5 L 46.5 45.5 L 43 70 L 35 70 L 35 76.5 L 43 76.5 L 43 92 L 57 92 L 57 76.5 L 65 76.5 L 65 70 L 57 70 L 53.5 45.5 L 60 45.5 L 60 40 L 53.5 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="15" r="3.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+        <div class="size-label">40px</div>
+      </div>
+      <div class="size-item">
+        <svg width="24" height="24" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg4t" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#bg4t)"/>
+          <path d="M 50 15 L 46.5 40 L 40 40 L 40 45.5 L 46.5 45.5 L 43 70 L 35 70 L 35 76.5 L 43 76.5 L 43 92 L 57 92 L 57 76.5 L 65 76.5 L 65 70 L 57 70 L 53.5 45.5 L 60 45.5 L 60 40 L 53.5 40 Z" fill="#ffffff"/>
+          <circle cx="50" cy="15" r="5" fill="#a5b4fc"/>
+        </svg>
+        <div class="size-label">24px</div>
+      </div>
+      <div class="size-item">
+        <svg width="16" height="16" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg4f" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#bg4f)"/>
+          <path d="M 50 15 L 46.5 40 L 40 40 L 40 45.5 L 46.5 45.5 L 43 70 L 35 70 L 35 76.5 L 43 76.5 L 43 92 L 57 92 L 57 76.5 L 65 76.5 L 65 70 L 57 70 L 53.5 45.5 L 60 45.5 L 60 40 L 53.5 40 Z" fill="#ffffff"/>
+        </svg>
+        <div class="size-label">16px</div>
+      </div>
+    </div>
+
+    <div class="wordmark-row">
+      <div class="wordmark wordmark-light">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg4w" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#312e81"/></linearGradient><clipPath id="clip4w"><circle cx="50" cy="50" r="50"/></clipPath></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#bg4w)"/>
+          <g clip-path="url(#clip4w)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M 50 15 L 46.5 40 L 40 40 L 40 45.5 L 46.5 45.5 L 43 70 L 35 70 L 35 76.5 L 43 76.5 L 43 92 L 57 92 L 57 76.5 L 65 76.5 L 65 70 L 57 70 L 53.5 45.5 L 60 45.5 L 60 40 L 53.5 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="15" r="2.5" fill="#a5b4fc"/>
+          </g>
+        </svg>
+        <span class="wm-text wm-text-dark">RigaCap</span>
+      </div>
+      <div class="wordmark wordmark-dark">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="bg4wd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient><clipPath id="clip4wd"><circle cx="50" cy="50" r="50"/></clipPath></defs>
+          <circle cx="50" cy="50" r="50" fill="url(#bg4wd)"/>
+          <g clip-path="url(#clip4wd)">
+            <path d="M 37 25 A 15 15 0 0 1 37 39" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 63 25 A 15 15 0 0 0 63 39" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 50 15 L 46.5 40 L 40 40 L 40 45.5 L 46.5 45.5 L 43 70 L 35 70 L 35 76.5 L 43 76.5 L 43 92 L 57 92 L 57 76.5 L 65 76.5 L 65 70 L 57 70 L 53.5 45.5 L 60 45.5 L 60 40 L 53.5 40 Z" fill="#ffffff"/>
+            <circle cx="50" cy="15" r="2.5" fill="#c7d2fe"/>
+          </g>
+        </svg>
+        <span class="wm-text wm-text-light">RigaCap</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="max-width: 1000px; margin: 48px auto 0; text-align: center; color: #94a3b8; font-size: 13px; line-height: 1.6;">
+  <p><strong>All four are the same Beacon + Contained concept</strong> — just varying the accent color (indigo, gold, green) and container shape (squircle vs circle). The spire + signal arcs are consistent across all.</p>
+</div>
+
+</body>
+</html>

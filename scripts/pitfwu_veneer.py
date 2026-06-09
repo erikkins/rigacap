@@ -68,6 +68,41 @@ def universe_asof(date, n=100, panel=None):
     return ranked[:n]
 
 
+_VOL60 = None
+_CLOSE = None
+
+
+def load_vol60():
+    global _VOL60
+    if _VOL60 is None:
+        _VOL60 = _read_parquet("pitfwu/universe/vol60.parquet")
+        _VOL60.index = pd.to_datetime(_VOL60.index)
+    return _VOL60
+
+
+def load_close_panel():
+    global _CLOSE
+    if _CLOSE is None:
+        _CLOSE = _read_parquet("pitfwu/universe/close.parquet")
+        _CLOSE.index = pd.to_datetime(_CLOSE.index)
+    return _CLOSE
+
+
+def universe_asof_prod(date, n=100, min_price=15.0):
+    """PRODUCTION-MATCHING universe: top-N by 60-day average VOLUME, with a
+    min-price floor (close >= min_price) applied at the selection date. Mirrors
+    backend _get_top_symbols_as_of exactly — the only difference is the candidate
+    pool is the survivorship-free PITFWU set. Point-in-time (uses only data <= date)."""
+    d = pd.Timestamp(date)
+    vol = load_vol60().loc[:d]
+    if vol.empty:
+        return []
+    vrow = vol.iloc[-1].dropna()
+    crow = load_close_panel().loc[:d].iloc[-1]
+    eligible = [s for s in vrow.index if s not in RENAME_STUBS and crow.get(s, 0) >= min_price]
+    return list(vrow[eligible].sort_values(ascending=False).head(n).index)
+
+
 # ---------------------------------------------------------------- corp-actions
 def load_corp_actions():
     global _CA

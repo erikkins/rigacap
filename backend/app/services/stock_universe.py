@@ -28,6 +28,11 @@ LOCAL_CACHE_FILE = LOCAL_CACHE_DIR / "symbols_cache.json"
 
 # S3 key for universe cache
 S3_UNIVERSE_KEY = "universe/symbols_cache.json"
+# Separate cache for sector/industry data (populated by scripts/backfill_sectors.py;
+# refreshed monthly via cron). Kept separate from symbols_cache.json because the
+# NASDAQ screener API no longer returns sector fields — sector data has to come
+# from yfinance, which is too slow to fold into the per-day symbols refresh.
+S3_SECTORS_KEY = "universe/sectors_cache.json"
 
 # Excluded symbols: ALL ETFs, leveraged/inverse products, commodities, bonds
 # Individual stocks ONLY — customers pay for stock picks, not "buy SPY"
@@ -451,9 +456,69 @@ class StockUniverseService:
             List of stock symbols
         """
         if self.symbols and len(self.symbols) > 100:
+            # Even on warm path, make sure sectors are merged once. Cheap.
+            self._merge_sectors_cache()
             return self.symbols
 
-        return await self.fetch_all_symbols(use_cache=True, max_cache_age_hours=max_cache_age_hours)
+        result = await self.fetch_all_symbols(use_cache=True, max_cache_age_hours=max_cache_age_hours)
+        self._merge_sectors_cache()
+        return result
+
+    def _merge_sectors_cache(self):
+        """Fold S3 sectors_cache.json into self.symbol_info if available.
+
+        Called once per ensure_loaded; idempotent. If S3 fetch fails or cache
+        is missing, silently no-op — the system continues with empty sector
+        fields exactly as before (no regression).
+        """
+        # Only merge once per process
+        if getattr(self, '_sectors_merged', False):
+            return
+        cache = None
+        # Try S3 first. PRICE_DATA_BUCKET is set in Lambda env but typically
+        # not in local research scripts — fall back to the well-known prod
+        # bucket name so research can use sector data without extra env setup.
+        # Production Lambda hits the env var path with IAM role permissions.
+        try:
+            import boto3
+            bucket = S3_BUCKET or "rigacap-prod-price-data-149218244179"
+            s3 = boto3.client('s3')
+            resp = s3.get_object(Bucket=bucket, Key=S3_SECTORS_KEY)
+            cache = json.loads(resp['Body'].read())
+            logger.info(f"Sectors cache loaded from s3://{bucket}/{S3_SECTORS_KEY}")
+        except Exception as e:
+            # Local fallback: /tmp/sectors_cache.json (written by
+            # scripts/backfill_sectors.py). Useful when local AWS profile
+            # doesn't have access to the prod bucket (different account).
+            local_path = "/tmp/sectors_cache.json"
+            try:
+                with open(local_path) as f:
+                    cache = json.load(f)
+                logger.info(f"Sectors cache loaded from local fallback {local_path} (S3 error: {type(e).__name__})")
+            except Exception:
+                logger.info(f"Sectors cache not loaded (S3: {type(e).__name__}; no local fallback); continuing without")
+                self._sectors_merged = True
+                return
+
+        merged = 0
+        for sym, info in cache.items():
+            if sym.startswith('_'):  # skip _meta etc.
+                continue
+            if not isinstance(info, dict):
+                continue
+            existing = self.symbol_info.setdefault(sym, {})
+            sector = info.get('sector')
+            if sector and not existing.get('sector'):
+                existing['sector'] = sector
+                merged += 1
+            industry = info.get('industry')
+            if industry and not existing.get('industry'):
+                existing['industry'] = industry
+            country = info.get('country')
+            if country and not existing.get('country'):
+                existing['country'] = country
+        logger.info(f"Sectors cache merged: {merged} symbols now have sector data")
+        self._sectors_merged = True
 
     async def fetch_company_details(self, symbol: str) -> dict:
         """

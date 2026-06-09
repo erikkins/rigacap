@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap Logo Concepts v5 — Abstract Geometric</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f172a; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; }
+  h1 { text-align: center; font-size: 28px; margin-bottom: 10px; color: #fff; }
+  .subtitle { text-align: center; color: #94a3b8; margin-bottom: 50px; font-size: 14px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+  .concepts { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto; }
+  .concept { background: #1e293b; border-radius: 16px; padding: 30px; border: 1px solid #334155; }
+  .concept h2 { font-size: 20px; color: #f59e0b; margin-bottom: 6px; }
+  .concept .rationale { color: #94a3b8; font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+  .previews { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .preview-box { text-align: center; }
+  .preview-box .label { font-size: 11px; color: #64748b; margin-top: 6px; }
+  canvas { border-radius: 8px; }
+  .context-row { display: flex; gap: 20px; align-items: center; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+  .context-card { background: #0f172a; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+  .context-card .name { font-size: 18px; font-weight: 700; color: #fff; }
+</style>
+</head>
+<body>
+
+<h1>RigaCap Logo Concepts v5</h1>
+<p class="subtitle">Pure geometry. Abstract. The kind of mark that looks like it belongs on a building in Zurich or a card made of metal.</p>
+
+<div class="concepts">
+
+  <!-- 1: RC Monogram -->
+  <div class="concept">
+    <h2>1. The RC Monogram</h2>
+    <p class="rationale">R and C interlocked into a single geometric mark. Like the Chanel CC energy but sharper, more angular. Feels like a luxury brand that happens to be in finance. Instantly ownable.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="rc-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="rc-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="rc-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="rc-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 2: The Facet -->
+  <div class="concept">
+    <h2>2. The Facet</h2>
+    <p class="rationale">A single cut gem face — angular, precise, valuable. Not a full diamond. Just one perfect facet. Suggests cutting through noise to find value. Abstract enough to be anything, specific enough to remember.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="facet-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="facet-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="facet-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="facet-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 3: The Eclipse -->
+  <div class="concept">
+    <h2>3. The Eclipse</h2>
+    <p class="rationale">Two offset circles — navy reveals gold at the edge. Like an eclipse moment where something hidden becomes visible. "We see what others can't." Elegant negative space. Feels like a premium card logo.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="eclipse-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="eclipse-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="eclipse-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="eclipse-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 4: The Stack -->
+  <div class="concept">
+    <h2>4. The Stack</h2>
+    <p class="rationale">Three thin horizontal planes, slightly offset, building upward. The top layer is gold. Foundation → Intelligence → Signal. Feels like a tech product icon. Clean, structural, modern.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="stack-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="stack-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="stack-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="stack-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 5: The Gate -->
+  <div class="concept">
+    <h2>5. The Gate</h2>
+    <p class="rationale">Two abstract columns framing a clean opening with gold light inside. A portal. Gateway to intelligence. Strong negative-space design. Feels architectural, substantial, like an entrance to something exclusive.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="gate-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="gate-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="gate-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="gate-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 6: The Apex -->
+  <div class="concept">
+    <h2>6. The Apex</h2>
+    <p class="rationale">A single sharp upward vertex — where two angled planes meet at a peak. Not an arrow, not a chevron. An architectural apex. The highest point. Decisive, minimal, confident. Gold at the peak, fading to white at the base.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="apex-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="apex-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="apex-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="apex-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+  <!-- 7: The Split -->
+  <div class="concept">
+    <h2>7. The Split</h2>
+    <p class="rationale">A circle with a precise diagonal cut, revealing gold underneath navy. Like peeling back the surface to show the intelligence inside. Suggests depth, discovery, something more than meets the eye. Mastercard energy but sharper.</p>
+    <div class="previews">
+      <div class="preview-box"><canvas id="split-lg" width="200" height="200"></canvas><div class="label">Primary</div></div>
+      <div class="preview-box"><canvas id="split-sm" width="60" height="60"></canvas><div class="label">Favicon</div></div>
+      <div class="preview-box"><canvas id="split-dark" width="200" height="200"></canvas><div class="label">Light bg</div></div>
+    </div>
+    <div class="context-row">
+      <div class="context-card"><canvas id="split-ctx" width="36" height="36"></canvas><span class="name">RigaCap</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const NAVY = '#172554';
+const NAVY_MID = '#1e3a5f';
+const GOLD = '#f59e0b';
+const GOLD_LIGHT = '#fbbf24';
+const GOLD_DARK = '#d97706';
+const WHITE = '#ffffff';
+const LIGHT_BG = '#f1f5f9';
+
+function drawOnAll(prefix, drawFn) {
+  ['lg','sm','dark','ctx'].forEach(suffix => {
+    const c = document.getElementById(`${prefix}-${suffix}`);
+    if (!c) return;
+    drawFn(c, c.width, suffix === 'dark');
+  });
+}
+
+function bgCircle(ctx, s, lightBg) {
+  if (lightBg) { ctx.fillStyle = LIGHT_BG; ctx.fillRect(0, 0, s, s); }
+  const g = ctx.createLinearGradient(0, 0, s, s);
+  g.addColorStop(0, NAVY); g.addColorStop(1, NAVY_MID);
+  ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fillStyle = g; ctx.fill();
+}
+
+// ── 1. RC MONOGRAM ──────────────────────────────────────────────
+drawOnAll('rc', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+  const u = s * 0.035; // unit
+
+  ctx.lineCap = 'square';
+  ctx.lineJoin = 'miter';
+
+  // R — left side, geometric/angular construction
+  const rLeft = cx - u * 3.5;
+  const rTop = cy - u * 3.5;
+  const rBot = cy + u * 3.5;
+  const rMid = cy - u * 0.3;
+  const rRight = cx - u * 0.2;
+
+  // R vertical stem
+  ctx.strokeStyle = WHITE;
+  ctx.lineWidth = s * 0.028;
+  ctx.beginPath();
+  ctx.moveTo(rLeft, rTop);
+  ctx.lineTo(rLeft, rBot);
+  ctx.stroke();
+
+  // R top bowl
+  ctx.beginPath();
+  ctx.moveTo(rLeft, rTop);
+  ctx.lineTo(rRight - u * 0.5, rTop);
+  ctx.quadraticCurveTo(rRight + u * 0.8, rTop, rRight + u * 0.8, rMid - u * 0.5);
+  ctx.quadraticCurveTo(rRight + u * 0.8, rMid, rRight - u * 0.5, rMid);
+  ctx.lineTo(rLeft, rMid);
+  ctx.stroke();
+
+  // R leg (diagonal kick)
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = s * 0.028;
+  ctx.beginPath();
+  ctx.moveTo(rLeft + u * 1.5, rMid);
+  ctx.lineTo(rRight + u * 1, rBot);
+  ctx.stroke();
+
+  // C — right side, open arc
+  const cCx = cx + u * 2.2;
+  const cCy = cy;
+  const cR = u * 3.2;
+
+  ctx.strokeStyle = WHITE;
+  ctx.lineWidth = s * 0.028;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(cCx, cCy, cR, -Math.PI * 0.7, Math.PI * 0.7);
+  ctx.stroke();
+
+  // Gold accent on C terminals
+  ctx.fillStyle = GOLD;
+  const cTopX = cCx + Math.cos(-Math.PI * 0.7) * cR;
+  const cTopY = cCy + Math.sin(-Math.PI * 0.7) * cR;
+  const cBotX = cCx + Math.cos(Math.PI * 0.7) * cR;
+  const cBotY = cCy + Math.sin(Math.PI * 0.7) * cR;
+  ctx.beginPath(); ctx.arc(cTopX, cTopY, s * 0.018, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cBotX, cBotY, s * 0.018, 0, Math.PI*2); ctx.fill();
+});
+
+// ── 2. THE FACET ────────────────────────────────────────────────
+drawOnAll('facet', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+  const r = s * 0.3;
+
+  // Asymmetric gem facet — pentagon-ish shape
+  const pts = [
+    { x: cx - r * 0.1, y: cy - r * 0.95 },   // top (slightly left of center)
+    { x: cx + r * 0.85, y: cy - r * 0.3 },    // top-right
+    { x: cx + r * 0.6, y: cy + r * 0.8 },     // bottom-right
+    { x: cx - r * 0.65, y: cy + r * 0.75 },   // bottom-left
+    { x: cx - r * 0.8, y: cy - r * 0.2 },     // top-left
+  ];
+
+  // Main facet fill
+  ctx.beginPath();
+  pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.closePath();
+  const facetGrad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+  facetGrad.addColorStop(0, 'rgba(245,158,11,0.15)');
+  facetGrad.addColorStop(0.5, 'rgba(245,158,11,0.05)');
+  facetGrad.addColorStop(1, 'rgba(245,158,11,0.25)');
+  ctx.fillStyle = facetGrad;
+  ctx.fill();
+
+  // Outer edges
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = s * 0.015;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Internal facet lines — from center to each vertex
+  const innerPt = { x: cx + r * 0.05, y: cy + r * 0.05 };
+  pts.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.moveTo(innerPt.x, innerPt.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.strokeStyle = i === 0 || i === 1 ? GOLD : WHITE;
+    ctx.globalAlpha = i === 0 || i === 1 ? 0.6 : 0.2;
+    ctx.lineWidth = s * 0.008;
+    ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+
+  // Highlight facet (top triangle) — brighter
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  ctx.lineTo(pts[1].x, pts[1].y);
+  ctx.lineTo(innerPt.x, innerPt.y);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(245,158,11,0.15)';
+  ctx.fill();
+
+  // Center point
+  ctx.beginPath();
+  ctx.arc(innerPt.x, innerPt.y, s * 0.015, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+});
+
+// ── 3. THE ECLIPSE ──────────────────────────────────────────────
+drawOnAll('eclipse', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+  const r = s * 0.28;
+  const offset = s * 0.08;
+
+  // Gold circle (behind, slightly right)
+  ctx.beginPath();
+  ctx.arc(cx + offset, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+
+  // Navy circle (front, slightly left) — masks the gold
+  ctx.beginPath();
+  ctx.arc(cx - offset * 0.3, cy, r, 0, Math.PI * 2);
+  const frontGrad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+  frontGrad.addColorStop(0, NAVY);
+  frontGrad.addColorStop(1, '#1a2e4a');
+  ctx.fillStyle = frontGrad;
+  ctx.fill();
+
+  // Subtle edge on front circle
+  ctx.beginPath();
+  ctx.arc(cx - offset * 0.3, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = WHITE;
+  ctx.globalAlpha = 0.1;
+  ctx.lineWidth = s * 0.005;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+});
+
+// ── 4. THE STACK ────────────────────────────────────────────────
+drawOnAll('stack', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  // Three isometric parallelogram layers
+  const layerW = s * 0.28;
+  const layerD = s * 0.08;
+  const layerGap = s * 0.1;
+  const layerH = s * 0.025;
+
+  const layers = [
+    { y: cy + layerGap, color: WHITE, alpha: 0.2 },
+    { y: cy, color: WHITE, alpha: 0.35 },
+    { y: cy - layerGap, color: GOLD, alpha: 0.9 },
+  ];
+
+  layers.forEach(l => {
+    // Top face
+    ctx.beginPath();
+    ctx.moveTo(cx, l.y - layerD);
+    ctx.lineTo(cx + layerW, l.y - layerD * 0.3);
+    ctx.lineTo(cx, l.y + layerD * 0.4);
+    ctx.lineTo(cx - layerW, l.y - layerD * 0.3);
+    ctx.closePath();
+    ctx.fillStyle = l.color;
+    ctx.globalAlpha = l.alpha;
+    ctx.fill();
+
+    // Front-left face
+    ctx.beginPath();
+    ctx.moveTo(cx - layerW, l.y - layerD * 0.3);
+    ctx.lineTo(cx, l.y + layerD * 0.4);
+    ctx.lineTo(cx, l.y + layerD * 0.4 + layerH);
+    ctx.lineTo(cx - layerW, l.y - layerD * 0.3 + layerH);
+    ctx.closePath();
+    ctx.fillStyle = l.color;
+    ctx.globalAlpha = l.alpha * 0.5;
+    ctx.fill();
+
+    // Front-right face
+    ctx.beginPath();
+    ctx.moveTo(cx + layerW, l.y - layerD * 0.3);
+    ctx.lineTo(cx, l.y + layerD * 0.4);
+    ctx.lineTo(cx, l.y + layerD * 0.4 + layerH);
+    ctx.lineTo(cx + layerW, l.y - layerD * 0.3 + layerH);
+    ctx.closePath();
+    ctx.fillStyle = l.color;
+    ctx.globalAlpha = l.alpha * 0.35;
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+});
+
+// ── 5. THE GATE ─────────────────────────────────────────────────
+drawOnAll('gate', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  const pillarW = s * 0.08;
+  const gapW = s * 0.1;
+  const pillarH = s * 0.45;
+  const topY = cy - pillarH * 0.45;
+  const botY = cy + pillarH * 0.55;
+
+  // Gold light in the gap (behind pillars)
+  const glowGrad = ctx.createLinearGradient(cx, topY, cx, botY);
+  glowGrad.addColorStop(0, 'rgba(245,158,11,0.6)');
+  glowGrad.addColorStop(0.4, 'rgba(245,158,11,0.3)');
+  glowGrad.addColorStop(1, 'rgba(245,158,11,0.05)');
+  ctx.fillStyle = glowGrad;
+  ctx.fillRect(cx - gapW / 2, topY, gapW, pillarH);
+
+  // Left pillar
+  const leftGrad = ctx.createLinearGradient(cx - gapW/2 - pillarW, topY, cx - gapW/2, topY);
+  leftGrad.addColorStop(0, 'rgba(255,255,255,0.25)');
+  leftGrad.addColorStop(1, 'rgba(255,255,255,0.45)');
+  ctx.fillStyle = leftGrad;
+  ctx.beginPath();
+  ctx.roundRect(cx - gapW/2 - pillarW, topY, pillarW, pillarH, [s*0.015, s*0.015, 0, 0]);
+  ctx.fill();
+
+  // Right pillar
+  const rightGrad = ctx.createLinearGradient(cx + gapW/2, topY, cx + gapW/2 + pillarW, topY);
+  rightGrad.addColorStop(0, 'rgba(255,255,255,0.45)');
+  rightGrad.addColorStop(1, 'rgba(255,255,255,0.25)');
+  ctx.fillStyle = rightGrad;
+  ctx.beginPath();
+  ctx.roundRect(cx + gapW/2, topY, pillarW, pillarH, [s*0.015, s*0.015, 0, 0]);
+  ctx.fill();
+
+  // Top lintel connecting pillars
+  ctx.fillStyle = WHITE;
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath();
+  ctx.roundRect(cx - gapW/2 - pillarW, topY - s * 0.025, pillarW * 2 + gapW, s * 0.035, s * 0.01);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Gold accent line at top
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = s * 0.012;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx - gapW/2 - pillarW + s*0.01, topY - s * 0.025 - s * 0.01);
+  ctx.lineTo(cx + gapW/2 + pillarW - s*0.01, topY - s * 0.025 - s * 0.01);
+  ctx.stroke();
+});
+
+// ── 6. THE APEX ─────────────────────────────────────────────────
+drawOnAll('apex', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+
+  // Two angled planes meeting at a sharp peak
+  const peakY = cy - s * 0.25;
+  const baseY = cy + s * 0.25;
+  const spread = s * 0.3;
+  const thickness = s * 0.04;
+
+  // Left plane
+  ctx.beginPath();
+  ctx.moveTo(cx, peakY);                         // peak
+  ctx.lineTo(cx - spread, baseY);                // outer bottom
+  ctx.lineTo(cx - spread + thickness * 2, baseY); // inner bottom
+  ctx.lineTo(cx, peakY + thickness * 3);         // inner peak
+  ctx.closePath();
+  const leftGrad = ctx.createLinearGradient(cx, peakY, cx - spread, baseY);
+  leftGrad.addColorStop(0, GOLD);
+  leftGrad.addColorStop(1, 'rgba(255,255,255,0.2)');
+  ctx.fillStyle = leftGrad;
+  ctx.fill();
+
+  // Right plane
+  ctx.beginPath();
+  ctx.moveTo(cx, peakY);                          // peak
+  ctx.lineTo(cx + spread, baseY);                 // outer bottom
+  ctx.lineTo(cx + spread - thickness * 2, baseY);  // inner bottom
+  ctx.lineTo(cx, peakY + thickness * 3);          // inner peak
+  ctx.closePath();
+  const rightGrad = ctx.createLinearGradient(cx, peakY, cx + spread, baseY);
+  rightGrad.addColorStop(0, GOLD);
+  rightGrad.addColorStop(1, 'rgba(255,255,255,0.35)');
+  ctx.fillStyle = rightGrad;
+  ctx.fill();
+
+  // Gold tip accent
+  ctx.beginPath();
+  ctx.arc(cx, peakY, s * 0.02, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD_LIGHT;
+  ctx.fill();
+
+  // Subtle horizontal base line
+  ctx.strokeStyle = WHITE;
+  ctx.globalAlpha = 0.15;
+  ctx.lineWidth = s * 0.005;
+  ctx.beginPath();
+  ctx.moveTo(cx - spread - s * 0.02, baseY);
+  ctx.lineTo(cx + spread + s * 0.02, baseY);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+});
+
+// ── 7. THE SPLIT ────────────────────────────────────────────────
+drawOnAll('split', (canvas, s, lightBg) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, s, s);
+  bgCircle(ctx, s, lightBg);
+  const cx = s/2, cy = s/2;
+  const r = s * 0.32;
+
+  // Gold base circle (fully visible)
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+
+  // Navy overlay — clipped to a diagonal cut
+  // Covers the top-left portion, revealing gold in bottom-right
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.clip();
+
+  // Diagonal cut line from upper-left to lower-right
+  // Navy covers the upper-left
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 1.5, cy - r * 1.5);
+  ctx.lineTo(cx + r * 0.4, cy - r * 1.5);
+  ctx.lineTo(cx - r * 0.6, cy + r * 1.5);
+  ctx.lineTo(cx - r * 1.5, cy + r * 1.5);
+  ctx.closePath();
+  const navyGrad = ctx.createLinearGradient(cx - r, cy - r, cx, cy);
+  navyGrad.addColorStop(0, NAVY);
+  navyGrad.addColorStop(1, NAVY_MID);
+  ctx.fillStyle = navyGrad;
+  ctx.fill();
+
+  ctx.restore();
+
+  // Thin white line along the diagonal cut
+  ctx.beginPath();
+  ctx.moveTo(cx + r * 0.35, cy - r * 0.85);
+  ctx.lineTo(cx - r * 0.55, cy + r * 0.8);
+  ctx.strokeStyle = WHITE;
+  ctx.globalAlpha = 0.3;
+  ctx.lineWidth = s * 0.006;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = WHITE;
+  ctx.globalAlpha = 0.12;
+  ctx.lineWidth = s * 0.006;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>Daily Dashboard — In Context</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{--paper:#F5F1E8;--paper-deep:#EDE7D8;--paper-card:#FAF7F0;--ink:#141210;--ink-mute:#5A544E;--ink-light:#8A8279;--claret:#7A2430;--claret-light:#9A3444;--rule:#DDD5C7;--rule-dark:#C9BFAC;--positive:#2D5F3F;--negative:#8F2D3D;--gold:#B8923D;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-feature-settings:'tnum';}
+.display{font-family:'Fraunces',Georgia,serif;}
+.mono{font-family:'IBM Plex Mono',Menlo,monospace;}
+.eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.eyebrow .tick{display:inline-block;width:24px;height:1px;background:var(--claret);}
+.eyebrow .txt{font-size:.72rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:600;}
+.pill.pos{background:rgba(45,95,63,.1);color:var(--positive);}
+.pill.neg{background:rgba(143,45,61,.1);color:var(--negative);}
+.pill.claret{background:rgba(122,36,48,.1);color:var(--claret);}
+.pill.gold{background:rgba(184,146,61,.14);color:#8A6A1F;}
+
+.wrap{max-width:1200px;margin:0 auto;padding:30px 32px 56px;}
+
+/* ===== TOP APP BAR ===== */
+.appbar{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;margin-bottom:22px;border-bottom:1px solid var(--rule);}
+.brand{display:flex;align-items:center;gap:11px;}
+.brand .mark{width:30px;height:30px;border-radius:7px;background:linear-gradient(180deg,#7A2430,#5e1b25);color:#F5F1E8;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:600;font-size:1.05rem;}
+.brand .nm{font-family:'Fraunces',serif;font-weight:500;font-size:1.2rem;font-variation-settings:"opsz" 36;}
+.appbar .right{display:flex;align-items:center;gap:14px;}
+.tabset{display:inline-flex;border:1px solid var(--rule-dark);border-radius:8px;overflow:hidden;}
+.tabset button{padding:7px 16px;font-size:.82rem;font-weight:500;border:none;background:transparent;color:var(--ink-mute);cursor:pointer;border-right:1px solid var(--rule-dark);}
+.tabset button:last-child{border-right:none;}
+.tabset button.on{background:var(--ink);color:var(--paper);}
+.mode{font-size:.78rem;color:var(--ink-light);}
+
+/* ===== 1. PORTFOLIO / STATUS BANNER ===== */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px;}
+.mcard{background:var(--paper-card);border:1px solid var(--rule);border-radius:11px;padding:16px 18px;}
+.mcard .lab{font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-light);margin-bottom:8px;}
+.mcard .big{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:500;font-variation-settings:"opsz" 48;color:var(--ink);line-height:1;}
+.mcard .big.pos{color:var(--positive);}
+.mcard .sub{font-size:.76rem;color:var(--ink-mute);margin-top:6px;}
+
+/* ===== 2. REGIME STRIP ===== */
+.regime{display:flex;align-items:center;gap:14px;padding:14px 18px;border:1px solid var(--rule);background:var(--paper-card);border-radius:11px;margin-bottom:26px;}
+.regime .dot{width:13px;height:13px;border-radius:50%;background:var(--positive);box-shadow:0 0 0 4px rgba(45,95,63,.12);flex-shrink:0;}
+.regime .rtext{flex:1;font-size:.92rem;color:var(--ink);}
+.regime .rtext b{font-weight:600;}
+.regime .spy{font-size:.86rem;font-weight:500;color:var(--ink);white-space:nowrap;}
+.regime .spy .up{color:var(--positive);margin-left:5px;}
+.regime .live{margin-left:8px;display:inline-flex;align-items:center;padding:2px 7px;border-radius:5px;font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:rgba(45,95,63,.12);color:var(--positive);}
+.regime .asof{font-size:.74rem;color:var(--ink-light);white-space:nowrap;}
+
+/* ===== SECTION HEADERS ===== */
+.section-eyebrow{margin-bottom:6px;}
+h2.section{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:500;font-variation-settings:"opsz" 48;letter-spacing:-.01em;margin-bottom:4px;}
+.section-sub{color:var(--ink-mute);font-size:.9rem;margin-bottom:20px;max-width:660px;}
+
+/* ===== 3. BUCKETS ===== */
+.bucket{margin-bottom:22px;border-radius:12px;overflow:hidden;border:1px solid var(--rule);background:var(--paper-card);}
+.bucket.primary{border:1.5px solid var(--claret-light);box-shadow:0 2px 14px rgba(122,36,48,.10);}
+.bucket-head{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 24px;border-left:4px solid var(--accent);}
+.bucket.primary .bucket-head{border-left-width:6px;padding:22px 24px;}
+.bucket-head .left{display:flex;flex-direction:column;gap:3px;}
+.bucket-title{display:flex;align-items:center;gap:10px;}
+.bucket-title .name{font-family:'Fraunces',serif;font-size:1.35rem;font-weight:500;font-variation-settings:"opsz" 48;color:var(--ink);}
+.bucket.primary .bucket-title .name{font-size:1.75rem;}
+.count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 8px;border-radius:999px;font-weight:600;font-size:.85rem;color:#fff;background:var(--accent);}
+.bucket.primary .count-badge{min-width:30px;height:30px;font-size:.95rem;}
+.helper{font-size:.86rem;color:var(--ink-mute);font-style:italic;font-family:'Fraunces',serif;font-variation-settings:"opsz" 18;max-width:560px;}
+.bucket.primary .helper{font-size:.93rem;color:var(--ink);}
+.action-tag{font-size:.64rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);padding-top:5px;white-space:nowrap;}
+.action-tag.solid{background:var(--claret);color:#F5F1E8;padding:5px 11px;border-radius:999px;letter-spacing:.1em;}
+.rows{padding:6px 12px 14px;}
+.row{display:grid;grid-template-columns:150px 1fr 120px 150px 40px;align-items:center;gap:12px;padding:11px 12px;border-radius:8px;}
+.row:hover{background:var(--paper-deep);}
+.row + .row{border-top:1px solid var(--rule);}
+.sym{display:flex;align-items:center;gap:8px;}
+.sym .t{font-weight:600;font-size:1.0rem;}
+.name-co{color:var(--ink-light);font-size:.8rem;}
+.metric{display:flex;flex-direction:column;}
+.metric .lab{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-light);margin-bottom:2px;}
+.metric .val{font-family:'IBM Plex Mono',monospace;font-size:.9rem;color:var(--ink);}
+.metric .val.pos{color:var(--positive);}
+.chev{justify-self:end;color:var(--ink-light);}
+.more{padding:8px 24px 16px;font-size:.82rem;color:var(--claret);font-weight:500;}
+.section-divider{display:flex;align-items:center;gap:14px;margin:24px 0 16px;}
+.section-divider .ln{flex:1;height:1px;background:var(--rule);}
+.section-divider .lbl{font-size:.64rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-light);}
+
+/* ===== 4. VOLATILITY BASKET ===== */
+.vb-block{margin:42px 0 0;}
+.card{background:var(--paper-card);border:1px solid var(--rule);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(20,18,16,.04);}
+.band{background:linear-gradient(180deg,#7A2430,#5e1b25);color:#F5F1E8;padding:22px 26px 20px;}
+.band-top{display:flex;align-items:flex-start;justify-content:space-between;}
+.band .ttl{display:flex;align-items:center;gap:12px;}
+.spark{width:34px;height:34px;border:1px solid rgba(245,241,232,.4);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.band h3{font-family:'Fraunces',serif;font-weight:500;font-size:1.45rem;font-variation-settings:"opsz" 48;letter-spacing:-.01em;line-height:1.1;}
+.band .sub{font-size:.82rem;color:rgba(245,241,232,.78);margin-top:3px;}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:.68rem;font-weight:600;letter-spacing:.04em;background:rgba(245,241,232,.12);color:#F5F1E8;border:1px solid rgba(245,241,232,.22);}
+.status-pill .glow{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px var(--gold);}
+.explain{padding:16px 26px;border-bottom:1px solid var(--rule);background:var(--paper-card);}
+.explain p{font-size:.88rem;color:var(--ink-mute);line-height:1.55;font-family:'Fraunces',serif;font-style:italic;font-variation-settings:"opsz" 18;}
+.vmeta{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--rule);}
+.vmeta .m{padding:14px 20px;border-right:1px solid var(--rule);}
+.vmeta .m:last-child{border-right:none;}
+.vmeta .lab{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;}
+.vmeta .val{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:500;font-variation-settings:"opsz" 24;color:var(--ink);}
+.vmeta .val small{font-size:.7rem;color:var(--ink-mute);font-family:'IBM Plex Sans';font-weight:400;}
+.trigger{display:flex;align-items:center;gap:10px;padding:12px 26px;background:rgba(184,146,61,.08);border-bottom:1px solid var(--rule);font-size:.84rem;color:var(--ink);}
+.trigger b{color:#8A6A1F;}
+.vhold{padding:8px 16px 16px;}
+.vhd{display:grid;grid-template-columns:1.4fr 1fr 1fr 90px;padding:10px 12px 8px;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-light);}
+.vhr{display:grid;grid-template-columns:1.4fr 1fr 1fr 90px;align-items:center;padding:10px 12px;border-radius:8px;}
+.vhr:hover{background:var(--paper-deep);}
+.vhr + .vhr{border-top:1px solid var(--rule);}
+.vhr .sym .t{font-weight:600;font-size:.95rem;}
+.vhr .sym .co{color:var(--ink-light);font-size:.74rem;}
+.vhr .mono{font-family:'IBM Plex Mono',monospace;font-size:.88rem;}
+.vhr .pct{justify-self:end;}
+.vsummary{display:flex;align-items:center;justify-content:space-between;padding:14px 26px;border-top:1px solid var(--rule);background:var(--paper-deep);}
+.vsummary .lab{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mute);}
+.vsummary .big{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:500;font-variation-settings:"opsz" 48;color:var(--positive);}
+
+/* ===== 5. OPEN POSITIONS TABLE ===== */
+.pos-block{margin:42px 0 0;}
+.postable{background:var(--paper-card);border:1px solid var(--rule);border-radius:12px;overflow:hidden;}
+.pt-head{display:grid;grid-template-columns:150px 1fr 1fr 1fr 1fr 110px;padding:13px 20px 10px;font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-light);border-bottom:1px solid var(--rule);}
+.pt-row{display:grid;grid-template-columns:150px 1fr 1fr 1fr 1fr 110px;align-items:center;padding:13px 20px;}
+.pt-row + .pt-row{border-top:1px solid var(--rule);}
+.pt-row:hover{background:var(--paper-deep);}
+.pt-row .sym{display:flex;align-items:center;gap:8px;}
+.pt-row .sym .t{font-weight:600;font-size:.98rem;}
+.pt-row .sym .co{color:var(--ink-light);font-size:.76rem;}
+.pt-row .mono{font-family:'IBM Plex Mono',monospace;font-size:.88rem;color:var(--ink);}
+.pt-row .guide{justify-self:end;}
+.pt-foot{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;background:var(--paper-deep);border-top:1px solid var(--rule);}
+.pt-foot .lab{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mute);}
+.pt-foot .big{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:500;font-variation-settings:"opsz" 36;color:var(--positive);}
+
+footer{max-width:1200px;margin:0 auto;padding:30px 32px 40px;color:var(--ink-light);font-size:.78rem;text-align:center;border-top:1px solid var(--rule);margin-top:38px;}
+</style></head>
+<body>
+<div class="wrap">
+
+  <!-- ===== TOP APP BAR ===== -->
+  <div class="appbar">
+    <div class="brand"><div class="mark display">R</div><div class="nm">RigaCap</div></div>
+    <div class="right">
+      <div class="tabset"><button class="on">Signals</button><button>History</button></div>
+      <span class="mode">Simple view ▾</span>
+    </div>
+  </div>
+
+  <!-- ===== 1. PORTFOLIO / STATUS BANNER ===== -->
+  <div class="metrics">
+    <div class="mcard"><div class="lab">Portfolio Value</div><div class="big mono">$118,420</div><div class="sub">Cost basis $104,800</div></div>
+    <div class="mcard"><div class="lab">Open P&amp;L</div><div class="big mono pos">+13.0%</div><div class="sub">+$13,620 unrealized</div></div>
+    <div class="mcard"><div class="lab">Open Positions</div><div class="big mono">5</div><div class="sub">of 6 slots filled</div></div>
+    <div class="mcard"><div class="lab">New Signals Today</div><div class="big mono" style="color:var(--claret);">3</div><div class="sub">fresh in last 5 days</div></div>
+  </div>
+
+  <!-- ===== 2. MARKET REGIME STRIP ===== -->
+  <div class="regime">
+    <div class="dot"></div>
+    <div class="rtext"><b>Weak Bull</b> &middot; SPY above its 200-day average. Market looks constructive — stay invested, lean on fresh signals.</div>
+    <div class="spy">SPY 561.40<span class="up">+0.62%</span><span class="live">Live</span></div>
+    <div class="asof">as of Jun 4, 2026</div>
+  </div>
+
+  <!-- ===== 3. SIGNAL BUCKETS (CENTERPIECE) ===== -->
+  <div class="eyebrow section-eyebrow"><span class="tick"></span><span class="txt">Today's Signals &middot; Jun 4, 2026</span></div>
+  <h2 class="section display">Start with what's actionable</h2>
+  <p class="section-sub">Three states, one glance. Fresh buys come first — then the names already running, then what's climbing toward a signal.</p>
+
+  <!-- NEW (PRIMARY) -->
+  <section class="bucket primary" style="--accent:var(--claret);">
+    <div class="bucket-head">
+      <div class="left">
+        <div class="bucket-title"><span class="name display">New</span><span class="count-badge">3</span></div>
+        <div class="helper">Fresh buys — every criterion just passed within the last 5 days. These are the names to act on today.</div>
+      </div>
+      <div class="action-tag solid">Actionable buy</div>
+    </div>
+    <div class="rows">
+      <div class="row"><div class="sym"><span class="t">NVDA</span><span class="name-co">NVIDIA</span><span class="pill claret" style="margin-left:4px;">2d ago</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$132.10</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val pos mono">+6.4%</span></div>
+        <div class="chev">›</div></div>
+      <div class="row"><div class="sym"><span class="t">AVGO</span><span class="name-co">Broadcom</span><span class="pill claret" style="margin-left:4px;">1d ago</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$1,684.00</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val pos mono">+5.9%</span></div>
+        <div class="chev">›</div></div>
+      <div class="row"><div class="sym"><span class="t">CRWD</span><span class="name-co">CrowdStrike</span><span class="pill claret" style="margin-left:4px;">4d ago</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$368.55</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val pos mono">+7.2%</span></div>
+        <div class="chev">›</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"><span class="lbl">Already in play</span><span class="ln"></span></div>
+
+  <!-- OPEN -->
+  <section class="bucket" style="--accent:var(--positive);">
+    <div class="bucket-head">
+      <div class="left">
+        <div class="bucket-title"><span class="name display">Open</span><span class="count-badge">5</span></div>
+        <div class="helper">Still valid but already running — if you're in, hold. Too late for a fresh entry.</div>
+      </div>
+      <div class="action-tag">Hold if you own it</div>
+    </div>
+    <div class="rows">
+      <div class="row"><div class="sym"><span class="t">AAPL</span><span class="name-co">Apple</span><span class="pill pos" style="margin-left:4px;">18d</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$224.30</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val pos mono">+11.8%</span></div>
+        <div class="chev">›</div></div>
+      <div class="row"><div class="sym"><span class="t">META</span><span class="name-co">Meta</span><span class="pill pos" style="margin-left:4px;">26d</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$598.10</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val pos mono">+14.2%</span></div>
+        <div class="chev">›</div></div>
+      <div class="row"><div class="sym"><span class="t">MSFT</span><span class="name-co">Microsoft</span><span class="pill pos" style="margin-left:4px;">9d</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$441.70</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val pos mono">+8.6%</span></div>
+        <div class="chev">›</div></div>
+    </div>
+    <div class="more">+ 2 more open →</div>
+  </section>
+
+  <div class="section-divider"><span class="lbl">On the radar</span><span class="ln"></span></div>
+
+  <!-- APPROACHING (LAST) -->
+  <section class="bucket" style="--accent:var(--gold);">
+    <div class="bucket-head">
+      <div class="left">
+        <div class="bucket-title"><span class="name display">Approaching</span><span class="count-badge">4</span></div>
+        <div class="helper">Climbing toward a buy but not there yet — add to your watchlist, no action needed.</div>
+      </div>
+      <div class="action-tag">Watch &middot; don't buy</div>
+    </div>
+    <div class="rows">
+      <div class="row"><div class="sym"><span class="t">PANW</span><span class="name-co">Palo Alto</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$382.40</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val mono">+3.8%</span></div>
+        <div class="chev">›</div></div>
+      <div class="row"><div class="sym"><span class="t">SHOP</span><span class="name-co">Shopify</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$104.85</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val mono">+4.5%</span></div>
+        <div class="chev">›</div></div>
+      <div class="row"><div class="sym"><span class="t">UBER</span><span class="name-co">Uber</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$81.20</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val mono">+3.1%</span></div>
+        <div class="chev">›</div></div>
+    </div>
+    <div class="more">+ 1 more approaching →</div>
+  </section>
+
+  <!-- ===== 4. VOLATILITY BASKET ===== -->
+  <div class="vb-block">
+    <div class="eyebrow"><span class="tick"></span><span class="txt">Opportunistic Overlay</span></div>
+    <div class="card">
+      <div class="band">
+        <div class="band-top">
+          <div class="ttl">
+            <div class="spark">✦</div>
+            <div>
+              <h3 class="display">Volatility Basket</h3>
+              <div class="sub">Triggered when VIX crosses above 30</div>
+            </div>
+          </div>
+          <div class="status-pill"><span class="glow"></span>ACTIVE · Fired Apr 7</div>
+        </div>
+      </div>
+      <div class="explain">
+        <p>A special panic-buying overlay that sits dormant most of the year. When fear spikes and the VIX clears 30, it sweeps the seven largest mega-caps at a discount — parallel to your main signals, on its own 8% trailing stop.</p>
+      </div>
+      <div class="vmeta">
+        <div class="m"><div class="lab">Holdings</div><div class="val">7 <small>mega-caps</small></div></div>
+        <div class="m"><div class="lab">Size each</div><div class="val">~10% <small>of cash</small></div></div>
+        <div class="m"><div class="lab">Trailing stop</div><div class="val">8%</div></div>
+        <div class="m"><div class="lab">VIX at trigger</div><div class="val">34.2</div></div>
+      </div>
+      <div class="trigger">⚡ Last triggered <b>Apr 7, 2026</b> — VIX spiked to 34.2 during the tariff selloff. Basket has been open 58 days.</div>
+      <div class="vhold">
+        <div class="vhd"><div>Holding</div><div>Entry</div><div>Current</div><div style="text-align:right;">P/L</div></div>
+        <div class="vhr"><div class="sym"><span class="t">NVDA</span><span class="co">NVIDIA</span></div><div class="mono">$98.40</div><div class="mono">$132.10</div><div class="pct"><span class="pill pos">+34.2%</span></div></div>
+        <div class="vhr"><div class="sym"><span class="t">TSLA</span><span class="co">Tesla</span></div><div class="mono">$214.60</div><div class="mono">$248.30</div><div class="pct"><span class="pill pos">+15.7%</span></div></div>
+        <div class="vhr"><div class="sym"><span class="t">AAPL</span><span class="co">Apple</span></div><div class="mono">$188.20</div><div class="mono">$224.30</div><div class="pct"><span class="pill pos">+19.2%</span></div></div>
+        <div class="vhr"><div class="sym"><span class="t">MSFT</span><span class="co">Microsoft</span></div><div class="mono">$372.10</div><div class="mono">$441.70</div><div class="pct"><span class="pill pos">+18.7%</span></div></div>
+        <div class="vhr"><div class="sym"><span class="t">AMZN</span><span class="co">Amazon</span></div><div class="mono">$176.30</div><div class="mono">$201.40</div><div class="pct"><span class="pill pos">+14.2%</span></div></div>
+        <div class="vhr"><div class="sym"><span class="t">GOOGL</span><span class="co">Alphabet</span></div><div class="mono">$152.80</div><div class="mono">$178.95</div><div class="pct"><span class="pill pos">+17.1%</span></div></div>
+        <div class="vhr"><div class="sym"><span class="t">META</span><span class="co">Meta</span></div><div class="mono">$512.40</div><div class="mono">$598.10</div><div class="pct"><span class="pill pos">+16.7%</span></div></div>
+      </div>
+      <div class="vsummary">
+        <div class="lab">Basket return since Apr 7</div>
+        <div class="big mono">+19.4%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 5. OPEN POSITIONS TABLE ===== -->
+  <div class="pos-block">
+    <div class="eyebrow"><span class="tick"></span><span class="txt">Your Holdings</span></div>
+    <h2 class="section display">Open Positions</h2>
+    <p class="section-sub">The positions you've entered, with live P/L and where each one sits against its trailing stop.</p>
+    <div class="postable">
+      <div class="pt-head"><div>Symbol</div><div>Shares</div><div>Entry</div><div>Current</div><div>P/L</div><div style="justify-self:end;">Guidance</div></div>
+      <div class="pt-row"><div class="sym"><span class="t">AAPL</span><span class="co">Apple</span></div><div class="mono">95</div><div class="mono">$188.20</div><div class="mono">$224.30</div><div class="mono" style="color:var(--positive);">+19.2%</div><div class="guide"><span class="pill pos">Hold</span></div></div>
+      <div class="pt-row"><div class="sym"><span class="t">META</span><span class="co">Meta</span></div><div class="mono">34</div><div class="mono">$512.40</div><div class="mono">$598.10</div><div class="mono" style="color:var(--positive);">+16.7%</div><div class="guide"><span class="pill pos">Hold</span></div></div>
+      <div class="pt-row"><div class="sym"><span class="t">MSFT</span><span class="co">Microsoft</span></div><div class="mono">42</div><div class="mono">$372.10</div><div class="mono">$441.70</div><div class="mono" style="color:var(--positive);">+18.7%</div><div class="guide"><span class="pill pos">Hold</span></div></div>
+      <div class="pt-row"><div class="sym"><span class="t">NVDA</span><span class="co">NVIDIA</span></div><div class="mono">190</div><div class="mono">$98.40</div><div class="mono">$132.10</div><div class="mono" style="color:var(--positive);">+34.2%</div><div class="guide"><span class="pill pos">Hold</span></div></div>
+      <div class="pt-row"><div class="sym"><span class="t">GOOGL</span><span class="co">Alphabet</span></div><div class="mono">115</div><div class="mono">$165.20</div><div class="mono">$178.95</div><div class="mono" style="color:var(--positive);">+8.3%</div><div class="guide"><span class="pill gold">Near stop</span></div></div>
+      <div class="pt-foot"><div class="lab">Total unrealized</div><div class="big mono">+$13,620 &nbsp;(+13.0%)</div></div>
+    </div>
+  </div>
+
+</div>
+<footer>Signals only — execute via your broker. RigaCap does not place trades on your behalf.</footer>
+</body></html>

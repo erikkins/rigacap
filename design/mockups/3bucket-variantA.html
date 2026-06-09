@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>3-Bucket — Variant A (Stacked)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{--paper:#F5F1E8;--paper-deep:#EDE7D8;--paper-card:#FAF7F0;--ink:#141210;--ink-mute:#5A544E;--ink-light:#8A8279;--claret:#7A2430;--claret-light:#9A3444;--rule:#DDD5C7;--rule-dark:#C9BFAC;--positive:#2D5F3F;--negative:#8F2D3D;--gold:#B8923D;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-feature-settings:'tnum';}
+.display{font-family:'Fraunces',Georgia,serif;}
+.mono{font-family:'IBM Plex Mono',Menlo,monospace;}
+.eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.eyebrow .tick{display:inline-block;width:24px;height:1px;background:var(--claret);}
+.eyebrow .txt{font-size:.74rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:600;}
+.pill.pos{background:rgba(45,95,63,.1);color:var(--positive);}
+.pill.neg{background:rgba(143,45,61,.1);color:var(--negative);}
+.pill.claret{background:rgba(122,36,48,.1);color:var(--claret);}
+.pill.gold{background:rgba(184,146,61,.14);color:#8A6A1F;}
+
+.wrap{max-width:1160px;margin:0 auto;padding:40px 32px 56px;}
+.page-eyebrow{margin-bottom:8px;}
+h1.page{font-size:2.1rem;font-weight:400;letter-spacing:-.02em;font-variation-settings:"opsz" 96;margin-bottom:6px;}
+.page-sub{color:var(--ink-mute);font-size:.95rem;max-width:640px;margin-bottom:34px;}
+
+.bucket{margin-bottom:26px;border-radius:12px;overflow:hidden;border:1px solid var(--rule);background:var(--paper-card);}
+.bucket-head{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 24px;border-left:4px solid var(--accent);}
+.bucket-head .left{display:flex;flex-direction:column;gap:3px;}
+.bucket-title{display:flex;align-items:center;gap:10px;}
+.bucket-title .name{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:500;font-variation-settings:"opsz" 48;color:var(--ink);}
+.count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 8px;border-radius:999px;font-weight:600;font-size:.85rem;color:#fff;background:var(--accent);}
+.helper{font-size:.88rem;color:var(--ink-mute);font-style:italic;font-family:'Fraunces',serif;font-variation-settings:"opsz" 18;max-width:560px;}
+.action-tag{font-size:.64rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);padding-top:5px;white-space:nowrap;}
+
+.rows{padding:6px 12px 14px;}
+.row{display:grid;grid-template-columns:120px 1fr 130px 150px 90px;align-items:center;gap:12px;padding:11px 12px;border-radius:8px;}
+.row:hover{background:var(--paper-deep);}
+.row+ .row{border-top:1px solid var(--rule);}
+.sym{display:flex;align-items:center;gap:8px;}
+.sym .t{font-weight:600;font-size:1.02rem;}
+.name-co{color:var(--ink-light);font-size:.82rem;}
+.metric{display:flex;flex-direction:column;}
+.metric .lab{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-light);margin-bottom:2px;}
+.metric .val{font-family:'IBM Plex Mono',monospace;font-size:.92rem;color:var(--ink);}
+.metric .val.pos{color:var(--positive);}
+.chev{justify-self:end;color:var(--ink-light);}
+.more{padding:8px 24px 16px;font-size:.82rem;color:var(--claret);font-weight:500;}
+
+footer{max-width:1160px;margin:0 auto;padding:0 32px 40px;color:var(--ink-light);font-size:.78rem;}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="eyebrow page-eyebrow"><span class="tick"></span><span class="txt">Today's Signals &middot; Jun 4, 2026</span></div>
+  <h1 class="page display">Where every name stands</h1>
+  <p class="page-sub">Three states, one glance. Each bucket tells you exactly what to do — whether that's act now, keep watching, or simply hold.</p>
+
+  <!-- APPROACHING -->
+  <section class="bucket" style="--accent:var(--gold);">
+    <div class="bucket-head">
+      <div class="left">
+        <div class="bucket-title"><span class="name display">Approaching</span><span class="count-badge">4</span></div>
+        <div class="helper">Climbing toward a buy but not there yet — add to your watchlist, no action needed.</div>
+      </div>
+      <div class="action-tag">Watch &middot; don't buy</div>
+    </div>
+    <div class="rows">
+      <div class="row"><div class="sym"><span class="t">PANW</span><span class="name-co">Palo Alto</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$382.40</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val mono">+3.8%</span></div>
+        <div class="chev">›</div></div>
+      <div class="row"><div class="sym"><span class="t">SHOP</span><span class="name-co">Shopify</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$104.85</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val mono">+4.5%</span></div>
+        <div class="chev">›</div></div>
+      <div class="row"><div class="sym"><span class="t">UBER</span><span class="name-co">Uber</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$81.20</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val mono">+3.1%</span></div>
+        <div class="chev">›</div></div>
+    </div>
+    <div class="more">+ 1 more approaching →</div>
+  </section>
+
+  <!-- NEW -->
+  <section class="bucket" style="--accent:var(--claret);">
+    <div class="bucket-head">
+      <div class="left">
+        <div class="bucket-title"><span class="name display">New</span><span class="count-badge">3</span></div>
+        <div class="helper">Fresh buys — all criteria just passed within the last 5 days. These are the ones to act on.</div>
+      </div>
+      <div class="action-tag">Actionable buy</div>
+    </div>
+    <div class="rows">
+      <div class="row"><div class="sym"><span class="t">NVDA</span><span class="name-co">NVIDIA</span><span class="pill claret" style="margin-left:4px;">2d ago</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$132.10</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val pos mono">+6.4%</span></div>
+        <div class="chev">›</div></div>
+      <div class="row"><div class="sym"><span class="t">AVGO</span><span class="name-co">Broadcom</span><span class="pill claret" style="margin-left:4px;">1d ago</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$1,684.00</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val pos mono">+5.9%</span></div>
+        <div class="chev">›</div></div>
+      <div class="row"><div class="sym"><span class="t">CRWD</span><span class="name-co">CrowdStrike</span><span class="pill claret" style="margin-left:4px;">4d ago</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$368.55</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val pos mono">+7.2%</span></div>
+        <div class="chev">›</div></div>
+    </div>
+  </section>
+
+  <!-- OPEN -->
+  <section class="bucket" style="--accent:var(--positive);">
+    <div class="bucket-head">
+      <div class="left">
+        <div class="bucket-title"><span class="name display">Open</span><span class="count-badge">5</span></div>
+        <div class="helper">Still valid but already running — if you're in, hold. Too late for a fresh entry.</div>
+      </div>
+      <div class="action-tag">Hold if you own it</div>
+    </div>
+    <div class="rows">
+      <div class="row"><div class="sym"><span class="t">AAPL</span><span class="name-co">Apple</span><span class="pill pos" style="margin-left:4px;">18d</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$224.30</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val pos mono">+11.8%</span></div>
+        <div class="chev">›</div></div>
+      <div class="row"><div class="sym"><span class="t">META</span><span class="name-co">Meta</span><span class="pill pos" style="margin-left:4px;">26d</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$598.10</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val pos mono">+14.2%</span></div>
+        <div class="chev">›</div></div>
+      <div class="row"><div class="sym"><span class="t">MSFT</span><span class="name-co">Microsoft</span><span class="pill pos" style="margin-left:4px;">9d</span></div><div></div>
+        <div class="metric"><span class="lab">Price</span><span class="val mono">$441.70</span></div>
+        <div class="metric"><span class="lab">Above Wtd Avg</span><span class="val pos mono">+8.6%</span></div>
+        <div class="chev">›</div></div>
+    </div>
+    <div class="more">+ 2 more open →</div>
+  </section>
+</div>
+<footer>Signals only — execute via your broker. RigaCap does not place trades on your behalf.</footer>
+</body></html>
