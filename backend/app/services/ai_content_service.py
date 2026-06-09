@@ -33,6 +33,8 @@ TONE RULES:
 - The trade is real — live-tracked in our walk-forward validated model portfolio.
 - If news context is provided, connect the result to recent events thoughtfully — never "we called it" smugly.
 - For every few winner posts, acknowledge a loss, a quiet week, or a limitation honestly. Transparency builds trust.
+- LEAD WITH DISCIPLINE, NOT RETURNS. RigaCap sells a risk-managed process, not hot stock picks. The strongest posts show the discipline working: a volatile name sized smaller so it couldn't sink the book, the system stepping back before a drop, a stop that capped a loss, staying invested through a scary dip that recovered, diversification cushioning a bad week. Big winners are fine occasionally — but they are NOT the main story. The repeatable process is.
+- Never frame a single trade as proof the strategy "works." One trade is an anecdote; the process across many trades is the point. The brand is half-the-drawdown discipline, not lottery tickets.
 
 SOUND HUMAN — people are spotting AI-written posts instantly. Avoid these tells:
 - Never start with "Just," "Interesting," "Here's the thing," "Let me explain," or "Thread"
@@ -123,16 +125,28 @@ class AIContentService:
 
         type_instructions = {
             "trade_result": (
-                f"Write a post celebrating a winning trade.\n"
+                f"Write a post about a completed trade — but LEAD WITH THE DISCIPLINE, not the gain.\n"
                 f"${symbol}: entered at ${entry_price:.2f} on {entry_date}, "
                 f"exited at ${exit_price:.2f} on {exit_date} for {pnl_pct:+.1f}%.\n"
-                f"Exit reason: {exit_reason}."
+                f"Exit reason: {exit_reason}.\n"
+                f"FRAME: the point isn't the {pnl_pct:+.1f}% — it's that the rules did exactly what they "
+                f"were designed to do (let a winner run, or exit on the predetermined signal). The "
+                f"repeatable process is the story; this number is just one instance of it."
+            ),
+            "discipline_win": (
+                f"Write a post about the RISK DISCIPLINE working — not a big winner, the process itself.\n"
+                f"${symbol} context: {news_context or 'recent system behavior'}.\n"
+                f"Pick whichever angle the data supports: a volatile name sized smaller so it couldn't "
+                f"sink the book; the system stepping back from new entries when losses clustered; staying "
+                f"invested through a scary dip that recovered; diversification cushioning a rough week. "
+                f"The lesson: boring, repeated discipline is what produces a drawdown you can actually live with."
             ),
             "missed_opportunity": (
-                f"Write a 'you missed this' post (FOMO angle, but not obnoxious).\n"
+                f"Write a restrained post about a signal subscribers acted on — NOT FOMO-baiting.\n"
                 f"${symbol}: signal fired {entry_date} at ${entry_price:.2f}, "
                 f"exited {exit_date} at ${exit_price:.2f} for {pnl_pct:+.1f}%.\n"
-                f"Subscribers saw the signal. Did you?"
+                f"FRAME: the value is a disciplined system surfacing this on schedule — not 'you should "
+                f"have bought.' Emphasize process over the missed gain."
             ),
             "we_called_it": (
                 f"Write a 'we called it' post connecting our trade result to news.\n"
