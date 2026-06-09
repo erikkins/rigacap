@@ -149,9 +149,11 @@ class Settings(BaseSettings):
     # from the Apr 28 2026 8-date 5y baseline (+160.22% / 21.5% ann /
     # 0.92 Sharpe / 20.4% MaxDD). Whether sim IDs 922-930 ARE the Apr 28
     # baseline runs or are stale Trial 37 leftovers is NOT yet verified.
-    # TODO: verify each row in walk_forward_simulations table by ID and
-    # either confirm or rebuild from the Apr 28 launch-5y-8dates.sh output.
-    TRACK_RECORD_SIM_IDS: List[int] = [922, 924, 925, 926, 927, 928, 929, 930]
+    # t30v honest track record (Jun 9 2026): 5 staggered-start walk-forward
+    # sims (2017-01 → 2019-01 starts, all to 2026-05) run on the deployed
+    # vol_weight-plumbed code. The public endpoint overlaps these into the
+    # best/worst/n_sims band. Replaces the old 5y mirage sims (922-930).
+    TRACK_RECORD_SIM_IDS: List[int] = [1519, 1520, 1521, 1522, 1523]
 
     # AWS
     AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
