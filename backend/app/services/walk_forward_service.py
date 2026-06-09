@@ -836,6 +836,7 @@ class WalkForwardService:
         dwap_threshold_pct_override: Optional[float] = None,
         near_50d_high_pct_override: Optional[float] = None,
         trailing_stop_pct_override: Optional[float] = None,
+        vol_weight_override: Optional[float] = None,
         regime_reentry_mode: bool = False,
         bear_keep_pct: float = 0.0,
         graduated_reentry: bool = False,
@@ -866,6 +867,9 @@ class WalkForwardService:
                 backtester.near_50d_high_pct = near_50d_high_pct_override
             if trailing_stop_pct_override is not None:
                 backtester.trailing_stop_pct = trailing_stop_pct_override / 100
+            _vw = vol_weight_override if vol_weight_override is not None else getattr(self, '_vol_weight_for_run', None)
+            if _vw is not None:
+                backtester.vol_weight = _vw
             backtester.regime_reentry_mode = regime_reentry_mode
             backtester.bear_keep_pct = bear_keep_pct
             backtester.graduated_reentry = graduated_reentry
@@ -1010,6 +1014,7 @@ class WalkForwardService:
         dwap_threshold_pct_override: Optional[float] = None,
         near_50d_high_pct_override: Optional[float] = None,
         trailing_stop_pct_override: Optional[float] = None,
+        vol_weight_override: Optional[float] = None,
         regime_reentry_mode: bool = False,
         bear_keep_pct: float = 0.0,
         graduated_reentry: bool = False,
@@ -1183,6 +1188,7 @@ class WalkForwardService:
         dwap_threshold_pct: Optional[float] = None,  # Override DWAP entry threshold (e.g., 2.0 for 2%)
         near_50d_high_pct: Optional[float] = None,  # Override breakout window (e.g., 10.0 for 10%)
         trailing_stop_pct: Optional[float] = None,  # Override trailing stop (e.g., 15.0 for 15%)
+        vol_weight: Optional[float] = None,  # Inverse-vol (risk-parity) sizing exponent — t30v lever. None/0 = flat sizing.
         regime_reentry_mode: bool = False,  # Smart regime re-entry (MA50 + V-recovery detection)
         bear_keep_pct: float = 0.0,  # Partial cash: keep top N% positions during bear (0.0 = close all)
         graduated_reentry: bool = False,  # Graduated re-entry with breadth thrust / VIX signals
@@ -1204,6 +1210,7 @@ class WalkForwardService:
         self._disable_cb_for_run = disable_circuit_breaker
         self._intraday_aware_for_run = intraday_aware
         self._hwm_from_day_high_for_run = hwm_from_day_high
+        self._vol_weight_for_run = vol_weight  # inverse-vol sizing (t30v); read by per-period sim methods
         """
         Run walk-forward simulation with AI optimization over a historical period.
 
