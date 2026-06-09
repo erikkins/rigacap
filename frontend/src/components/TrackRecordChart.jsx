@@ -93,7 +93,10 @@ export default function TrackRecordChart({ compact = false, apiUrl = null }) {
     if (!data?.equity_curve) return [];
     const periods = data.regime_periods || [];
     const maxSims = Math.max(...data.equity_curve.map(p => p.n_sims || 1));
-    const minRequired = Math.max(2, Math.floor(maxSims * 0.6));
+    // Require >=2 sims for a meaningful band. (Was max(2, 0.6*maxSims), which
+    // hid most of the band when staggered-start sims have misaligned date grids
+    // — most dates only align 2 sims, so the 0.6 rule collapsed it to ~1 point.)
+    const minRequired = 2;
 
     return data.equity_curve.filter(p => (p.n_sims || 1) >= minRequired).map(point => {
       let regime = null;
