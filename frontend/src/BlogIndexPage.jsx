@@ -6,9 +6,16 @@ import TopNav from './components/TopNav';
 
 const POSTS = [
   {
-    title: 'Inside Our 5-Year Walk-Forward: +160%',
+    title: 'We Found Our Own Backtest Was Lying',
+    path: '/blog/honest-backtest',
+    description: 'Survivorship bias and stock splits inflated our numbers. So we rebuilt everything and revised them down.',
+    category: 'A Reckoning',
+    icon: Shield,
+  },
+  {
+    title: 'Inside Our 9-Year Walk-Forward',
     path: '/blog/walk-forward-results',
-    description: 'We spent months trying to break our own strategy. It held up.',
+    description: 'We spent months trying to break our own strategy. It held up — at honest numbers.',
     category: 'Results',
     icon: LineChart,
   },
@@ -67,13 +74,6 @@ const POSTS = [
     description: 'The playbook most investors wish they had before 2022.',
     category: 'Strategy',
     icon: Shield,
-  },
-  {
-    title: 'The 7 Market Regimes (Deep Dive)',
-    path: '/blog/market-regimes',
-    description: 'Most strategies have one mode. Ours detects seven.',
-    category: 'Intelligence',
-    icon: Brain,
   },
 ];
 

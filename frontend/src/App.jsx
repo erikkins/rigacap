@@ -30,7 +30,7 @@ const MarketRegimePage = lazy(() => import('./MarketRegimePage'));
 const Blog2022StoryPage = lazy(() => import('./Blog2022StoryPage'));
 const BlogBacktestsPage = lazy(() => import('./BlogBacktestsPage'));
 const BlogMarketCrashPage = lazy(() => import('./BlogMarketCrashPage'));
-const BlogMarketRegimesPage = lazy(() => import('./BlogMarketRegimesPage'));
+const BlogHonestBacktestPage = lazy(() => import('./BlogHonestBacktestPage'));
 const BlogMarketRegimeGuidePage = lazy(() => import('./BlogMarketRegimeGuidePage'));
 const BlogMomentumTradingPage = lazy(() => import('./BlogMomentumTradingPage'));
 const BlogTrailingStopsPage = lazy(() => import('./BlogTrailingStopsPage'));
@@ -4755,7 +4755,7 @@ export default function App() {
         <Route path="/blog/2022-story" element={<Blog2022StoryPage />} />
         <Route path="/blog/backtests" element={<BlogBacktestsPage />} />
         <Route path="/blog/market-crash" element={<BlogMarketCrashPage />} />
-        <Route path="/blog/market-regimes" element={<BlogMarketRegimesPage />} />
+        <Route path="/blog/honest-backtest" element={<BlogHonestBacktestPage />} />
         <Route path="/blog/trailing-stops" element={<BlogTrailingStopsPage />} />
         <Route path="/blog/momentum-trading" element={<BlogMomentumTradingPage />} />
         <Route path="/blog/walk-forward-results" element={<BlogWalkForwardResultsPage />} />
