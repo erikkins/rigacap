@@ -275,21 +275,22 @@ export default function MethodologyPageV2() {
 
           <div className="space-y-4 text-[1.05rem] leading-[1.75] text-ink max-w-[62ch]">
             <p>
-              The walk-forward simulation uses <strong className="font-medium">end-of-day prices</strong> for both entries and exits.
-              In live operation, the system polls open positions every <strong className="font-medium">5 minutes during market hours</strong> and executes on trigger conditions when they occur intraday.
+              The walk-forward simulation uses <strong className="font-medium">end-of-day prices</strong> for both entries and exits —
+              and so does live operation. We deliberately match the two.
             </p>
             <p>
-              <strong className="font-medium">Where live execution may outperform simulation:</strong> On trailing-stop exits,
-              a 5-minute polling system exits at the moment the stop level is breached. An end-of-day simulation records the exit
-              at whatever price the stock closes at &mdash; which, on days of continued decline, can be meaningfully below the actual stop level.
+              <strong className="font-medium">Why end-of-day.</strong> We tested intraday execution — polling positions through the
+              day and exiting the moment a trailing stop was breached — on earlier versions of the strategy. It consistently
+              <strong className="font-medium"> underperformed</strong>: whipsaw exits on volatility spikes an end-of-day system would
+              have ridden through, plus false triggers on intraday noise, cost more than the faster exits saved. So the system tracks
+              positions through the day but acts on the <strong className="font-medium">closing price</strong>.
             </p>
             <p>
-              <strong className="font-medium">Where live execution may underperform:</strong> Intraday polling introduces whipsaw exits
-              triggered by volatility spikes that an EOD system would have ridden through, gap moves that blow past stop levels
-              between polls, and false triggers on intraday noise.
+              The benefit is honesty: because the backtest and the live primary exits use the same end-of-day timing, there's no
+              hidden gap between the simulated results and how the system actually trades. What you see tested is what runs.
             </p>
             <p className="font-display italic text-ink-mute" style={{ fontVariationSettings: '"opsz" 24' }}>
-              Net effect: unquantified. We do not present any performance figure as being enhanced by intraday execution.
+              Real-world slippage and commissions still apply and are modeled conservatively. We present no figure as enhanced by execution timing.
             </p>
           </div>
         </div>
