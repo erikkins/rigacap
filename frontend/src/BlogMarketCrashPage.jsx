@@ -345,10 +345,10 @@ export default function BlogMarketCrashPage() {
             No watching CNBC at 2 AM trying to figure out what to do.
           </p>
           <p className="text-ink-mute leading-relaxed text-base">
-            That's exactly what we built RigaCap to do. Our system uses a 7-regime market model
-            that classifies conditions in real time. When conditions deteriorate, it reduces
-            exposure automatically. When conditions improve, it re-enters with conviction. In 2022,
-            while the S&P 500 lost 20%, our walk-forward validated system averaged +8% across start dates — every start date positive.
+            That's exactly what we built RigaCap to do. The system sizes by risk, diversifies
+            across many names, and steps back when conditions turn hostile — automatically, without
+            waiting for the willpower to act. In 2022, while the S&P 500 lost about 20%, RigaCap's
+            two-year windows through that bear finished positive, around +8%.
           </p>
           <p className="text-ink-mute leading-relaxed text-base">
             The next crash is coming. It always is. The only question is whether you'll face it

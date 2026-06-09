@@ -301,7 +301,7 @@ export default function BlogWeCalledItTGTXPage() {
               <span className="block text-ink-light text-sm mt-1">The momentum ranking system behind trades like TGTX and MRNA.</span>
             </Link>
             <Link to="/blog/walk-forward-results" className="block p-4 bg-paper-card rounded border border-rule hover:border-rule-dark transition-colors">
-              <span className="text-ink font-medium">Inside Our 5-Year Walk-Forward</span>
+              <span className="text-ink font-medium">Inside Our 9-Year Walk-Forward</span>
               <span className="block text-ink-light text-sm mt-1">The full walk-forward simulation that produced these real trade signals.</span>
             </Link>
           </div>

@@ -396,7 +396,7 @@ export default function BlogTrailingStopsPage() {
               <span className="block text-ink-light text-sm mt-1">How regime detection and automatic exits protect your portfolio during downturns.</span>
             </Link>
             <Link to="/blog/walk-forward-results" className="block p-4 bg-paper-card rounded border border-rule hover:border-rule-dark transition-colors">
-              <span className="text-ink font-medium">Inside Our 5-Year Walk-Forward</span>
+              <span className="text-ink font-medium">Inside Our 9-Year Walk-Forward</span>
               <span className="block text-ink-light text-sm mt-1">The full breakdown of our walk-forward simulation across multiple start dates.</span>
             </Link>
           </div>

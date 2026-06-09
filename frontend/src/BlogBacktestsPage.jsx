@@ -165,6 +165,18 @@ export default function BlogBacktestsPage() {
             Combined — which they often are — they can fabricate returns out of thin air.
           </p>
 
+          <div className="my-8 border border-rule bg-paper-card p-6" style={{ borderLeft: '3px solid #7A2430' }}>
+            <p className="text-ink text-[0.98rem] leading-[1.7] m-0">
+              <strong className="font-semibold">We're not speaking hypothetically.</strong> We found our
+              own backtest doing exactly this — survivorship bias and unadjusted stock splits had quietly
+              inflated every number we published. So we rebuilt the whole thing and revised our returns
+              down.{' '}
+              <Link to="/blog/honest-backtest" className="text-claret hover:text-claret/80 underline">
+                Here's what honest looks like &rarr;
+              </Link>
+            </p>
+          </div>
+
           {/* Walk-Forward Section */}
           <h2 className="font-display text-2xl font-bold text-ink mt-12 mb-4 flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
             <Eye className="w-6 h-6 text-positive flex-shrink-0" />
@@ -428,7 +440,7 @@ export default function BlogBacktestsPage() {
           <h3 className="text-lg font-semibold text-ink mb-4">Related Reading</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Link to="/blog/walk-forward-results" className="block p-4 bg-paper-card rounded border border-rule hover:border-rule-dark transition-colors">
-              <span className="text-ink font-medium">Inside Our 5-Year Walk-Forward</span>
+              <span className="text-ink font-medium">Inside Our 9-Year Walk-Forward</span>
               <span className="block text-ink-light text-sm mt-1">See the walk-forward results that prove our strategy works without hindsight bias.</span>
             </Link>
             <Link to="/blog/momentum-trading" className="block p-4 bg-paper-card rounded border border-rule hover:border-rule-dark transition-colors">

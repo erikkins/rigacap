@@ -260,8 +260,9 @@ export default function Blog2022StoryPage() {
         <div className="prose prose-gray max-w-none">
           <p className="text-ink-mute leading-relaxed text-base">
             The system doesn't try to beat the market every year. In bull markets like 2023,
-            it may lag the S&P. But it never gives back what it earned. Over 5 years,
-            the average total return is +160% vs. the S&P's +93%.
+            it may lag the S&P. But it aims never to give back what it earned. Over our
+            nine-year walk-forward, RigaCap compounded at roughly 14% a year — close to the
+            S&P's pace, but with about half the drawdown.
           </p>
 
           {/* Methodology Note */}
@@ -269,8 +270,8 @@ export default function Blog2022StoryPage() {
             How We Know This Is Real
           </h2>
           <p className="text-ink-mute leading-relaxed text-base">
-            These aren't backtested results — they're walk-forward validated. The difference
-            matters.
+            These are walk-forward results — not a curve-fit backtest, and now survivorship-free.
+            The difference matters.
           </p>
           <p className="text-ink-mute leading-relaxed text-base">
             A backtest looks at historical data and finds parameters that would have worked.
@@ -279,9 +280,9 @@ export default function Blog2022StoryPage() {
             There's no hindsight bias, no curve-fitting, no cherry-picking.
           </p>
           <p className="text-ink-mute leading-relaxed text-base">
-            We run each simulation from multiple start dates to prove the results
-            aren't dependent on when you begin. Every single start date produced a positive
-            5-year return. Every single one beat the S&P 500.
+            We run each simulation from sixteen overlapping start dates to prove the results
+            aren't dependent on when you begin. Fifteen of the sixteen finished positive — and
+            through the 2022 bear specifically, every window stayed in the black while the S&P fell.
           </p>
         </div>
 
@@ -333,7 +334,7 @@ export default function Blog2022StoryPage() {
               <span className="block text-ink-light text-sm mt-1">The trailing stop mechanism that limited drawdowns during 2022.</span>
             </Link>
             <Link to="/blog/walk-forward-results" className="block p-4 bg-paper-card rounded border border-rule hover:border-rule-dark transition-colors">
-              <span className="text-ink font-medium">Inside Our 5-Year Walk-Forward</span>
+              <span className="text-ink font-medium">Inside Our 9-Year Walk-Forward</span>
               <span className="block text-ink-light text-sm mt-1">Full performance breakdown including the 2022 period.</span>
             </Link>
           </div>

@@ -172,8 +172,8 @@ export default function BlogMarketRegimeGuidePage() {
 
         <p className="text-sm text-ink-light text-center mb-8">
           Green = bullish regimes. Amber/Red = bearish. Blue = transition.{' '}
-          <Link to="/blog/market-regimes" className="text-claret hover:text-claret/80 underline underline-offset-2 transition-colors">
-            Read the deep-dive on all 7 regimes
+          <Link to="/blog/walk-forward-results" className="text-claret hover:text-claret/80 underline underline-offset-2 transition-colors">
+            See how the strategy performs across regimes
           </Link>
         </p>
 
@@ -330,10 +330,10 @@ export default function BlogMarketRegimeGuidePage() {
           </p>
           <p className="text-ink-mute leading-relaxed text-base">
             Want to go deeper? Our{' '}
-            <Link to="/blog/market-regimes" className="text-claret hover:text-claret/80 underline underline-offset-2 transition-colors">
-              full breakdown of all 7 regimes
+            <Link to="/blog/walk-forward-results" className="text-claret hover:text-claret/80 underline underline-offset-2 transition-colors">
+              nine-year walk-forward results
             </Link>
-            {' '}covers each one in detail with historical examples and system response logic.
+            {' '}show how the strategy actually behaved across each of these environments.
           </p>
         </div>
 
@@ -376,9 +376,9 @@ export default function BlogMarketRegimeGuidePage() {
         <div className="mt-12 pt-8 border-t border-rule">
           <h3 className="text-lg font-semibold text-ink mb-4">Related Reading</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Link to="/blog/market-regimes" className="block p-4 bg-paper-card rounded border border-rule hover:border-rule-dark transition-colors">
-              <span className="text-ink font-medium">The 7 Market Regimes — Deep Dive</span>
-              <span className="block text-ink-light text-sm mt-1">A detailed look at each of the seven market regimes and what drives them.</span>
+            <Link to="/blog/honest-backtest" className="block p-4 bg-paper-card rounded border border-rule hover:border-rule-dark transition-colors">
+              <span className="text-ink font-medium">We Found Our Own Backtest Was Lying</span>
+              <span className="block text-ink-light text-sm mt-1">How survivorship bias and stock splits inflated our numbers — and how we fixed it.</span>
             </Link>
             <Link to="/blog/market-crash" className="block p-4 bg-paper-card rounded border border-rule hover:border-rule-dark transition-colors">
               <span className="text-ink font-medium">What to Do When the Market Crashes</span>
