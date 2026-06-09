@@ -2918,12 +2918,24 @@ async def get_public_track_record(db: AsyncSession = Depends(get_db)):
     for sim in sims:
         if not sim.equity_curve_json:
             continue
-        curve = json.loads(sim.equity_curve_json)
+        try:
+            curve = json.loads(sim.equity_curve_json)
+        except (ValueError, TypeError):
+            continue
         for pt in curve:
-            d = pt["date"]
+            d = pt.get("date")
+            eq = pt.get("equity")
+            if not d or eq is None:
+                continue
+            # spy_equity can be explicitly null (e.g. benchmark not covering
+            # early dates) — .get(key, default) does NOT catch an explicit None,
+            # so coerce here. Prefer a real spy value if any sim has one for this date.
+            spy = pt.get("spy_equity")
             if d not in date_buckets:
-                date_buckets[d] = {"equities": [], "spy": pt.get("spy_equity", 100000)}
-            date_buckets[d]["equities"].append(pt["equity"])
+                date_buckets[d] = {"equities": [], "spy": spy if spy is not None else 100000}
+            elif spy is not None and date_buckets[d]["spy"] == 100000:
+                date_buckets[d]["spy"] = spy
+            date_buckets[d]["equities"].append(eq)
 
     # Build band data — require at least 2 sims per date for meaningful range
     band = []
