@@ -66,6 +66,38 @@ PORTFOLIO_TYPES = ("live", "walkforward")
 MAX_POSITIONS = 6
 POSITION_SIZE_PCT = 0.15  # 15% of available cash per position
 TRAILING_STOP_PCT = 12.0
+
+
+def _annualized_vol_20d(closes) -> float:
+    """20-day annualized volatility %, identical to the backtester's measure
+    (backtester.py:1468-1469): last ~21 closes -> 20 daily returns -> sample std
+    (ddof=1, matching pandas .std()) * sqrt(252) * 100. Returns 30.0 (the
+    backtester's no-data default) on insufficient/invalid data. Used by the
+    inverse-vol (risk-parity) sizing port so prod matches the walk-forward exactly."""
+    try:
+        c = [float(x) for x in closes if x is not None and float(x) > 0][-21:]
+        if len(c) < 3:
+            return 30.0
+        rets = [(c[i] / c[i - 1]) - 1.0 for i in range(1, len(c))]
+        n = len(rets)
+        mean = sum(rets) / n
+        var = sum((r - mean) ** 2 for r in rets) / (n - 1)
+        sd = var ** 0.5
+        return sd * (252 ** 0.5) * 100.0 if sd > 0 else 30.0
+    except Exception:
+        return 30.0
+
+
+def _inverse_vol_mult(vol: float, median_vol: float, vol_weight: float) -> float:
+    """Risk-parity size multiplier, identical to backtester._vol_mult (backtester.py:747):
+    (median_vol / vol) ** vol_weight, clamped to [0.3, 2.5], centered at the
+    cross-sectional median (exposure-neutral). vol_weight <= 0 disables it (1.0)."""
+    try:
+        if vol_weight <= 0 or vol <= 0 or median_vol <= 0:
+            return 1.0
+        return max(0.3, min(2.5, (median_vol / vol) ** vol_weight))
+    except Exception:
+        return 1.0
 STARTING_CAPITAL = 100_000.0
 
 # Volatility Basket overlay (M3). On a VIX>30 cross-up, buy a fixed mega-cap
@@ -155,6 +187,59 @@ class ModelPortfolioService:
     # Entry logic
     # ------------------------------------------------------------------
 
+    async def _load_strategy_params(self, db: AsyncSession) -> dict:
+        """Read the ACTIVE strategy definition (strategy 6 = t30v) parameters —
+        the single source of truth shared with the walk-forward service, which
+        closes the WF<->prod parity gap. Falls back to module constants if the
+        row/keys are missing, so behaviour is unchanged until strategy 6's params
+        are flipped to t30v at cutover. position_size_pct accepts either a percent
+        (4.5) or a fraction (0.045)."""
+        out = {
+            "max_positions": MAX_POSITIONS,
+            "position_size_pct": POSITION_SIZE_PCT,
+            "trailing_stop_pct": TRAILING_STOP_PCT,
+            "vol_weight": 0.0,
+        }
+        try:
+            from app.core.database import StrategyDefinition
+            from sqlalchemy import select as _select
+            row = (await db.execute(
+                _select(StrategyDefinition).where(StrategyDefinition.is_active == True).limit(1)
+            )).scalars().first()
+            if row and row.parameters:
+                p = json.loads(row.parameters)
+                if p.get("max_positions") is not None:
+                    out["max_positions"] = int(p["max_positions"])
+                if p.get("position_size_pct") is not None:
+                    v = float(p["position_size_pct"])
+                    out["position_size_pct"] = (v / 100.0) if v > 1 else v
+                if p.get("trailing_stop_pct") is not None:
+                    out["trailing_stop_pct"] = float(p["trailing_stop_pct"])
+                if p.get("vol_weight") is not None:
+                    out["vol_weight"] = float(p["vol_weight"])
+        except Exception as e:
+            logger.warning(f"[STRATEGY-PARAMS] load failed, using module constants: {e}")
+        return out
+
+    async def _candidate_vols(self, symbols: list) -> dict:
+        """20-day annualized vol per symbol for the inverse-vol sizing port.
+        One batched bar fetch; missing/short series fall back to 30.0 (the
+        backtester's default) so the cross-sectional median stays well-defined."""
+        vols = {s: 30.0 for s in symbols}
+        if not symbols:
+            return vols
+        try:
+            from datetime import timedelta as _td
+            start = (date.today() - _td(days=45)).isoformat()  # ~30 trading days back
+            bars = await market_data_provider.fetch_bars(list(symbols), start)
+            for s in symbols:
+                df = bars.get(s)
+                if df is not None and "close" in df and len(df) >= 3:
+                    vols[s] = _annualized_vol_20d(list(df["close"].values))
+        except Exception as e:
+            logger.warning(f"[INVERSE-VOL] vol fetch failed, defaulting to flat: {e}")
+        return vols
+
     async def process_entries(
         self, db: AsyncSession, portfolio_type: str
     ) -> dict:
@@ -194,11 +279,20 @@ class ModelPortfolioService:
         open_positions = await self._get_open_positions(db, portfolio_type, position_kinds=["core"])
         open_count = len(open_positions)
 
-        if open_count >= MAX_POSITIONS:
+        # Strategy params from the ACTIVE strategy 6 (t30v) — single source of
+        # truth shared with the walk-forward service. Module constants are the
+        # fallback, so behaviour is identical to today until strategy 6's params
+        # are flipped to t30v at cutover.
+        sp = await self._load_strategy_params(db)
+        max_pos = sp["max_positions"]
+        pos_size = sp["position_size_pct"]
+        vol_weight = sp["vol_weight"]
+
+        if open_count >= max_pos:
             return {"entries": 0, "reason": "Max positions reached"}
 
         held_symbols = {p.symbol for p in open_positions}
-        slots = MAX_POSITIONS - open_count
+        slots = max_pos - open_count
 
         # Read fresh signals from dashboard cache
         from app.services.data_export import data_export_service
@@ -226,19 +320,40 @@ class ModelPortfolioService:
         ]
         fresh_signals.sort(key=lambda x: -x.get("ensemble_score", 0))
 
+        candidates = fresh_signals[:slots]
+
+        # Inverse-vol (risk-parity) sizing — the t30v drawdown lever. Dormant
+        # while vol_weight == 0 (sizing stays flat, prod unchanged); activates
+        # when strategy 6's vol_weight is set. Vol is computed on-the-fly with
+        # the exact backtester measure (20-day annualized) for WF<->prod parity.
+        cand_vols, median_vol = {}, 0.0
+        if vol_weight > 0 and candidates:
+            cand_vols = await self._candidate_vols([c["symbol"] for c in candidates])
+            _vs = sorted(v for v in cand_vols.values() if v > 0)
+            median_vol = _vs[len(_vs) // 2] if _vs else 0.0
+
         entries = 0
-        for sig in fresh_signals[:slots]:
+        for sig in candidates:
             symbol = sig["symbol"]
             price = sig.get("price", 0)
             if price <= 0:
                 continue
 
-            # Position sizing: 15% of current cash
-            alloc = state.current_cash * POSITION_SIZE_PCT
+            # Base allocation, then apply the inverse-vol multiplier.
+            base_alloc = state.current_cash * pos_size
+            vmult = _inverse_vol_mult(cand_vols.get(symbol, 0.0), median_vol, vol_weight)
+            alloc = base_alloc * vmult
             if alloc < 100:  # Minimum allocation
                 break
 
             shares = alloc / price
+
+            # Audit trail: record the vol + multiplier that drove this size, so the
+            # sizing decision is verifiable/explainable later (no schema change).
+            sig_to_store = dict(sig)
+            if vol_weight > 0:
+                sig_to_store["_entry_volatility"] = round(cand_vols.get(symbol, 0.0), 2)
+                sig_to_store["_vol_mult"] = round(vmult, 4)
 
             pos = ModelPosition(
                 portfolio_type=portfolio_type,
@@ -249,7 +364,7 @@ class ModelPortfolioService:
                 cost_basis=alloc,
                 highest_price=price,
                 status="open",
-                signal_data_json=json.dumps(sig),
+                signal_data_json=json.dumps(sig_to_store),
             )
             db.add(pos)
             state.current_cash -= alloc

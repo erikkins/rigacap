@@ -1691,13 +1691,24 @@ def handler(event, context):
                     # Real broken-pipeline signal = at least one fresh signal we DON'T hold
                     actionable_fresh = [s for s in fresh_signals if s.get('symbol') not in held_symbols]
                     actionable_count = len(actionable_fresh)
-                    if open_count < 6 and actionable_count > 0:
+                    # CB-aware: if the circuit breaker has paused entries, holding
+                    # cash with actionable signals is EXPECTED behaviour, not a broken
+                    # pipeline. Only flag Silent Cash when the CB is NOT the reason.
+                    cb_paused = False
+                    try:
+                        from app.services.circuit_breaker_state import is_paused as _cb_is_paused
+                        cb_paused = _cb_is_paused("live")
+                    except Exception:
+                        pass
+                    if open_count < 6 and actionable_count > 0 and not cb_paused:
                         pipeline_failures.append((
                             "Silent Cash",
                             f"{actionable_count} actionable fresh signals (of {fresh_count} total), "
                             f"0 entries opened, {open_count}/6 positions held — entry pipeline may be silently broken. "
                             f"Skipped: {[s.get('symbol') for s in actionable_fresh]}"
                         ))
+                    elif open_count < 6 and actionable_count > 0 and cb_paused:
+                        print(f"🛡 Circuit breaker active — {actionable_count} fresh signal(s) correctly held back; cash position is expected, not a pipeline failure.")
             except Exception as _cde:
                 print(f"⚠️ Silent-cash detector failed (non-fatal): {_cde}")
 
