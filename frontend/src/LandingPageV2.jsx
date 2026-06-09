@@ -35,21 +35,21 @@ const Navbar = ({ onGetStarted }) => <TopNav onGetStarted={onGetStarted} />;
 const HeroSection = ({ onGetStarted }) => (
   <section className="bg-paper pt-16 pb-12 sm:pt-24 sm:pb-16">
     <div className="max-w-[920px] mx-auto px-4 sm:px-8">
-      <SectionLabel>Risk-managed momentum &middot; Est. 2026</SectionLabel>
+      <SectionLabel>Institution-grade momentum &middot; Est. 2026</SectionLabel>
 
       <h1
         className="font-display font-normal text-ink mb-8 tracking-[-0.025em] leading-[1.02]"
         style={{ fontSize: 'clamp(2.5rem, 5.5vw, 4.5rem)', fontVariationSettings: '"opsz" 144' }}
       >
-        The hard part isn't the returns.<br />
-        It's <em className="text-claret italic font-normal">staying invested.</em>
+        Institutional discipline.<br />
+        <em className="text-claret italic font-normal">Individual price.</em>
       </h1>
 
       <p
         className="font-display italic text-ink-mute text-xl sm:text-[1.2rem] leading-relaxed max-w-[640px] mb-3"
         style={{ fontVariationSettings: '"opsz" 24' }}
       >
-        We engineer momentum you can actually hold through a crash &mdash; bounded drawdowns, honest numbers, no theatrics.
+        Survivorship-free, drawdown-controlled momentum &mdash; built the way an institution would, for the price of a subscription, not 1% a year.
       </p>
 
       <p className="text-[0.95rem] text-ink-mute leading-relaxed max-w-[640px] mb-10">

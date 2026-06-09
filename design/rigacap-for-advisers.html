@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RigaCap — For Advisers</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#F5F1E8;--deep:#EDE7D8;--card:#FAF7F0;--ink:#141210;--mute:#5A544E;--light:#8A8279;--accent:#7A2430;--line:#DDD5C7;--line2:#C9BFAC;--pos:#2D5F3F;--neg:#8F2D3D}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .serif{font-family:'Fraunces','Georgia',serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 30px}
+  .eyebrow{font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .masthead{border-bottom:2px solid var(--ink);margin-top:14px}
+  .kicker{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--light);padding:7px 0;border-bottom:1px solid var(--line)}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:16px 0 14px}
+  .logo{display:flex;align-items:center;gap:10px}.logo .name{font-family:'Fraunces',serif;font-weight:600;font-size:22px}
+  .pill{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);border-radius:20px;padding:4px 11px;font-weight:600}
+  .btn{background:var(--accent);color:#fff;font-weight:600;padding:10px 18px;border-radius:3px;font-size:13.5px;border:0;cursor:pointer}
+  .btn-ghost{background:transparent;border:1px solid var(--line2);color:var(--ink);font-weight:600;padding:10px 18px;border-radius:3px;font-size:13.5px}
+
+  .hero{padding:48px 0 18px}
+  h1{font-family:'Fraunces',serif;font-size:54px;font-weight:500;line-height:1.04;letter-spacing:-.015em}
+  h1 em{font-style:italic;color:var(--accent)}
+  .sub{margin-top:20px;font-size:19px;color:#3a342e;max-width:600px;line-height:1.55}
+  .cta{display:flex;gap:13px;align-items:center;margin-top:28px}
+  .cta .note{font-size:12.5px;color:var(--light)}
+
+  .insight{margin-top:44px;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--ink);padding:28px 30px;display:grid;grid-template-columns:1.1fr 1fr;gap:34px;align-items:center}
+  .insight .big{font-family:'Fraunces',serif;font-size:27px;font-weight:500;line-height:1.25;letter-spacing:-.01em}
+  .insight .big em{font-style:italic;color:var(--accent)}
+  .ddmini .ttl{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);font-weight:600;margin-bottom:12px}
+  .ddrow{display:grid;grid-template-columns:1fr 56px;align-items:center;gap:12px;margin:9px 0}
+  .ddrow .lbl{font-size:12.5px;color:var(--mute)}
+  .bar{height:22px;background:#e7e0d2;border-radius:2px;position:relative}
+  .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px}
+  .bar .n{width:100%;background:repeating-linear-gradient(45deg,#8F2D3D,#8F2D3D 8px,#7c2533 8px,#7c2533 16px)}
+  .bar .o{width:48.5%;background:var(--pos)}
+  .ddrow .v{font-family:'Fraunces',serif;font-size:18px;font-weight:600;text-align:right}
+  .ddrow .v.bad{color:var(--neg)}.ddrow .v.good{color:var(--pos)}
+
+  section{padding:50px 0;border-top:1px solid var(--line)}
+  h2{font-family:'Fraunces',serif;font-size:30px;font-weight:500;letter-spacing:-.01em}
+  .lead{margin-top:11px;color:#3a342e;font-size:16px;max-width:640px;line-height:1.6}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:28px;border-top:1px solid var(--line)}
+  .g{padding:22px 24px 22px 0;border-bottom:1px solid var(--line)}
+  .g:not(:nth-child(3n)){border-right:1px solid var(--line);padding-right:28px}
+  .g:nth-child(3n-1){padding-left:24px}.g:nth-child(3n){padding-left:24px}
+  .g h3{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:var(--accent);margin-bottom:6px}
+  .g p{font-size:13.5px;color:#4a443d;line-height:1.55}
+
+  .dil{display:grid;grid-template-columns:repeat(2,1fr);gap:0;margin-top:26px;border-top:1px solid var(--line)}
+  .dcard{padding:20px 26px 20px 0;border-bottom:1px solid var(--line)}
+  .dcard:nth-child(odd){border-right:1px solid var(--line);padding-right:30px}.dcard:nth-child(even){padding-left:28px}
+  .dcard h4{font-size:14.5px;font-weight:600;color:var(--ink);margin-bottom:5px}.dcard h4 span{color:var(--accent);margin-right:7px}
+  .dcard p{font-size:13.5px;color:#4a443d;line-height:1.55}
+
+  .honest{margin-top:30px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);padding:18px 22px;font-size:13.5px;color:#3a342e;line-height:1.6}.honest b{color:var(--ink)}
+  .ctaband{padding:44px 0;border-top:2px solid var(--ink);text-align:center}
+  .ctaband h2{font-size:28px}.ctaband p{color:var(--mute);font-size:15px;margin:10px auto 22px;max-width:520px}
+  footer{padding:30px 0 50px;border-top:1px solid var(--line);color:var(--light);font-size:12px;line-height:1.7}
+</style></head><body><div class="wrap">
+  <div class="masthead">
+    <div class="kicker"><span>For registered advisers &amp; RIAs</span><span>Model delivery · Walk-forward backtest</span></div>
+    <nav><div class="logo"><svg width="20" height="24" viewBox="0 0 20 24"><path d="M10 1 L13 9 L10 23 L7 9 Z" fill="#7A2430"/></svg><span class="name">RigaCap</span> <span class="pill">For Advisers</span></div>
+      <button class="btn">Request adviser access</button></nav>
+  </div>
+
+  <div class="hero">
+    <span class="eyebrow">A momentum allocation, built for client books</span>
+    <h1 class="serif" style="margin-top:14px">A momentum sleeve you<br>can actually <em>defend.</em></h1>
+    <p class="sub">Survivorship-free, walk-forward-validated, and drawdown-controlled &mdash; a systematic momentum allocation you can hold a client book through, and explain in a single meeting.</p>
+    <div class="cta">
+      <button class="btn">Request adviser access</button>
+      <button class="btn-ghost">Download the methodology</button>
+      <span class="note">Model delivery · you stay the fiduciary</span>
+    </div>
+
+    <div class="insight">
+      <div class="big">Clients don't fire you at <em>&minus;17%.</em><br>They fire you at <em>&minus;35%.</em></div>
+      <div class="ddmini">
+        <div class="ttl">Worst drawdown · 2017&ndash;2026</div>
+        <div class="ddrow"><span class="lbl">Raw momentum</span><div class="bar"><i class="n"></i></div><span class="v bad">&minus;35%</span></div>
+        <div class="ddrow"><span class="lbl">RigaCap</span><div class="bar"><i class="o"></i></div><span class="v good">&minus;17%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <span class="eyebrow">Why advisers use it</span>
+    <h2 class="serif" style="margin-top:10px">The drawdown is the deliverable.</h2>
+    <div class="grid3">
+      <div class="g"><h3>Behaviorally holdable</h3><p>Your biggest portfolio risk isn't the market &mdash; it's a client capitulating at the bottom. A 17% worst-case drawdown is one a client can sit through. A 35% one isn't.</p></div>
+      <div class="g"><h3>Diligence you can present</h3><p>Survivorship-free, point-in-time, walk-forward, out-of-sample. The methodology stands up in a committee meeting, not just a marketing deck.</p></div>
+      <div class="g"><h3>A complement, not a core</h3><p>A disciplined momentum sleeve that sits alongside an indexed core &mdash; uncorrelated discipline, sized to your mandate.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Built to survive due diligence</span>
+    <h2 class="serif" style="margin-top:10px">Engineered for the questions you'll be asked.</h2>
+    <div class="dil">
+      <div class="dcard"><h4><span>—</span>Survivorship-free construction</h4><p>Delisted, merged, and bankrupt names reconstructed from SEC filings. No accidental winners-only inflation.</p></div>
+      <div class="dcard"><h4><span>—</span>Point-in-time, no look-ahead</h4><p>Universe, prices, and corporate actions adjusted strictly as-of each date.</p></div>
+      <div class="dcard"><h4><span>—</span>Walk-forward, out-of-sample</h4><p>Validated on dates the parameters never saw; overfit configurations documented and discarded.</p></div>
+      <div class="dcard"><h4><span>—</span>Honest, discounted, transparent</h4><p>Backtest figures published net of modeled costs and explicitly discounted for the absence of a live record.</p></div>
+    </div>
+    <div class="honest"><b>How it works.</b> RigaCap delivers <b>signals and a model allocation</b> — entries, exits, and sizing. You implement across client accounts through your own custodian; <b>RigaCap never touches client capital, and you remain the fiduciary.</b> Backtested, not yet live (~14% / 0.92 Sharpe / 17% max DD, 2017&ndash;2026); underwrite conservatively until the live record accrues, which we publish.</div>
+  </section>
+
+  <div class="ctaband">
+    <h2 class="serif">Adviser access is application-based.</h2>
+    <p>Tell us about your practice and how you'd use the sleeve. We'll share the full methodology, model history, and licensing terms.</p>
+    <button class="btn" style="padding:13px 26px;font-size:15px">Request adviser access →</button>
+  </div>
+
+  <footer>RigaCap publishes impersonal, regularly-circulated commentary under the publisher's exemption. Not personalized investment advice; advisers remain responsible for suitability and fiduciary duties to their clients. Signals and model delivery only — RigaCap does not custody or manage client assets. Past performance, including backtested performance, does not guarantee future results.</footer>
+</div></body></html>
