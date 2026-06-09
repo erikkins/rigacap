@@ -83,9 +83,10 @@ export default function MethodologyPageV2() {
 
           <div className="space-y-5 text-[1.05rem] leading-[1.75] text-ink max-w-[62ch]">
             <p>
-              Walk-forward simulation tests the strategy across biweekly periods over the full 5-year window. Strategy
-              parameters are <strong className="font-medium">fixed at the start of the test and applied forward</strong> &mdash;
-              no future information is ever used, and no per-period re-tuning hides hindsight bias.
+              Walk-forward simulation tests the strategy across biweekly periods over a full nine-year span (2017&ndash;2026),
+              on <strong className="font-medium">survivorship-free, point-in-time data</strong>. Strategy parameters are
+              <strong className="font-medium"> fixed at the start and applied forward</strong> &mdash; no future information is
+              ever used, and no per-period re-tuning hides hindsight bias.
             </p>
             <p>
               The period structure governs <strong className="font-medium">rebalancing cadence</strong>, not re-optimization.
@@ -93,8 +94,8 @@ export default function MethodologyPageV2() {
               curve that reflects what real-time decision-making would have looked like with that configuration.
             </p>
             <p>
-              To test robustness, we run the same process across <strong className="font-medium">multiple start dates</strong> (Jan&ndash;Apr 2021).
-              The track record page shows the average, best, and worst outcomes across all start dates &mdash; not a single cherry-picked run.
+              To test robustness, we run the same process across <strong className="font-medium">16 overlapping start dates</strong> spanning 2017&ndash;2026.
+              The track record page shows the average, best, and worst outcomes across all of them &mdash; not a single cherry-picked run.
             </p>
           </div>
 
@@ -102,7 +103,7 @@ export default function MethodologyPageV2() {
             {[
               ['Tuned via', 'Bayesian parameter optimization (Optuna TPE), multi-objective: maximize Sharpe, minimize drawdown. The configuration is selected once, then locked.'],
               ['Locked across periods', 'Position sizing, exit rules, signal thresholds, regime logic. No per-period re-tuning, no hindsight bias.'],
-              ['Tested across', 'Multiple start dates over a 5-year window. Average, best, and worst outcomes all published.'],
+              ['Tested across', '16 overlapping start dates spanning 2017–2026, on survivorship-free data. Average, best, and worst outcomes all published.'],
             ].map(([label, text]) => (
               <div key={label}>
                 <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-2">{label}</div>
@@ -123,10 +124,10 @@ export default function MethodologyPageV2() {
 
           <div className="grid sm:grid-cols-2 gap-x-12 gap-y-8">
             {[
-              ['Max positions', '5–7', 'Concentrated by design; not diluted across many weak signals'],
-              ['Position size', '12–20% of capital', 'Per position; total exposure up to ~80%'],
-              ['Trailing stop', '12–18% from high water mark', 'Primary exit rule; tightens after +12% profit'],
-              ['Market regime filter', '7-regime detection', 'Cascade Guard pauses entries when panic-grade stress is detected'],
+              ['Diversification', 'A broad basket', 'Spread across many names so no single position can sink the book'],
+              ['Position sizing', 'Risk-weighted', 'Capital flows to where it is steadiest, not where the story is loudest'],
+              ['Trailing stop', 'Wide, from high water mark', 'Primary exit rule; lets winners run rather than cutting them early'],
+              ['Defensive posture', 'Automatic', 'Steps back from new entries when losses cluster in market stress'],
             ].map(([label, value, desc]) => (
               <div key={label}>
                 <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-1">{label}</div>
@@ -137,12 +138,12 @@ export default function MethodologyPageV2() {
           </div>
 
           <div className="mt-10 pt-8 border-t border-rule">
-            <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-2">Cascade Guard (validated safeguard)</div>
+            <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-2">Defensive pause</div>
             <p className="text-ink text-[0.98rem] leading-relaxed max-w-[58ch]">
-              When 3+ positions hit trailing stop on the same day, the system freezes all new entries for 10 trading days.
-              Validated against a no-Cascade-Guard counterfactual: the safeguard contributed approximately
-              <strong className="font-medium"> +37 percentage points of return</strong> across the 5-year test period
-              (~+3.7 pp annualized) by avoiding forced re-entries during cascade selloffs.
+              When losses cluster &mdash; a sign the market has turned hostile &mdash; the system pauses new entries rather than
+              chasing a falling market. Buying into a sharp sell-off is how concentrated strategies turn one bad week into a
+              deep drawdown; stepping back is a meaningful part of how the worst-case drawdown stays near 17% instead of the
+              raw factor's 35%.
             </p>
           </div>
         </div>
