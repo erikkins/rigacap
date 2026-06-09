@@ -35,25 +35,25 @@ const Navbar = ({ onGetStarted }) => <TopNav onGetStarted={onGetStarted} />;
 const HeroSection = ({ onGetStarted }) => (
   <section className="bg-paper pt-16 pb-12 sm:pt-24 sm:pb-16">
     <div className="max-w-[920px] mx-auto px-4 sm:px-8">
-      <SectionLabel>The Ensemble Strategy &middot; Est. 2026</SectionLabel>
+      <SectionLabel>Risk-managed momentum &middot; Est. 2026</SectionLabel>
 
       <h1
         className="font-display font-normal text-ink mb-8 tracking-[-0.025em] leading-[1.02]"
         style={{ fontSize: 'clamp(2.5rem, 5.5vw, 4.5rem)', fontVariationSettings: '"opsz" 144' }}
       >
-        A disciplined momentum strategy that stays in cash when it should &mdash; and{' '}
-        <em className="text-claret italic font-normal">exits</em> before major drawdowns.
+        The hard part isn't the returns.<br />
+        It's <em className="text-claret italic font-normal">staying invested.</em>
       </h1>
 
       <p
         className="font-display italic text-ink-mute text-xl sm:text-[1.2rem] leading-relaxed max-w-[640px] mb-3"
         style={{ fontVariationSettings: '"opsz" 24' }}
       >
-        Built for the investor who's tired of fighting their own worst instincts.
+        We engineer momentum you can actually hold through a crash &mdash; bounded drawdowns, honest numbers, no theatrics.
       </p>
 
       <p className="text-[0.95rem] text-ink-mute leading-relaxed max-w-[640px] mb-10">
-        Walk-forward validated over 5 years. Built by a former <strong className="text-ink font-medium">Chief Innovation Officer</strong> with 15 years of quantitative research as a parallel practice. <strong className="text-ink font-medium">$129/month.</strong>
+        Nine years of survivorship-free, walk-forward validation. Built by a former <strong className="text-ink font-medium">Chief Innovation Officer</strong> with 15 years of quantitative research as a parallel practice. <strong className="text-ink font-medium">$129/month.</strong>
       </p>
 
       <div className="flex flex-wrap gap-4 items-center mb-0">
@@ -74,10 +74,10 @@ const HeroSection = ({ onGetStarted }) => (
       {/* SURFACE-MARKER:landing-hero-stats-START */}
       <div className="flex flex-wrap gap-12 mt-20 pt-8 border-t border-rule">
         {[
-          ['20.4%', 'Max drawdown (5-year average)'],
-          ['+8% in 2022', 'While S&P fell 20%'],
-          ['+109%', 'Worst 5-year start'],
-          ['~21.5%', 'Annualized return'],
+          ['17%', 'Worst drawdown · vs 35% for raw momentum'],
+          ['0.92', 'Sharpe ratio'],
+          ['~14%', 'Annualized · backtest*'],
+          ['2018·COVID·2022', 'Crashes survived'],
         ].map(([value, label]) => (
           <div key={label} className="text-[0.88rem] text-ink-mute leading-snug">
             <strong className="block font-display text-ink text-[1.05rem] font-medium mb-0.5" style={{ fontVariationSettings: '"opsz" 48' }}>
@@ -172,11 +172,11 @@ const PerformanceSection = () => (
       <SectionLabel>Performance</SectionLabel>
       <div className="max-w-[680px] mb-6">
         <h2 className="font-display text-ink mb-4 tracking-[-0.02em]" style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.75rem)', fontVariationSettings: '"opsz" 96' }}>
-          Five-year walk-forward results.
+          Less return. <em className="text-claret italic">Far less pain.</em>
         </h2>
         <p className="text-ink-mute text-[1.05rem] leading-[1.65]">
-          Tested across multiple start dates in early 2021 to check robustness.
-          All three outcomes published &mdash; best, average, and worst.
+          We don't claim a magic new edge. We take a well-documented anomaly &mdash; momentum &mdash; and harvest it
+          with discipline. Here's the honest tradeoff, measured on survivorship-free data across three downturns.
         </p>
       </div>
 
@@ -185,7 +185,7 @@ const PerformanceSection = () => (
         <table className="w-full border-collapse" style={{ fontFeatureSettings: '"tnum"' }}>
           <thead>
             <tr>
-              {['Series', '5-Year Return', 'Annualized', 'Sharpe', 'Max Drawdown'].map((h, i) => (
+              {['Strategy', 'Annualized', 'Sharpe', 'Max Drawdown'].map((h, i) => (
                 <th key={h} className={`py-3 ${i === 0 ? 'text-left pr-4' : 'text-right px-5'} font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark`}>
                   {h}
                 </th>
@@ -193,19 +193,17 @@ const PerformanceSection = () => (
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b border-rule bg-paper-card">
-              <td className="py-4 pr-4 text-[0.95rem] font-semibold text-ink">RigaCap walk-forward (avg. of multiple start dates)</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">+160%</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">~21.5%</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">0.92</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">20%</td>
+            <tr className="border-b border-rule">
+              <td className="py-4 pr-4 text-[0.95rem] text-ink-mute">Raw 12-month momentum</td>
+              <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">22.2%</td>
+              <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">0.67</td>
+              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium" style={{ color: '#8F2D3D' }}>35%</td>
             </tr>
-            <tr>
-              <td className="py-4 pr-4 text-[0.95rem] italic text-ink-mute">S&P 500 (SPY, price only)</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">+93%</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">~13%</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">&mdash;</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">&mdash;</td>
+            <tr className="border-b border-rule bg-paper-card">
+              <td className="py-4 pr-4 text-[0.95rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>RigaCap &mdash; risk-managed</td>
+              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">14.0%</td>
+              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">0.92</td>
+              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-semibold" style={{ color: '#2D5F3F' }}>17%</td>
             </tr>
           </tbody>
         </table>
@@ -213,17 +211,15 @@ const PerformanceSection = () => (
       {/* SURFACE-MARKER:perf-comparison-table-END */}
 
       <p className="text-[0.85rem] text-ink-mute leading-relaxed">
-        Walk-forward simulation across multiple start dates from early 2021, each measured over a full 5-year window. Best: +252%. Worst: +109%. Average shown above.<br />
-        See <a href="/methodology" className="text-claret underline underline-offset-2 decoration-1">methodology</a> for all assumptions.
+        Same momentum factor, same survivorship-free universe. <strong className="text-ink font-medium">We cut the maximum drawdown nearly in half</strong> &mdash; and improved every risk-adjusted measure &mdash; through diversification, volatility-aware sizing, and disciplined exits. Walk-forward backtest, 2017&ndash;2026, net of modeled costs. <strong className="text-ink font-medium">Not yet a live track record.</strong> See <a href="/methodology" className="text-claret underline underline-offset-2 decoration-1">methodology</a> for all assumptions.
       </p>
 
       <div className="bg-paper-card border-l-[3px] border-claret p-8 mt-12 max-w-[62ch]">
         <h3 className="font-display text-[1.15rem] font-semibold text-ink mb-3" style={{ fontVariationSettings: '"opsz" 48' }}>
-          The bear-market test.
+          Why the lower number is the point.
         </h3>
         <p className="text-ink leading-[1.7]">
-          The five-year window included one major bear market. <strong className="font-medium">Every start date ended 2022 in positive territory</strong> while the S&P fell 20% &mdash;{' '}
-          not by luck, but by design. Regime-aware position sizing and trailing-stop discipline kept the strategy on the right side of risk through the year &mdash; responding to data as it changed, not predicting the drawdown.<br />
+          Raw momentum's higher headline return is mostly an illusion &mdash; <strong className="font-medium">almost no one survives a 35% drawdown to collect it.</strong> Investors abandon strategies at the bottom. By holding the worst drawdown near 17%, RigaCap is something you can actually stay invested in through a full cycle &mdash; which is the only way the returns ever reach your account.<br />
           <em className="font-display italic text-claret">That behavior, not the headline return, is the reason to subscribe.</em>
         </p>
       </div>
@@ -377,11 +373,11 @@ const PricingSection = ({ onGetStarted }) => (
 
 const faqItems = [
   { q: 'Who is this for?', a: "Self-directed investors with meaningful portfolios who've decided indexing alone is too passive and individual active trading has been too emotional. If you've tried to run your own momentum strategy and found yourself overriding your own rules, this is a system that will do the boring parts consistently whether you feel like it or not." },
-  { q: 'What returns should I actually expect?', a: "The 5-year walk-forward average is ~21.5% annualized — meaningfully above the S&P's ~13% historical, with even the worst-case start date returning +109% over five years. Your actual results will vary based on execution quality, position sizing, and consistency. Past performance does not predict future results. Read the methodology page before subscribing." },
-  { q: "Why don't you publish higher numbers like other services?", a: "Because we anchor on what a subscriber can actually realize. Most signal services lead with cherry-picked windows or zero-friction simulations — numbers no real subscriber reproduces. We publish the average across multiple start dates including the worst one. We'd rather be conservative and accurate than aggressive and approximate." },
-  { q: 'Why $129/month?', a: "Because it reflects the value delivered. On a $100K portfolio targeting ~21.5% annualized returns versus SPY's ~13% historical, the potential uplift is around $8,500/year. $1,548/year in subscription cost captures less than 20% of that value — less than what a traditional financial advisor takes in fees." },
-  { q: 'How many signals do you generate?', a: "On average, 3–4 high-conviction signals per month from a universe of 4,000+ stocks. When conditions aren't right, the system stays quiet — that discipline is a meaningful part of why it outperforms." },
-  { q: 'Has the system ever had a down year?', a: "No. Every calendar year and every start date in the 5-year walk-forward ended in positive territory. The hardest year, 2022, still averaged about +8% across start dates while the S&P fell 20% — broad-market crashes are precisely when the regime-aware design is supposed to earn its keep. The strategy is built for participation in momentum and protection in stress, not to outperform every quarter." },
+  { q: 'What returns should I actually expect?', a: "Our nine-year walk-forward backtest averages ~14% annualized with a 17% maximum drawdown and a Sharpe near 1.0 — strong risk-adjusted performance, with roughly half the drawdown of raw momentum. Critically, these are backtested, not yet live, results. Even good strategies degrade somewhat once real money is involved, so underwrite this conservatively — think high-single-digits to low-teens — until our live track record accrues, which we publish as it does. Past performance, including backtested performance, does not predict future results." },
+  { q: "Why don't you publish flashier numbers like other services?", a: "Because we anchor on what survives scrutiny. We rebuilt our research data to be survivorship-free and strictly point-in-time — and when the honest numbers came in more conservative than our earlier figures, we revised them down. Most services lead with cherry-picked windows or zero-friction simulations no subscriber reproduces. We'd rather publish a true 14% with a 17% drawdown than a flattering number we can't defend." },
+  { q: 'Why $129/month?', a: "You're not paying for a return forecast — you're paying for disciplined risk management: a momentum implementation with roughly half the drawdown of the raw factor, and the discipline to keep you invested through a cycle instead of bailing at the bottom. On a meaningful portfolio, the value of not abandoning a strategy in a drawdown dwarfs the $1,548/year — and it's less than a traditional advisor's fee." },
+  { q: 'How many signals do you generate?', a: "The strategy holds up to 20 diversified positions, refreshed as fresh signals appear — typically a handful of new entries a month, with quiet stretches when conditions don't warrant trading. Low turnover by design; the discipline to do nothing is part of the product." },
+  { q: 'Has the system ever had a down year?', a: "Across nine years of walk-forward backtest — through the 2018-Q4 correction, the COVID crash, and the 2022 bear — 94% of rolling two-year windows finished positive, and the worst drawdown stayed near 17%. The design is built for participation in trends and protection in stress, not to win every quarter. (Backtested; the live record is accruing now.)" },
   { q: 'If it works this well, why sell signals instead of running a fund?', a: "Running a fund requires regulatory infrastructure, institutional capital, and a 2+ year live track record — I'm building that now. In the meantime, signals let me prove the system in live markets with real subscribers while bootstrapping. You get access to the same engine I'll eventually deploy with my own capital." },
   { q: 'Can I cancel anytime?', a: 'Yes. No contracts, no commitments. Cancel from your account settings at any time; access continues until the end of your billing period.' },
   { q: 'Do you provide financial advice?', a: 'No. RigaCap provides algorithmic signals and educational information only. RigaCap is not a registered investment advisor. Always do your own research and consider consulting a licensed professional before making investment decisions.' },
