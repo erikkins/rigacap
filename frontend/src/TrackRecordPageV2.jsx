@@ -26,10 +26,10 @@ export default function TrackRecordPageV2() {
         <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
           <SectionLabel>Track Record</SectionLabel>
           <h1 className="font-display font-normal text-ink mb-4 tracking-[-0.025em]" style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontVariationSettings: '"opsz" 144' }}>
-            Five years. Many start dates. <em className="text-claret italic">No cherry-picking.</em>
+            Nine years. Every regime. <em className="text-claret italic">No cherry-picking.</em>
           </h1>
           <p className="text-ink-mute text-[1.05rem] leading-[1.65] max-w-[60ch]">
-            Year-by-year performance validated through walk-forward simulation &mdash; no hindsight bias, no curve-fitting.
+            Performance validated through survivorship-free, point-in-time walk-forward simulation &mdash; no hindsight, no curve-fitting.
             Best, average, and worst outcomes all published.
           </p>
         </div>
@@ -40,10 +40,10 @@ export default function TrackRecordPageV2() {
         <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-rule">
             {[
-              ['+160%', 'Average Return', 'multiple start dates, same strategy'],
-              ['+109%', 'Worst Start Date', 'Still positive, still ahead of SPY'],
-              ['0.92', 'Avg Sharpe Ratio', 'Risk-adjusted performance'],
-              ['20%', 'Avg Max Drawdown', 'Peak to trough'],
+              ['~14%', 'Annualized', 'Walk-forward, 2017–2026'],
+              ['0.92', 'Sharpe Ratio', 'Risk-adjusted performance'],
+              ['17%', 'Max Drawdown', 'vs 35% for raw momentum'],
+              ['94%', 'Windows Positive', '15 of 16 two-year windows'],
             ].map(([value, label, subtitle]) => (
               <div key={label} className="bg-paper-card p-6 sm:p-8 text-center">
                 <div className="font-display text-3xl sm:text-4xl font-normal text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>{value}</div>
@@ -60,7 +60,7 @@ export default function TrackRecordPageV2() {
         <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
           <SectionLabel>Equity Curve</SectionLabel>
           <h2 className="font-display text-ink mb-8 tracking-[-0.02em]" style={{ fontSize: 'clamp(1.6rem, 3vw, 2.25rem)', fontVariationSettings: '"opsz" 96' }}>
-            5-Year Growth &mdash; <em className="text-claret italic">multiple start dates vs S&P 500.</em>
+            Nine-Year Growth &mdash; <em className="text-claret italic">every start date, every regime.</em>
           </h2>
 
           <div className="bg-paper-card border border-rule p-4 sm:p-8">
@@ -85,27 +85,31 @@ export default function TrackRecordPageV2() {
             <table className="w-full border-collapse" style={{ fontFeatureSettings: '"tnum"' }}>
               <thead>
                 <tr>
-                  {['Series', '5-Year Return', 'Annualized', 'Sharpe', 'Max Drawdown'].map((h, i) => (
-                    <th key={h} className={`py-3 ${i === 0 ? 'text-left pr-4' : 'text-right px-5'} font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark`}>
+                  {['Strategy', 'Annualized', 'Sharpe', 'Max Drawdown'].map((h, i) => (
+                    <th key={h} className={`py-3 ${i === 0 ? 'text-left pl-5 pr-4' : 'text-right px-5'} font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark`}>
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
+                <tr className="border-b border-rule">
+                  <td className="py-4 pl-5 pr-4 text-[0.95rem] text-ink-mute">Raw 12-month momentum</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">22.2%</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">0.67</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium" style={{ color: '#8F2D3D' }}>35%</td>
+                </tr>
                 <tr className="border-b border-rule bg-paper-card">
-                  <td className="py-4 pr-4 text-[0.95rem] font-semibold text-ink">RigaCap walk-forward (avg. of multiple start dates)</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">+160%</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">~21.5%</td>
+                  <td className="py-4 pl-5 pr-4 text-[0.95rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>RigaCap &mdash; risk-managed</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">14.0%</td>
                   <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">0.92</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">20%</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-semibold" style={{ color: '#2D5F3F' }}>17%</td>
                 </tr>
                 <tr>
-                  <td className="py-4 pr-4 text-[0.95rem] italic text-ink-mute">S&P 500 (SPY, price only)</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">+93%</td>
+                  <td className="py-4 pl-5 pr-4 text-[0.95rem] italic text-ink-mute">S&P 500 (SPY, price only)</td>
                   <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">~13%</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">&mdash;</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">&mdash;</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">~0.6</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">~34%</td>
                 </tr>
               </tbody>
             </table>
@@ -113,38 +117,29 @@ export default function TrackRecordPageV2() {
           {/* SURFACE-MARKER:perf-comparison-table-END */}
 
           <p className="mt-4 text-[0.85rem] text-ink-light leading-relaxed">
-            Walk-forward simulation across multiple start dates from early 2021, each measured over a full 5-year window. Rebalance frictions modeled in-simulation; realized end-of-day fills used. Best: +252%. Worst: +109%.
+            Walk-forward simulation across 16 overlapping two-year windows, 2017&ndash;2026, on survivorship-free data and net of modeled costs. 15 of 16 windows finished positive; the lone exception was roughly flat in the 2017&ndash;18 chop. Raw 12-month momentum shown as the unmanaged factor benchmark.
             See <Link to="/methodology" className="text-claret underline underline-offset-2 decoration-1">full methodology</Link> for all assumptions.
           </p>
 
-          {/* 11-year companion result — long-window consistency check */}
+          {/* Per-regime resilience */}
           <div className="mt-12 bg-paper-card border-l-[3px] border-claret p-8">
-            <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-3">
-              The 11-Year Consistency Check
+            <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-5">
+              Tested Through Every Downturn
             </div>
-            <div className="grid sm:grid-cols-4 gap-6 mt-4">
-              <div>
-                <div className="font-display text-[1.6rem] font-medium text-ink leading-none" style={{ fontVariationSettings: '"opsz" 96' }}>+675%</div>
-                <div className="text-[0.78rem] text-ink-mute mt-1.5">11-year total return</div>
-              </div>
-              <div>
-                <div className="font-display text-[1.6rem] font-medium text-claret leading-none" style={{ fontVariationSettings: '"opsz" 96' }}>~21.6%</div>
-                <div className="text-[0.78rem] text-ink-mute mt-1.5">Annualized</div>
-              </div>
-              <div>
-                <div className="font-display text-[1.6rem] font-medium text-ink leading-none" style={{ fontVariationSettings: '"opsz" 96' }}>0.95</div>
-                <div className="text-[0.78rem] text-ink-mute mt-1.5">Sharpe</div>
-              </div>
-              <div>
-                <div className="font-display text-[1.6rem] font-medium text-ink leading-none" style={{ fontVariationSettings: '"opsz" 96' }}>28%</div>
-                <div className="text-[0.78rem] text-ink-mute mt-1.5">Max drawdown</div>
-              </div>
+            <div>
+              {[
+                ['COVID crash & recovery', '2019–21', '+24 to +32%', '9–10%'],
+                ['2022 inflation bear', '2022 start', '+8 to +10%', '13–15%'],
+                ['2018-Q4 correction', '2017–19', '+2 to +6%', '13–17%'],
+              ].map(([regime, window, ret, dd]) => (
+                <div key={regime} className="flex items-center justify-between py-3 border-b border-rule text-[0.95rem]">
+                  <div><span className="font-medium text-ink">{regime}</span> <span className="text-ink-light text-[0.8rem]">· {window}</span></div>
+                  <div className="flex gap-6 sm:gap-10 font-mono text-[0.9rem]"><span style={{ color: '#2D5F3F' }}>{ret} ann</span><span className="text-ink-mute">{dd} max DD</span></div>
+                </div>
+              ))}
             </div>
             <p className="mt-6 text-[0.95rem] text-ink leading-[1.6]">
-              Same strategy, run from October 2015 through April 2026 — a full ten-and-a-half-year window covering the 2018 vol spikes, the COVID crash, the 2022 bear market, and the AI rally. The annualized return came in at <strong className="font-medium">~21.6%</strong>, within rounding of our published <strong className="font-medium">~21.5%</strong> annualized. Two different windows, two different validation methods, the same compound growth rate.
-            </p>
-            <p className="mt-3 text-[0.85rem] text-ink-light leading-relaxed">
-              The longer window includes more bear cycles, so the max drawdown reads slightly higher (28% vs the 5-year's 20%). SPY over the same 11-year window: +318% (about ~14% annualized).
+              Three materially different stress environments &mdash; a liquidity crash, a vol spike, and a year-long inflation bear. <strong className="font-medium">The drawdown stayed bounded through all of them</strong>, and the strategy finished each window positive. That resilience &mdash; not a headline return &mdash; is the point.
             </p>
           </div>
         </div>
@@ -157,9 +152,9 @@ export default function TrackRecordPageV2() {
 
           <div className="grid sm:grid-cols-3 gap-px bg-rule">
             {[
-              ['Positive in 2022', 'S&P fell 20%', 'Every start date ended 2022 in positive territory while broad markets had their worst year since 2008 \u2014 averaging around +8%.'],
-              ['2.5x win/loss ratio', '42% win rate', 'Less than half the trades win, but the average winner returns roughly 2.5\u00d7 the size of the average loser. That asymmetry is the engine.'],
-              ['+37pp from Cascade Guard', '~3.7pp annualized', 'When multiple positions hit their trailing stop on the same day, the system pauses new entries for ten days \u2014 preventing forced re-entries during cascading market stress. Validated against a full no-Cascade-Guard counterfactual.'],
+              ['Positive through 2022', 'S&P fell ~20%', 'While the S&P had its worst year since 2008, RigaCap\u2019s 2022 windows finished positive \u2014 the risk controls earning their keep in a year-long bear.'],
+              ['Half the drawdown', 'vs raw momentum', 'The same momentum factor returns ~22% with a brutal 35% drawdown. RigaCap trades some of that raw return for a 17% worst case \u2014 the risk engineering is the edge.'],
+              ['Steps back in stress', 'capital preservation', 'When the market turns hostile and losses cluster, the strategy pauses new entries rather than chase a falling market \u2014 sidestepping the falling knife that turns a bad week into a deep drawdown.'],
             ].map(([title, subtitle, desc]) => (
               <div key={title} className="bg-paper-card p-8">
                 <div className="font-display text-2xl text-ink mb-1" style={{ fontVariationSettings: '"opsz" 96' }}>{title}</div>
@@ -177,8 +172,8 @@ export default function TrackRecordPageV2() {
           <div className="bg-paper-card border-l-[3px] border-claret p-8">
             <h3 className="font-display text-[1.15rem] font-semibold text-ink mb-3">The bear-market test.</h3>
             <p className="text-ink leading-[1.7]">
-              The five-year window included one major bear market. <strong className="font-medium">Every start date ended 2022 in positive territory</strong> while the S&P fell 20% &mdash;{' '}
-              not by luck, but by design. Regime-aware position sizing and trailing-stop discipline kept the strategy on the right side of risk through the year &mdash; responding to data as it changed, not predicting the drawdown.<br />
+              The nine-year span included three distinct downturns. <strong className="font-medium">RigaCap finished its 2022 windows in positive territory</strong> while the S&P fell ~20% &mdash;{' '}
+              not by luck, but by design. Risk-based sizing and trailing-stop discipline kept the strategy on the right side of risk &mdash; responding to data as it changed, not predicting the drawdown.<br />
               <em className="font-display italic text-claret">That behavior, not the headline return, is the reason to subscribe.</em>
             </p>
           </div>
