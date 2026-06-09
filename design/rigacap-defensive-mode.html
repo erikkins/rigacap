@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RigaCap — Defensive Mode Indicator</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#F5F1E8;--card:#FAF7F0;--ink:#141210;--mute:#5A544E;--light:#8A8279;--accent:#7A2430;--line:#DDD5C7;--line2:#C9BFAC;--pos:#2D5F3F;--neg:#8F2D3D;--amber:#9a6a1c}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;padding:40px 0}
+  .serif{font-family:'Fraunces','Georgia',serif}
+  .wrap{max-width:760px;margin:0 auto;padding:0 30px}
+  .label{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--light);font-weight:600;margin-bottom:14px}
+
+  /* the dashboard card */
+  .panel{background:var(--card);border:1px solid var(--line2);border-radius:4px;overflow:hidden;box-shadow:0 8px 30px rgba(20,18,16,.06)}
+  .phead{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line)}
+  .phead .t{font-family:'Fraunces',serif;font-size:19px;font-weight:600}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#fff;background:var(--accent);padding:6px 13px;border-radius:20px}
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:#f3d9a0;box-shadow:0 0 0 3px rgba(243,217,160,.3)}
+
+  .banner{display:flex;gap:16px;padding:22px;background:linear-gradient(90deg,rgba(122,36,48,.06),transparent)}
+  .shield{flex:0 0 44px;height:44px;border:1.5px solid var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center}
+  .banner .h{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--accent)}
+  .banner p{font-size:14.5px;color:#3a342e;margin-top:5px;line-height:1.55;max-width:560px}
+  .banner .meta{display:flex;gap:26px;margin-top:14px}
+  .banner .meta div{font-size:12px;color:var(--light)}
+  .banner .meta b{display:block;font-family:'Fraunces',serif;font-size:17px;color:var(--ink);font-weight:600;margin-top:1px}
+
+  .why{padding:18px 22px;border-top:1px solid var(--line);font-size:13.5px;color:#4a443d;line-height:1.6;background:var(--paper)}
+  .why b{color:var(--ink)}
+
+  .holds{padding:18px 22px;border-top:1px solid var(--line)}
+  .holds .hl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);font-weight:600;margin-bottom:12px}
+  .row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .row:last-child{border-bottom:0}
+  .row .sym{font-weight:600}.row .sub{font-size:11.5px;color:var(--light);font-weight:400}
+  .row .pl{font-variant-numeric:tabular-nums;font-weight:600}
+  .cashrow{display:flex;justify-content:space-between;font-size:13px;color:var(--mute);padding-top:12px;margin-top:4px;border-top:1px dashed var(--line2)}
+  .cashrow b{color:var(--ink);font-weight:600}
+
+  .caption{margin-top:18px;font-size:13px;color:var(--light);line-height:1.6;font-style:italic}
+</style></head><body><div class="wrap">
+  <div class="label">In-dashboard indicator · "risk-off" state</div>
+
+  <div class="panel">
+    <div class="phead">
+      <span class="t">Model Portfolio</span>
+      <span class="badge"><span class="dot"></span>Defensive · entries paused</span>
+    </div>
+
+    <div class="banner">
+      <div class="shield">
+        <svg width="22" height="24" viewBox="0 0 22 24" fill="none"><path d="M11 2 L19 5 V12 C19 17 15 21 11 22 C7 21 3 17 3 12 V5 Z" stroke="#7A2430" stroke-width="1.6"/><path d="M7.5 12 l2.3 2.3 L15 9" stroke="#7A2430" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <div class="h">The system stepped back — on purpose.</div>
+        <p>After a cluster of stop-outs on <b>Jun 5</b>, the strategy paused new entries rather than chase a falling market. It's holding its remaining positions and sitting in cash until conditions stabilize. This is the risk discipline working, not the system idle.</p>
+        <div class="meta">
+          <div>Triggered<b>Jun 5</b></div>
+          <div>Stops that day<b>4</b></div>
+          <div>Re-engages by<b>~Jun 15</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="why">
+      <b>Why this matters.</b> Buying into a sharp sell-off is how concentrated strategies turn one bad week into a 35% drawdown. By pausing after a stop-cluster, the system sidesteps the falling knife — the same discipline that keeps our worst-case drawdown near 17% instead of the raw factor's 35%.
+    </div>
+
+    <div class="holds">
+      <div class="hl">Currently holding · 2 of 20</div>
+      <div class="row"><div><span class="sym">GOOG</span> <span class="sub">· held since Apr 15</span></div><div class="pl" style="color:var(--pos)">+6.2%</div></div>
+      <div class="row"><div><span class="sym">FCX</span> <span class="sub">· held since Jun 4</span></div><div class="pl" style="color:var(--pos)">+1.4%</div></div>
+      <div class="cashrow"><span>Cash (awaiting re-engagement)</span><b>83%</b></div>
+    </div>
+  </div>
+
+  <p class="caption">Most services go silent when their model stops trading. We tell you exactly why — and frame it as what it is: the strategy protecting your capital.</p>
+</div></body></html>

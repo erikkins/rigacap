@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RigaCap — Who Built This</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#F5F1E8;--card:#FAF7F0;--ink:#141210;--mute:#5A544E;--light:#8A8279;--accent:#7A2430;--line:#DDD5C7;--line2:#C9BFAC}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .serif{font-family:'Fraunces','Georgia',serif}
+  .wrap{max-width:920px;margin:0 auto;padding:0 30px}
+  .eyebrow{font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .masthead{border-bottom:2px solid var(--ink);margin-top:14px}
+  .kicker{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--light);padding:7px 0;border-bottom:1px solid var(--line)}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:16px 0 14px}
+  .logo .name{font-family:'Fraunces',serif;font-weight:600;font-size:22px}
+  .navlinks{display:flex;gap:24px;font-size:13.5px;color:var(--mute);font-weight:500}.navlinks .on{color:var(--accent);font-weight:600}
+
+  .head{display:grid;grid-template-columns:1fr 230px;gap:40px;align-items:end;padding:46px 0 30px}
+  h1{font-family:'Fraunces',serif;font-size:44px;font-weight:500;line-height:1.06;letter-spacing:-.015em}
+  h1 em{font-style:italic;color:var(--accent)}
+  .head .dek{margin-top:14px;font-size:17px;color:#3a342e;line-height:1.55}
+  .portrait{text-align:center}
+  .portrait img{width:170px;height:170px;border-radius:50%;object-fit:cover;border:1px solid var(--line2);filter:sepia(.12) contrast(1.02)}
+  .portrait .nm{font-family:'Fraunces',serif;font-weight:600;font-size:16px;margin-top:12px}
+  .portrait .rl{font-size:12.5px;color:var(--light)}
+
+  .body{max-width:660px;padding:36px 0;border-top:1px solid var(--line)}
+  .body p{font-size:16.5px;color:#2c2722;line-height:1.7;margin-bottom:20px}
+  .body p em{font-style:italic;color:var(--accent)}
+  .body h3{font-family:'Fraunces',serif;font-size:21px;font-weight:600;margin:30px 0 12px}
+
+  .pull{margin:40px 0;padding:26px 30px;border-left:3px solid var(--accent);background:var(--card)}
+  .pull p{font-family:'Fraunces',serif;font-size:24px;line-height:1.35;font-style:italic;color:var(--ink);font-weight:500}
+
+  .principles{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border-top:1px solid var(--line);margin-top:10px}
+  .pr{padding:22px 28px 22px 0;border-bottom:1px solid var(--line)}
+  .pr:nth-child(odd){border-right:1px solid var(--line);padding-right:32px}
+  .pr:nth-child(even){padding-left:30px}
+  .pr h4{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:var(--accent);margin-bottom:6px}
+  .pr p{font-size:13.5px;color:#4a443d;line-height:1.55}
+
+  footer{padding:34px 0 54px;border-top:2px solid var(--ink);margin-top:44px;color:var(--light);font-size:12px;line-height:1.7}
+  footer .sig{font-family:'Fraunces',serif;font-style:italic;color:var(--accent);font-size:17px}
+</style></head><body><div class="wrap">
+  <div class="masthead">
+    <div class="kicker"><span>Who built this</span><span>One quant · shipping honestly</span></div>
+    <nav><div class="logo"><span class="name">RigaCap</span></div>
+      <div class="navlinks"><span>Strategy</span><span>Track Record</span><span>Methodology</span><span class="on">About</span><span>Pricing</span></div>
+    </nav>
+  </div>
+
+  <div class="head">
+    <div>
+      <span class="eyebrow">Solo by choice</span>
+      <h1 class="serif" style="margin-top:12px">One quant — disciplined enough<br>to be his own <em>harshest critic.</em></h1>
+      <p class="dek">No team to impress, no fund to raise, no incentive to oversell. Just the discipline to catch my own mistakes before you ever see them.</p>
+    </div>
+    <div class="portrait">
+      <img src="/erikheadshot.jpg" alt="Erik Kins" onerror="this.style.background='#EDE7D8';this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22170%22 height=%22170%22%3E%3Crect width=%22170%22 height=%22170%22 fill=%22%23EDE7D8%22/%3E%3C/svg%3E'">
+      <div class="nm">Erik Kins</div>
+      <div class="rl">Founder, RigaCap</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <p>I'm Erik Kins — a self-taught engineer and former Chief Innovation Officer. For fifteen years I ran quantitative research as a parallel practice alongside a career building software. RigaCap is what happens when those tracks converge: an <em>institution-grade research process, run by one person,</em> priced for individuals.</p>
+
+    <p>Working solo cuts both ways, and I'd rather be honest about it. The upside is there's no marketing department to spin you and no investors to placate. The downside is that <em>I'm the only one who can catch my own errors</em> — so the entire discipline of this operation is built around doing exactly that.</p>
+
+    <h3 class="serif">The clearest example is recent.</h3>
+    <p>When I rebuilt my research data foundation to be <em>survivorship-free</em> — to include the companies that delisted, merged, and went bankrupt, not just today's survivors — and made every price decision strictly point-in-time, my honest numbers came in <em>more conservative</em> than my earlier figures. So I revised them down. The strategy I put my name on is the one that survived me trying my hardest to break it.</p>
+
+    <div class="pull"><p>"The number I publish is the one that's left after I've done everything I can to disprove it."</p></div>
+
+    <p>That's the whole philosophy. RigaCap isn't a lottery ticket dressed up as an algorithm. It's a <em>risk-managed implementation of a real, well-documented market anomaly</em> — momentum — harvested with enough discipline to roughly halve its worst-case drawdown. Backtested rigorously, not yet live, and I'll publish the real results as they accrue. Good or bad.</p>
+
+    <div class="principles">
+      <div class="pr"><h4>Right over impressive</h4><p>I'd rather show you a true 14% with a 17% drawdown than a flattering number I can't defend under scrutiny.</p></div>
+      <div class="pr"><h4>Methodology in the open</h4><p>Survivorship-free, point-in-time, walk-forward, out-of-sample. Read it before you read the marketing.</p></div>
+      <div class="pr"><h4>Focus, not headcount</h4><p>The things I build best, I build alone. RigaCap doesn't need a team. It needs to be right.</p></div>
+      <div class="pr"><h4>Name the unknowns</h4><p>The honest open question is live performance. I'm building that track record now, in public.</p></div>
+    </div>
+  </div>
+
+  <footer>
+    <span class="sig">— Erik</span><br><br>
+    RigaCap publishes impersonal, regularly-circulated commentary under the publisher's exemption. Not personalized advice. Signals only — execute through your own broker. Past performance, including backtested performance, does not guarantee future results.
+  </footer>
+</div></body></html>

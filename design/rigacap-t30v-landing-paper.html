@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap — Risk-Managed Momentum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F5F1E8; --deep:#EDE7D8; --card:#FAF7F0;
+    --ink:#141210; --mute:#5A544E; --light:#8A8279;
+    --accent:#7A2430; --accent2:#9A3444;
+    --line:#DDD5C7; --line2:#C9BFAC;
+    --pos:#2D5F3F; --neg:#8F2D3D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+  .serif{font-family:'Fraunces','Georgia',serif}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 30px}
+  .eyebrow{font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .accent{color:var(--accent)}
+
+  /* masthead */
+  .masthead{border-bottom:2px solid var(--ink);margin-top:14px}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:16px 0 14px}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo .name{font-family:'Fraunces',serif;font-weight:600;font-size:23px;letter-spacing:.01em}
+  .spire{width:20px;height:24px}
+  .navlinks{display:flex;gap:26px;font-size:13.5px;color:var(--mute);font-weight:500}
+  .btn{background:var(--accent);color:#fff;font-weight:600;padding:10px 18px;border-radius:3px;font-size:13.5px;border:0;cursor:pointer}
+  .btn-ghost{background:transparent;border:1px solid var(--line2);color:var(--ink);font-weight:600;padding:10px 18px;border-radius:3px;font-size:13.5px}
+  .kicker{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--light);padding:7px 0;border-bottom:1px solid var(--line)}
+
+  /* hero */
+  .hero{padding:52px 0 30px}
+  .hero h1{font-family:'Fraunces',serif;font-size:58px;line-height:1.02;font-weight:500;letter-spacing:-.015em;max-width:740px}
+  .hero h1 em{font-style:italic;color:var(--accent);font-weight:500}
+  .sub{margin-top:24px;font-size:19px;color:#2c2722;max-width:600px;line-height:1.58;font-weight:400}
+  .lede-rule{width:54px;height:3px;background:var(--accent);margin:26px 0}
+  .cta{display:flex;gap:13px;align-items:center}
+  .cta .note{font-size:12.5px;color:var(--light)}
+
+  /* drawdown proof */
+  .proof{margin-top:46px;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--ink);padding:28px 30px}
+  .proof .ttl{font-size:12px;letter-spacing:.04em;color:var(--mute);text-transform:uppercase;font-weight:600;margin-bottom:6px}
+  .proof .sub2{font-size:13px;color:var(--light);margin-bottom:22px}
+  .ddrow{display:grid;grid-template-columns:200px 1fr 70px;align-items:center;gap:18px;margin:15px 0}
+  .ddrow .lbl{font-size:14.5px;font-weight:600}
+  .ddrow .lbl small{display:block;font-size:11.5px;color:var(--light);font-weight:400;margin-top:2px}
+  .bar{height:26px;background:#e7e0d2;position:relative;border-radius:2px}
+  .bar i{position:absolute;left:0;top:0;bottom:0;display:block;border-radius:2px}
+  .bar .naive{width:100%;background:repeating-linear-gradient(45deg,#8F2D3D,#8F2D3D 9px,#7c2533 9px,#7c2533 18px)}
+  .bar .ours{width:48.5%;background:var(--pos)}
+  .ddrow .val{font-family:'Fraunces',serif;font-size:24px;font-weight:600;text-align:right}
+  .ddrow .val.bad{color:var(--neg)}.ddrow .val.good{color:var(--pos)}
+  .proof .cap{margin-top:18px;font-size:13.5px;color:#3a342e;border-top:1px solid var(--line);padding-top:15px;line-height:1.6}
+  .proof .cap b{color:var(--ink)}
+
+  /* metric strip */
+  .metrics{display:grid;grid-template-columns:repeat(5,1fr);margin-top:26px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink)}
+  .metric{padding:20px 16px;text-align:center;border-right:1px solid var(--line)}
+  .metric:last-child{border-right:0}
+  .metric .n{font-family:'Fraunces',serif;font-size:32px;font-weight:500;letter-spacing:-.01em}
+  .metric .n.a{color:var(--accent)}
+  .metric .k{font-size:11px;color:var(--light);margin-top:4px;letter-spacing:.04em;text-transform:uppercase}
+
+  /* section */
+  section.band{padding:58px 0;border-top:1px solid var(--line)}
+  h2{font-family:'Fraunces',serif;font-size:34px;font-weight:500;letter-spacing:-.01em}
+  .lead{margin-top:13px;color:#3a342e;font-size:16.5px;max-width:660px;line-height:1.6}
+
+  /* table — FT data style */
+  table{width:100%;border-collapse:collapse;margin-top:28px;font-size:15px}
+  th,td{padding:14px 16px;text-align:right;font-variant-numeric:tabular-nums}
+  th:first-child,td:first-child{text-align:left}
+  thead th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);border-bottom:2px solid var(--ink);font-weight:600}
+  tbody td{border-bottom:1px solid var(--line)}
+  tbody tr.us td{background:var(--card);font-weight:600;color:var(--ink)}
+  tbody tr.us td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+  .tag{display:inline-block;font-size:10px;font-weight:700;color:#fff;background:var(--accent);padding:2px 7px;border-radius:2px;margin-left:8px;vertical-align:middle;letter-spacing:.04em}
+
+  /* trust */
+  .trust{display:grid;grid-template-columns:repeat(2,1fr);gap:0;margin-top:28px;border-top:1px solid var(--line)}
+  .tcard{padding:24px 26px 24px 0;border-bottom:1px solid var(--line)}
+  .tcard:nth-child(odd){padding-right:34px;border-right:1px solid var(--line)}
+  .tcard:nth-child(even){padding-left:30px}
+  .tcard h3{font-family:'Fraunces',serif;font-size:18px;font-weight:600;margin-bottom:7px;color:var(--ink)}
+  .tcard h3 span{color:var(--accent)}
+  .tcard p{font-size:14px;color:#4a443d;line-height:1.55}
+
+  .honest{margin-top:34px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);padding:20px 24px;font-size:14px;color:#3a342e;line-height:1.62}
+  .honest b{color:var(--ink)}
+
+  footer{padding:38px 0 56px;border-top:2px solid var(--ink);margin-top:50px;color:var(--light);font-size:12px;line-height:1.7}
+  footer b{color:var(--mute)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="kicker"><span>Disciplined market commentary · Est. 2026</span><span>Walk-forward backtest · Not yet live</span></div>
+    <nav>
+      <div class="logo">
+        <svg class="spire" viewBox="0 0 20 24" fill="none"><path d="M10 1 L13 9 L10 23 L7 9 Z" fill="#7A2430"/><path d="M10 1 L10 23" stroke="#9A3444" stroke-width=".8"/></svg>
+        <span class="name">RigaCap</span>
+      </div>
+      <div class="navlinks"><span>Strategy</span><span>Track Record</span><span>Methodology</span><span>Pricing</span></div>
+      <button class="btn">Start free trial</button>
+    </nav>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <span class="eyebrow">A disciplined implementation of the momentum anomaly</span>
+    <h1 class="serif" style="margin-top:16px">Momentum returns.<br><em>Drawdowns you can live with.</em></h1>
+    <div class="lede-rule"></div>
+    <p class="sub">Raw momentum is powerful — and brutal, with crashes near 35%. We trade a few points of return to cut the worst-case drawdown roughly in half. The difference between a strategy you abandon and one you actually keep.</p>
+    <div class="cta" style="margin-top:30px">
+      <button class="btn">See the track record</button>
+      <button class="btn-ghost">How we validate it</button>
+      <span class="note">$129/mo · 7-day trial · cancel anytime</span>
+    </div>
+
+    <!-- HERO PROOF -->
+    <div class="proof">
+      <div class="ttl">Worst drawdown, 2017–2026</div>
+      <div class="sub2">Same universe. Same momentum factor. The difference is the engineering.</div>
+      <div class="ddrow">
+        <div class="lbl">Naïve momentum <small>top names by raw 12-month return</small></div>
+        <div class="bar"><i class="naive"></i></div>
+        <div class="val bad">−35%</div>
+      </div>
+      <div class="ddrow">
+        <div class="lbl">RigaCap <small>risk-managed implementation</small></div>
+        <div class="bar"><i class="ours"></i></div>
+        <div class="val good">−17%</div>
+      </div>
+      <div class="cap"><b>We cut the maximum drawdown nearly in half</b> — and improved every risk-adjusted measure — through diversification, volatility-aware sizing, and disciplined exits. That's the hard part, and it's the part that lets you stay invested through the cycle.</div>
+    </div>
+
+    <!-- METRICS -->
+    <div class="metrics">
+      <div class="metric"><div class="n a">~14%</div><div class="k">Annualized*</div></div>
+      <div class="metric"><div class="n">0.92</div><div class="k">Sharpe</div></div>
+      <div class="metric"><div class="n a">17%</div><div class="k">Max drawdown</div></div>
+      <div class="metric"><div class="n">1.2</div><div class="k">Calmar</div></div>
+      <div class="metric"><div class="n">0</div><div class="k">Losing 2-yr windows</div></div>
+    </div>
+  </div>
+
+  <!-- COMPARISON -->
+  <section class="band">
+    <span class="eyebrow">The trade professionals pay for</span>
+    <h2 class="serif" style="margin-top:11px">Less raw return. Far less pain.</h2>
+    <p class="lead">We don't claim a magic new edge. We take a well-documented anomaly and harvest it with discipline. Here's the honest tradeoff, measured on survivorship-free data across three downturns.</p>
+    <table>
+      <thead><tr><th>Strategy</th><th>Return</th><th>Sharpe</th><th>Max drawdown</th></tr></thead>
+      <tbody>
+        <tr><td>Raw 12-month momentum</td><td>22.2%</td><td>0.67</td><td style="color:var(--neg)">35%</td></tr>
+        <tr class="us"><td>RigaCap <span class="tag">Ours</span></td><td>14.0%</td><td>0.92</td><td style="color:var(--pos)">17%</td></tr>
+      </tbody>
+    </table>
+    <p class="lead" style="margin-top:20px;font-size:14.5px;color:var(--mute)">Retail chases the 22%. Serious investors and advisers know the 17% drawdown is what keeps you — and your clients — invested through the cycle.</p>
+  </section>
+
+  <!-- TRUST -->
+  <section class="band">
+    <span class="eyebrow">Validated the hard way</span>
+    <h2 class="serif" style="margin-top:11px">Built to survive scrutiny, not just a backtest.</h2>
+    <div class="trust">
+      <div class="tcard"><h3><span>—</span> Survivorship-free</h3><p>Most backtests quietly see only today's winners. We reconstructed delisted and merged names from SEC filings, so the strategy is tested against the companies that <em>died</em> — not just the survivors.</p></div>
+      <div class="tcard"><h3><span>—</span> Point-in-time, no look-ahead</h3><p>Every decision uses only the data available on that date — prices, universe, and corporate actions adjusted as-of, never with hindsight.</p></div>
+      <div class="tcard"><h3><span>—</span> Walk-forward &amp; out-of-sample</h3><p>Tuned on one set of dates, validated on dates it never saw. We discarded parameterizations that looked good in-sample and failed out — and kept only what held up.</p></div>
+      <div class="tcard"><h3><span>—</span> Crash-tested</h3><p>Held its ~17% drawdown ceiling through the 2018-Q4 correction, the COVID crash, and the 2022 bear — three materially different stress environments.</p></div>
+    </div>
+
+    <div class="honest">
+      <b>Our honesty pledge.</b> These are <b>walk-forward backtest</b> results, net of modeled trading costs — <b>not yet a live track record.</b> Even excellent strategies degrade somewhat once real money is involved, so underwrite this conservatively — think high-single-digits to low-teens live — until our real-time results accrue, which we'll publish, good or bad. <em>*Annualized figure is the through-cycle backtest mean; recent and held-out windows run higher.</em>
+    </div>
+  </section>
+
+  <footer>
+    <span class="serif accent" style="font-size:16px;font-weight:600">RigaCap</span> — disciplined momentum commentary for serious investors and advisers.<br><br>
+    RigaCap publishes impersonal, regularly-circulated market commentary under the publisher's exemption. <b>Not personalized investment advice. Signals only — execute through your own broker.</b> Past performance, including backtested performance, does not guarantee future results. Backtested results have inherent limitations and do not reflect live trading conditions.
+  </footer>
+
+</div>
+</body>
+</html>
