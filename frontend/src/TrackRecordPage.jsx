@@ -5,17 +5,17 @@ import TrackRecordChart from './components/TrackRecordChart';
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 const HEADLINE_METRICS = [
-  { value: '+263%', label: 'Average Return', subtitle: 'multiple start dates, same strategy', color: 'text-emerald-400' },
-  { value: '+165%', label: 'Worst Start Date', subtitle: 'Still 2x SPY\'s +86%', color: 'text-amber-400' },
-  { value: '0.92', label: 'Avg Sharpe Ratio', subtitle: 'Risk-adjusted performance', color: 'text-emerald-400' },
-  { value: '27%', label: 'Avg Max Drawdown', subtitle: 'Peak to trough', color: 'text-amber-400' },
+  { value: '8.3%', label: 'Annualized Return', subtitle: '21 years, 2007–2026 (price returns)', color: 'text-emerald-400' },
+  { value: '0.73', label: 'Sharpe Ratio', subtitle: 'Risk-adjusted performance', color: 'text-emerald-400' },
+  { value: '19%', label: 'Worst Drawdown', subtitle: 'vs S&P 500\'s 55%', color: 'text-amber-400' },
+  { value: '+32.0%', label: 'Last 24 Months', subtitle: 'Annualized, held-out window', color: 'text-emerald-400' },
 ];
 
+// Worst drawdown over the 21-year walk-forward (2007–2026) — lower is better.
 const BENCHMARKS = [
-  { name: 'RigaCap (best start)', value: 568, label: '+568%', color: 'from-blue-300 to-blue-400' },
-  { name: 'RigaCap (average)', value: 263, label: '+263%', color: 'from-amber-400 to-amber-500' },
-  { name: 'RigaCap (worst start)', value: 165, label: '+165%', color: 'from-blue-600 to-blue-700' },
-  { name: 'S&P 500', value: 86, label: '+86%', color: 'from-gray-400 to-gray-500' },
+  { name: 'RigaCap', value: 19, label: '-19%', color: 'from-amber-400 to-amber-500' },
+  { name: 'S&P 500', value: 55, label: '-55%', color: 'from-gray-400 to-gray-500' },
+  { name: 'Raw 12-month momentum', value: 57, label: '-57%', color: 'from-blue-600 to-blue-700' },
 ];
 
 export default function TrackRecordPage() {
@@ -108,7 +108,7 @@ export default function TrackRecordPage() {
       <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-12">
         <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
           <BarChart3 className="w-6 h-6 text-amber-400" />
-          5-Year Benchmark Comparison
+          Worst Drawdown — 21 Years (2007–2026)
         </h2>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
           <div className="space-y-5">
@@ -116,17 +116,22 @@ export default function TrackRecordPage() {
               <div key={b.name}>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium text-gray-300">{b.name}</span>
-                  <span className={`text-sm font-bold ${b.name === 'RigaCap Ensemble' ? 'text-amber-400' : 'text-gray-400'}`}>{b.label}</span>
+                  <span className={`text-sm font-bold ${b.name === 'RigaCap' ? 'text-amber-400' : 'text-gray-400'}`}>{b.label}</span>
                 </div>
                 <div className="h-4 bg-gray-800 rounded-full overflow-hidden">
                   <div
                     className={`h-full bg-gradient-to-r ${b.color} rounded-full transition-all duration-1000`}
-                    style={{ width: `${(b.value / 600) * 100}%` }}
+                    style={{ width: `${(b.value / 60) * 100}%` }}
                   />
                 </div>
               </div>
             ))}
           </div>
+          <p className="text-xs text-gray-600 mt-4">
+            Lower is better. Over the same 21 years, raw 12-month momentum returned more (13.2% annualized net of costs)
+            and the S&P 500 returned 9.8% on price — but both demanded drawdowns that cut portfolios by more than half.
+            RigaCap trades some return for a worst drawdown of 19%.
+          </p>
         </div>
       </section>
 

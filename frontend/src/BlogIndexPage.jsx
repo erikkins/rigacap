@@ -13,7 +13,7 @@ const POSTS = [
     icon: Shield,
   },
   {
-    title: 'Inside Our 9-Year Walk-Forward',
+    title: 'Inside Our 21-Year Walk-Forward',
     path: '/blog/walk-forward-results',
     description: 'We spent months trying to break our own strategy. It held up — at honest numbers.',
     category: 'Results',
@@ -36,7 +36,7 @@ const POSTS = [
   {
     title: 'The 2022 Story',
     path: '/blog/2022-story',
-    description: "The S&P 500 fell 20%. Our system preserved capital. Here's exactly how.",
+    description: "The S&P 500 fell 20%. We lost 7.5%. Why that difference is the whole product.",
     category: 'Case Study',
     icon: BarChart3,
   },

@@ -331,7 +331,7 @@ export default function BlogMarketRegimeGuidePage() {
           <p className="text-ink-mute leading-relaxed text-base">
             Want to go deeper? Our{' '}
             <Link to="/blog/walk-forward-results" className="text-claret hover:text-claret/80 underline underline-offset-2 transition-colors">
-              nine-year walk-forward results
+              21-year walk-forward results
             </Link>
             {' '}show how the strategy actually behaved across each of these environments.
           </p>

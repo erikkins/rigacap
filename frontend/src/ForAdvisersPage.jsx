@@ -47,13 +47,14 @@ export default function ForAdvisersPage() {
           {/* Insight box */}
           <div className="mt-11 bg-paper-card border border-rule border-t-[3px] border-t-ink p-7 sm:p-8 grid sm:grid-cols-[1.1fr_1fr] gap-8 items-center">
             <div className="font-display font-medium text-[1.7rem] leading-[1.25] tracking-[-0.01em]" style={{ fontVariationSettings: '"opsz" 72' }}>
-              Clients don't fire you at <em className="text-claret italic">−17%.</em><br />They fire you at <em className="text-claret italic">−35%.</em>
+              Clients don't fire you at <em className="text-claret italic">−19%.</em><br />They fire you at <em className="text-claret italic">−57%.</em>
             </div>
             <div>
-              <div className="text-[0.7rem] tracking-[0.05em] uppercase text-ink-mute font-semibold mb-3">Worst drawdown · 2017–2026</div>
+              <div className="text-[0.7rem] tracking-[0.05em] uppercase text-ink-mute font-semibold mb-3">Worst drawdown · 2007–2026</div>
               {[
-                ['Raw momentum', '100%', '−35%', false],
-                ['RigaCap', '48.5%', '−17%', true],
+                ['Raw momentum', '100%', '−57%', false],
+                ['S&P 500', '96%', '−55%', false],
+                ['RigaCap', '34%', '−19%', true],
               ].map(([label, w, val, good]) => (
                 <div key={label} className="grid grid-cols-[1fr_56px] items-center gap-3 my-2.5">
                   <div>
@@ -75,9 +76,74 @@ export default function ForAdvisersPage() {
           <h2 className="font-display font-medium text-ink mt-2.5 tracking-[-0.01em]" style={{ fontSize: 'clamp(1.6rem, 3vw, 2rem)', fontVariationSettings: '"opsz" 96' }}>The drawdown is the deliverable.</h2>
           <div className="grid sm:grid-cols-3 gap-x-8 gap-y-6 mt-7 border-t border-rule pt-7">
             {[
-              ['Behaviorally holdable', 'Your biggest portfolio risk isn’t the market — it’s a client capitulating at the bottom. A 17% worst-case drawdown is one a client can sit through. A 35% one isn’t.'],
+              ['Behaviorally holdable', 'Your biggest portfolio risk isn’t the market — it’s a client capitulating at the bottom. A 19% worst case across twenty-one years — through 2008, COVID, and 2022 — is one a client can sit through. The index’s 55% and raw momentum’s 57% aren’t.'],
               ['Diligence you can present', 'Survivorship-free, point-in-time, walk-forward, out-of-sample. The methodology stands up in a committee meeting, not just a marketing deck.'],
-              ['A complement, not a core', 'A disciplined momentum sleeve that sits alongside an indexed core — uncorrelated discipline, sized to your mandate.'],
+              ['A complement, not a core', 'A disciplined momentum sleeve that sits alongside an indexed core — 0.43 monthly correlation to the S&P over 21 years, sized to your mandate.'],
+            ].map(([h, p]) => (
+              <div key={h}>
+                <h3 className="font-display text-[1.05rem] font-semibold text-claret mb-1.5" style={{ fontVariationSettings: '"opsz" 36' }}>{h}</h3>
+                <p className="text-[0.88rem] text-[#4a443d] leading-[1.55]">{p}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* The months clients call about */}
+        <section className="py-12 border-t border-rule">
+          <Eyebrow>When clients call</Eyebrow>
+          <h2 className="font-display font-medium text-ink mt-2.5 tracking-[-0.01em]" style={{ fontSize: 'clamp(1.6rem, 3vw, 2rem)', fontVariationSettings: '"opsz" 96' }}>
+            The index's six worst months, <em className="text-claret italic">and where we were.</em>
+          </h2>
+          <div className="grid sm:grid-cols-[1.2fr_1fr] gap-10 mt-7 items-start">
+            <table className="w-full border-collapse" style={{ fontFeatureSettings: '"tnum"' }}>
+              <thead>
+                <tr>
+                  {['Month', 'S&P 500', 'RigaCap'].map((h, i) => (
+                    <th key={h} className={`py-2.5 ${i === 0 ? 'text-left' : 'text-right'} font-body font-medium text-[0.72rem] tracking-[0.14em] uppercase text-ink-mute border-b border-rule-dark`}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['Oct 2008', '−16.5%', '0.0%', 'in cash'],
+                  ['Mar 2020', '−13.1%', '−4.7%', ''],
+                  ['Feb 2009', '−10.7%', '0.0%', 'in cash'],
+                  ['Sep 2008', '−9.9%', '0.0%', 'in cash'],
+                  ['Sep 2022', '−9.6%', '0.0%', 'in cash'],
+                  ['Dec 2018', '−9.3%', '−1.3%', ''],
+                ].map(([m, s, r, note]) => (
+                  <tr key={m} className="border-b border-rule">
+                    <td className="py-2.5 text-[0.9rem] text-ink-mute">{m}</td>
+                    <td className="py-2.5 text-right font-mono text-[0.9rem]" style={{ color: '#8F2D3D' }}>{s}</td>
+                    <td className="py-2.5 text-right font-mono text-[0.9rem] font-medium" style={{ color: '#2D5F3F' }}>
+                      {r}{note && <span className="font-body italic text-ink-light text-[0.78rem]"> · {note}</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="text-[0.95rem] text-ink leading-[1.7]">
+              <p>
+                Across 21 backtested years, RigaCap averaged <strong className="font-medium">−1.0% in the index's down months</strong> (the
+                index averaged −3.9% in those same months) while keeping <strong className="font-medium">+1.7% per month</strong> when the
+                index was rising. Four of the index's six worst months, the regime filter had the strategy in cash before the month began.
+              </p>
+              <p className="mt-3 text-[0.85rem] text-ink-light">
+                That asymmetry — roughly a quarter of the downside, meaningful participation in the upside — is what a 0.43 correlation
+                feels like to a client. Backtested, price returns; see <a href="/methodology" className="text-claret underline underline-offset-2 decoration-1">methodology</a>.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Operational reality */}
+        <section className="py-12 border-t border-rule">
+          <Eyebrow>The questions you'll ask anyway</Eyebrow>
+          <div className="grid sm:grid-cols-3 gap-x-8 gap-y-6 mt-6 border-t border-rule pt-7">
+            {[
+              ['Turnover & taxes', 'Roughly 50–60 trades a year across 20 positions; typical holds run weeks to months, so gains skew short-term. Most advisers deploy it in tax-advantaged accounts, or accept the tax drag as the cost of the drawdown profile in taxable ones.'],
+              ['Workflow', 'Signals and the model book update daily after the close; entries and exits arrive by email with sizing. Implementation is yours, through your custodian — typically minutes a day, not hours.'],
+              ['What clients see', 'A track record page and methodology you can hand them directly — every number backtested, labeled, and reproducible, with the live record accruing in public. Nothing you’d need to walk back later.'],
             ].map(([h, p]) => (
               <div key={h}>
                 <h3 className="font-display text-[1.05rem] font-semibold text-claret mb-1.5" style={{ fontVariationSettings: '"opsz" 36' }}>{h}</h3>
@@ -105,7 +171,7 @@ export default function ForAdvisersPage() {
             ))}
           </div>
           <div className="mt-7 bg-paper-card border border-rule border-l-[3px] border-l-claret p-5 text-[0.88rem] text-[#3a342e] leading-[1.6]">
-            <strong className="text-ink">How it works.</strong> RigaCap delivers <strong className="text-ink">signals and a model allocation</strong> — entries, exits, and sizing. You implement across client accounts through your own custodian; <strong className="text-ink">RigaCap never touches client capital, and you remain the fiduciary.</strong> Performance shown is backtested (~14% / 0.92 Sharpe / 17% max DD, 2017–2026); the strategy runs live and its real-time track record is now accruing — underwrite conservatively until that record builds, which we publish.
+            <strong className="text-ink">How it works.</strong> RigaCap delivers <strong className="text-ink">signals and a model allocation</strong> — entries, exits, and sizing. You implement across client accounts through your own custodian; <strong className="text-ink">RigaCap never touches client capital, and you remain the fiduciary.</strong> Performance shown is backtested (8.3% annualized / 0.73 Sharpe / 19% max DD across 2007–2026; +32% / 2.20 Sharpe over the last 24 months); the strategy runs live and its real-time track record is now accruing — underwrite conservatively until that record builds, which we publish.
           </div>
         </section>
 

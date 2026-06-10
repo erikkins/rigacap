@@ -91,10 +91,10 @@ export default function BlogHonestBacktestPage() {
               <span className="font-mono text-[0.72rem] tracking-[0.12em] uppercase text-paper/70 font-semibold">The honest number</span>
             </div>
             <p className="text-paper/90 text-[1.05rem] leading-[1.7] mb-5">
-              Stripped of the inflation, our strategy compounds at roughly <strong className="text-paper font-semibold">14% a year</strong>, with a worst-case drawdown near <strong className="text-paper font-semibold">17%</strong> and a Sharpe ratio close to <strong className="text-paper font-semibold">1.0</strong> — tested through the 2018 correction, the COVID crash, and the 2022 bear, with 15 of 16 rolling two-year windows finishing positive.
+              Stripped of the inflation, our strategy compounds at <strong className="text-paper font-semibold">8.3% a year</strong> across <strong className="text-paper font-semibold">21 years (2007–2026)</strong>, with a worst drawdown of <strong className="text-paper font-semibold">19%</strong> and a Sharpe ratio of <strong className="text-paper font-semibold">0.73</strong> — tested through the 2008 financial crisis, the COVID crash, and the 2022 bear.
             </p>
             <p className="text-paper/70 text-[0.95rem] leading-[1.65] mb-0">
-              Lower than what we used to show. More conservative than we'd hoped. And — as far as we can make it — true.
+              Lower than what we used to show. More conservative than we'd hoped. And — as far as we can make it — true. (Our data from 2016 onward is survivorship-free and point-in-time; the pre-2016 extension carries a survivorship caveat, disclosed in our methodology.)
             </p>
           </div>
 
@@ -103,7 +103,7 @@ export default function BlogHonestBacktestPage() {
           </h2>
           <p>The obvious move is to never mention any of it. Quietly fix the numbers, update the website, hope nobody noticed. Plenty of shops do exactly that.</p>
           <p>We're telling you because <strong className="font-medium">the honesty is the product.</strong> Anyone can publish a flattering backtest; almost no one publishes the one that survived their own attempt to destroy it. When you can't see how a number was made, you're trusting the marketing. When the person behind it has shown you the bodies — the bugs they found, the numbers they walked back — you're trusting the method.</p>
-          <p>A 14% strategy you can actually believe is worth more than a 30% strategy you can't.</p>
+          <p>An 8% strategy you can actually believe is worth more than a 30% strategy you can't.</p>
 
           <div className="my-10 border-l-[3px] border-claret pl-6 py-1">
             <p className="font-display text-[1.4rem] leading-[1.4] italic text-ink mb-0" style={{ fontVariationSettings: '"opsz" 36' }}>

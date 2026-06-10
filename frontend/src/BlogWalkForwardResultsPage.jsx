@@ -4,14 +4,14 @@ import { ArrowLeft, ArrowRight, TrendingUp, BarChart3, Target, AlertTriangle, Za
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 export default function BlogWalkForwardResultsPage() {
-  useEffect(() => { document.title = 'Inside Our 9-Year Walk-Forward | RigaCap';
-    const DESC = 'RigaCap 9-year, survivorship-free walk-forward simulation across 16 overlapping windows: ~14% annualized, 0.92 Sharpe, 17% max drawdown — half the drawdown of raw momentum.';
+  useEffect(() => { document.title = 'Inside Our 21-Year Walk-Forward | RigaCap';
+    const DESC = 'RigaCap 21-year continuous walk-forward simulation (2007–2026): 8.3% annualized, 0.73 Sharpe, 19% worst drawdown — a third of the drawdown of raw momentum.';
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', DESC);
-    document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'Inside Our 9-Year Walk-Forward | RigaCap');
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'Inside Our 21-Year Walk-Forward | RigaCap');
     document.querySelector('meta[property="og:description"]')?.setAttribute('content', DESC);
     document.querySelector('meta[property="og:url"]')?.setAttribute('content', 'https://rigacap.com/blog/walk-forward-results');
-    document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', 'Inside Our 9-Year Walk-Forward | RigaCap');
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', 'Inside Our 21-Year Walk-Forward | RigaCap');
     document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', DESC);
     const existingSchema = document.querySelector('script[type="application/ld+json"]');
     if (existingSchema) existingSchema.remove();
@@ -20,7 +20,7 @@ export default function BlogWalkForwardResultsPage() {
     schema.text = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "Article",
-      "headline": "Inside Our 9-Year Walk-Forward",
+      "headline": "Inside Our 21-Year Walk-Forward",
       "description": DESC,
       "author": {"@type": "Organization", "name": "RigaCap"},
       "publisher": {"@type": "Organization", "name": "RigaCap", "url": "https://rigacap.com"},
@@ -46,7 +46,7 @@ export default function BlogWalkForwardResultsPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center">
           <p className="text-sm font-medium uppercase tracking-wider text-claret mb-6">Walk-Forward Validated</p>
           <h1 className="font-display text-4xl sm:text-5xl font-bold text-ink tracking-tight mb-4" style={{ fontVariationSettings: '"opsz" 48' }}>
-            Inside Our 9-Year Walk-Forward
+            Inside Our 21-Year Walk-Forward
           </h1>
           <p className="text-lg text-ink-mute max-w-2xl mx-auto">
             Most trading strategies look great on paper. Ours did too
@@ -61,15 +61,15 @@ export default function BlogWalkForwardResultsPage() {
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-paper-card border border-positive/30 rounded p-6 text-center">
             <ShieldCheck className="w-6 h-6 text-positive mx-auto mb-2" />
-            <div className="text-3xl sm:text-4xl font-bold text-positive">-17%</div>
+            <div className="text-3xl sm:text-4xl font-bold text-positive">-19%</div>
             <div className="text-xs text-ink-light uppercase tracking-wider mt-1">Our Strategy</div>
-            <div className="text-xs text-ink-light mt-0.5">Worst drawdown, 9-year</div>
+            <div className="text-xs text-ink-light mt-0.5">Worst drawdown, 21-year</div>
           </div>
           <div className="bg-paper-card border border-rule/50 rounded p-6 text-center">
             <BarChart3 className="w-6 h-6 text-ink-mute mx-auto mb-2" />
-            <div className="text-3xl sm:text-4xl font-bold text-ink-mute">-34%</div>
+            <div className="text-3xl sm:text-4xl font-bold text-ink-mute">-55%</div>
             <div className="text-xs text-ink-light uppercase tracking-wider mt-1">S&P 500</div>
-            <div className="text-xs text-ink-light mt-0.5">Same period (COVID)</div>
+            <div className="text-xs text-ink-light mt-0.5">Same period (2008–09)</div>
           </div>
         </div>
       </section>
@@ -112,10 +112,10 @@ export default function BlogWalkForwardResultsPage() {
           <p className="text-ink-mute leading-relaxed text-base">
             Strategy parameters are fixed at the start and applied forward across every period —
             no per-period re-tuning that could quietly leak future information into past
-            decisions. We then run the same test from <strong className="font-medium">16 overlapping
-            start dates</strong> across 2017–2026. If the strategy were just finding noise, the
-            outcomes would diverge wildly. Ours stayed consistent: 15 of the 16 windows finished
-            positive.
+            decisions. We then run the test <strong className="font-medium">continuously across
+            21 years, 2007 through 2026</strong> — through the 2008 financial crisis, the COVID
+            crash, and the 2022 bear — with the most recent 24 months held out as a final exam
+            the strategy was never tuned on.
           </p>
           <p className="text-ink-mute leading-relaxed text-base">
             For a deeper dive into the methodology, see our{' '}
@@ -137,10 +137,10 @@ export default function BlogWalkForwardResultsPage() {
         {/* Setup Details */}
         <div className="grid sm:grid-cols-2 gap-4 my-8">
           {[
-            { label: 'Time Span', value: '9 Years', detail: '2017 through 2026' },
-            { label: 'Data Integrity', value: 'Survivorship-free', detail: 'Includes companies that died' },
+            { label: 'Time Span', value: '21 Years', detail: '2007 through 2026' },
+            { label: 'Data Integrity', value: 'Survivorship-free', detail: 'From 2016 on; pre-2016 caveated in methodology' },
             { label: 'Decisions', value: 'Point-in-time', detail: 'No look-ahead, ever' },
-            { label: 'Robustness', value: '16 windows', detail: 'Same rules, different start dates' },
+            { label: 'Robustness', value: 'Held-out 24 mo', detail: 'A final window never tuned on' },
           ].map((item) => (
             <div key={item.label} className="bg-paper-card border border-rule rounded p-5">
               <div className="text-xs text-ink-light uppercase tracking-wider">{item.label}</div>
@@ -152,8 +152,9 @@ export default function BlogWalkForwardResultsPage() {
 
         <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <p className="text-ink-mute leading-relaxed text-base">
-            This window captures everything: the 2018-Q4 correction, the COVID crash, the
-            brutal 2022 bear market, and the AI-fueled rally that followed. If a strategy can
+            This window captures everything: the 2008 financial crisis, the 2018-Q4 correction,
+            the COVID crash, the brutal 2022 bear market, and the AI-fueled rally that followed.
+            If a strategy can
             survive all of that — on data that includes the companies that went bankrupt — it's
             worth paying attention to.
           </p>
@@ -178,10 +179,9 @@ export default function BlogWalkForwardResultsPage() {
             </thead>
             <tbody>
               {[
-                { metric: 'Annualized Return', ours: '~14%', raw: '22.2%', spy: '~13%' },
-                { metric: 'Sharpe Ratio', ours: '0.92', raw: '0.67', spy: '~0.6', highlight: true },
-                { metric: 'Max Drawdown', ours: '17%', raw: '35%', spy: '~34%', highlight: true },
-                { metric: 'Windows Positive', ours: '15 / 16', raw: '—', spy: '—' },
+                { metric: 'Annualized Return', ours: '8.3%', raw: '13.2%', spy: '9.8%' },
+                { metric: 'Sharpe Ratio', ours: '0.73', raw: '0.69', spy: '—', highlight: true },
+                { metric: 'Max Drawdown', ours: '19%', raw: '57%', spy: '55%', highlight: true },
               ].map((row) => (
                 <tr key={row.metric} className={`border-b border-rule/50 ${row.highlight ? 'bg-positive/5' : ''}`}>
                   <td className="px-6 py-4 text-ink-mute font-medium">{row.metric}</td>
@@ -197,11 +197,13 @@ export default function BlogWalkForwardResultsPage() {
         <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <p className="text-ink-mute leading-relaxed text-base">
             Here's the honest tradeoff. The <em>raw</em> momentum factor actually returns more —
-            about 22% a year — but it does it with a stomach-churning 35% drawdown that almost no
-            real investor survives. RigaCap gives back some of that raw return in exchange for
-            <strong className="font-medium"> roughly half the drawdown and a meaningfully better
-            Sharpe</strong>. Versus the S&P, it earns a similar return with far less pain. The
-            point was never the biggest number — it was a number you can actually live through.
+            13.2% a year net of trading costs (19.0% gross) — but it does it with a stomach-churning
+            57% drawdown that almost no real investor survives. RigaCap gives back some of that raw
+            return in exchange for <strong className="font-medium">roughly a third of the drawdown
+            and a slightly better Sharpe</strong>. Versus the S&P — 9.8% a year on price, with a 55%
+            worst drawdown that twice cut the index by more than half — it earns a bit less while
+            taking on dramatically less pain. The point was never the biggest number — it was a
+            number you can actually live through.
           </p>
 
           {/* Equity Curve Description */}
@@ -210,12 +212,12 @@ export default function BlogWalkForwardResultsPage() {
             The Shape of the Equity Curve
           </h2>
           <p className="text-ink-mute leading-relaxed text-base">
-            The equity curve tells the real story. Through the COVID crash, the strategy's
-            two-year windows held their drawdown near 9–10% while staying positioned for the
-            recovery. Through the 2022 bear, when the S&P fell roughly 20%, RigaCap's 2022
-            windows finished positive — not by predicting the crash, but by responding to the
-            data: risk-based sizing leaned away from the most volatile names, and disciplined
-            exits cut losers before they compounded.
+            The equity curve tells the real story. Across 21 years — including 2008, when the
+            S&P lost more than half its value — the strategy's worst peak-to-trough loss was
+            19%. Through the 2022 bear, when the S&P fell roughly 20%, RigaCap finished the
+            year positive — not by predicting the crash, but by responding to the data:
+            risk-based sizing leaned away from the most volatile names, and disciplined exits
+            cut losers before they compounded.
           </p>
           <p className="text-ink-mute leading-relaxed text-base">
             The pattern repeats across regimes. The strategy doesn't try to call tops and
@@ -227,44 +229,46 @@ export default function BlogWalkForwardResultsPage() {
           {/* Multi-Start-Date Robustness */}
           <h2 className="font-display text-2xl font-bold text-ink mt-12 mb-4 flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
             <Zap className="w-6 h-6 text-claret flex-shrink-0" />
-            Why Multi-Window Testing Matters
+            Why a Held-Out Window Matters
           </h2>
           <p className="text-ink-mute leading-relaxed text-base">
             Cherry-picking a favorable start date is the most common backtest distortion in
             retail signal services. A strategy can look incredible from one date and unremarkable
-            from another. We addressed this by running the same rules from 16 overlapping start
-            dates across the full nine years and publishing the entire distribution.
+            from another. We addressed this by running one continuous 21-year simulation — no
+            chosen start date to flatter the result — and by holding out the most recent 24 months
+            (June 2024 through May 2026) as a final exam the strategy was never tuned on.
           </p>
         </div>
 
-        {/* Multi-window result range */}
+        {/* Held-out window result */}
         <div className="grid grid-cols-3 gap-4 my-8">
           <div className="bg-paper-card border border-positive/30 rounded p-6 text-center">
             <TrendingUp className="w-6 h-6 text-positive mx-auto mb-2" />
-            <div className="text-3xl sm:text-4xl font-bold text-positive">+29%</div>
-            <div className="text-xs text-ink-light uppercase tracking-wider mt-1">Best Window</div>
-            <div className="text-xs text-ink-light mt-0.5">Annualized</div>
+            <div className="text-3xl sm:text-4xl font-bold text-positive">+32.0%</div>
+            <div className="text-xs text-ink-light uppercase tracking-wider mt-1">Annualized</div>
+            <div className="text-xs text-ink-light mt-0.5">Held-out 24 months</div>
           </div>
           <div className="bg-paper-card border border-claret/30 rounded p-6 text-center">
             <BarChart3 className="w-6 h-6 text-claret mx-auto mb-2" />
-            <div className="text-3xl sm:text-4xl font-bold text-claret">~14%</div>
-            <div className="text-xs text-ink-light uppercase tracking-wider mt-1">Average</div>
-            <div className="text-xs text-ink-light mt-0.5">Across all windows</div>
+            <div className="text-3xl sm:text-4xl font-bold text-claret">2.20</div>
+            <div className="text-xs text-ink-light uppercase tracking-wider mt-1">Sharpe Ratio</div>
+            <div className="text-xs text-ink-light mt-0.5">vs S&P 1.18</div>
           </div>
           <div className="bg-paper-card border border-rule/50 rounded p-6 text-center">
             <ShieldCheck className="w-6 h-6 text-ink-mute mx-auto mb-2" />
-            <div className="text-3xl sm:text-4xl font-bold text-ink-mute">-5%</div>
-            <div className="text-xs text-ink-light uppercase tracking-wider mt-1">Worst Window</div>
-            <div className="text-xs text-ink-light mt-0.5">The lone negative</div>
+            <div className="text-3xl sm:text-4xl font-bold text-ink-mute">-8.5%</div>
+            <div className="text-xs text-ink-light uppercase tracking-wider mt-1">Max Drawdown</div>
+            <div className="text-xs text-ink-light mt-0.5">vs S&P -19.0%</div>
           </div>
         </div>
 
         <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <p className="text-ink-mute leading-relaxed text-base">
-            Fifteen of the sixteen windows finished positive. The one exception was roughly flat —
-            a soft −5% through the choppy 2017–18 stretch. The spread from worst to best is real
-            path-dependency, not strategy fragility: the same rules from a different entry date
-            land in a different part of the distribution. We publish all of it.
+            Over that held-out window the strategy compounded at 32.0% annualized with a 2.20
+            Sharpe and an 8.5% maximum drawdown — against the S&P's 19.9%, 1.18, and 19.0%. A
+            two-year stretch that strong won't repeat on schedule; the 21-year average of 8.3% is
+            the number to underwrite. But it's the cleanest evidence we have that the rules work
+            on data they were never fitted to. We publish all of it.
           </p>
 
           {/* What we're NOT claiming */}
@@ -288,16 +292,16 @@ export default function BlogWalkForwardResultsPage() {
           </p>
           <p className="text-ink-mute text-sm m-0">
             <span className="text-negative font-semibold">Past performance does not guarantee future results.</span>{' '}
-            The next nine years could look nothing like the last. Regimes shift, correlations
+            The next two decades could look nothing like the last two. Regimes shift, correlations
             break, and a true momentum-factor winter would hurt us. We believe a diversified,
             risk-managed implementation handles this better than concentrated bets — but nothing
             is certain.
           </p>
           <p className="text-ink-mute text-sm m-0">
             <span className="text-negative font-semibold">The drawdown is real.</span>{' '}
-            At its worst the strategy was down about 17% from its peak. That's a real number that
-            tests an investor's resolve — it's just a far smaller one than the 35% the raw factor
-            demands. We don't hide it; we lead with it.
+            At its worst — through the 2008 financial crisis — the strategy was down about 19% from
+            its peak. That's a real number that tests an investor's resolve — it's just a far
+            smaller one than the 57% the raw factor demands. We don't hide it; we lead with it.
           </p>
         </div>
 

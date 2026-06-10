@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Shield, TrendingDown, TrendingUp, Clock, BarChart3, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Shield, TrendingDown, Clock, BarChart3, ArrowRight } from 'lucide-react';
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 export default function Blog2022StoryPage() {
@@ -25,9 +25,9 @@ export default function Blog2022StoryPage() {
             The 2022 Story
           </h1>
           <p className="text-lg text-ink-mute max-w-2xl mx-auto">
-            The S&P 500 fell 20%. Our system preserved capital.
+            The S&P 500 fell 20%. We lost 7.5%.
             <br className="hidden sm:block" />
-            Here's exactly how — and why it matters.
+            That difference is the whole product — here's why.
           </p>
         </div>
       </section>
@@ -37,15 +37,15 @@ export default function Blog2022StoryPage() {
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-paper-card border border-negative/30 rounded p-6 text-center">
             <TrendingDown className="w-6 h-6 text-negative mx-auto mb-2" />
-            <div className="text-3xl sm:text-4xl font-bold text-negative">-20.4%</div>
+            <div className="text-3xl sm:text-4xl font-bold text-negative">-19.9%</div>
             <div className="text-xs text-ink-light uppercase tracking-wider mt-1">S&P 500</div>
             <div className="text-xs text-ink-light mt-0.5">2022 Calendar Year</div>
           </div>
-          <div className="bg-paper-card border border-positive/30 rounded p-6 text-center">
-            <TrendingUp className="w-6 h-6 text-positive mx-auto mb-2" />
-            <div className="text-3xl sm:text-4xl font-bold text-positive">+6.0%</div>
+          <div className="bg-paper-card border border-claret/30 rounded p-6 text-center">
+            <Shield className="w-6 h-6 text-claret mx-auto mb-2" />
+            <div className="text-3xl sm:text-4xl font-bold text-ink">-7.5%</div>
             <div className="text-xs text-ink-light uppercase tracking-wider mt-1">RigaCap</div>
-            <div className="text-xs text-ink-light mt-0.5">Walk-Forward Validated</div>
+            <div className="text-xs text-ink-light mt-0.5">Continuous Walk-Forward</div>
           </div>
         </div>
       </section>
@@ -59,29 +59,30 @@ export default function Blog2022StoryPage() {
             The Year Everyone Lost Money
           </h2>
           <p className="text-ink-mute leading-relaxed text-base">
-            2022 was brutal. The Fed hiked rates seven times. Inflation hit 9.1%.
-            The S&P 500 dropped 20.4% — its worst year since 2008. The Nasdaq fell 33%.
-            Bonds, which were supposed to be safe, dropped 13%. There was nowhere to hide.
+            2022 was brutal. The Fed hiked rates relentlessly. Inflation hit a forty-year high.
+            The S&P 500 dropped 19.9% — its worst year since 2008. The Nasdaq fell harder.
+            Bonds, which were supposed to be safe, lost money too. There was nowhere to hide.
           </p>
           <p className="text-ink-mute leading-relaxed text-base">
-            Every "buy the dip" call turned into a falling knife.
-            Every bounce turned into a lower high.
-            Retail investors who tried to time the bottom got destroyed.
+            And it was worst of all for momentum investors. The 2021–23 unwind was gutting
+            raw 12-month momentum strategies: the very stocks that had led the way up were
+            the ones falling hardest, month after month. Every "buy the dip" call turned into
+            a falling knife. Every bounce turned into a lower high.
           </p>
 
           {/* What Our System Did */}
           <h2 className="font-display text-2xl font-bold text-ink mt-12 mb-4 flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
             <Clock className="w-6 h-6 text-claret flex-shrink-0" />
-            What Our System Did: Nothing
+            What Our System Did: Step Back
           </h2>
           <p className="text-ink-mute leading-relaxed text-base">
-            For five consecutive months, our system generated zero buy signals. Zero.
+            For long stretches of 2022, our system generated few or no buy signals.
           </p>
           <p className="text-ink-mute leading-relaxed text-base">
             It detected that market conditions were unfavorable — the SPY was trading below its
             200-day moving average, our 7-regime model classified conditions as a bear market —
-            and it refused to deploy capital. It sat on its hands while everyone else
-            was trying to catch a falling knife.
+            and it stopped deploying fresh capital while trailing stops took risk off the table.
+            It sat on its hands while everyone else was trying to catch a falling knife.
           </p>
 
           {/* Highlight Box */}
@@ -97,25 +98,24 @@ export default function Blog2022StoryPage() {
           </div>
 
           <p className="text-ink-mute leading-relaxed text-base">
-            When the regime filter finally cleared — when conditions showed genuine
-            recovery, not a dead cat bounce — the system re-entered with precision.
-            Concentrated positions in momentum leaders. 12% trailing stops to protect gains.
-          </p>
-          <p className="text-ink-mute leading-relaxed text-base">
-            The result: <span className="text-positive font-semibold">+6.0% for the year</span>.
-            Not spectacular. Not a moonshot. But while the S&P 500 lost a fifth of its value,
-            our subscribers would have been up.
+            The result: <span className="text-ink font-semibold">−7.5% for the year</span>.
+            Yes — a loss. We're not going to dress that up. But it came in a year when the
+            index lost 19.9% and the multi-year momentum unwind was destroying momentum
+            investors. Cutting the damage to roughly a third of the index's loss — in the
+            single worst environment for our style of investing — is the system doing
+            exactly what it was built to do.
           </p>
 
           {/* The Math */}
           <h2 className="font-display text-2xl font-bold text-ink mt-12 mb-4 flex items-center gap-2" style={{ fontVariationSettings: '"opsz" 48' }}>
             <BarChart3 className="w-6 h-6 text-claret flex-shrink-0" />
-            Why This Matters More Than a 50% Year
+            Why a Small Loss Matters More Than a Big Year
           </h2>
           <p className="text-ink-mute leading-relaxed text-base">
-            Anyone can make money in a bull market. 2021 and 2025 were easy — stocks
-            went up, momentum was everywhere, and even random picks did well.
-            The real test of a strategy is what happens when the market turns against you.
+            Anyone can make money in a bull market. Stocks go up, momentum is everywhere,
+            and even random picks do well. The real test of a strategy is what happens
+            when the market turns against you — because losses compound against you
+            in a way gains never do.
           </p>
         </div>
 
@@ -127,23 +127,21 @@ export default function Blog2022StoryPage() {
                 <th className="text-left px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold">Scenario</th>
                 <th className="text-right px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold">$10,000 Start</th>
                 <th className="text-right px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold">After 2022</th>
+                <th className="text-right px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold hidden sm:table-cell">Gain Needed to Recover</th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b border-rule/50">
-                <td className="px-6 py-4 text-ink-mute">S&P 500 Index Fund</td>
+                <td className="px-6 py-4 text-ink-mute">S&P 500 Index Fund (−19.9%)</td>
                 <td className="px-6 py-4 text-right text-ink-mute">$10,000</td>
-                <td className="px-6 py-4 text-right text-negative font-semibold">$7,960</td>
+                <td className="px-6 py-4 text-right text-negative font-semibold">$8,010</td>
+                <td className="px-6 py-4 text-right text-negative font-semibold hidden sm:table-cell">+25%</td>
               </tr>
-              <tr className="border-b border-rule/50">
-                <td className="px-6 py-4 text-ink-mute">Average Hedge Fund</td>
+              <tr className="bg-claret/10 border-t border-claret/30">
+                <td className="px-6 py-4 text-claret font-medium">RigaCap (−7.5%)</td>
                 <td className="px-6 py-4 text-right text-ink-mute">$10,000</td>
-                <td className="px-6 py-4 text-right text-negative font-semibold">$9,360</td>
-              </tr>
-              <tr className="bg-positive/10 border-t border-positive/30">
-                <td className="px-6 py-4 text-positive font-medium">RigaCap</td>
-                <td className="px-6 py-4 text-right text-ink-mute">$10,000</td>
-                <td className="px-6 py-4 text-right text-positive font-bold">$10,600</td>
+                <td className="px-6 py-4 text-right text-ink font-bold">$9,250</td>
+                <td className="px-6 py-4 text-right text-ink font-bold hidden sm:table-cell">+8%</td>
               </tr>
             </tbody>
           </table>
@@ -151,10 +149,12 @@ export default function Blog2022StoryPage() {
 
         <div className="prose prose-gray max-w-none">
           <p className="text-ink-mute leading-relaxed text-base">
-            The difference between losing 20% and staying flat isn't just 20 percentage points.
-            It's the compounding effect. Someone who lost 20% in 2022 needed a 25% gain in
-            2023 just to get back to even. Our subscribers started 2023 already ahead —
-            and compounded from there.
+            The difference between losing 20% and losing 7.5% isn't just 12 percentage points.
+            It's the compounding math of recovery. Someone who lost 20% in 2022 needed a 25% gain
+            just to get back to even — for many index investors, that took years. A 7.5% loss
+            is recoverable in months. That's the asymmetry the system is built around: you can't
+            avoid every loss, but you can keep every loss small enough that the next leg up
+            makes you whole quickly.
           </p>
 
           {/* How It Works */}
@@ -179,8 +179,9 @@ export default function Blog2022StoryPage() {
                 <p className="text-ink-mute text-sm m-0">
                   Our proprietary model classifies the market into 7 distinct regimes — from
                   strong bull to panic crash. When conditions shift to unfavorable territory,
-                  the system stops buying entirely. No new positions. Full cash. This alone
-                  avoided the worst of 2022.
+                  the system stops buying entirely. No new positions. This is what cut the
+                  2022 loss to a fraction of the index's — and in 2008 it kept the system
+                  in cash almost the entire year.
                 </p>
               </div>
             </div>
@@ -220,36 +221,47 @@ export default function Blog2022StoryPage() {
         <div className="prose prose-gray max-w-none">
           {/* The Bigger Picture */}
           <h2 className="font-display text-2xl font-bold text-ink mt-12 mb-4" style={{ fontVariationSettings: '"opsz" 48' }}>
-            The Bigger Picture: 5 Years, Zero Losing Years
+            The Bigger Picture: Losing Less When It Matters
           </h2>
           <p className="text-ink-mute leading-relaxed text-base">
-            2022 wasn't a fluke. Across 5 years of walk-forward testing — starting from
-            multiple start dates to eliminate timing luck — the system has never had a losing year.
+            2022 wasn't a fluke — and we won't pretend the record is spotless. Over the full
+            21-year continuous walk-forward (2007–2026), the system has had losing years:
+            2017, 2018, and 2022. The worst of them was 2018, when RigaCap lost 12.3% against
+            the S&P's 7.0% — a whipsaw year where the regime filter got chopped in and out.
+            We'd rather show you that wart than hide it.
+          </p>
+          <p className="text-ink-mute leading-relaxed text-base">
+            But look at what happens in the years that actually destroy portfolios.
+            In 2008, while the S&P 500 fell 37.7%, the regime filter held the system in cash
+            by design — it finished the year at −0.5%. In 2020, it captured the recovery and
+            returned +31.9% against the S&P's +15.2%. And in 2022, it cut a 19.9% index loss
+            down to 7.5%. The pattern is consistent: in the worst years, the system loses
+            far less — and small losses are the ones you recover from.
           </p>
         </div>
 
-        {/* 5-Year Summary */}
+        {/* Recent Years Summary */}
         <div className="bg-paper-card border border-rule rounded overflow-hidden my-8">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-rule">
                 <th className="text-left px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold">Year</th>
                 <th className="text-right px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold">RigaCap</th>
-                <th className="text-right px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold">S&P 500</th>
                 <th className="text-left px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold hidden sm:table-cell">Note</th>
               </tr>
             </thead>
             <tbody>
               {[
-                { year: '2022', rc: '+8.0%', spy: '-18.2%', note: 'Bear market — every start date positive', rcColor: 'text-positive', highlight: true },
-                { year: '2023', rc: '+12.0%', spy: '+26.2%', note: 'Lagged the index but stayed positive', rcColor: 'text-positive' },
-                { year: '2024', rc: '+31.9%', spy: '+24.9%', note: 'Beat the index', rcColor: 'text-positive' },
-                { year: '2025', rc: '+49.6%', spy: '+17.7%', note: 'Beat the index handily', rcColor: 'text-positive' },
+                { year: '2021', rc: '+30.8%', note: 'Momentum bull market', rcColor: 'text-positive' },
+                { year: '2022', rc: '-7.5%', note: 'S&P 500: −19.9%. Loss cut to roughly a third of the index', rcColor: 'text-negative', highlight: true },
+                { year: '2023', rc: '+17.8%', note: "More than recovered 2022's loss", rcColor: 'text-positive' },
+                { year: '2024', rc: '+7.6%', note: 'Modest year', rcColor: 'text-positive' },
+                { year: '2025', rc: '+12.0%', note: '', rcColor: 'text-positive' },
+                { year: '2026 YTD', rc: '+16.4%', note: 'Year to date', rcColor: 'text-positive' },
               ].map((row) => (
                 <tr key={row.year} className={`border-b border-rule/50 ${row.highlight ? 'bg-claret/10' : ''}`}>
                   <td className={`px-6 py-4 font-medium ${row.highlight ? 'text-claret' : 'text-ink'}`}>{row.year}</td>
                   <td className={`px-6 py-4 text-right font-semibold ${row.rcColor}`}>{row.rc}</td>
-                  <td className={`px-6 py-4 text-right ${row.spy.startsWith('-') ? 'text-negative' : 'text-ink-mute'}`}>{row.spy}</td>
                   <td className="px-6 py-4 text-ink-light text-xs hidden sm:table-cell">{row.note}</td>
                 </tr>
               ))}
@@ -259,10 +271,12 @@ export default function Blog2022StoryPage() {
 
         <div className="prose prose-gray max-w-none">
           <p className="text-ink-mute leading-relaxed text-base">
-            The system doesn't try to beat the market every year. In bull markets like 2023,
-            it may lag the S&P. But it aims never to give back what it earned. Over our
-            nine-year walk-forward, RigaCap compounded at roughly 14% a year — close to the
-            S&P's pace, but with about half the drawdown.
+            The system doesn't try to beat the market every year — in strong bull years it
+            often lags. Over the 21-year continuous walk-forward (2007–2026), RigaCap
+            compounded at 8.3% a year with a 0.73 Sharpe ratio, giving up some pace to the
+            index in exchange for a worst drawdown of 19% — against the S&P's 55% and raw
+            12-month momentum's 57%. You pay for that drawdown profile in bull-year returns.
+            2022 is what you get back.
           </p>
 
           {/* Methodology Note */}
@@ -280,9 +294,11 @@ export default function Blog2022StoryPage() {
             There's no hindsight bias, no curve-fitting, no cherry-picking.
           </p>
           <p className="text-ink-mute leading-relaxed text-base">
-            We run each simulation from sixteen overlapping start dates to prove the results
-            aren't dependent on when you begin. Fifteen of the sixteen finished positive — and
-            through the 2022 bear specifically, every window stayed in the black while the S&P fell.
+            And we report the continuous path — one portfolio, held through everything from
+            2007 to 2026 — not the friendliest start date. That's why this post shows a loss
+            for 2022 rather than a flattering window. A strategy that only looks good from
+            hand-picked starting points isn't a strategy; it's a story. We'd rather show you
+            the loss and let the size of it speak.
           </p>
         </div>
 
@@ -334,7 +350,7 @@ export default function Blog2022StoryPage() {
               <span className="block text-ink-light text-sm mt-1">The trailing stop mechanism that limited drawdowns during 2022.</span>
             </Link>
             <Link to="/blog/walk-forward-results" className="block p-4 bg-paper-card rounded border border-rule hover:border-rule-dark transition-colors">
-              <span className="text-ink font-medium">Inside Our 9-Year Walk-Forward</span>
+              <span className="text-ink font-medium">Inside Our 21-Year Walk-Forward</span>
               <span className="block text-ink-light text-sm mt-1">Full performance breakdown including the 2022 period.</span>
             </Link>
           </div>

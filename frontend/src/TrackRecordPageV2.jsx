@@ -171,18 +171,19 @@ export default function TrackRecordPageV2() {
             </div>
             <div>
               {[
-                ['COVID crash & recovery', '2019–21', '+24 to +32%', '9–10%'],
-                ['2022 inflation bear', '2022 start', '+8 to +10%', '13–15%'],
-                ['2018-Q4 correction', '2017–19', '+2 to +6%', '13–17%'],
+                ['2008 financial crisis', 'S&P −37.7%', '−0.5%', 'in cash by design'],
+                ['COVID crash year', 'S&P +15.2%', '+31.9%', 'exit & re-entry'],
+                ['2022 inflation bear', 'S&P −19.9%', '−7.5%', 'shallow & recoverable'],
+                ['2018 whipsaw (our worst)', 'S&P −7.0%', '−12.3%', 'the honest wart'],
               ].map(([regime, window, ret, dd]) => (
                 <div key={regime} className="flex items-center justify-between py-3 border-b border-rule text-[0.95rem]">
                   <div><span className="font-medium text-ink">{regime}</span> <span className="text-ink-light text-[0.8rem]">· {window}</span></div>
-                  <div className="flex gap-6 sm:gap-10 font-mono text-[0.9rem]"><span style={{ color: '#2D5F3F' }}>{ret} ann</span><span className="text-ink-mute">{dd} max DD</span></div>
+                  <div className="flex gap-6 sm:gap-10 font-mono text-[0.9rem]"><span style={{ color: ret.startsWith('−') || ret.startsWith('-') ? '#8F2D3D' : '#2D5F3F' }}>{ret}</span><span className="text-ink-mute italic font-body">{dd}</span></div>
                 </div>
               ))}
             </div>
             <p className="mt-6 text-[0.95rem] text-ink leading-[1.6]">
-              Three materially different stress environments &mdash; a liquidity crash, a vol spike, and a year-long inflation bear. <strong className="font-medium">The drawdown stayed bounded through all of them</strong>, and the strategy finished each window positive. That resilience &mdash; not a headline return &mdash; is the point.
+              Calendar years, continuous run &mdash; including our worst one, because you should see it. A liquidity collapse the strategy sat out almost entirely, a crash year it turned into its best, a bear it cut to a third of the index's loss &mdash; and a whipsaw year it lost more than the index. <strong className="font-medium">The drawdown stayed bounded through all of it.</strong> That resilience &mdash; not a headline return &mdash; is the point.
             </p>
           </div>
         </div>
@@ -195,7 +196,7 @@ export default function TrackRecordPageV2() {
 
           <div className="grid sm:grid-cols-3 gap-px bg-rule">
             {[
-              ['Positive through 2022', 'S&P fell ~20%', 'While the S&P had its worst year since 2008, RigaCap\u2019s 2022 windows finished positive \u2014 the risk controls earning their keep in a year-long bear.'],
+              ['\u22120.5% through 2008', 'S&P fell 38%', 'While the index lost over a third in the worst financial year since the Depression, RigaCap ended 2008 essentially flat \u2014 the regime filter had it in cash by design.'],
               ['A third of the drawdown', 'vs raw momentum', 'The same momentum factor nets ~13% over two decades with a brutal 57% drawdown. RigaCap trades some of that raw return for a 19% worst case across 21 years \u2014 the risk engineering is the edge.'],
               ['Steps back in stress', 'capital preservation', 'When the market turns hostile and losses cluster, the strategy pauses new entries rather than chase a falling market \u2014 sidestepping the falling knife that turns a bad week into a deep drawdown.'],
             ].map(([title, subtitle, desc]) => (
@@ -215,7 +216,7 @@ export default function TrackRecordPageV2() {
           <div className="bg-paper-card border-l-[3px] border-claret p-8">
             <h3 className="font-display text-[1.15rem] font-semibold text-ink mb-3">The bear-market test.</h3>
             <p className="text-ink leading-[1.7]">
-              The twenty-one-year span included the 2008 financial crisis &mdash; in which the index lost over half its value and raw momentum lost 46% in a single year &mdash; plus COVID and the 2022 bear. <strong className="font-medium">RigaCap's worst peak-to-trough across all of it stayed near 19%, and it finished its 2022 windows positive</strong> while the S&P fell ~20% &mdash;{' '}
+              The twenty-one-year span included the 2008 financial crisis &mdash; in which the index lost over half its value and raw momentum lost 46% in a single year &mdash; plus COVID and the 2022 bear. <strong className="font-medium">RigaCap's worst peak-to-trough across all of it stayed near 19%; it ended 2008 essentially flat and held its 2022 loss to a third of the index's</strong> &mdash;{' '}
               not by luck, but by design. Risk-based sizing and trailing-stop discipline kept the strategy on the right side of risk &mdash; responding to data as it changed, not predicting the drawdown.<br />
               <em className="font-display italic text-claret">That behavior, not the headline return, is the reason to subscribe.</em>
             </p>
