@@ -134,7 +134,8 @@ async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.
     yrs = (end - start).days / 365.25
     return {"ann": ((1 + r.total_return_pct / 100) ** (1 / yrs) - 1) * 100,
             "sharpe": r.sharpe_ratio, "mdd": r.max_drawdown_pct, "total": r.total_return_pct,
-            "trades": len(r.trades), "yrs": yrs, "size": size}
+            "trades": len(r.trades), "yrs": yrs, "size": size,
+            "equity_curve": getattr(r, "equity_curve", None)}
 
 
 _ADJ = {}  # symbol -> adjusted close series, cached
@@ -189,6 +190,41 @@ def naive_momentum(start, end, lookback=120, hold=21, topk=20):
     return {"ann": ann, "sharpe": sharpe, "mdd": mdd}
 
 
+def naive_curve(start, end, lookback=120, hold=21, topk=20):
+    """Same as naive_momentum but returns (dates, equity) for the portfolio-race animation."""
+    cal = _adj_close("SPY", end).loc[pd.Timestamp(start):pd.Timestamp(end)].index
+    if len(cal) < lookback + hold:
+        return [], []
+    ridx = list(range(0, len(cal) - 1, hold))
+    eq = [1.0]
+    dates = [cal[ridx[0]]]
+    for i in range(len(ridx) - 1):
+        d, nd = cal[ridx[i]], cal[ridx[i + 1]]
+        uni = [s for s in v.universe_asof_prod(d, 300, 15.0) if s not in _EXCLUDED_SET and not s.startswith("^")][:100]
+        scored = []
+        for sym in uni:
+            try:
+                ps = _adj_close(sym, end).loc[:d]
+            except Exception:
+                continue
+            if len(ps) < lookback + 1:
+                continue
+            scored.append((ps.iloc[-1] / ps.iloc[-1 - lookback] - 1, sym))
+        scored.sort(reverse=True)
+        top = [s for _, s in scored[:topk]]
+        if not top:
+            eq.append(eq[-1]); dates.append(nd); continue
+        rets = []
+        for sym in top:
+            ps = _adj_close(sym, end)
+            p0 = ps.loc[:d].iloc[-1]
+            seg = ps.loc[d:nd]
+            p1 = seg.iloc[-1] if len(seg) else p0
+            rets.append(p1 / p0 - 1)
+        eq.append(eq[-1] * (1 + sum(rets) / len(rets))); dates.append(nd)
+    return dates, eq
+
+
 def _starts_ends():
     starts = [datetime(y, m, 3) for y in (2022, 2023) for m in (1, 4, 7, 10)] + \
              [datetime(2024, m, 3) for m in (1, 4)]
@@ -200,6 +236,46 @@ def _starts_ends():
 
 
 async def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "race":
+        # Portfolio-race animation data: $100k in t30v vs SPY vs naive momentum,
+        # 2017-2026, on survivorship-free parquet. Emits value + drawdown series
+        # on a weekly grid -> frontend/public/portfolio-race.json.
+        import json as _json, pandas as _pd
+        s = datetime(2017, 1, 3); e = datetime(2026, 5, 29)
+        print("=== PORTFOLIO RACE ($100k each): t30v vs SPY vs naive ===", flush=True)
+        print("running t30v WF (2017-2026)...", flush=True)
+        res = await wf(s, e, 20, 4.5, 30, conv=0.0, volw=1.0)
+        ec = res.get("equity_curve") or []
+        print(f"  t30v: {len(ec)} curve points, total {res['total']:.0f}% / mdd {res['mdd']:.1f}%", flush=True)
+        print("running naive momentum (250d = 12-month, matches copy)...", flush=True)
+        n_dates, n_eq = naive_curve(s, e, lookback=250)
+        print(f"  naive: {len(n_eq)} points", flush=True)
+        spy = _adj_close("SPY", e).loc[_pd.Timestamp(s):_pd.Timestamp(e)]
+        grid = _pd.date_range(s, e, freq="W-FRI")
+
+        def _al(dates, vals):
+            ser = _pd.Series(list(vals), index=_pd.DatetimeIndex([_pd.Timestamp(x) for x in dates])).sort_index()
+            ser = ser[~ser.index.duplicated(keep="last")]
+            return ser.reindex(grid, method="ffill").ffill().bfill()
+
+        t = _al([p["date"] for p in ec], [float(p["equity"]) for p in ec])
+        n = _al(n_dates, n_eq)
+        sp = _al(spy.index, spy.values)
+        out = {"start_capital": 100000, "as_of": "2026-05-29", "backtested": True,
+               "dates": [d.strftime("%Y-%m-%d") for d in grid], "series": {}}
+        for name, ser in [("rigacap", t), ("spy", sp), ("naive", n)]:
+            norm = ser / ser.iloc[0] * 100000.0
+            dd = (norm / norm.cummax() - 1.0) * 100.0
+            out["series"][name] = {"value": [round(float(x)) for x in norm],
+                                   "dd": [round(float(x), 1) for x in dd]}
+        path = "/Users/erikkins/CODE/stocker-app/frontend/public/portfolio-race.json"
+        with open(path, "w") as f:
+            _json.dump(out, f)
+        print(f"WROTE {path} ({len(grid)} weekly points)", flush=True)
+        for name in ("rigacap", "spy", "naive"):
+            vv = out["series"][name]["value"]; dd = out["series"][name]["dd"]
+            print(f"  {name:8} end=${vv[-1]:,}  worst_dd={min(dd):.1f}%", flush=True)
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "naive":
         # factor decomposition: pure momentum factor vs t30v (implementation edge = the gap)
         se = []
