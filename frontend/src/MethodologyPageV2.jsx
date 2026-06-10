@@ -83,10 +83,19 @@ export default function MethodologyPageV2() {
 
           <div className="space-y-5 text-[1.05rem] leading-[1.75] text-ink max-w-[62ch]">
             <p>
-              Walk-forward simulation tests the strategy across biweekly periods over a full nine-year span (2017&ndash;2026),
-              on <strong className="font-medium">survivorship-free, point-in-time data</strong>. Strategy parameters are
+              Walk-forward simulation tests the strategy across biweekly periods over a full twenty-one-year span (2007&ndash;2026),
+              on <strong className="font-medium">point-in-time data</strong>. Strategy parameters are
               <strong className="font-medium"> fixed at the start and applied forward</strong> &mdash; no future information is
               ever used, and no per-period re-tuning hides hindsight bias.
+            </p>
+            <p>
+              <strong className="font-medium">Data honesty, stated plainly:</strong> from 2016 onward our research data is
+              survivorship-free &mdash; it includes companies that later delisted, ranked exactly as they appeared at the time.
+              The 2005&ndash;2015 extension is built from a source that only covers companies still listed today, so
+              <strong className="font-medium"> pre-2016 results carry a survivorship bias</strong>. That bias flatters the
+              benchmarks (raw momentum, buy-and-hold) at least as much as it flatters us &mdash; the worst casualties of 2008
+              are simply missing for everyone &mdash; but we'd rather disclose it than pretend it away. All results are price
+              returns (dividends excluded for both the strategy and its benchmarks).
             </p>
             <p>
               The period structure governs <strong className="font-medium">rebalancing cadence</strong>, not re-optimization.
