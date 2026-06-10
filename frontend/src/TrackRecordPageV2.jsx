@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import TrackRecordChart from './components/TrackRecordChart';
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 import TopNav from './components/TopNav';
 
@@ -55,22 +54,11 @@ export default function TrackRecordPageV2() {
         </div>
       </section>
 
-      {/* Equity Curve */}
-      <section className="py-16 border-t border-rule mt-12">
-        <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
-          <SectionLabel>Equity Curve</SectionLabel>
-          <h2 className="font-display text-ink mb-8 tracking-[-0.02em]" style={{ fontSize: 'clamp(1.6rem, 3vw, 2.25rem)', fontVariationSettings: '"opsz" 96' }}>
-            Nine-Year Growth &mdash; <em className="text-claret italic">every start date, every regime.</em>
-          </h2>
-
-          <div className="bg-paper-card border border-rule p-4 sm:p-8">
-            <TrackRecordChart />
-            <p className="text-[0.82rem] text-ink-light mt-4 text-center">
-              Solid line: average across multiple start dates. Shaded band: best to worst. All use the same strategy and parameters.
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* Drawdown chart goes here (underwater viz) — equity-curve chart removed
+          Jun 9 2026: it showed return-only, where RigaCap ≈/below SPY (our edge
+          is RISK, not return), so it argued against the product. The per-regime
+          resilience table below carries the drawdown story until the underwater
+          chart lands. */}
 
       {/* Performance Table */}
       <section className="py-16 border-t border-rule">
