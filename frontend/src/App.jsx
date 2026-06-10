@@ -3420,7 +3420,7 @@ function Dashboard() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-t border-b border-ink py-4 mb-6">
                 <MetricCard title="Portfolio Value" value={`$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 0})}`} subtitle={`Cost basis $${totalCost.toLocaleString(undefined, {maximumFractionDigits: 0})}`} />
                 <MetricCard title="Open P&L" value={`${totalPnlPct >= 0 ? '+' : ''}${totalPnlPct.toFixed(1)}%`} trend={totalPnlPct >= 0 ? 'up' : 'down'} subtitle={`${totalPnlPct >= 0 ? '+' : ''}$${Math.abs(totalValue - totalCost).toLocaleString(undefined, {maximumFractionDigits: 0})} unrealized`} />
-                <MetricCard title="Positions" value={<>{positions.length}<span className="text-[0.95rem] text-ink-light">&thinsp;/&thinsp;6</span></>} subtitle={positions.length >= 6 ? 'Max filled' : `${6 - positions.length} open slots`} />
+                <MetricCard title="Positions" value={<>{positions.length}<span className="text-[0.95rem] text-ink-light">&thinsp;/&thinsp;{dashboardData?.regime_adjustments?.effective?.max_positions ?? 20}</span></>} subtitle={positions.length >= (dashboardData?.regime_adjustments?.effective?.max_positions ?? 20) ? 'Max filled' : `${(dashboardData?.regime_adjustments?.effective?.max_positions ?? 20) - positions.length} open slots`} />
                 <MetricCard title="Buy Signals" value={dashboardData?.market_stats?.signal_count || signalsWithLiveQuotes.length} subtitle={`${dashboardData?.market_stats?.fresh_count || 0} fresh`} />
                 <MetricCard title="Win Rate" value={trades.length > 0 ? `${winRate.toFixed(0)}%` : '—'} subtitle={trades.length > 0 ? `${trades.length} trades` : '0 closed trades'} />
               </div>
@@ -4109,9 +4109,14 @@ function Dashboard() {
                 const hasUnfilteredPositions = guidanceWithLiveQuotes.length > 0 || positionsWithLiveQuotes.length > 0;
                 return (
               <div className="overflow-hidden">
-                <div className="flex items-baseline justify-between pb-3 border-b-2 border-ink mb-5">
-                  <h2 className="font-display text-[1.25rem] font-medium text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>Open Positions</h2>
-                  <span className="font-mono text-[0.72rem] text-ink-light tracking-wide">Click row for chart</span>
+                <div className="pb-3 border-b-2 border-ink mb-5">
+                  <div className="flex items-baseline justify-between">
+                    <h2 className="font-display text-[1.25rem] font-medium text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>Open Positions</h2>
+                    <span className="font-mono text-[0.72rem] text-ink-light tracking-wide">Click row for chart</span>
+                  </div>
+                  {/* invisible spacer matching Buy Signals' subtitle line so both
+                      headers' bottom borders align across the two columns */}
+                  <em className="block invisible font-display italic text-[0.78rem] mt-1.5" style={{ fontVariationSettings: '"opsz" 24' }}>spacer</em>
                 </div>
 
                 <div className="max-h-[500px] overflow-y-auto">
