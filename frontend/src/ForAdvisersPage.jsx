@@ -16,11 +16,20 @@ export default function ForAdvisersPage() {
         <div className="border-b-2 border-ink mt-3">
           <div className="flex justify-between text-[0.68rem] tracking-[0.14em] uppercase text-ink-light py-2 border-b border-rule">
             <span>For registered advisers &amp; RIAs</span>
-            <span className="hidden sm:inline">Model delivery · Walk-forward backtest</span>
+            <span className="hidden sm:inline">Signals & sizing · Walk-forward backtested</span>
           </div>
           <nav className="flex items-center justify-between py-4">
             <Link to="/" className="flex items-center gap-2.5 no-underline">
-              <svg width="20" height="24" viewBox="0 0 20 24"><path d="M10 1 L13 9 L10 23 L7 9 Z" fill="#7A2430" /></svg>
+              <svg className="w-7 h-7 shrink-0 relative top-[2px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 1024">
+                <g transform="matrix(5.27 0 0 5.27 640 511)"><g>
+                  <g transform="matrix(0.448 0 0 0.448 -22.4 -28.8)"><path fill="#7A2430" transform="translate(-300,-286)" d="M215.49 348.13C215.49 341.43 220.55 335.98 227.05 335.22L241.64 278.36C238.32 275.99 236.13 272.12 236.13 267.73C236.13 260.51 241.98 254.66 249.2 254.66C255.89 254.66 261.34 259.71 262.11 266.19L309.18 278.16C311.55 274.82 315.42 272.63 319.83 272.63C324 272.63 327.67 274.62 330.06 277.66L391.39 258.85C391.87 252.06 397.46 246.69 404.37 246.69C405.09 246.69 405.78 246.79 406.47 246.91L420.4 223.13C395.44 205.2 364.84 194.62 331.76 194.62C247.75 194.62 179.66 262.72 179.66 346.72C179.66 357.06 180.71 367.15 182.69 376.91L216.05 351.72C215.72 350.57 215.49 349.38 215.49 348.13z"/></g>
+                  <g transform="matrix(0.448 0 0 0.448 -11.1 -9)"><path fill="#7A2430" transform="translate(-325,-330)" d="M427.89 228.86L414.54 251.65C416.32 253.88 417.43 256.68 417.43 259.76C417.43 266.98 411.58 272.83 404.37 272.83C400.19 272.83 396.52 270.84 394.13 267.79L332.8 286.61C332.33 293.39 326.73 298.76 319.83 298.76C313.14 298.76 307.69 293.72 306.92 287.24L259.84 275.26C257.76 278.21 254.48 280.2 250.71 280.64L236.12 337.5C239.44 339.87 241.63 343.74 241.63 348.13C241.63 355.35 235.78 361.2 228.56 361.2C226.02 361.2 223.68 360.45 221.67 359.19L185.04 386.86C189.39 402.76 196.25 417.63 205.17 431L343.51 312.12L408.04 312.12L465.59 274.41C456.09 256.86 443.23 241.4 427.89 228.86z"/></g>
+                  <g transform="matrix(0.448 0 0 0.448 73.8 -37.1)"><polygon fill="#7A2430" points="-45.31,-14.33 45.31,-39.44 -12.75,39.44 -17.06,3.28"/></g>
+                  <g transform="matrix(0.448 0 0 0.448 -48.2 25.7)"><path fill="#141210" transform="translate(-242,-407)" d="M297.69 513.38C291.85 512.18 286.13 510.68 280.53 508.91L280.53 405.3L233.16 446.01L233.16 485.18C189.93 454.31 161.67 403.77 161.67 346.72C161.67 321.48 167.23 297.53 177.14 275.97L153.41 275.97C144.69 297.88 139.84 321.74 139.84 346.72C139.84 452.54 225.93 538.63 331.76 538.63C336.23 538.63 340.66 538.42 345.06 538.12L345.06 349.85L297.69 390.55L297.69 513.38z"/></g>
+                  <g transform="matrix(0.448 0 0 0.448 41.6 31.4)"><path fill="#141210" transform="translate(-443,-420)" d="M523.16 333.38L501.27 333.38C501.62 337.79 501.85 342.23 501.85 346.72C501.85 381 491.63 412.92 474.11 439.65L474.11 304.24L426.75 335.28L426.75 487.65C421.24 491.37 415.52 494.78 409.58 497.85L409.58 341.74L362.22 341.74L362.22 536.19C453.61 521.55 523.67 442.17 523.67 346.72C523.67 342.23 523.46 337.79 523.16 333.38z"/></g>
+                  <g transform="matrix(0.448 0 0 0.448 -11.8 -60.8)"><path fill="#141210" transform="translate(-324,-214)" d="M331.75 169.32C390.45 169.32 442.58 197.98 474.89 242.04L483.06 239.78C449.46 192.37 394.16 161.37 331.75 161.37C258.06 161.37 194.28 204.6 164.43 267.02L173.29 267.02C202.53 209.12 262.58 169.32 331.75 169.32z"/></g>
+                </g></g>
+              </svg>
               <span className="font-display font-semibold text-[1.4rem] text-ink" style={{ fontVariationSettings: '"opsz" 48' }}>RigaCap</span>
               <span className="text-[0.68rem] tracking-[0.12em] uppercase text-claret border border-rule-dark rounded-full px-2.5 py-1 font-semibold">For Advisers</span>
             </Link>
@@ -205,17 +214,17 @@ export default function ForAdvisersPage() {
         <section className="py-11 border-t-2 border-ink text-center">
           <h2 className="font-display font-medium text-ink text-[1.7rem]" style={{ fontVariationSettings: '"opsz" 72' }}>Use it yourself. Offer it to your clients.</h2>
           <p className="text-ink-mute text-[0.95rem] mt-2.5 mb-5 max-w-[520px] mx-auto">
-            Start a free trial on your own account — the same engine our subscribers run. When you're ready to deliver the sleeve across client books, talk to us about model delivery and licensing.
+            Start a free trial on your own account — the same engine our subscribers run. When you're ready to implement the sleeve across client books, talk to us about firm licensing.
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link to="/" className="inline-flex items-center gap-2 bg-claret text-white font-semibold px-6 py-3.5 rounded-[3px] text-[0.95rem] no-underline hover:bg-claret-light transition-colors">Start your free trial <ArrowRight className="w-4 h-4" /></Link>
-            <a href="mailto:erik@rigacap.com?subject=RigaCap%20model%20delivery" className="inline-flex items-center border border-rule-dark text-ink font-semibold px-6 py-3.5 rounded-[3px] text-[0.95rem] no-underline hover:border-ink transition-colors">Talk about model delivery</a>
+            <a href="mailto:erik@rigacap.com?subject=RigaCap%20firm%20licensing" className="inline-flex items-center border border-rule-dark text-ink font-semibold px-6 py-3.5 rounded-[3px] text-[0.95rem] no-underline hover:border-ink transition-colors">Talk about firm licensing</a>
           </div>
         </section>
 
         {/* Footer */}
         <footer className="py-8 border-t border-rule text-ink-light text-[0.72rem] leading-[1.7]">
-          RigaCap publishes impersonal, regularly-circulated commentary under the publisher's exemption. Not personalized investment advice; advisers remain responsible for suitability and fiduciary duties to their clients. Signals and model delivery only — RigaCap does not custody or manage client assets. Past performance, including backtested performance, does not guarantee future results.
+          RigaCap publishes impersonal, regularly-circulated commentary under the publisher's exemption. Not personalized investment advice; advisers remain responsible for suitability and fiduciary duties to their clients. Signals only — RigaCap does not custody or manage client assets. Past performance, including backtested performance, does not guarantee future results.
         </footer>
       </div>
     </div>
