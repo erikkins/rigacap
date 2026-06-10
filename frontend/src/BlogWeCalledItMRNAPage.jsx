@@ -249,8 +249,10 @@ export default function BlogWeCalledItMRNAPage() {
           </h2>
           <p className="text-ink-mute leading-relaxed text-base">
             "Let winners run, cut losers short" isn't a platitude — it's math.
-            The 12% trailing stop is what makes this possible. It gives a winning
-            trade room to breathe while establishing a non-negotiable floor.
+            The trailing stop is what makes this possible — 12% at the time of this
+            trade; today's strategy runs a wider trail across a more diversified book.
+            It gives a winning trade room to breathe while establishing a
+            non-negotiable floor.
           </p>
 
           {/* Highlight Box */}

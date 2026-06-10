@@ -26,11 +26,11 @@ export default function TrackRecordPageV2() {
         <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
           <SectionLabel>Track Record</SectionLabel>
           <h1 className="font-display font-normal text-ink mb-4 tracking-[-0.025em]" style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontVariationSettings: '"opsz" 144' }}>
-            Nine years. Every regime. <em className="text-claret italic">No cherry-picking.</em>
+            Twenty-one years. Three crashes. <em className="text-claret italic">No cherry-picking.</em>
           </h1>
-          <p className="text-ink-mute text-[1.05rem] leading-[1.65] max-w-[60ch]">
-            Performance validated through survivorship-free, point-in-time walk-forward simulation &mdash; no hindsight, no curve-fitting.
-            Best, average, and worst outcomes all published.
+          <p className="text-ink-mute text-[1.05rem] leading-[1.65]">
+            Performance validated through twenty-one years of point-in-time walk-forward simulation &mdash; no hindsight, no curve-fitting.
+            The wins, the losses, and the worst drawdown all published.
           </p>
         </div>
       </section>

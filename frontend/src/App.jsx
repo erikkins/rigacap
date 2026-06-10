@@ -65,6 +65,16 @@ import TwoFactorSettings from './components/TwoFactorSettings';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+// Effective trailing stop (fraction) from the dashboard's regime-adjusted
+// params. Module-level so stop-price math everywhere (trade modal, position
+// guidance) tracks the LIVE strategy config instead of a hardcoded 12%.
+// Updated whenever dashboard data lands; 30% = t30v default.
+let EFFECTIVE_TRAIL_FRAC = 0.30;
+const updateEffectiveTrail = (data) => {
+  const pct = data?.regime_adjustments?.effective?.trailing_stop_pct;
+  if (pct && pct > 0) EFFECTIVE_TRAIL_FRAC = pct / 100;
+};
+
 // CDN URLs removed — signals served through authenticated API to prevent free access
 
 // localStorage cache keys
@@ -258,7 +268,7 @@ const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanc
   const [submitting, setSubmitting] = useState(false);
 
   const totalCost = shares * entryPrice;
-  const trailingStop = entryPrice * 0.88; // 12% trailing stop — matches strategy
+  const trailingStop = entryPrice * (1 - EFFECTIVE_TRAIL_FRAC); // trail from live effective params
 
   const handleBuy = async () => {
     setSubmitting(true);
@@ -2102,6 +2112,7 @@ function Dashboard() {
           });
           if (!res.ok) throw new Error(`API error: ${res.status}`);
           const data = await res.json();
+          updateEffectiveTrail(data);
           setDashboardData(data);
           if (data.missed_opportunities?.length > 0) {
             setMissedOpportunities(data.missed_opportunities);
@@ -2123,6 +2134,7 @@ function Dashboard() {
       // Step 1: Show localStorage cache immediately (instant)
       const cached = getCache(CACHE_KEYS.DASHBOARD);
       if (cached && !signal.aborted) {
+        updateEffectiveTrail(cached);
         setDashboardData(cached);
         if (cached.missed_opportunities?.length > 0) {
           setMissedOpportunities(cached.missed_opportunities);
@@ -2139,6 +2151,7 @@ function Dashboard() {
         if (!res.ok) throw new Error(`API error: ${res.status}`);
         const data = await res.json();
         if (signal.aborted) return;
+        updateEffectiveTrail(data);
         setDashboardData(data);
         if (data.missed_opportunities?.length > 0) {
           setMissedOpportunities(data.missed_opportunities);
@@ -2255,7 +2268,7 @@ function Dashboard() {
 
       // Recalculate trailing stop distance and action with live price
       const hwm = Math.max(p.high_water_mark || p.entry_price, livePrice);
-      const stopPrice = hwm * 0.88; // 12% trailing stop, always derived from live HWM
+      const stopPrice = hwm * (1 - EFFECTIVE_TRAIL_FRAC); // effective trail, always derived from live HWM
       const distToStop = stopPrice > 0 ? ((livePrice - stopPrice) / stopPrice) * 100 : 100;
       let action = p.action || 'hold';
       let actionReason = p.action_reason || '';
