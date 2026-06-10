@@ -135,11 +135,15 @@ export default function PortfolioRace() {
   const activeEra = eras.find(e => ci >= e.i0 && ci <= e.i1);
 
   // collision-aware label placement: try offsets above/below until the slot
-  // clears every visible curve within a small horizontal window
+  // clears every visible curve within a small horizontal window AND every
+  // previously placed label (labels register as they place, in render order)
   const activeArrs = series.map(s => (robot ? s.raw : s.curve));
   const idxWin = Math.max(2, Math.ceil((16 / (W - PAD_L - PAD_R)) * n));
-  const clearY = (i, baseY, preferUp = true) => {
-    const offs = preferUp ? [-22, 26, -34, 38, -46, 50] : [26, -22, 38, -34, 50, -46];
+  const placed = []; // {x, y, hw} of labels already placed this render pass
+  const clearY = (i, baseY, preferUp = true, halfW = 14) => {
+    const cx = x(i);
+    const offs = preferUp ? [-22, 26, -34, 38, -46, 50, -58] : [26, -22, 38, -34, 50, -46, 62];
+    let pick = null;
     for (const off of offs) {
       const cand = baseY + off;
       if (cand < PAD_T + 10 || cand > H - PAD_B - 6) continue;
@@ -150,9 +154,16 @@ export default function PortfolioRace() {
         }
         if (!ok) break;
       }
-      if (ok) return cand;
+      if (ok) {
+        for (const p of placed) {
+          if (Math.abs(p.y - cand) < 12 && Math.abs(p.x - cx) < p.hw + halfW + 4) { ok = false; break; }
+        }
+      }
+      if (ok) { pick = cand; break; }
     }
-    return baseY + offs[0];
+    if (pick === null) pick = baseY + offs[0];
+    placed.push({ x: cx, y: pick, hw: halfW });
+    return pick;
   };
   const yearTicks = [];
   for (let yr = 2008; yr <= 2026; yr += 3) {
@@ -280,7 +291,7 @@ export default function PortfolioRace() {
                     <line x1={x(a)} x2={x(bEff)} y1={yc} y2={yc} stroke={s.color} strokeWidth={wd}
                       strokeDasharray="2 5" opacity="0.55" />
                     {wide && (
-                      <text x={(x(a) + x(bEff)) / 2} y={clearY(Math.floor((a + bEff) / 2), yc, s.key !== 'spy')}
+                      <text x={(x(a) + x(bEff)) / 2} y={clearY(Math.floor((a + bEff) / 2), yc, s.key !== 'spy', 80)}
                         textAnchor="middle" fontSize="10.5"
                         fontStyle="italic" fill={s.color} opacity="0.85" fontFamily="Fraunces, serif">
                         in cash, waiting to feel safe
