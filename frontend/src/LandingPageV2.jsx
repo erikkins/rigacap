@@ -74,10 +74,10 @@ const HeroSection = ({ onGetStarted }) => (
       {/* SURFACE-MARKER:landing-hero-stats-START */}
       <div className="flex flex-wrap gap-12 mt-20 pt-8 border-t border-rule">
         {[
-          ['19%', 'Worst drawdown · 21 years · raw momentum: 57%'],
-          ['0.73', 'Sharpe ratio · 21-yr backtest'],
-          ['8.3%', 'Annualized · 21-yr backtest*'],
-          ['2008·COVID·2022', 'Crashes survived · the index lost half, twice'],
+          ['+32%', 'Last 24 months, annualized · vs S&P +20% · backtest*'],
+          ['2.20', 'Sharpe, last 24 months · vs S&P 1.18'],
+          ['8.3%', 'Annualized across 21 years · 2008, COVID, 2022 included'],
+          ['19%', 'Worst drawdown in 21 years · raw momentum: 57%'],
         ].map(([value, label]) => (
           <div key={label} className="text-[0.88rem] text-ink-mute leading-snug">
             <strong className="block font-display text-ink text-[1.05rem] font-medium mb-0.5" style={{ fontVariationSettings: '"opsz" 48' }}>
