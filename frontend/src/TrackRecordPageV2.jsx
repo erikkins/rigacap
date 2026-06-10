@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 import TopNav from './components/TopNav';
+import PortfolioRace from './PortfolioRace';
 
 const SectionLabel = ({ children }) => (
   <div className="flex items-center gap-3 mb-5">
@@ -54,11 +55,14 @@ export default function TrackRecordPageV2() {
         </div>
       </section>
 
-      {/* Drawdown chart goes here (underwater viz) — equity-curve chart removed
-          Jun 9 2026: it showed return-only, where RigaCap ≈/below SPY (our edge
-          is RISK, not return), so it argued against the product. The per-regime
-          resilience table below carries the drawdown story until the underwater
-          chart lands. */}
+      {/* Portfolio race: $100k · 2007-2026 · daily resolution. Replaces the
+          return-only equity chart removed Jun 9 — this one tells the RISK story
+          (drawdown badges, era shading, behavioral panic-sell overlay). */}
+      <section className="mt-14">
+        <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+          <PortfolioRace />
+        </div>
+      </section>
 
       {/* Performance Table */}
       <section className="py-16 border-t border-rule">

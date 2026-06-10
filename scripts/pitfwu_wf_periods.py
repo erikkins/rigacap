@@ -438,6 +438,48 @@ async def main():
         print(f"DIAG {s.date()}->{e.date()}: total={r.total_return_pct:.1f}% mdd={r.max_drawdown_pct:.1f}% trades={len(trades)}")
         print(f"WROTE {path}", flush=True)
         return
+    if len(sys.argv) > 1 and sys.argv[1] == "race2":
+        # Portfolio-race v2 (requires PITFWU_EXT=1): $100k in t30v vs SPY vs naive,
+        # 2007-2026 at DAILY resolution (the weekly/monthly grids of v1 masked
+        # naive's true -57% trough). Same JSON shape as v1 -> drop-in for the
+        # animation component. Pre-2016 layer survivorship caveat applies.
+        import json as _json
+        import importlib.util as _ilu
+        s, e = datetime(2007, 1, 3), datetime(2026, 5, 29)
+        print("=== RACE v2 (daily, 2007-2026): t30v vs SPY vs naive ===", flush=True)
+        r = await wf(s, e, 20, 4.5, 30, 60, conv=0.0, volw=1.0, raw=True)
+        ec = r.equity_curve or []
+        print(f"t30v: {len(ec)} daily points", flush=True)
+        _spec = _ilu.spec_from_file_location("ic", os.path.join(R, "scripts", "inversion_campaign.py"))
+        _ic = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_ic)
+        nser = _ic.run(topk=20, full_curve=True)["series"]
+        print(f"naive: {len(nser)} daily points", flush=True)
+        spy = v.split_adjusted("SPY", asof=e, ca=v.load_corp_actions())["close"].loc[pd.Timestamp(s):pd.Timestamp(e)]
+        grid = spy.index  # daily trading-day grid from SPY
+
+        def _al(idx, vals):
+            ser = pd.Series(list(vals), index=pd.DatetimeIndex([pd.Timestamp(x) for x in idx])).sort_index()
+            ser = ser[~ser.index.duplicated(keep="last")]
+            return ser.reindex(grid, method="ffill").ffill().bfill()
+
+        t = _al([p["date"] for p in ec], [float(p["equity"]) for p in ec])
+        n = _al(nser.index, nser.values)
+        out = {"start_capital": 100000, "as_of": "2026-05-29", "backtested": True,
+               "resolution": "daily", "span": "2007-2026",
+               "dates": [d.strftime("%Y-%m-%d") for d in grid], "series": {}}
+        for name, ser in [("rigacap", t), ("spy", _al(spy.index, spy.values)), ("naive", n)]:
+            norm = ser / ser.iloc[0] * 100000.0
+            dd = (norm / norm.cummax() - 1.0) * 100.0
+            out["series"][name] = {"value": [round(float(x)) for x in norm],
+                                   "dd": [round(float(x), 1) for x in dd]}
+        path = os.path.join(R, "frontend", "public", "portfolio-race.json")
+        with open(path, "w") as f:
+            _json.dump(out, f)
+        print(f"WROTE {path} ({len(grid)} daily points)", flush=True)
+        for name in ("rigacap", "spy", "naive"):
+            vv = out["series"][name]["value"]; dd = out["series"][name]["dd"]
+            print(f"  {name:8} end=${vv[-1]:,}  worst_dd={min(dd):.1f}%", flush=True)
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "smoke_p3":
         # 6-month window covering a regime exit+recovery (2022H2-2023H1) with
         # BOTH new code paths on — verifies the wired read-sites don't crash
