@@ -318,10 +318,11 @@ const PricingSection = ({ onGetStarted }) => (
         <p className="text-ink-mute text-[1.05rem] leading-[1.65]">
           The standard rate reflects the value delivered to a self-directed investor with a meaningful portfolio.
           The founding rate rewards the first 100 subscribers with a locked-in price while the live track record is being built.
+          Advisory firms applying the strategy across client accounts license it at the firm level.
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-8 mt-12 max-w-[860px]">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-12 max-w-[1120px]">
         {/* Founding — Featured */}
         <div className="bg-paper-card border-2 border-claret p-10 flex flex-col relative">
           <span className="absolute -top-3 left-8 bg-claret text-paper text-[0.7rem] font-medium tracking-[0.15em] uppercase px-3 py-1">
@@ -362,7 +363,7 @@ const PricingSection = ({ onGetStarted }) => (
             Or <strong className="text-claret font-medium">$1,099/year</strong> billed annually &mdash; three months free.
           </p>
           <ul className="list-none my-7 pt-6 border-t border-rule flex-1 space-y-1.5">
-            {['Unlimited real-time signals', 'Daily email digest', 'Entry, stop, and target levels', 'Seven-regime market context', 'Portfolio tracking dashboard', '4,000+ stocks scanned daily', 'Full methodology access'].map(item => (
+            {['Unlimited real-time signals', 'Daily email digest', 'Entry, stop, and target levels', 'Market-regime risk filter', 'Portfolio tracking dashboard', '4,000+ stocks scanned daily', 'Full methodology access'].map(item => (
               <li key={item} className="text-ink-mute text-[0.92rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
             ))}
           </ul>
@@ -373,6 +374,31 @@ const PricingSection = ({ onGetStarted }) => (
             Start 7-Day Free Trial
           </button>
           <p className="text-center text-[0.8rem] text-ink-light mt-3">Credit card required &middot; Cancel anytime</p>
+        </div>
+
+        {/* Advisory firms */}
+        <div className="bg-paper-card border border-rule p-10 flex flex-col">
+          <h3 className="font-display text-[1.3rem] font-medium text-ink mb-1" style={{ fontVariationSettings: '"opsz" 72' }}>Advisory Firms</h3>
+          <p className="font-display italic text-ink-mute text-[0.92rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>For RIAs &amp; registered advisers.</p>
+          <div className="mb-1">
+            <span className="font-display text-[3.5rem] font-normal text-ink leading-none tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>Firm</span>
+            <span className="text-ink-mute text-[0.95rem] ml-1">license</span>
+          </div>
+          <p className="text-ink-mute text-[0.9rem] leading-relaxed mt-3">
+            Internal-use license for applying the strategy across client accounts. <strong className="text-claret font-medium">You remain the fiduciary.</strong>
+          </p>
+          <ul className="list-none my-7 pt-6 border-t border-rule flex-1 space-y-1.5">
+            {['Everything in Standard', 'Multiple adviser seats', 'Internal use across client books', 'Client-presentable methodology & track record', 'A 19% worst drawdown clients can sit through', 'Direct line to the founder'].map(item => (
+              <li key={item} className="text-ink-mute text-[0.92rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
+            ))}
+          </ul>
+          <a
+            href="/for-advisers"
+            className="w-full py-4 border border-ink text-ink text-[0.95rem] font-medium rounded-[2px] text-center hover:bg-ink hover:text-paper transition-colors no-underline"
+          >
+            See the adviser page
+          </a>
+          <p className="text-center text-[0.8rem] text-ink-light mt-3">Signals only &middot; no custody, no discretion</p>
         </div>
       </div>
     </div>
