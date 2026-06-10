@@ -148,8 +148,12 @@ export default function PortfolioRace() {
       const cand = baseY + off;
       if (cand < PAD_T + 10 || cand > H - PAD_B - 6) continue;
       let ok = true;
+      // clear the curves across the label's FULL width (strided), not just its center
+      const pxPerIdx = (W - PAD_L - PAD_R) / (n - 1);
+      const span = Math.max(idxWin, Math.ceil(halfW / pxPerIdx) + idxWin);
+      const stride = Math.max(1, Math.floor(span / 24));
       for (const arr of activeArrs) {
-        for (let j = Math.max(0, i - idxWin); j <= Math.min(n - 1, i + idxWin); j++) {
+        for (let j = Math.max(0, i - span); j <= Math.min(n - 1, i + span); j += stride) {
           if (Math.abs(y(arr[j]) - cand) < 9) { ok = false; break; }
         }
         if (!ok) break;
@@ -335,7 +339,7 @@ export default function PortfolioRace() {
           {' '}{fmtMoney(series[2].lo)} to {fmtMoney(series[2].hi)} across 6&ndash;10 panic-sales.</strong> RigaCap
           collected {fmtMoney(series[0].curve[n - 1])} under every rule, because in twenty-one years it never handed
           you a loss deep enough to trip the panic.
-          <em className="font-display italic text-claret"> It removes your own behavior as the biggest risk in the portfolio.</em>
+          <em className="block mt-2 font-display italic text-claret">It removes your own behavior as the biggest risk in the portfolio.</em>
         </p>
       )}
 
