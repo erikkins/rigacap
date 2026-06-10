@@ -1,9 +1,20 @@
 ---
 name: Roadmap away from gzipped pickle storage
-description: Options, trade-offs, and triggers for migrating market data off the 275MB gzipped pickle toward parquet / DuckDB / TimescaleDB
+description: "Pickle → parquet migration. REVISED Jun 10 2026: the migration target is now the PITFWU per-symbol layer itself (promote research store to canonical) — absolute research↔prod data parity, not just an infra win. See the Jun 10 section first."
 type: project
 originSessionId: 39ce1e26-1ab7-4fbd-8e9a-6c892d933b00
 ---
+
+## ⭐ REVISED TARGET (Jun 10 2026, Erik-approved): promote PITFWU to canonical — research↔prod 1:1
+Erik's framing: "wouldn't we want production to use the SAME EXACT parquet we're using for research? ABSOLUTE 1:1 parity." Decision: **the migration target is no longer a parquet mirror of the pickle (`prices/all_data.parquet`) — it is the PITFWU layer (`pitfwu/bars/{sym}.parquet` + corp_actions calendar + universe panels + veneer composition).** Marketing numbers then come from literally the same bytes prod trades on, and the entire two-stores bug class dies (min-price-on-end-adjusted bug, 7y-pickle-can't-reproduce-9y-validation, Jun-4 pickle split bug — all were two-store artifacts).
+
+What's needed before cutover (≈1-2 wks careful work, NOT now — strategy decision still gates customer-facing):
+1. **Freshness pipeline** — 4:30 PM scan appends daily bars per symbol to pitfwu/bars/, updates corp-actions calendar + rolls panels. Same guardrail discipline as pickle (symbol-count checks, backups, atomic per-symbol writes). The dual-source scan already produces the data; this is a write-path change.
+2. **One adjustment convention, decided explicitly** (per [[parquet-fix-not-silence]]): prod pickle = fully adjusted; PITFWU = RAW + split-adjustment at read, price-return (no dividends). Proposal: PITFWU split-only price-return becomes canonical, prod aligns; existing diff harness validates a shadow period before cutover.
+3. **Prod never reads the pre-2016 EXT layer** (yfinance-sourced, survivorship-biased, research-only behind v.EXT opt-in flag — built Jun 10: bars_ext/ 2096 symbols 2005+, calendar_pre2016, *_ext panels).
+4. Indicators computed at load (Worker has headroom); per-symbol partial reads finally solve the 3008 MB Lambda cap — the original motivation, now a side benefit.
+
+Stages 1-2 below (shadow write, AL2023) remain valid groundwork; Stage 3+ retargets to PITFWU instead of the monolith parquet.
 ## Why this matters
 
 The current architecture stores ~4500 symbols × 7yr OHLCV + indicators in a single gzipped pickle (`s3://rigacap-prod-price-data-149218244179/prices/all_data.pkl.gz`, ~275MB compressed, loads into ~1.5GB RAM). This worked for bootstrapping but has structural problems that bit us repeatedly during Apr 2026 debugging:

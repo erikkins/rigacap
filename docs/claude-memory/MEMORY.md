@@ -148,7 +148,7 @@
 - **DWAP stale crosses perform BETTER** — stale (90+d) = 56.8% win vs fresh (0-10d) = 49.6%
 
 ## Storage Roadmap
-- [Pickle → Parquet/DuckDB/TimescaleDB migration](project_storage_migration_roadmap.md) — triggers, options, sequencing. Stay on pickle through ~500 paid subs, then start with Parquet on S3.
+- [Pickle → Parquet migration — REVISED Jun 10: promote PITFWU to canonical](project_storage_migration_roadmap.md) — migration target = the PITFWU layer itself (research↔prod 1:1 parity; kills the two-stores bug class). Needs: daily-append write path, adjustment-convention decision (split-only price-return proposed), shadow-diff validation. Pre-2016 EXT layer stays research-only.
 - **[Parquet: fix the difference, never silence the alarm](feedback_parquet_fix_not_silence.md)** — when the diff harness flags a divergence, ask "if parquet were already primary, which side is correct?" Align parquet with target behavior. Never broaden "explainable" just to make the warning go away. Once we cut over, every silenced quirk is permanent.
 
 ## Active Tasks
