@@ -31,10 +31,16 @@ Follow-on to [[jun9-strategy-reckoning-and-launch]]. Erik's call: keep the 14% w
 ## Behavioral sim (on weekly race data — daily would be harsher on naive)
 Panic-sell at 20-25% own-DD, various re-entries: **t30v never trips (17.9% max). Panic-SPY realizes 0.1-9.3% → t30v's 9.9% beats behavioral SPY in EVERY scenario** (the honest animation story). Panic-naive still realizes 10-21% — behavior does NOT rescue us vs naive on this decade. Also: t30v's longest below-peak stretch = 37mo (worse than SPY 24mo, ≈naive 36mo) — defense is "shallow but LONG underwater"; don't oversell comfort.
 
-## Open: t30v-side ablation (running at session end)
-`pitfwu_wf_periods.py ablate` (mode added; wf() now takes dwap_th/near_hi; disable = −1000/+1000) → `scripts/ablation_results.json`, checkpointed per config. Configs: no_nearhigh, no_dwap, no_gates, no_volw, trail40 on t30v base (20×4.5 t30 volw1.0), continuous 2017-2026. Question: which control is the drawdown technology, what does each cost in CAGR — is there a t30v-minus-one-control at ~15-20% CAGR / ≤25% MDD? Base ref: 9.8%/17.9% (race).
+## t30v-side ablation (continuous 2017-2026, base ref 9.8%/17.9%) — `scripts/ablation_results.json`
+`pitfwu_wf_periods.py ablate` (wf() now takes dwap_th/near_hi/mom_days; disable gates = −1000/+1000; _MOMDAYS hook in patched configure). Results:
+- **no_nearhigh 6.7%/19.6% · no_dwap 7.5%/15.9% — each gate alone ADDS return** (removing hurts). BUT **no_gates (both off) 9.4%/0.75/15.1% ≈ base with BETTER risk** — gates only work as a PAIR; net contribution of the pair ≈ zero return, slightly worse MDD. (Caveat: no_nearhigh may be partly split-artifact suppressed — the gate masks unadjusted-split names.)
+- no_volw 10.9%/20.6% — inverse-vol = honest small trade (−1.1pp CAGR for −2.7pp MDD). trail40 7.2%/22.4% — t30 is the trail sweet spot.
+- **m250 (12-mo ranking in t30v frame) 10.7%/0.80/18.8%, m120_250 10.8%/0.80/18.9% — RANKING HORIZON IS NOT THE GAP.** Same universe, same 250d ranking: naive frame 29.9% vs t30v frame 10.7%. The ~19pp lives in the FRAME (MA20/50 trend quality filter, max_hold=60 force-close, vacancy-only entry/cash drag, biweekly cadence), NOT selection.
+- The t30v frame's real DD-technology (vs naive's 52%): trend quality filter + vacancy-only entry (no forced re-entry into a falling factor) + trail + diversification — NOT the DWAP/near-high gates.
+- **RUNNING at session end: hold_inf (max_hold=9999) + m250_hold_inf** — max_hold=60 force-closes winners at ~3mo while momentum pays at 6-12mo; suspect #1 for the return gap. → checkpoint JSON.
 
 ## Next after ablation
-- If a relaxed-t30v middle exists → per-window Tier-2 (held-out starts) before believing it (round-2/ablation variants are shaped by this window's data).
-- Pre-2016 parquet extension (2008 GFC + 2009 momentum crash) is the decisive out-of-sample test — naive's 28.8% rode a crash-free decade; 2009 is where naive momentum historically died. Helps animation drama too.
-- Rebuild portfolio-race.json with DAILY naive resolution before building the animation.
+- If hold_inf jumps return materially → candidate = m250_hold_inf-style relaxed t30v → per-window Tier-2 (held-out starts) MANDATORY before believing it (ablation variants are shaped by this window).
+- If frame can't be opened up → t30v ~10%/15-18% is the honest product; remaining lever = pre-2016 parquet extension (2008 GFC + 2009 momentum crash — where naive momentum historically died; would also flip the animation's ending).
+- Rebuild portfolio-race.json with DAILY naive resolution before building the animation (current −30% naive DD is a sampling artifact; truth −52%).
+- Erik engaged with all interim findings live (Jun 9 night session); copy stays window-mean-14% meanwhile.
