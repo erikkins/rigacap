@@ -40,10 +40,10 @@ export default function TrackRecordPageV2() {
         <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-rule">
             {[
-              ['8.3%', 'Annualized', 'Walk-forward, 2007–2026'],
-              ['19%', 'Max Drawdown', 'vs 57% for raw momentum'],
               ['+32%', 'Last 24 Months', 'annualized · vs S&P +20% · backtest'],
-              ['8.5%', 'Recent Max Drawdown', 'last 24 months · vs S&P 17%'],
+              ['2.20', 'Recent Sharpe', 'last 24 months · vs S&P 1.18'],
+              ['8.3%', 'Annualized', 'Walk-forward, 2007–2026'],
+              ['19%', 'Max Drawdown', '21 years · vs 57% for raw momentum'],
             ].map(([value, label, subtitle]) => (
               <div key={label} className="bg-paper-card p-6 sm:p-8 text-center">
                 <div className="font-display text-3xl sm:text-4xl font-normal text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>{value}</div>
@@ -72,6 +72,56 @@ export default function TrackRecordPageV2() {
             The numbers, <em className="text-claret italic">walk-forward.</em>
           </h2>
 
+          {/* Recent 24 months — held-out walk-forward window (Jun 2024 – May 2026) */}
+          <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-4">
+            The Last 24 Months
+          </div>
+          <div className="overflow-x-auto mb-4">
+            <table className="w-full border-collapse" style={{ fontFeatureSettings: '"tnum"' }}>
+              <thead>
+                <tr>
+                  {['Strategy', 'Annualized', 'Sharpe', 'Calmar', 'Max Drawdown'].map((h, i) => (
+                    <th key={h} className={`py-3 ${i === 0 ? 'text-left pl-5 pr-4' : 'text-right px-5'} font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark`}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-rule bg-paper-card">
+                  <td className="py-4 pl-5 pr-4 text-[0.95rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>RigaCap &mdash; risk-managed</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">+32.0%</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">2.20</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-semibold" style={{ color: '#2D5F3F' }}>3.76</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-semibold" style={{ color: '#2D5F3F' }}>8.5%</td>
+                </tr>
+                <tr className="border-b border-rule">
+                  <td className="py-4 pl-5 pr-4 text-[0.95rem] text-ink-mute">S&amp;P 500 (price)</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">+19.9%</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">1.18</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">1.05</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">19.0%</td>
+                </tr>
+                <tr className="border-b border-rule">
+                  <td className="py-4 pl-5 pr-4 text-[0.95rem] text-ink-mute">Raw momentum (gross)</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">+71.9%</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">1.35</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">1.91</td>
+                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium" style={{ color: '#8F2D3D' }}>37.7%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="mb-12 text-[0.9rem] text-ink leading-[1.65] max-w-[68ch]">
+            June 2024 through May 2026, a held-out walk-forward window (backtested, not yet live money):
+            <strong className="font-medium"> RigaCap beat the index by 12 points a year at well under half its drawdown</strong> &mdash;
+            twice the S&amp;P's Sharpe, three-and-a-half times its Calmar. Raw momentum earned more, gross of costs &mdash;
+            and took a 38% drawdown <em>during a bull market</em> to collect it. Defense isn't the same as sitting out the bull.
+          </p>
+
+          <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-4">
+            The Two-Decade Foundation &middot; 2007&ndash;2026
+          </div>
           {/* SURFACE-MARKER:perf-comparison-table-START */}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse" style={{ fontFeatureSettings: '"tnum"' }}>
@@ -113,27 +163,6 @@ export default function TrackRecordPageV2() {
             See <Link to="/methodology" className="text-claret underline underline-offset-2 decoration-1">full methodology</Link> for all assumptions.
           </p>
 
-          {/* Recent 24 months — held-out walk-forward window (Jun 2024 – May 2026) */}
-          <div className="mt-12 bg-paper-card border-l-[3px] border-claret p-8">
-            <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-5">
-              The Last 24 Months
-            </div>
-            <div>
-              {[
-                ['RigaCap — risk-managed', '+32.0% ann', '8.5% max DD', true],
-                ['S&P 500 (price)', '+19.8% ann', '17.1% max DD', false],
-                ['Raw momentum (gross)', '+63.1% ann', '35.3% max DD', false],
-              ].map(([name, ret, dd, hl]) => (
-                <div key={name} className="flex items-center justify-between py-3 border-b border-rule text-[0.95rem]">
-                  <div className={hl ? 'font-semibold text-ink' : 'text-ink-mute'}>{name}</div>
-                  <div className="flex gap-6 sm:gap-10 font-mono text-[0.9rem]"><span style={{ color: hl ? '#2D5F3F' : undefined }}>{ret}</span><span className="text-ink-mute">{dd}</span></div>
-                </div>
-              ))}
-            </div>
-            <p className="mt-6 text-[0.95rem] text-ink leading-[1.6]">
-              June 2024 through May 2026, a held-out walk-forward window (backtested, not yet live money): <strong className="font-medium">RigaCap beat the index by 12 points a year at half its drawdown</strong> &mdash; defense isn't the same as sitting out the bull. Raw momentum earned more, gross of costs &mdash; and took a 35% drawdown <em>during a bull market</em> to collect it.
-            </p>
-          </div>
 
           {/* Per-regime resilience */}
           <div className="mt-12 bg-paper-card border-l-[3px] border-claret p-8">
