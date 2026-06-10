@@ -171,7 +171,33 @@ export default function ForAdvisersPage() {
             ))}
           </div>
           <div className="mt-7 bg-paper-card border border-rule border-l-[3px] border-l-claret p-5 text-[0.88rem] text-[#3a342e] leading-[1.6]">
-            <strong className="text-ink">How it works.</strong> RigaCap delivers <strong className="text-ink">signals and a model allocation</strong> — entries, exits, and sizing. You implement across client accounts through your own custodian; <strong className="text-ink">RigaCap never touches client capital, and you remain the fiduciary.</strong> Performance shown is backtested (8.3% annualized / 0.73 Sharpe / 19% max DD across 2007–2026; +32% / 2.20 Sharpe over the last 24 months); the strategy runs live and its real-time track record is now accruing — underwrite conservatively until that record builds, which we publish.
+            <strong className="text-ink">How it works.</strong> RigaCap delivers <strong className="text-ink">signals and a model allocation</strong> — entries, exits, and sizing. You implement across client accounts through your own custodian; <strong className="text-ink">RigaCap never touches client capital, and you remain the fiduciary.</strong> Performance shown is backtested:
+            <table className="w-full border-collapse my-4" style={{ fontFeatureSettings: '"tnum"' }}>
+              <thead>
+                <tr>
+                  {['', 'Annualized', 'Sharpe', 'Calmar', 'Max Drawdown'].map((h, i) => (
+                    <th key={h || 'span'} className={`py-2 ${i === 0 ? 'text-left' : 'text-right pl-4'} font-body font-medium text-[0.68rem] tracking-[0.14em] uppercase text-ink-mute border-b border-rule-dark`}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-rule">
+                  <td className="py-2.5 text-[0.85rem] text-ink font-medium">21 years · 2007–2026 <span className="font-normal text-ink-light italic">— the foundation</span></td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] text-ink">8.3%</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] text-ink">0.73</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] text-ink">0.43</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-medium" style={{ color: '#2D5F3F' }}>19%</td>
+                </tr>
+                <tr className="border-b border-rule">
+                  <td className="py-2.5 text-[0.85rem] text-ink font-medium">Last 24 months <span className="font-normal text-ink-light italic">— held-out window</span></td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-semibold" style={{ color: '#2D5F3F' }}>+32.0%</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-semibold text-ink">2.20</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-semibold text-ink">3.76</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-medium" style={{ color: '#2D5F3F' }}>8.5%</td>
+                </tr>
+              </tbody>
+            </table>
+            The strategy runs live and its real-time track record is now accruing — underwrite conservatively until that record builds, which we publish.
           </div>
         </section>
 
