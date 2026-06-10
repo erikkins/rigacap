@@ -3975,6 +3975,17 @@ function Dashboard() {
                   ) : (
                     /* Smart empty state */
                     <div className="p-5 space-y-4">
+                      {/* AI Market Briefing — was only mounted in the signals>0
+                          branch, so on all-cash days (when it matters most:
+                          "all 25 signals cleared overnight") it never rendered. */}
+                      {dashboardData?.market_context && (
+                        <div className="py-4 px-5 bg-paper-card border-l-2 border-claret">
+                          <span className="block font-body text-[0.64rem] font-medium tracking-[0.22em] uppercase text-ink-mute mb-2">
+                            Market Briefing
+                          </span>
+                          <p className="font-display italic text-[1rem] text-ink leading-[1.6]">{dashboardData.market_context}</p>
+                        </div>
+                      )}
                       {/* A. Market context message */}
                       {dashboardData?.regime_forecast && (
                         <div className="flex items-center gap-2 text-sm text-ink-mute">

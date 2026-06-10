@@ -693,17 +693,30 @@ class ModelPortfolioService:
 
         post_type = "we_called_it" if position.pnl_pct >= 10 else "trade_result"
 
-        for platform in ("twitter", "instagram"):
-            post = await ai_content_service.generate_post(
-                trade=trade,
-                post_type=post_type,
-                platform=platform,
+        # Social writes get their OWN session, serialized by an advisory lock.
+        # Jun 10 2026: live-exits and track-record steps both generated content
+        # concurrently inside their exit transactions and deadlocked on
+        # social_posts + the scheduler's sweep — rolling back the EXITS
+        # themselves (GOOG +5.6% close lost, 25 track-record closes lost).
+        # Trades must never share a transaction with content generation.
+        from app.core.database import async_session as _social_session
+        from sqlalchemy import text as _text
+        async with _social_session() as social_db:
+            await social_db.execute(
+                _text("SELECT pg_advisory_xact_lock(hashtext('social_posts_writer'))")
             )
-            if post:
-                db.add(post)
-                await db.flush()
-                # Auto-schedule the draft
-                await post_scheduler_service.auto_schedule_drafts(db)
+            for platform in ("twitter", "instagram"):
+                post = await ai_content_service.generate_post(
+                    trade=trade,
+                    post_type=post_type,
+                    platform=platform,
+                )
+                if post:
+                    social_db.add(post)
+                    await social_db.flush()
+                    # Auto-schedule the draft
+                    await post_scheduler_service.auto_schedule_drafts(social_db)
+            await social_db.commit()
 
         logger.info(
             f"[MODEL-PORTFOLIO] Generated {post_type} content for "
