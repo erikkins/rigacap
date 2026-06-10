@@ -1121,6 +1121,13 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                     exit_date = trade.get('exit_date', '')
                     exit_price = trade.get('exit_price', 0)
                     days_held = trade.get('days_held', 0)
+                    if not days_held and exit_date and entry_date_str:
+                        # nightly sim trades_json doesn't carry days_held -> derive
+                        # from dates (dashboard showed a permanent "0d" column)
+                        try:
+                            days_held = (pd.Timestamp(str(exit_date)[:10]) - pd.Timestamp(entry_date_str)).days
+                        except Exception:
+                            days_held = 0
 
                     missed_opportunities.append({
                         'symbol': symbol,
