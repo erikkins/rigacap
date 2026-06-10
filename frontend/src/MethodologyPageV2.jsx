@@ -175,8 +175,8 @@ export default function MethodologyPageV2() {
               ['Timing setup', 'How the breakout looks relative to historical winners.'],
               ['Momentum quality', 'Strength of trend continuation relative to the rest of the universe.'],
               ['Volume confirmation', 'Whether buying interest stepped up alongside price, or price moved alone.'],
-              ['Volatility profile', 'Whether the move is occurring in a tradeable volatility band — too quiet or too violent both score lower.'],
               ['Regime fit', 'Whether the broader market context supports new exposure.'],
+              ['Volatility profile', 'Whether the move is occurring in a tradeable volatility band — too quiet or too violent both score lower.'],
             ].map(([label, desc]) => (
               <div key={label}>
                 <div className="font-body text-[0.78rem] font-medium tracking-[0.15em] uppercase text-claret mb-1">{label}</div>
