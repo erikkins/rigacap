@@ -53,7 +53,8 @@ const HeroSection = ({ onGetStarted }) => (
       </p>
 
       <p className="text-[0.95rem] text-ink-mute leading-relaxed max-w-[640px] mb-10">
-        Twenty-one years of walk-forward validation — through 2008, COVID, and 2022. Built by a former <strong className="text-ink font-medium">Chief Innovation Officer</strong> with 15 years of quantitative research as a parallel practice. <strong className="text-ink font-medium">$129/month.</strong>
+        Twenty-one years of walk-forward validation — through 2008, COVID, and 2022.<br />
+        Built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong> with 15 years of quantitative research as a parallel practice. <strong className="text-ink font-medium">$129/month.</strong>
       </p>
 
       <div className="flex flex-wrap gap-4 items-center mb-0">
