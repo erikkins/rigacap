@@ -242,7 +242,8 @@ export default function PortfolioRace() {
             <text x={x(idx)} y={H - 12} textAnchor="middle" fontSize="11" fill="#8A8578" fontFamily="IBM Plex Mono, monospace">{yr}</text>
           </g>
         ))}
-        {series.map(s => {
+        {/* paint order: spy, naive, then rigacap LAST so our line sits on top */}
+        {[...series].reverse().map(s => {
           const arr = robot ? s.raw : s.curve;
           const wd = s.key === 'rigacap' ? 2.5 : 1.5;
           return (
@@ -258,7 +259,7 @@ export default function PortfolioRace() {
                     <line x1={x(a)} x2={x(bEff)} y1={yc} y2={yc} stroke={s.color} strokeWidth={wd}
                       strokeDasharray="2 5" opacity="0.55" />
                     {wide && (
-                      <text x={(x(a) + x(bEff)) / 2} y={s.key === 'spy' ? yc + 20 : yc - 14} textAnchor="middle" fontSize="10.5"
+                      <text x={(x(a) + x(bEff)) / 2} y={s.key === 'spy' ? yc + 22 : yc - 22} textAnchor="middle" fontSize="10.5"
                         fontStyle="italic" fill={s.color} opacity="0.85" fontFamily="Fraunces, serif">
                         in cash, waiting to feel safe
                       </text>
