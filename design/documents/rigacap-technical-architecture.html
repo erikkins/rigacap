@@ -1238,11 +1238,14 @@ EventBridge  <span class="arrow">&rarr;</span>  Worker Lambda  <span class="arro
 
   <h3>Production strategy</h3>
   <p>
-    The deployed strategy is the clean-data Trial 37 ensemble: six positions at 15%
-    each, a 12% trailing stop, biweekly rebalancing, and a multi-factor entry gauntlet
-    (timing reference, momentum quality, breakout proximity, volume confirmation)
-    filtered through the regime classifier. Performance figures live in the investor
-    report and the public track-record page; they are not duplicated here.
+    The deployed strategy is the RigaCap Momentum Strategy (live since June 10, 2026):
+    up to twenty positions at 4.5% each with inverse-volatility sizing, a 30% trailing
+    stop, a market-regime filter, and the Cascade Guard circuit breaker. Entry requires
+    a multi-factor gauntlet &mdash; price above DWAP &times; 1.05, within 3% of the 50-day
+    high, and a top momentum-composite rank &mdash; drawn from a universe of the top 100
+    symbols by 60-day volume ($15 minimum price, 500k minimum daily volume). Performance
+    figures live in the investor report and the public track-record page; they are not
+    duplicated here.
   </p>
 
   <h3>Cascade Guard (circuit breaker)</h3>
@@ -1457,7 +1460,7 @@ EventBridge  <span class="arrow">&rarr;</span>  Worker Lambda  <span class="arro
       <tr><td><strong>AdminDashboard.jsx</strong></td><td>~42 KB</td><td>Strategy and user management, model portfolio, ghost comparison, regime forecast, what-if calculator, trade autopsies.</td></tr>
       <tr><td><strong>FlexibleBacktest.jsx</strong></td><td>~39 KB</td><td>Backtest configuration, strategy comparison, exit testing.</td></tr>
       <tr><td><strong>LandingPage.jsx</strong></td><td>~30 KB</td><td>Marketing surface: hero, features, pricing, FAQ, social proof.</td></tr>
-      <tr><td><strong>TrackRecordPage.jsx</strong></td><td>~16 KB</td><td>Public <code>/track-record</code>: five-year multi-start and ten-year-plus single-start side by side.</td></tr>
+      <tr><td><strong>TrackRecordPage.jsx</strong></td><td>~16 KB</td><td>Public <code>/track-record</code>: continuous walk-forward backtest results plus the live track record.</td></tr>
       <tr><td><strong>NewsletterArchive.jsx</strong></td><td>~12 KB</td><td>Newsletter archive teasers with headline and breadcrumb lines.</td></tr>
       <tr><td><strong>StrategyEditor.jsx</strong></td><td>~16 KB</td><td>Custom strategy creation and editing.</td></tr>
       <tr><td><strong>AutoSwitchConfig.jsx</strong></td><td>~15 KB</td><td>Auto-switch rule configuration.</td></tr>
@@ -1631,7 +1634,7 @@ Email / Google / Apple  <span class="arrow">&rarr;</span>  Turnstile (bot guard)
       <tr><td>Dashboard load</td><td>&lt; 2 seconds</td><td>Pre-computed JSON from CloudFront.</td></tr>
       <tr><td>Daily signal scan</td><td>30&ndash;45 seconds</td><td>Worker Lambda, ~4,000 symbols, Alpaca SIP.</td></tr>
       <tr><td>Single backtest (90d, 100 symbols)</td><td>20&ndash;40 seconds</td><td>Worker Lambda, 3 GB.</td></tr>
-      <tr><td>Walk-forward (5y, biweekly)</td><td>10&ndash;30 minutes</td><td>Step Functions fan-out across the Worker Lambda.</td></tr>
+      <tr><td>Walk-forward (multi-year)</td><td>10&ndash;30 minutes</td><td>Step Functions fan-out across the Worker Lambda.</td></tr>
       <tr><td>AI content generation</td><td>2&ndash;5 seconds</td><td>Claude API (Sonnet 4.5).</td></tr>
       <tr><td>Chart card generation</td><td>1&ndash;3 seconds</td><td>matplotlib on the Worker Lambda.</td></tr>
     </tbody>

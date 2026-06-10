@@ -408,37 +408,37 @@
 <section class="cover">
   <div class="cover-rule">
     <span class="brand">RigaCap<span class="dot">.</span></span>
-    <span class="meta">Investor Report &middot; May 2026</span>
+    <span class="meta">Investor Report &middot; June 2026</span>
   </div>
 
   <div>
     <h1>A disciplined momentum strategy &mdash; <em>measured.</em></h1>
     <p class="cover-sub">
-      Walk-forward validation across multiple start dates. Capital preservation in 2022.<br />
-      A risk profile that came in tighter than the simulation&nbsp;modeled.
+      A continuous 21-year walk-forward backtest, through 2008, COVID, and 2022.<br />
+      Capital preserved in every crisis the index&nbsp;failed.
     </p>
   </div>
 
   <div>
     <div class="cover-stats">
       <div class="cover-stat">
-        <div class="label">Max Drawdown</div>
-        <div class="value">20.4%</div>
-        <div class="sub">5-year average</div>
+        <div class="label">Worst Drawdown</div>
+        <div class="value">19%</div>
+        <div class="sub">21-year backtest</div>
       </div>
       <div class="cover-stat">
         <div class="label">Annualized</div>
-        <div class="value pos">21.5%</div>
-        <div class="sub">Walk-forward</div>
+        <div class="value pos">8.3%</div>
+        <div class="sub">Walk-forward, 2007&ndash;2026</div>
       </div>
       <div class="cover-stat">
-        <div class="label">Worst Start</div>
-        <div class="value">+109%</div>
-        <div class="sub">Still nearly 2&times;</div>
+        <div class="label">2008</div>
+        <div class="value">&minus;0.5%</div>
+        <div class="sub">vs S&amp;P 500 &minus;37.7%</div>
       </div>
       <div class="cover-stat">
         <div class="label">Sharpe</div>
-        <div class="value">0.92</div>
+        <div class="value">0.73</div>
         <div class="sub">Risk-adjusted</div>
       </div>
     </div>
@@ -459,57 +459,57 @@
 
   <p class="lead">
     RigaCap is a disciplined momentum strategy distributed as a subscription publication.
-    Subscribers receive 3&ndash;4 high-conviction signals per month, drawn from a universe
-    of ~4,000 US equities and filtered through a 3-factor entry gauntlet, regime-aware
-    position sizing, and trailing-stop discipline.
+    Subscribers receive high-conviction signals drawn from a universe of ~4,000 US equities
+    and filtered through a 3-factor entry gauntlet, a market-regime filter,
+    inverse-volatility position sizing, and trailing-stop discipline.
   </p>
 
   <p>
     What separates RigaCap from the broader signal-service category is the <strong>methodology
     posture</strong>. Every return figure in this document is drawn from walk-forward
-    simulation &mdash; not in-sample optimization, not cherry-picked windows. We disclose
-    the full distribution across multiple start dates, including the worst-case. And the
+    backtesting &mdash; not in-sample optimization, not cherry-picked windows. We publish
+    a single continuous 21-year window, crisis years included, warts included. And the
     backtesting infrastructure flags data-integrity issues automatically, so the numbers
     we publish are the ones the strategy actually produced on clean inputs.
   </p>
 
   <p>
-    RigaCap has not yet accumulated a live track record; the figures here are what
-    walk-forward methodology produced when run on multiple start dates over the past
-    five years. As live execution data accumulates from launch forward, quarterly
-    disclosure will compare live results to the walk-forward baseline.
+    RigaCap's live track record began June 11, 2026 with a fresh $100k model book; every
+    figure in this document before that date is backtested and labeled as such. As live
+    execution data accumulates, quarterly disclosure will compare live results to the
+    walk-forward baseline.
   </p>
 
   <div class="callout">
-    <p><strong>Core Result &middot; 5-Year Walk-Forward.</strong> Across multiple start dates from early 2021,
-    the strategy averaged <strong>+160% total return / 21.5% annualized</strong>, with a <strong>20.4% average
-    max drawdown</strong> &mdash; meaningfully tighter than the 32% the prior simulation had modeled.
-    Worst-case start date returned <strong>+109%</strong>; best-case, +252%.</p>
+    <p><strong>Core Result &middot; Continuous 21-Year Walk-Forward (2007&ndash;2026, price returns).</strong>
+    The strategy compounded at <strong>8.3% annualized</strong> (0.73 Sharpe, 0.43 Calmar) with a
+    <strong>worst drawdown of 19%</strong> &mdash; through the 2008 financial crisis, COVID, and the
+    2022 bear. Over the same window the S&amp;P 500 (price-only) compounded at 9.8% but lost more
+    than half its value twice (55% worst drawdown); raw 12-month momentum compounded at 13.2% with
+    a 57% worst drawdown. The product is not the return &mdash; it is the survivability.</p>
   </div>
 
   <h3>Three things to know.</h3>
 
   <ol>
     <li>
-      <strong>Capital preservation in 2022.</strong> Every start date in the test ended 2022
-      in positive territory, averaging about +8%, while the S&amp;P 500 fell roughly 20%.
-      This is the strongest empirical evidence that the regime-aware design earns its keep
-      when it should.
+      <strong>Capital preservation when it matters.</strong> In 2008 the regime filter held the
+      portfolio in cash: <strong>&minus;0.5% against the S&amp;P 500's &minus;37.7%</strong>. In 2022,
+      &minus;7.5% against &minus;19.9%. In 2020, +31.9% against +15.2%. The honest wart: 2018,
+      a whipsaw year, cost &minus;12.3% against the index's &minus;7.0%. We publish that too.
     </li>
     <li>
-      <strong>Cascade Guard adds quantified value.</strong> When multiple positions hit their
-      trailing stops on the same day &mdash; signalling cascading market stress &mdash;
-      the system pauses new entries for ten days. Validated against a no-Cascade-Guard
-      counterfactual, the safeguard contributed approximately <strong>+37 percentage
-      points of return</strong> across the test period (roughly +3.7 pp annualized) by
-      avoiding forced re-entries during stress. Live in the production scanner since
-      May 2026.
+      <strong>The strategy is holdable.</strong> Stress-testing a $100k investor who panic-sells
+      after a &minus;25% drawdown: RigaCap finishes at <strong>$473k under every re-entry rule</strong>
+      because it never trips the threshold. Raw momentum finishes anywhere between $206k and $1.02M
+      depending on nerve (6&ndash;10 panic-sales over the window); the S&amp;P 500 between $210k and
+      $399k. A strategy only compounds for the investor who can stay in it.
     </li>
     <li>
-      <strong>Risk came in tighter than the model.</strong> Internal modeling targeted a
-      32% maximum drawdown; the walk-forward simulation delivered <strong>20.4%</strong>.
-      The strategy's actual risk profile is materially better than the conservative case
-      we planned for.
+      <strong>The recent held-out window is strong.</strong> The last 24 months (June 2024&ndash;May 2026)
+      were held out of all tuning: <strong>+32.0% annualized, 2.20 Sharpe, 8.5% max drawdown</strong>,
+      against +19.9% annualized and a 19.0% drawdown for the S&amp;P 500. We do not project this rate
+      forward; we publish it alongside the 21-year base rate.
     </li>
   </ol>
 </div>
@@ -519,151 +519,132 @@
      ═══════════════════════════════════════════════════════════════ -->
 <div class="content page-break">
   <span class="kicker">02 &middot; Performance</span>
-  <h2>Walk-Forward, multiple start dates, full distribution <em>published.</em></h2>
+  <h2>One continuous window. Twenty-one years. <em>Nothing</em> cherry-picked.</h2>
 
   <p class="lead">
-    Cherry-picking a favorable start date is the single most common backtest distortion
-    in retail signal services. Our response: run the strategy from many different start
-    dates over the same five-year window, publish the average, and disclose the full range
-    &mdash; best, worst, and every point in between.
+    Cherry-picking a favorable window is the single most common backtest distortion
+    in retail signal services. Our response: publish a single continuous walk-forward
+    backtest from 2007 through 2026 &mdash; through the financial crisis, COVID, and the
+    2022 bear &mdash; alongside the benchmarks, with the bad years on the record.
   </p>
 
-  <h3>Five-Year Walk-Forward (clean data, 2026-04-28 vintage)</h3>
+  <h3>Continuous 21-Year Walk-Forward (2007&ndash;2026, price returns)</h3>
 
   <table>
     <thead>
       <tr>
         <th>Series</th>
-        <th>5-Year Return</th>
         <th>Annualized</th>
         <th>Sharpe</th>
-        <th>Max Drawdown</th>
+        <th>Calmar</th>
+        <th>Worst Drawdown</th>
       </tr>
     </thead>
     <tbody>
       <tr class="headline-row">
-        <td>RigaCap walk-forward (avg.)</td>
-        <td>+160%</td>
-        <td>21.5%</td>
-        <td>0.92</td>
-        <td>20.4%</td>
+        <td>RigaCap walk-forward</td>
+        <td>8.3%</td>
+        <td>0.73</td>
+        <td>0.43</td>
+        <td>19%</td>
+      </tr>
+      <tr>
+        <td>Raw 12-month momentum (net of costs)</td>
+        <td>13.2%</td>
+        <td>0.69</td>
+        <td>&mdash;</td>
+        <td>57%</td>
       </tr>
       <tr class="benchmark-row">
-        <td>S&amp;P 500 (SPY, price-only)</td>
-        <td>+93%</td>
-        <td>14%</td>
+        <td>S&amp;P 500 (price-only)</td>
+        <td>9.8%</td>
+        <td>0.54</td>
         <td>&mdash;</td>
-        <td>&mdash;</td>
+        <td>55%</td>
       </tr>
     </tbody>
   </table>
   <p class="table-caption">
-    Walk-forward simulation across multiple start dates from January&ndash;April 2021,
-    each measured over a full 5-year window. Realized end-of-day fills used; rebalance
-    frictions modeled in-simulation. SPY benchmark is price-only (excludes dividends).
+    Continuous walk-forward backtest, 2007&ndash;2026, price returns. Data from 2016 onward is
+    survivorship-free and point-in-time; the pre-2016 extension carries a survivorship caveat.
+    SPY benchmark is price-only (excludes dividends). The index lost more than half its value
+    twice in this window; RigaCap's worst drawdown was 19%.
   </p>
 
-  <h3>Per-Start-Date Distribution</h3>
-
-  <p>
-    The full set, sorted by entry date. Best-to-worst spread: <strong>+143 percentage
-    points</strong>. Every start date positive over the full window; every start date
-    positive in calendar 2022.
-  </p>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Start Date</th>
-        <th>5-Year Return</th>
-        <th>Sharpe</th>
-        <th>Max DD</th>
-        <th>SPY (same window)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td>2021-01-04</td><td>+145%</td><td>0.92</td><td>20.3%</td><td>+98%</td></tr>
-      <tr><td>2021-01-18</td><td>+252%</td><td>0.88</td><td>25.9%</td><td>+96%</td></tr>
-      <tr><td>2021-01-25</td><td>+160%</td><td>0.83</td><td>20.4%</td><td>+92%</td></tr>
-      <tr><td>2021-02-01</td><td>+156%</td><td>0.96</td><td>20.4%</td><td>+97%</td></tr>
-      <tr><td>2021-02-08</td><td>+156%</td><td>0.96</td><td>20.4%</td><td>+97%</td></tr>
-      <tr><td>2021-02-15</td><td>+156%</td><td>0.96</td><td>20.4%</td><td>+97%</td></tr>
-      <tr><td>2021-03-01</td><td>+146%</td><td>0.95</td><td>16.7%</td><td>+89%</td></tr>
-      <tr><td>2021-04-01</td><td>+109%</td><td>0.89</td><td>19.0%</td><td>+75%</td></tr>
-      <tr class="headline-row"><td>Average</td><td>+160%</td><td>0.92</td><td>20.4%</td><td>+93%</td></tr>
-    </tbody>
-  </table>
-
-  <h3>Calendar-Year Breakdown</h3>
+  <h3>Crisis-Year Record</h3>
 
   <table>
     <thead>
       <tr>
         <th>Year</th>
-        <th>RigaCap (avg.)</th>
-        <th>Worst start</th>
+        <th>RigaCap</th>
         <th>S&amp;P 500</th>
         <th>Note</th>
       </tr>
     </thead>
     <tbody>
-      <tr class="headline-row"><td>2022</td><td>+8%</td><td>+2%</td><td>&minus;19%</td><td>Bear-year proof</td></tr>
-      <tr><td>2023</td><td>+12%</td><td>+12%</td><td>+26%</td><td>Lagged the index</td></tr>
-      <tr><td>2024</td><td>+32%</td><td>+25%</td><td>+24%</td><td>Beat the index</td></tr>
-      <tr><td>2025</td><td>+50%</td><td>+41%</td><td>+18%</td><td>Beat the index</td></tr>
+      <tr class="headline-row"><td>2008</td><td>&minus;0.5%</td><td>&minus;37.7%</td><td>Regime filter in cash through the financial crisis</td></tr>
+      <tr><td>2020</td><td>+31.9%</td><td>+15.2%</td><td>COVID crash and recovery</td></tr>
+      <tr><td>2022</td><td>&minus;7.5%</td><td>&minus;19.9%</td><td>Rate-hike bear</td></tr>
+      <tr><td>2018</td><td>&minus;12.3%</td><td>&minus;7.0%</td><td>The honest wart: whipsaw year, filter cost performance</td></tr>
     </tbody>
   </table>
   <p class="table-caption">
-    Every calendar year, every start date in the test ended in positive territory.
     SPY benchmark is price-only (excludes dividends, roughly 1.5&ndash;2 percentage
-    points of annual understatement).
+    points of annual understatement). We publish the bad year alongside the good ones.
   </p>
 
   <div class="pullquote">
-    Every year. Every start date. Positive.
+    Down &minus;1.0% on average when the market falls. The market averages &minus;3.9%.
   </div>
 
-  <h3>The 11-Year Consistency Check</h3>
+  <p>
+    Monthly correlation to the S&amp;P 500 runs at just <strong>0.43</strong>. In months the
+    index falls, RigaCap averages &minus;1.0% against the index's &minus;3.9%; in months it
+    rises, RigaCap averages +1.7%. That asymmetry &mdash; not raw return &mdash; is the product.
+  </p>
+
+  <h3>The Held-Out Recent Window</h3>
 
   <p>
-    The 5-year multi-start window is the rigorous near-term proof. The 11-year
-    single-start window is the long-window confirmation that the 5-year result
-    isn't a recent-regime artifact.
+    The most recent 24 months (June 2024&ndash;May 2026) were held out of all parameter
+    tuning &mdash; the strategy was locked, then run forward into data it had never seen.
   </p>
 
   <div class="stat-row">
     <div class="stat">
-      <div class="stat-num pos">+675%</div>
-      <div class="stat-label">11-year total</div>
+      <div class="stat-num pos">+32.0%</div>
+      <div class="stat-label">Annualized, last 24 months</div>
     </div>
     <div class="stat">
-      <div class="stat-num pos">~21.6%</div>
-      <div class="stat-label">Annualized</div>
+      <div class="stat-num pos">2.20</div>
+      <div class="stat-label">Sharpe (Calmar 3.76)</div>
     </div>
     <div class="stat">
-      <div class="stat-num">28%</div>
+      <div class="stat-num">8.5%</div>
       <div class="stat-label">Max drawdown</div>
     </div>
   </div>
 
   <p>
-    Same fixed-parameter strategy, run from October 2015 through April 2026 &mdash;
-    a window that covers the 2018 vol spikes, the COVID crash, the 2022 bear
-    market, and the AI rally. The annualized return came in at <strong>~21.6%</strong>,
-    within rounding of our published <strong>21.5%</strong> annualized. Two
-    windows of different lengths and different start dates, the same compound
-    growth rate.
+    The S&amp;P 500 over the same window: +19.9% annualized, 1.18 Sharpe, 1.05 Calmar,
+    and a 19.0% maximum drawdown. We treat the 21-year figures as the base rate and the
+    held-out window as recent confirmation &mdash; not the other way around.
   </p>
 
+  <h3>The Behavioral Stress Test</h3>
+
   <p>
-    The longer window includes more bear cycles, so the 11-year max drawdown
-    reads slightly higher (28% vs the 5-year's 20%). SPY over the same 11-year
-    window: +318% (about 14% annualized) — alpha of approximately +357 percentage
-    points total, or roughly +7.6 pp annualized.
+    Backtests assume an investor with perfect nerve. Real investors sell into pain. We model a
+    $100k investor who panic-sells whenever their account is down 25% from its peak, then re-enters
+    under a range of rules. <strong>RigaCap finishes at $473k under every re-entry rule</strong> &mdash;
+    it never trips the panic threshold across all 21 years. Raw 12-month momentum, despite its higher
+    paper return, finishes anywhere from <strong>$206k to $1.02M</strong> depending entirely on nerve
+    (6&ndash;10 panic-sales over the window). The S&amp;P 500 finishes between <strong>$210k and $399k</strong>.
   </p>
 
   <div class="pullquote">
-    21% annualized over both 5 years and 11 years.
+    The best strategy is the one you can actually hold.
   </div>
 </div>
 
@@ -706,22 +687,22 @@
     <div class="component">
       <div class="component-num">03</div>
       <div>
-        <div class="component-title">Volume &amp; Position</div>
+        <div class="component-title">Breakout Proximity</div>
         <div class="component-desc">
-          A volume surge of ~1.3&times; the recent average and proximity to the
-          50-day high &mdash; institutional participation confirmed before
-          retail capital is committed.
+          The candidate must sit within 3% of its 50-day high, drawn from a liquid
+          universe &mdash; the top 100 symbols by 60-day volume, with a $15 minimum
+          price and 500k minimum daily volume.
         </div>
       </div>
     </div>
     <div class="component">
       <div class="component-num">04</div>
       <div>
-        <div class="component-title">Adaptive Exit</div>
+        <div class="component-title">Wide Trailing Exit</div>
         <div class="component-desc">
-          A 12% trailing stop from the high-water mark, with regime-aware tightening.
-          Winners run; losers cut. The exit logic, not the entry, governs how long
-          a position lives.
+          A 30% trailing stop from the high-water mark &mdash; wide enough to hold
+          winners through normal volatility, firm enough to cap any single failure.
+          The exit logic, not the entry, governs how long a position lives.
         </div>
       </div>
     </div>
@@ -730,10 +711,11 @@
   <h3>Portfolio construction.</h3>
 
   <p>
-    The system holds at most six concentrated positions at roughly 15% allocation
-    each, rebalanced biweekly. Concentration in the highest-conviction signals is a
-    deliberate choice &mdash; the alternative (broad diversification across many
-    weak signals) historically dilutes the strategy's edge.
+    The system holds up to twenty positions at roughly 4.5% allocation each, sized
+    by inverse volatility so calmer names carry more weight. Diversification is a
+    deliberate choice &mdash; the concentrated alternative was tested extensively and
+    produced drawdowns near 30%; spreading the same signals across twenty names is
+    what holds the worst drawdown to 19%.
   </p>
 </div>
 
@@ -742,52 +724,39 @@
      ═══════════════════════════════════════════════════════════════ -->
 <div class="content page-break">
   <span class="kicker">04 &middot; Cascade Guard</span>
-  <h2>A validated safeguard, not a <em>marketing</em> claim.</h2>
+  <h2>A safeguard we describe <em>precisely</em>, not loosely.</h2>
 
   <p class="lead">
-    When three or more positions hit their trailing stop on the same day &mdash;
+    When multiple positions hit their trailing stop on the same day &mdash;
     a rare event signalling cascading market stress &mdash; the system pauses all
     new entries for ten calendar days. This prevents the "buying into a falling
     knife" pattern where forced re-entries during stress produce concentrated losses.
   </p>
 
-  <h3>The number, and how it was measured.</h3>
+  <h3>How it is validated.</h3>
 
   <p>
-    Most safeguards in retail signal services are claimed but never quantified. We
-    measured ours by running the full walk-forward simulation a second time with
-    Cascade Guard <strong>disabled</strong> &mdash; a true counterfactual &mdash;
-    and comparing the result against the canonical run.
+    Most safeguards in retail signal services are claimed but never quantified. Ours is
+    measured by running the walk-forward backtest a second time with Cascade Guard
+    <strong>disabled</strong> &mdash; a true counterfactual &mdash; and comparing the
+    result against the canonical run. A prior strategy configuration showed a meaningful
+    return contribution from the safeguard; the attribution for the current production
+    configuration is being re-measured on the 21-year window and will be published when
+    complete, rather than carried forward from a superseded test.
   </p>
 
-  <div class="stat-row">
-    <div class="stat">
-      <div class="stat-num pos">+37 pp</div>
-      <div class="stat-label">Total Return Added</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num pos">+3.7 pp</div>
-      <div class="stat-label">Annualized Lift</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">+0.14</div>
-      <div class="stat-label">Sharpe Improvement</div>
-    </div>
-  </div>
-
   <p>
-    Across the test period, Cascade Guard contributed approximately +37 percentage
-    points of return (+3.7 pp annualized) and a Sharpe improvement of +0.14 &mdash;
-    by avoiding forced re-entries during cascade events. The strategy stays fully
-    active over 97% of trading days; the safeguard only fires on rare cascade-stress
-    events.
+    Cascade Guard has been live in the production scanner since May 2026 and remains
+    enabled in the current production configuration. The strategy stays fully active
+    on the overwhelming majority of trading days; the safeguard only fires on rare
+    cascade-stress events.
   </p>
 
   <div class="callout">
     <p><strong>What Cascade Guard does NOT do.</strong> It is not a drawdown reducer.
     Existing positions continue to drawdown during paused windows; the safeguard only
-    prevents new capital deployment into stress. The MDD impact is approximately
-    neutral. Cascade Guard is a <em>return amplifier</em>, not a downside hedge.</p>
+    prevents new capital deployment into stress. Cascade Guard is a re-entry
+    discipline, not a downside hedge &mdash; the regime filter is what handles drawdown.</p>
   </div>
 </div>
 
@@ -825,14 +794,14 @@
 
   <p>
     Detection is seven-state. Response is currently <strong>binary</strong>:
-    the strategy either trades according to the standard rules, or pauses entries
-    via Cascade Guard when panic-grade stress is detected. Regime-specific sub-strategies
-    (different entry rules per regime, different position sizing per regime, etc.)
-    were evaluated and <strong>deferred</strong>.
+    the strategy is either invested (market trend healthy) or in cash (market trend
+    broken), with Cascade Guard pausing new entries during cascade-grade stress.
+    Regime-specific sub-strategies (different entry rules per regime, different
+    position sizing per regime, etc.) were evaluated and <strong>deferred</strong>.
   </p>
 
   <p>
-    The reason is statistical, not philosophical. Across eleven years of data, only
+    The reason is statistical, not philosophical. Across twenty-one years of data, only
     a handful of true panic-grade regimes have occurred. That sample size is too
     small to support per-regime parameter optimization without overfitting. Adding
     more rules to the system, on this evidence, would degrade the result rather than
@@ -840,11 +809,11 @@
   </p>
 
   <p>
-    What detection is doing today: providing the trigger for Cascade Guard, informing
-    position-sizing tightness during weakening conditions, and feeding a 1&ndash;2
-    week regime-shift forecast surfaced to subscribers. Per-regime sub-strategies
-    revisit when either (a) more events occur, or (b) a universal rule emerges that
-    doesn't require per-event fitting.
+    What detection is doing today: providing market context on the dashboard, supporting
+    the binary invested-or-cash decision, and feeding a 1&ndash;2 week regime-shift
+    forecast surfaced to subscribers. Per-regime sub-strategies revisit when either
+    (a) more events occur, or (b) a universal rule emerges that doesn't require
+    per-event fitting.
   </p>
 </div>
 
@@ -905,11 +874,14 @@
   <h3>What the simulation includes.</h3>
   <ul>
     <li>Realized end-of-day fills at simulated execution prices</li>
-    <li>Rebalance frictions at the period boundary</li>
-    <li>The full 11-year price history (universe of ~4,000 US equities)</li>
-    <li>Walk-forward methodology with no hindsight bias &mdash; parameters fixed
-    at the start of each period, applied forward</li>
-    <li>Multiple start dates to disclose path-dependency variance</li>
+    <li>A continuous 21-year price history (2007&ndash;2026)</li>
+    <li>Survivorship-free, point-in-time data from 2016 onward; the pre-2016
+    extension carries a survivorship caveat and is disclosed as such wherever
+    21-year figures are cited</li>
+    <li>Walk-forward methodology with no hindsight bias &mdash; parameters fixed,
+    then applied forward into unseen data</li>
+    <li>A fully held-out final 24 months (June 2024&ndash;May 2026), untouched by
+    any tuning</li>
   </ul>
 
   <h3>What the simulation does NOT include.</h3>
@@ -945,8 +917,10 @@
   </p>
 
   <p>
-    Performance figures in this document reflect a 5-year walk-forward simulation
-    on clean indicator data, run April 2026.
+    Performance figures in this document reflect a continuous 21-year walk-forward
+    backtest (2007&ndash;2026, price returns) on clean indicator data, run June 2026.
+    The live track record began June 11, 2026 with a fresh $100k model book; all
+    figures before that date are backtested.
   </p>
 </div>
 
@@ -1027,14 +1001,14 @@
       subscriber capital.
     </p>
     <p>
-      Source data: <code>docs/canonical_numbers.json</code> (vintage 2026-04-28,
-      label "Clean-data 8-date 5y, carry-on"). Walk-forward simulation source:
-      internal walk-forward infrastructure with no hindsight bias and no per-period
-      parameter optimization. Cascade Guard impact validated against a true no-CG
-      counterfactual run.
+      Source data: continuous 21-year walk-forward backtest, 2007&ndash;2026, price
+      returns (vintage June 2026). Data from 2016 onward is survivorship-free and
+      point-in-time (PITFWU); pre-2016 data carries a survivorship caveat. Walk-forward
+      simulation source: internal walk-forward infrastructure with no hindsight bias
+      and no per-period parameter optimization.
     </p>
     <p style="margin-top: 1.5rem; font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.7rem; color: var(--ink-mute);">
-      RigaCap &middot; April 2026 &middot; Investor Report v2 &middot; rigacap.com
+      RigaCap &middot; June 2026 &middot; Investor Report v2 &middot; rigacap.com
     </p>
   </div>
 </div>

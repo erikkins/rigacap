@@ -570,7 +570,7 @@
       </div>
       <div class="cover-stat">
         <div class="label">Trailing Stop</div>
-        <div class="value">12%</div>
+        <div class="value">30%</div>
         <div class="sub">Hard exit</div>
       </div>
       <div class="cover-stat">
@@ -580,8 +580,8 @@
       </div>
       <div class="cover-stat">
         <div class="label">Walk-Forward</div>
-        <div class="value">5y</div>
-        <div class="sub">Multi-start, no cherry-picking</div>
+        <div class="value">21y</div>
+        <div class="sub">Continuous, no cherry-picking</div>
       </div>
     </div>
 
@@ -943,7 +943,7 @@
       <tr><th>Filter</th><th>Condition</th><th>Purpose</th></tr>
     </thead>
     <tbody>
-      <tr><td>Breakout proximity</td><td>Within 5% of 50-day high</td><td>High-conviction entries only</td></tr>
+      <tr><td>Breakout proximity</td><td>Within 3% of 50-day high</td><td>High-conviction entries only</td></tr>
       <tr><td>Volume confirmation</td><td>Day's volume &ge; 1.3x recent average</td><td>Real participation</td></tr>
       <tr><td>Trend</td><td>Price &gt; MA20 and MA50</td><td>Established uptrend</td></tr>
       <tr><td>Liquidity</td><td>&ge; 500,000 shares/day</td><td>Tradable size</td></tr>
@@ -970,18 +970,18 @@
 
   <h3>Production parameters.</h3>
   <p>
-    Production trades the locked Trial 37 parameter set: six positions sized at 15% each of
-    available capital, biweekly rebalance, 12% trailing stop, and the timing-and-momentum
-    ensemble described above. The walk-forward optimizer explores wider ranges in research
-    mode (4&ndash;8 positions, 12&ndash;20% sizing, varying breakout sensitivity); production
-    does not retune itself between runs.
+    Production trades the locked RigaCap Momentum Strategy parameter set (live since
+    June 10, 2026): up to twenty positions sized at roughly 4.5% each with inverse-volatility
+    weighting, a 30% trailing stop, and the timing-and-momentum ensemble described above,
+    drawn from a universe of the top 100 symbols by 60-day volume. The walk-forward harness
+    explores wider ranges in research mode; production does not retune itself between runs.
   </p>
 
   <div class="callout">
     <p><strong>Research vs. production.</strong> The walk-forward harness can re-optimize
-    parameters on a rolling window using Bayesian methods &mdash; that capability is what
-    surfaces the Trial 37 parameter set in the first place. Production then runs the locked
-    parameters until a new optimization pass justifies replacement. The system does not
+    parameters on a rolling window using Bayesian methods &mdash; research capability that
+    informs which parameter set gets locked. Production then runs the locked
+    parameters until a new validation pass justifies replacement. The system does not
     silently retune itself in front of subscribers.</p>
   </div>
 
@@ -1084,7 +1084,7 @@
   <p>
     Production response is deliberately binary: when the regime engine reads SPY below its
     200-day moving average, the system moves to cash; otherwise it stays invested at the
-    locked Trial 37 parameter set. Cascade Guard runs alongside (next section). Per-regime
+    locked production parameter set. Cascade Guard runs alongside (next section). Per-regime
     sizing &mdash; varying trailing-stop width, position count, or position size by regime
     state &mdash; is a research-mode capability of the walk-forward harness, not a live rule.
   </p>
@@ -1181,7 +1181,7 @@
 
   <div class="code-block"><span class="comment"># High water mark and trailing stop level</span>
 <span class="keyword">HWM</span>        = max(entry_price, stored_highest, current_price)
-<span class="keyword">stop_level</span> = HWM &times; (1 &minus; 0.12)
+<span class="keyword">stop_level</span> = HWM &times; (1 &minus; 0.30)
 
 <span class="comment"># Exit and warning conditions</span>
 <span class="keyword">SELL</span>    when price &le; stop_level
@@ -1190,10 +1190,10 @@
   <h3>Exit priority.</h3>
   <ol>
     <li><strong>Regime exit (<code>go_to_cash</code>)</strong> &mdash; immediate sell regardless of P&amp;L; capital preservation overrides everything else.</li>
-    <li><strong>Trailing-stop hit</strong> &mdash; price at or below HWM x 0.88; closes the position.</li>
+    <li><strong>Trailing-stop hit</strong> &mdash; price at or below HWM x 0.70; closes the position.</li>
     <li><strong>Warning zone</strong> &mdash; within 3% of the stop level; triggers a subscriber alert, no automatic action.</li>
     <li><strong>Regime warning</strong> &mdash; SPY approaching its 200-day average; advisory only.</li>
-    <li><strong>Rebalance rotation</strong> &mdash; at the biweekly universe re-ranking, an existing position has dropped out of the top tier and a stronger candidate displaces it. The 14-day boundary itself is not an exit trigger; the rank change is.</li>
+    <li><strong>Rebalance rotation</strong> &mdash; at the periodic universe re-ranking, an existing position has dropped out of the top tier and a stronger candidate displaces it. The boundary itself is not an exit trigger; the rank change is.</li>
   </ol>
 
   <!-- Trailing stop staircase diagram -->
@@ -1298,18 +1298,18 @@
       </tr>
       <tr>
         <td><strong>Trailing stop %</strong></td>
-        <td>strategy parameter, regime-adjusted</td>
-        <td>strategy parameter, regime-adjusted</td>
+        <td>strategy parameter (30% in production)</td>
+        <td>strategy parameter (30% in production)</td>
       </tr>
       <tr>
         <td><strong>Max concurrent positions</strong></td>
-        <td>6</td>
-        <td>6</td>
+        <td>20</td>
+        <td>20</td>
       </tr>
       <tr>
         <td><strong>Position sizing</strong></td>
-        <td>15% of capital per slot</td>
-        <td>15% of capital per slot</td>
+        <td>~4.5% of capital per slot, inverse-volatility weighted</td>
+        <td>~4.5% of capital per slot, inverse-volatility weighted</td>
       </tr>
       <tr>
         <td><strong>Entry: timing reference</strong></td>
@@ -1404,17 +1404,17 @@
 
   <h3>What it adds.</h3>
   <p>
-    On the canonical 5-year multi-start walk-forward, Cascade Guard contributes
-    <strong>+37.7 percentage points to total return</strong> (about <strong>+3.7 percentage
-    points annualised</strong>) and roughly <strong>+0.14 to the Sharpe ratio</strong>. The
-    drawdown impact is essentially neutral &mdash; modestly worse on a few start dates,
-    modestly better on others &mdash; so we frame Cascade Guard as a return-quality lever, not
-    as drawdown protection.
+    Cascade Guard is validated by counterfactual: the walk-forward backtest is re-run with the
+    safeguard disabled and the results compared. A prior strategy configuration showed a
+    meaningful return-quality contribution; the attribution for the current production
+    configuration is being re-measured on the 21-year window before we publish a number.
+    The drawdown impact is essentially neutral, so we frame Cascade Guard as a re-entry
+    discipline, not as drawdown protection.
   </p>
 
   <p>
-    Cascade Guard fires on rare cascade events &mdash; a handful of times in five years. The
-    point is not its frequency; it is the asymmetry. The cost during quiet periods is zero.
+    Cascade Guard fires on rare cascade events &mdash; a handful of times across a market cycle.
+    The point is not its frequency; it is the asymmetry. The cost during quiet periods is zero.
     The benefit during a cascade is avoiding the second wave of re-entries into the same
     falling market.
   </p>
@@ -1502,20 +1502,20 @@
   <h3>Production parameters.</h3>
   <div class="stat-row no-break">
     <div class="stat">
-      <div class="stat-num">6</div>
+      <div class="stat-num">20</div>
       <div class="stat-label">Max positions</div>
     </div>
     <div class="stat">
-      <div class="stat-num">15%</div>
-      <div class="stat-label">Position size</div>
+      <div class="stat-num">4.5%</div>
+      <div class="stat-label">Position size (inverse-vol)</div>
     </div>
     <div class="stat">
-      <div class="stat-num">12%</div>
+      <div class="stat-num">30%</div>
       <div class="stat-label">Trailing stop</div>
     </div>
     <div class="stat">
-      <div class="stat-num">14d</div>
-      <div class="stat-label">Rebalance period</div>
+      <div class="stat-num">Top 100</div>
+      <div class="stat-label">Universe by 60-day volume</div>
     </div>
   </div>
 
@@ -1525,7 +1525,7 @@
     <li>Filter to <code>is_fresh = true</code> only; skip symbols already held.</li>
     <li>Sort by ensemble score, highest first.</li>
     <li>Enter up to <code>MAX_POSITIONS - open_count</code> new positions.</li>
-    <li>Allocate 15% of <strong>current cash</strong> per position (not starting capital).</li>
+    <li>Allocate roughly 4.5% per position, weighted by inverse volatility so calmer names carry more.</li>
     <li>Minimum allocation $100 to avoid sub-share rounding.</li>
   </ul>
 
@@ -1535,23 +1535,22 @@
       <tr><th>Exit reason</th><th>Trigger</th><th>Portfolio</th></tr>
     </thead>
     <tbody>
-      <tr><td><code>trailing_stop</code></td><td>Daily close &le; HWM x 0.88</td><td>Live + WF</td></tr>
+      <tr><td><code>trailing_stop</code></td><td>Daily close &le; HWM x 0.70</td><td>Live + WF</td></tr>
       <tr><td><code>regime_exit</code></td><td><code>go_to_cash</code> recommendation</td><td>Live</td></tr>
-      <tr><td><code>rebalance_exit</code></td><td>Biweekly period boundary</td><td>Walk-forward</td></tr>
+      <tr><td><code>rebalance_exit</code></td><td>Period boundary (walk-forward harness)</td><td>Walk-forward</td></tr>
       <tr><td><code>cascade_pause</code></td><td>Cascade Guard active during entry window</td><td>Live + WF</td></tr>
     </tbody>
   </table>
 
   <div class="callout no-break">
-    <p><strong>Biweekly boundaries.</strong> &ldquo;Rebalance&rdquo; here means a universe
-    re-ranking, not a portfolio shuffle for the subscriber. Every two weeks the system
-    re-runs the entry gauntlet across the full universe of roughly 4,000 symbols, identifies
+    <p><strong>Re-ranking boundaries.</strong> &ldquo;Rebalance&rdquo; here means a universe
+    re-ranking, not a portfolio shuffle for the subscriber. The system periodically
+    re-runs the entry gauntlet across the full universe, identifies
     the current top-tier candidates, and checks whether existing held positions still
     qualify. Positions that still rank carry forward; ones that have dropped out of the
-    top tier rotate out. Carry-on semantics outperform force-close on the canonical
-    clean-data run (+160% vs. +155% total, Sharpe 0.92 vs. 0.88), so the system carries
-    qualifying positions across biweekly windows rather than mechanically liquidating at
-    the 14-day mark.</p>
+    top tier rotate out. Carry-on semantics outperform force-close, so the system carries
+    qualifying positions across windows rather than mechanically liquidating at
+    the boundary.</p>
   </div>
 
   <!-- Position lifecycle diagram -->
@@ -1775,25 +1774,26 @@
 
   <h3>Methodology.</h3>
   <ul>
-    <li><strong>Period length.</strong> Biweekly (14-day intervals, anchored to a fixed reference date).</li>
-    <li><strong>Optimization.</strong> Uses only historical data up to each period boundary.</li>
-    <li><strong>Trading.</strong> Enters fresh ensemble signals as they fire; at each biweekly boundary the universe is re-ranked and existing positions are checked against the refreshed top tier.</li>
-    <li><strong>Position carry.</strong> Carry-on outperforms force-close on the canonical clean-data run (+160% vs. +155% total, Sharpe 0.92 vs. 0.88).</li>
-    <li><strong>Universe size.</strong> 100 symbols per period for computational efficiency on the canonical run; the production scanner runs the full universe daily.</li>
-    <li><strong>Strategy.</strong> The locked Trial 37 timing-and-momentum ensemble.</li>
+    <li><strong>Window.</strong> A single continuous 21-year window (2007&ndash;2026), price returns.</li>
+    <li><strong>Optimization.</strong> Parameters are locked, then applied forward; no per-period retuning.</li>
+    <li><strong>Trading.</strong> Enters fresh ensemble signals as they fire; the universe is periodically re-ranked and existing positions are checked against the refreshed top tier.</li>
+    <li><strong>Position carry.</strong> Carry-on semantics: qualifying positions survive period boundaries rather than being mechanically liquidated.</li>
+    <li><strong>Universe.</strong> Top 100 symbols by 60-day volume per period; the production scanner runs the full universe daily.</li>
+    <li><strong>Strategy.</strong> The locked RigaCap Momentum Strategy timing-and-momentum ensemble (20 positions &times; 4.5%, inverse-volatility sizing, 30% trail, regime filter, Cascade Guard).</li>
+    <li><strong>Data integrity.</strong> Survivorship-free, point-in-time data from 2016 onward; the pre-2016 extension carries a survivorship caveat.</li>
   </ul>
 
   <h3>What we publish.</h3>
   <p>
-    We publish the average across multiple start dates, not the best single start date. The
-    walk-forward harness runs across multiple staggered start dates from early 2021; we also
-    run an 11-year single-start window for context. Every figure in the next section reflects
-    one of those runs &mdash; we identify which one beside each figure.
+    We publish one continuous window &mdash; 2007 through 2026 &mdash; with the crisis years
+    and the bad years on the record, plus a fully held-out final 24 months as recent
+    confirmation. Every figure in the next section reflects one of those runs &mdash; we
+    identify which one beside each figure.
   </p>
 
   <div class="callout no-break">
-    <p><strong>Zero hindsight bias.</strong> At each biweekly boundary, the harness knows
-    nothing about what happens next. Parameters are computed using only past data; the
+    <p><strong>Zero hindsight bias.</strong> At each step, the harness knows
+    nothing about what happens next. Parameters are fixed in advance; the
     strategy then trades forward into unseen market conditions. The published figures are
     out-of-sample by construction.</p>
   </div>
@@ -1807,114 +1807,115 @@
   <h2>What the walk-forward <em>shows.</em></h2>
 
   <p class="lead">
-    Two windows. Multiple start dates on the 5-year run, a single 11-year run for the long
-    view. Both reported on clean indicator data, with full disclosure of the worst case alongside
-    the average.
+    One continuous 21-year window (2007&ndash;2026), plus a fully held-out final 24 months.
+    Both reported on clean indicator data, with the crisis years and the bad years on the
+    record alongside the averages.
   </p>
 
   <h3>Headline numbers.</h3>
   <table>
     <thead>
-      <tr><th>Window</th><th>Total return</th><th>Annualised</th><th>Sharpe</th><th>Max drawdown</th></tr>
+      <tr><th>Series (2007&ndash;2026)</th><th>Annualised</th><th>Sharpe</th><th>Calmar</th><th>Worst drawdown</th></tr>
     </thead>
     <tbody>
       <tr class="headline-row">
-        <td>5-year multi-start average</td>
-        <td>+160%</td>
-        <td>21.5%</td>
-        <td>0.92</td>
-        <td>20.4%</td>
+        <td>RigaCap Momentum Strategy</td>
+        <td>8.3%</td>
+        <td>0.73</td>
+        <td>0.43</td>
+        <td>19%</td>
       </tr>
       <tr>
-        <td>5-year worst start</td>
-        <td>+109%</td>
-        <td>15.9%</td>
+        <td>Raw 12-month momentum (net of costs)</td>
+        <td>13.2%</td>
+        <td>0.69</td>
         <td>&mdash;</td>
-        <td>&mdash;</td>
-      </tr>
-      <tr>
-        <td>5-year best start</td>
-        <td>+252%</td>
-        <td>28.6%</td>
-        <td>&mdash;</td>
-        <td>&mdash;</td>
-      </tr>
-      <tr class="headline-row">
-        <td>11-year single-start</td>
-        <td>+675%</td>
-        <td>~21.6%</td>
-        <td>0.95</td>
-        <td>28.1%</td>
+        <td>57%</td>
       </tr>
       <tr class="benchmark-row">
-        <td>SPY, 11-year same window</td>
-        <td>+318%</td>
-        <td>13.8%</td>
+        <td>S&amp;P 500 (price-only)</td>
+        <td>9.8%</td>
+        <td>0.54</td>
         <td>&mdash;</td>
-        <td>&mdash;</td>
+        <td>55%</td>
+      </tr>
+      <tr class="headline-row">
+        <td>Held-out last 24 months (Jun 2024&ndash;May 2026)</td>
+        <td>+32.0%</td>
+        <td>2.20</td>
+        <td>3.76</td>
+        <td>8.5%</td>
+      </tr>
+      <tr class="benchmark-row">
+        <td>S&amp;P 500, same 24-month window</td>
+        <td>+19.9%</td>
+        <td>1.18</td>
+        <td>1.05</td>
+        <td>19.0%</td>
       </tr>
     </tbody>
   </table>
   <p class="table-caption">
-    Source: canonical walk-forward, clean indicator data, carry-on between biweekly windows.
-    Single-start figures are in-window; multi-start figures average across multiple staggered
-    start dates from early 2021. The 5-year average ran tighter than the prior simulation
-    modelled &mdash; the simulation expected a 32% drawdown and the walk-forward came in at
-    20.4%, a meaningful improvement we credit to clean data plus the locked parameter set.
+    Source: continuous 21-year walk-forward backtest, clean indicator data, price returns.
+    Data from 2016 onward is survivorship-free and point-in-time; the pre-2016 extension
+    carries a survivorship caveat. The live track record began June 11, 2026 with a fresh
+    $100k model book &mdash; all figures here are backtested.
   </p>
 
-  <h3>How drawdown beats the simulation.</h3>
+  <h3>Where the edge actually is.</h3>
   <p>
-    The earlier prior-simulation envelope assumed a 32% maximum drawdown. The clean-data
-    walk-forward came in at 20.4% on the 5-year average &mdash; roughly thirty-six percent
-    tighter than the simulation modelled. The strongest single contributor is regime-aware
-    capital preservation in 2022; the 11-year window shows a wider drawdown (28.1%) because
-    it spans 2014&ndash;2017 and the Covid crash, both of which the regime engine handled but
-    not without taking some heat.
+    On raw return, the strategy trails both the index and raw momentum over 21 years. The
+    edge is risk: a 19% worst drawdown against 55% for the index and 57% for raw momentum,
+    a 0.43 monthly correlation to the S&amp;P, and an average month of &minus;1.0% when the
+    index falls (the index averages &minus;3.9%) versus +1.7% when it rises. The strategy
+    is built to be held through a full cycle &mdash; including by investors who would
+    panic-sell anything that loses half its value.
   </p>
 
   <h3>Cascade Guard contribution.</h3>
   <p>
-    On the same 5-year multi-start window, Cascade Guard contributes roughly +37.7 percentage
-    points to total return (+3.7 percentage points annualised) and about +0.14 to the Sharpe
-    ratio. The drawdown effect is essentially neutral &mdash; the lever is a return-quality
-    contribution, not a drawdown shield. We do not claim drawdown protection from Cascade
-    Guard; the regime exit is what handles drawdown.
+    Cascade Guard is validated against a no-Cascade-Guard counterfactual run. A prior
+    configuration showed a meaningful return-quality contribution; attribution for the
+    current production configuration is being re-measured on the 21-year window before we
+    publish a number. The drawdown effect is essentially neutral &mdash; we do not claim
+    drawdown protection from Cascade Guard; the regime exit is what handles drawdown.
   </p>
 
   <div class="feature-grid no-break">
     <div class="feature-card">
-      <h4>2022 capital preservation</h4>
-      <p>Every start date in the multi-start window finished 2022 in positive territory,
-      averaging about +8% while the S&amp;P 500 fell roughly &minus;19.4%. The clearest empirical
-      evidence the regime-aware design earns its keep.</p>
+      <h4>Crisis capital preservation</h4>
+      <p>2008: &minus;0.5% while the S&amp;P 500 fell &minus;37.7% (regime filter in cash).
+      2022: &minus;7.5% against &minus;19.9%. The clearest empirical evidence the
+      regime-aware design earns its keep. The honest wart: 2018, a whipsaw year,
+      came in at &minus;12.3% against &minus;7.0%.</p>
     </div>
     <div class="feature-card">
-      <h4>2024 participation</h4>
-      <p>The strategy averaged +31.9% in 2024 against +24% for SPY &mdash; staying invested
-      through a strong-bull regime and capturing the upside.</p>
+      <h4>Bull participation</h4>
+      <p>2020: +31.9% against +15.2% for the S&amp;P 500 &mdash; back in for the recovery
+      after sidestepping the worst of the crash. The held-out last 24 months ran +32.0%
+      annualised against +19.9%.</p>
     </div>
   </div>
 
   <h3>How we trade.</h3>
   <p>
-    Across the canonical 5-year multi-start window, winners average roughly 2.5 times the
-    size of losers (a 2.51x win/loss ratio). The strategy wins on about 42% of trades; the
-    rest are exited at the trailing stop, by design. The system does not need to be right
-    most of the time. It needs winners to compound and losers to be cut on a fixed rule
-    &mdash; and that is what the trailing stop and exit priority deliver.
+    Most entries are exited at the trailing stop, by design. The system does not need to be
+    right most of the time. It needs winners to compound and losers to be cut on a fixed rule
+    &mdash; and that is what the wide 30% trailing stop and exit priority deliver, spread
+    across up to twenty inverse-volatility-sized positions.
   </p>
 
   <div class="feature-grid no-break">
     <div class="feature-card">
-      <h4>Winners are 2.5x losers</h4>
-      <p>Winners run; losers cut. The trailing stop lets profitable positions compound rather
-      than capping them, while exits on the rule keep losses bounded.</p>
+      <h4>Winners run, losers cut</h4>
+      <p>The wide trailing stop lets profitable positions compound through normal volatility
+      rather than capping them, while exits on the rule keep losses bounded.</p>
     </div>
     <div class="feature-card">
-      <h4>Trade with discipline, not frequency</h4>
-      <p>Subscribers receive 3&ndash;4 high-conviction signals per month. The bar is high by
-      design &mdash; the gauntlet rejects far more candidates than it admits.</p>
+      <h4>Diversification, not concentration</h4>
+      <p>Twenty smaller positions instead of a concentrated handful. The bar at entry remains
+      high &mdash; the gauntlet rejects far more candidates than it admits &mdash; but no
+      single name can sink the book.</p>
     </div>
   </div>
 </div>
@@ -1943,14 +1944,16 @@
       the strategy may materially underperform any single benchmark in any given period.
     </p>
     <p>
-      Source data: walk-forward simulation on clean indicator data, run May 2026. Cascade
-      Guard impact validated against a true no-Cascade-Guard counterfactual run on the same
-      universe and parameter set. Production parameters are the locked Trial 37 set: six
-      positions sized at 15% each, biweekly rebalance, 12% trailing stop, the timing-and-momentum
-      ensemble described in this document.
+      Source data: continuous 21-year walk-forward backtest (2007&ndash;2026, price returns)
+      on clean indicator data, run June 2026. Data from 2016 onward is survivorship-free and
+      point-in-time; pre-2016 data carries a survivorship caveat. The live track record began
+      June 11, 2026 with a fresh $100k model book. Production parameters are the locked
+      RigaCap Momentum Strategy set: up to twenty positions sized at roughly 4.5% each with
+      inverse-volatility weighting, a 30% trailing stop, the market-regime filter, Cascade
+      Guard, and the timing-and-momentum ensemble described in this document.
     </p>
     <p style="margin-top: 1.5rem; font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.7rem; color: var(--ink-mute);">
-      RigaCap &middot; May 2026 &middot; Signal Intelligence &middot; rigacap.com
+      RigaCap &middot; June 2026 &middot; Signal Intelligence &middot; rigacap.com
     </p>
   </div>
 </div>

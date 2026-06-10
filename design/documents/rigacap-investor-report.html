@@ -474,27 +474,27 @@
   <p class="subtitle">
     An autonomous, regime-aware trading system combining ensemble signal intelligence,
     walk-forward validation, and AI-powered content generation to deliver
-    institutional-grade returns and market insights.
+    market-like compounding with a fraction of the market's drawdown.
   </p>
   <div class="hero-stats">
     <div class="hero-stat">
-      <div class="value green">+603%</div>
-      <div class="label">10-Year Return</div>
+      <div class="value green">8.3%</div>
+      <div class="label">Annualized (21-Yr Backtest)</div>
     </div>
     <div class="hero-stat">
-      <div class="value">1.19</div>
+      <div class="value">0.73</div>
       <div class="label">Sharpe Ratio</div>
     </div>
     <div class="hero-stat">
-      <div class="value green">~37%</div>
-      <div class="label">Annualized Return</div>
+      <div class="value green">19%</div>
+      <div class="label">Worst Drawdown</div>
     </div>
     <div class="hero-stat">
-      <div class="value">30%</div>
-      <div class="label">Max Drawdown</div>
+      <div class="value">+32%</div>
+      <div class="label">Last 24 Mo (Annualized)</div>
     </div>
   </div>
-  <div class="date">Confidential &mdash; April 2026</div>
+  <div class="date">Confidential &mdash; June 2026</div>
 </div>
 
 <!-- PAGE 2: EXECUTIVE SUMMARY -->
@@ -502,14 +502,18 @@
   <h2>Executive Summary</h2>
   <p>
     RigaCap is a <strong>fully autonomous, AI-driven equity trading platform</strong> that identifies
-    high-conviction momentum breakouts across 4,000+ US stocks. The platform detects 7 distinct
-    market regimes and automatically moves to cash when conditions are unfavorable &mdash; a discipline
-    that kept returns positive during the 2022 bear market while the S&amp;P 500 fell 20%.
+    high-conviction momentum breakouts across 4,000+ US stocks. A market-regime filter
+    automatically moves the portfolio to cash when conditions are unfavorable &mdash; a discipline
+    that limited 2022 to &minus;7.5% while the S&amp;P 500 fell &minus;19.9%, and held 2008 to
+    &minus;0.5% while the index lost &minus;37.7%.
   </p>
   <p>
-    The platform's <strong>ensemble strategy</strong> &mdash; combining breakout timing, momentum quality ranking,
-    and volume confirmation &mdash; has been validated through rigorous 10-year walk-forward testing with
-    <strong>zero hindsight bias</strong>, producing a +603% cumulative return over 10 years (~37% annualized, Sharpe 1.19, 30% max drawdown).
+    The production <strong>RigaCap Momentum Strategy</strong> &mdash; combining breakout timing, momentum quality ranking,
+    and disciplined risk controls &mdash; has been validated through a continuous 21-year walk-forward backtest
+    (2007&ndash;2026, price returns) with <strong>zero hindsight bias</strong>: 8.3% annualized, 0.73 Sharpe,
+    0.43 Calmar, and a worst drawdown of 19% through the 2008 financial crisis, COVID, and the 2022 bear.
+    Over the held-out last 24 months (Jun 2024&ndash;May 2026) it returned +32.0% annualized
+    (2.20 Sharpe, 8.5% max drawdown) versus +19.9% for the S&amp;P 500.
   </p>
   <p>
     In April 2026, RigaCap launched its <strong>Social Intelligence Engine</strong> &mdash;
@@ -520,59 +524,109 @@
 
   <div class="callout-green callout">
     <p><strong>Key Differentiator:</strong> Every return figure cited in this document is from
-    walk-forward validation &mdash; the system was tested on data it had never seen during optimization.
-    This is the gold standard for trading system verification, eliminating overfitting concerns.</p>
+    walk-forward backtesting &mdash; the system was tested on data it had never seen during optimization.
+    Data from 2016 onward is survivorship-free and point-in-time; the pre-2016 extension carries a
+    survivorship caveat. The live track record began June 11, 2026 with a fresh $100k model book &mdash;
+    all figures before that date are backtested.</p>
   </div>
 
-  <h2>Walk-Forward Performance (2021&ndash;2026)</h2>
-  <p>Biweekly rebalancing across 10 years. Fixed parameters validated through walk-forward testing &mdash; the system trades forward into unseen market conditions with no parameter changes.</p>
+  <h2>Walk-Forward Performance (2007&ndash;2026, Backtested)</h2>
+  <p>A continuous 21-year walk-forward backtest on price returns. The edge is not raw return &mdash;
+  it is surviving every crisis fully intact. The S&amp;P 500 lost more than half its value twice in
+  this window; RigaCap's worst drawdown was 19%.</p>
 
   <table>
     <thead>
       <tr>
-        <th>Period</th>
-        <th>Return</th>
-        <th>S&amp;P 500</th>
-        <th>Market Context</th>
+        <th>Strategy (2007&ndash;2026)</th>
+        <th>Annualized</th>
+        <th>Sharpe</th>
+        <th>Worst Drawdown</th>
       </tr>
     </thead>
     <tbody>
       <tr class="highlight-row">
-        <td>5-Year Avg</td>
-        <td class="positive">+384%</td>
-        <td>+84%</td>
-        <td>~37% annualized, Sharpe 1.19, 30% max drawdown</td>
+        <td>RigaCap Momentum Strategy</td>
+        <td class="positive">8.3%</td>
+        <td>0.73</td>
+        <td class="positive">19%</td>
       </tr>
-      <tr class="highlight-row">
-        <td>10-Year Total</td>
-        <td class="positive">+603%</td>
-        <td>+257%</td>
-        <td>~37% annualized, 30% max drawdown</td>
+      <tr>
+        <td>Raw 12-month momentum (net of costs)</td>
+        <td>13.2%</td>
+        <td>0.69</td>
+        <td class="negative">57%</td>
+      </tr>
+      <tr>
+        <td>S&amp;P 500 (price only)</td>
+        <td>9.8%</td>
+        <td>0.54</td>
+        <td class="negative">55%</td>
       </tr>
     </tbody>
   </table>
 
-  <div style="margin: 30px 0; text-align: center;">
-    <img src="track-record-chart.svg" alt="RigaCap 5-Year Equity Curve vs S&P 500" style="width: 100%; max-width: 900px; border-radius: 8px; border: 1px solid #e2e8f0;">
-    <p style="font-size: 11px; color: #64748b; margin-top: 8px; font-style: italic;">
-      RigaCap Ensemble (solid) vs S&P 500 (dashed) &mdash; Feb 2021 to Feb 2026 with market regime overlays
-    </p>
-  </div>
+  <h3>Crisis-Year Performance</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Year</th>
+        <th>RigaCap</th>
+        <th>S&amp;P 500</th>
+        <th>Context</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2008</td>
+        <td class="positive">&minus;0.5%</td>
+        <td class="negative">&minus;37.7%</td>
+        <td>Financial crisis &mdash; regime filter held the portfolio in cash</td>
+      </tr>
+      <tr>
+        <td>2020</td>
+        <td class="positive">+31.9%</td>
+        <td>+15.2%</td>
+        <td>COVID crash and recovery</td>
+      </tr>
+      <tr>
+        <td>2022</td>
+        <td class="positive">&minus;7.5%</td>
+        <td class="negative">&minus;19.9%</td>
+        <td>Rate-hike bear market</td>
+      </tr>
+      <tr>
+        <td>2018</td>
+        <td class="negative">&minus;12.3%</td>
+        <td>&minus;7.0%</td>
+        <td>Honest wart: whipsaw year where the filter underperformed</td>
+      </tr>
+    </tbody>
+  </table>
 
-  <h3>RigaCap vs. Benchmarks (5-Year Cumulative)</h3>
+  <h3>Held-Out Recent Window (Jun 2024&ndash;May 2026)</h3>
   <div class="compare-bars">
     <div class="compare-row">
       <div class="compare-label">RigaCap</div>
       <div class="compare-bar-wrap">
-        <div class="compare-bar navy" style="width:90%">+603% (10yr)</div>
+        <div class="compare-bar navy" style="width:90%">+32.0% annualized &middot; 2.20 Sharpe &middot; 8.5% max DD</div>
       </div>
     </div>
     <div class="compare-row">
       <div class="compare-label">S&amp;P 500</div>
       <div class="compare-bar-wrap">
-        <div class="compare-bar gray" style="width:47%">+257% (10yr)</div>
+        <div class="compare-bar gray" style="width:56%">+19.9% annualized &middot; 1.18 Sharpe &middot; 19.0% max DD</div>
       </div>
     </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>The behavioral edge:</strong> Strategies only compound if investors can hold them.
+    Stress-testing a $100k investor who panic-sells after a &minus;25% drawdown: RigaCap finishes at
+    <strong>$473k under every re-entry rule</strong> &mdash; it never trips the panic threshold. Raw momentum
+    finishes anywhere from $206k to $1.02M depending on nerve (6&ndash;10 panic-sales), and the S&amp;P 500
+    from $210k to $399k. RigaCap also runs at just 0.43 monthly correlation to the S&amp;P: averaging
+    &minus;1.0% in months the index falls (vs. &minus;3.9% for the index) and +1.7% when it rises.</p>
   </div>
 </div>
 
@@ -584,57 +638,58 @@
   <div class="feature-grid no-break">
     <div class="feature-card">
       <h4>1. Breakout Timing</h4>
-      <p>Price must clear its long-term accumulation zone &mdash; a proprietary breakout signal refined from 127 legacy stored procedures and 20+ years of data.</p>
+      <p>Price must clear its long-term accumulation zone (DWAP &times; 1.05) &mdash; a proprietary breakout signal refined from 127 legacy stored procedures and 20+ years of data.</p>
     </div>
     <div class="feature-card">
       <h4>2. Momentum Quality</h4>
-      <p>Stock must rank in the top momentum tier via a composite score: short (10d) &times; 0.5 + long (60d) &times; 0.3 &minus; volatility &times; 0.2.</p>
+      <p>Stock must rank in the top momentum tier via a composite score blending short-term and long-term momentum, penalized for volatility.</p>
     </div>
     <div class="feature-card">
-      <h4>3. Volume Confirmation</h4>
-      <p>Requires 1.3&times; average volume spike and proximity to 50-day high &mdash; institutional participation confirmed.</p>
+      <h4>3. Breakout Confirmation</h4>
+      <p>Price must sit within 3% of its 50-day high, drawn from a liquid universe (top 100 by 60-day volume, $15 minimum price, 500k minimum daily volume).</p>
     </div>
     <div class="feature-card">
-      <h4>4. Adaptive Exit</h4>
-      <p>12% trailing stop from high water mark, adjusted by market regime (8&ndash;20%). Winners run; losers are cut quickly.</p>
+      <h4>4. Wide Trailing Exit</h4>
+      <p>30% trailing stop from the high water mark &mdash; wide enough to let winners run through normal volatility, firm enough to cap any single failure.</p>
     </div>
   </div>
 
   <div class="callout">
-    <p><strong>Portfolio Construction:</strong> Maximum 6 concentrated positions at 15% allocation each.
-    Biweekly rebalancing. This concentration in high-conviction signals is a key driver of
-    outperformance vs. diversified approaches.</p>
+    <p><strong>Portfolio Construction:</strong> Up to 20 positions at 4.5% allocation each, sized by
+    inverse volatility so calmer names carry more weight. Diversification &mdash; not concentration &mdash;
+    is what keeps the worst drawdown near 19% while raw momentum loses 57%.</p>
   </div>
 
-  <h2 style="page-break-before: always;">7-Regime Market Intelligence</h2>
+  <h2 style="page-break-before: always;">Market Regime Intelligence</h2>
   <p>
-    The platform classifies market conditions into 7 distinct regimes using a multi-factor model
-    analyzing SPY trend, VIX percentile, market breadth, new highs/lows, and momentum acceleration.
-    Strategy parameters <strong>automatically adapt</strong> to each regime:
+    The core risk lever is the <strong>market-regime filter</strong>: when broad-market conditions break down,
+    the portfolio moves to cash. Behind it, the platform classifies conditions into 7 regimes using a
+    multi-factor model analyzing SPY trend, VIX percentile, market breadth, new highs/lows, and momentum
+    acceleration &mdash; powering the dashboard, forecasts, and subscriber context:
   </p>
 
   <div class="regime-grid no-break">
     <div class="regime-badge" style="background:#dcfce7; color:#166534;">
       <div class="name">Strong Bull</div>
-      Tight stops, max positions
+      Fully invested
     </div>
     <div class="regime-badge" style="background:#f0fdf4; color:#166534;">
       <div class="name">Weak Bull</div>
-      Balanced approach
+      Invested, watchful
     </div>
     <div class="regime-badge" style="background:#eff6ff; color:#1e40af;">
       <div class="name">Rotating Bull</div>
-      Diversify, sector aware
+      Sector-aware context
     </div>
     <div class="regime-badge" style="background:#fef3c7; color:#92400e;">
       <div class="name">Range-Bound</div>
-      Reduce size, wait
+      Caution flagged
     </div>
   </div>
   <div class="regime-grid no-break" style="margin-top:0;">
     <div class="regime-badge" style="background:#fff7ed; color:#9a3412;">
       <div class="name">Weak Bear</div>
-      Tighter stops, fewer signals
+      Elevated risk warnings
     </div>
     <div class="regime-badge" style="background:#fee2e2; color:#991b1b;">
       <div class="name">Panic / Crash</div>
@@ -677,18 +732,21 @@
 
   <h3>Binary Regime Response</h3>
   <p>
-    Rather than adjusting parameters per regime (which was tested and reduced returns by -18pp annualized),
-    the system uses a binary approach: <strong>invested</strong> (SPY &gt; 200-day MA) or
-    <strong>cash</strong> (SPY &lt; 200-day MA). This simple rule kept the portfolio positive during
-    the entire 2022 bear market (flat while SPY fell -20%).
+    Rather than adjusting parameters per regime (which was tested and reduced returns),
+    the system uses a binary approach: <strong>invested</strong> (market trend healthy) or
+    <strong>cash</strong> (market trend broken). This simple rule held 2008 to &minus;0.5% while the
+    S&amp;P 500 lost &minus;37.7%, and limited 2022 to &minus;7.5% against the index's &minus;19.9%.
+    It is not free: in whipsaw years like 2018 the filter cost performance (&minus;12.3% vs. &minus;7.0%).
   </p>
 
   <h3>Walk-Forward Validation (Anti-Overfitting)</h3>
   <p>
-    The system was validated across 10 years of history (2016&ndash;2026) using walk-forward methodology.
-    At each biweekly boundary, the system trades forward into unseen data using fixed parameters. This produces an
-    <strong>out-of-sample equity curve</strong> &mdash; the +603% return is entirely on data the system never saw during development.
-    The strategy was further stress-tested across multiple start dates &mdash; every one positive, every one beats the S&amp;P 500.
+    The system was validated across a continuous 21 years of history (2007&ndash;2026) using walk-forward
+    methodology: at each step the system trades forward into unseen data using fixed parameters, producing an
+    <strong>out-of-sample equity curve</strong> &mdash; 8.3% annualized with a 19% worst drawdown, entirely on
+    data the system never saw during development. The most recent 24 months (Jun 2024&ndash;May 2026) were held
+    out entirely: +32.0% annualized, 2.20 Sharpe, 8.5% max drawdown. Data from 2016 onward is survivorship-free
+    and point-in-time; the pre-2016 extension carries a survivorship caveat.
   </p>
 
   <div class="callout">
@@ -873,7 +931,7 @@
     <div class="metric-card">
       <h3 style="margin-top: 0; font-size: 1rem;">Regime Shift Forecast</h3>
       <p style="font-size: 0.85rem; color: var(--text-secondary);">
-        Our 7-regime market intelligence doesn't just detect&mdash;it predicts.
+        Our market-regime intelligence doesn't just detect&mdash;it predicts.
         Daily probability forecasts with historical accuracy tracking give
         subscribers early warning of market regime shifts.
       </p>
@@ -926,7 +984,7 @@
         <li><strong>Daily 6 PM ET:</strong> Subscriber email digest</li>
         <li><strong>Daily 8 PM ET:</strong> Walk-forward + social posts</li>
         <li><strong>Every 15 min:</strong> Auto-publish scheduled posts</li>
-        <li><strong>Biweekly:</strong> Portfolio rebalancing</li>
+        <li><strong>Daily:</strong> Model portfolio update from fresh signals</li>
       </ul>
     </div>
   </div>
@@ -954,30 +1012,31 @@
   <h2>Risk Management Summary</h2>
   <div class="metrics-grid">
     <div class="metric-card">
-      <div class="value gold">4&ndash;8</div>
-      <div class="label">Max Positions (adaptive)</div>
+      <div class="value gold">20</div>
+      <div class="label">Max Positions</div>
     </div>
     <div class="metric-card">
-      <div class="value gold">12&ndash;20%</div>
-      <div class="label">Position Size (adaptive)</div>
+      <div class="value gold">4.5%</div>
+      <div class="label">Per Position (inverse-vol sized)</div>
     </div>
     <div class="metric-card">
-      <div class="value gold">14%</div>
+      <div class="value gold">30%</div>
       <div class="label">Trailing Stop</div>
     </div>
     <div class="metric-card">
-      <div class="value gold">7</div>
-      <div class="label">Regime States</div>
+      <div class="value gold">Cash</div>
+      <div class="label">Regime Filter Default</div>
     </div>
   </div>
 
   <div class="callout-green callout">
-    <p><strong>Downside Protection:</strong> During the 2022 bear market (S&amp;P 500 down ~20%),
-    RigaCap&rsquo;s regime detector moved to cash, limiting the intra-year drawdown to just -7.3%.
-    The system finished 2022 essentially flat (-0.4%) &mdash; preserving capital while the broad market lost a fifth of its value.</p>
+    <p><strong>Downside Protection (backtested):</strong> In 2008, the regime filter held the portfolio in
+    cash &mdash; finishing the year at &minus;0.5% while the S&amp;P 500 lost &minus;37.7%. In the 2022 bear
+    it limited losses to &minus;7.5% against the index's &minus;19.9%. Across the full 21-year backtest the
+    worst drawdown was 19%, versus 55% for the index and 57% for raw momentum.</p>
   </div>
   <div class="callout-green callout" style="margin-top: 8px;">
-    <p><strong>Cascade Guard:</strong> A portfolio-level circuit breaker pauses all new entries when 3+ positions hit trailing stop on the same day. Triggered just 7 times in 5.3 years, this guardrail added +87 percentage points of return by preventing re-entry during cascade events.</p>
+    <p><strong>Cascade Guard:</strong> A portfolio-level circuit breaker pauses all new entries when multiple positions hit their trailing stops on the same day &mdash; the signature of cascading market stress &mdash; preventing automatic re-entry into a falling market.</p>
   </div>
 </div>
 
@@ -985,8 +1044,20 @@
 <div class="content page-break" style="padding-top: 1.5rem;">
   <h2 style="margin-top: 0;">Growth Engine &amp; Roadmap</h2>
   <p>
-    RigaCap is positioned for rapid subscriber growth through a combination of social proof,
-    automated content, and conversion-optimized funnels.
+    RigaCap now sells into <strong>two channels</strong>. The retail channel grows through social proof,
+    automated content, and conversion-optimized funnels at $129/month per subscriber. The second channel —
+    opened June 2026 with a dedicated adviser product surface — is <strong>registered investment advisers</strong>,
+    who license the strategy at the firm level for internal use across client accounts.
+  </p>
+  <p>
+    The adviser channel changes the unit economics: a firm license is priced at a multiple of a retail seat,
+    is applied across millions in client AUM (making the fee trivial relative to delivered value), is acquired
+    through a single conversation rather than a paid funnel, and carries near-zero marginal cost. The product
+    is unusually well-shaped for this buyer — an adviser's core business risk is the client who capitulates at
+    the bottom, and RigaCap's pitch is exactly that risk, quantified: a 19% worst drawdown across twenty-one
+    backtested years versus 55&ndash;57% for the index and raw momentum, 0.43 monthly correlation to the S&amp;P,
+    and a sit-out-the-crash record through the index's worst months. RigaCap remains a publisher throughout:
+    impersonal signals, the adviser retains all discretion and fiduciary duty, no custody, no client data.
   </p>
 
   <h3>Current Capabilities (Launched)</h3>
@@ -1105,6 +1176,8 @@
     <p>Adaptive AI Trading Platform &mdash; rigacap.com</p>
     <p style="margin-top: 0.5rem;">This document is confidential and intended solely for the recipient. Past performance does not guarantee future results.
     Trading involves risk of loss. Walk-forward results are out-of-sample but simulated &mdash; not live trading results.
+    The live track record began June 11, 2026 with a fresh $100k model book; all performance before that date is backtested.
+    Backtest data from 2016 onward is survivorship-free and point-in-time; pre-2016 data carries a survivorship caveat.
     RigaCap provides trading signals only &mdash; users execute trades via their own brokerage accounts.</p>
   </div>
 </div>

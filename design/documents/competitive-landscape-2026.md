@@ -31,7 +31,7 @@
 | 9 | **Kavout** | Neural network "Kai Score" (1-9) | Contact for pricing | Undisclosed |
 | 10 | **Zacks Premium** | Quantitative rank system | $249/year | Massive brand |
 
-**Closest comp: Mindful Trader** ($47/mo, ~3,000 members). Stanford economist's swing trade alerts with radical transparency. RigaCap's ensemble approach is more sophisticated, and our +289% walk-forward is competitive with Seeking Alpha's Alpha Picks (+284%).
+**Closest comp: Mindful Trader** ($47/mo, ~3,000 members). Stanford economist's swing trade alerts with radical transparency. RigaCap's ensemble approach is more sophisticated, and we compete on a different axis than Seeking Alpha's Alpha Picks (+284%): a 21-year walk-forward backtest with a 19% worst drawdown while the S&P lost half its value twice — risk discipline no pick service publishes.
 
 ### Tier 2: Tools / Screeners / Research ("DIY")
 
@@ -78,7 +78,7 @@
 ## 4 Gaps RigaCap Can Exploit
 
 ### 1. Nobody markets regime awareness
-None of the top 30 say "we know when NOT to be in the market." Our 7-regime system is genuinely unique.
+None of the top 30 say "we know when NOT to be in the market." Our market-regime filter — in cash through 2008 (−0.5% vs the S&P's −37.7%, backtested) — is genuinely unique.
 
 ### 2. Most services only tell you to buy, not when to sell
 Motley Fool = "buy and hold forever." RigaCap's trailing stops + explicit sell signals is a differentiator.
@@ -103,7 +103,7 @@ Nobody else has "We Called It" turning real trades into social content automatic
 
 ### RigaCap's 6-step playbook
 
-1. **Track record as conversion engine** — +289% WF result in every ad, email, and social post. This is the #1 asset.
+1. **Track record as conversion engine** — the crisis story (−0.5% in 2008, −7.5% in 2022, 19% worst drawdown across a 21-year walk-forward backtest) in every ad, email, and social post. This is the #1 asset.
 2. **"We Called It" social content** — Already built. Consistent posting on FinTwit/X, StockTwits, investing subreddits. Compounds over time.
 3. **SEO content strategy** — Write about "when to sell stocks," "market regime investing," "trailing stop strategies." Underserved keywords competitors don't own.
 4. **5–10 micro-influencer partnerships** — Finance YouTubers/TikTokers with 10K–100K followers. Creator content delivers 2x CTR vs brand ads. Free access + affiliate commission.
