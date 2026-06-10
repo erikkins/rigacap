@@ -1753,6 +1753,8 @@ class BacktesterService:
         last_rebalance: Optional[pd.Timestamp] = None
         in_cash_mode = False  # True when market is unfavorable
         cash_mode_day_count = 0  # Days spent in cash mode (for anti-churn cooldown)
+        smart_hold = False  # latched True after a smart re-entry (regime_reentry_mode);
+                            # suppresses the regime exit while SPY holds its MA50
         # Reset per-run pause event log. _pause_until / _pause_source are NOT reset here so a
         # carryover from the prior walk-forward period (set by walk_forward_service before
         # this call) survives into this run.
@@ -1930,12 +1932,36 @@ class BacktesterService:
             if strategy_type in ("momentum", "dwap_hybrid", "ensemble") and settings.MARKET_FILTER_ENABLED:
                 market_favorable = self._check_market_regime(date, panic_only=settings.MARKET_FILTER_PANIC_ONLY)
 
+                # Smart-re-entry latch (regime_reentry_mode): after an early
+                # re-entry (SPY still < MA200), stay invested while SPY holds
+                # its MA50; if the recovery fails, drop the latch and let the
+                # normal regime exit fire.
+                if smart_hold and not market_favorable and not in_cash_mode:
+                    _spy_row = (self._get_row_for_date(scanner_service.data_cache['SPY'], date)
+                                if 'SPY' in scanner_service.data_cache else None)
+                    if (_spy_row is not None and not pd.isna(_spy_row.get('ma_50', np.nan))
+                            and _spy_row['close'] > _spy_row['ma_50']):
+                        market_favorable = True
+                    else:
+                        smart_hold = False
+
                 # If market turns unfavorable, close all positions
+                # (bear_keep_pct > 0: keep the strongest fraction of the book,
+                # ranked by unrealized P&L — partial de-risk instead of full flush)
                 if not market_favorable and not in_cash_mode:
                     in_cash_mode = True
                     cash_mode_day_count = 0
                     regime_cooldown_remaining = self.regime_cooldown_days
-                    for symbol in list(positions.keys()):
+                    symbols_to_close = list(positions.keys())
+                    if self.bear_keep_pct > 0 and positions:
+                        def _pnl_now(sym):
+                            r = (self._get_row_for_date(scanner_service.data_cache[sym], date)
+                                 if sym in scanner_service.data_cache else None)
+                            return (r['close'] / positions[sym]['entry_price'] - 1) if r is not None else float('-inf')
+                        _ranked = sorted(positions.keys(), key=_pnl_now, reverse=True)
+                        _n_keep = int(round(len(_ranked) * self.bear_keep_pct))
+                        symbols_to_close = _ranked[_n_keep:]
+                    for symbol in symbols_to_close:
                         pos = positions[symbol]
                         df = scanner_service.data_cache[symbol]
                         row = self._get_row_for_date(df, date)
@@ -1971,13 +1997,23 @@ class BacktesterService:
                             spy_trend=pos.get('spy_trend', 0),
                         ))
                         capital += pos['shares'] * current_price
-                    positions.clear()
+                    for symbol in symbols_to_close:
+                        positions.pop(symbol, None)
 
                 elif market_favorable:
+                    smart_hold = False  # regime healthy again; latch no longer needed
                     if self.regime_cooldown_days > 0 and regime_cooldown_remaining > 0:
                         regime_cooldown_remaining -= 1
                     else:
                         in_cash_mode = False
+                elif self.regime_reentry_mode and in_cash_mode:
+                    if self._check_regime_reentry(date, cash_mode_day_count):
+                        # Early re-entry: SPY recovering (MA50 reclaim or V-bounce)
+                        # before the MA200 reclaim. Latch so the regime exit doesn't
+                        # immediately re-fire while SPY remains below MA200.
+                        in_cash_mode = False
+                        smart_hold = True
+                        print(f"[SMART-REENTRY] {date_str} after {cash_mode_day_count} cash days", flush=True)
 
             # Basket exit check (Cascade Guard pause basket).
             # Each basket position has its own HWM and 8% (configurable) trail.
@@ -2263,6 +2299,7 @@ class BacktesterService:
             # Skip new entries if in cash mode (unfavorable market)
             if in_cash_mode:
                 debug_cash_mode_days += 1
+                cash_mode_day_count += 1  # was never incremented — smart-reentry anti-churn needs it
                 position_value = 0.0
                 for sym, pos in positions.items():
                     if sym in scanner_service.data_cache:
