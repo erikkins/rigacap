@@ -26,6 +26,15 @@ _S3 = None
 _PANEL = None
 _CA = None
 
+# EXT mode (Jun 10 2026): opt-in pre-2016 extension. When True, load_bars
+# prepends pitfwu/bars_ext/ rows (yfinance, de-adjusted to as-traded, ~2005+),
+# corp actions include calendar_pre2016 (yf splits ex<2016 only), and universe
+# panels read the *_ext merged keys. Default False so every existing bench
+# reproduces byte-for-byte. CAVEAT: pre-2016 layer is SURVIVORSHIP-BIASED
+# (yfinance lacks delisted names) — label all pre-2016 results.
+EXT = False
+_CA_EXT = None
+
 
 def s3():
     global _S3
@@ -43,7 +52,8 @@ def load_panel():
     """Liquidity panel: dates x symbols of 20d trailing avg dollar-volume."""
     global _PANEL
     if _PANEL is None:
-        _PANEL = _read_parquet("pitfwu/universe/liquidity_dv20.parquet")
+        key = "pitfwu/universe/liquidity_dv20_ext.parquet" if EXT else "pitfwu/universe/liquidity_dv20.parquet"
+        _PANEL = _read_parquet(key)
         _PANEL.index = pd.to_datetime(_PANEL.index)
     return _PANEL
 
@@ -75,7 +85,8 @@ _CLOSE = None
 def load_vol60():
     global _VOL60
     if _VOL60 is None:
-        _VOL60 = _read_parquet("pitfwu/universe/vol60.parquet")
+        key = "pitfwu/universe/vol60_ext.parquet" if EXT else "pitfwu/universe/vol60.parquet"
+        _VOL60 = _read_parquet(key)
         _VOL60.index = pd.to_datetime(_VOL60.index)
     return _VOL60
 
@@ -83,7 +94,8 @@ def load_vol60():
 def load_close_panel():
     global _CLOSE
     if _CLOSE is None:
-        _CLOSE = _read_parquet("pitfwu/universe/close.parquet")
+        key = "pitfwu/universe/close_ext.parquet" if EXT else "pitfwu/universe/close.parquet"
+        _CLOSE = _read_parquet(key)
         _CLOSE.index = pd.to_datetime(_CLOSE.index)
     return _CLOSE
 
@@ -105,9 +117,14 @@ def universe_asof_prod(date, n=100, min_price=15.0):
 
 # ---------------------------------------------------------------- corp-actions
 def load_corp_actions():
-    global _CA
+    global _CA, _CA_EXT
     if _CA is None:
         _CA = _read_parquet("pitfwu/corp_actions/calendar.parquet")
+    if EXT:
+        if _CA_EXT is None:
+            pre = _read_parquet("pitfwu/corp_actions/calendar_pre2016.parquet")
+            _CA_EXT = pd.concat([pre, _CA], ignore_index=True)
+        return _CA_EXT
     return _CA
 
 
@@ -131,7 +148,15 @@ def split_factors(symbol, ca=None):
 def load_bars(symbol):
     df = _read_parquet(f"pitfwu/bars/{symbol}.parquet")
     df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None).dt.normalize()
-    return df.set_index("date").sort_index()
+    df = df.set_index("date").sort_index()
+    if EXT:
+        try:
+            pre = _read_parquet(f"pitfwu/bars_ext/{symbol}.parquet")
+            pre.index = pd.to_datetime(pre.index).tz_localize(None).normalize()
+            df = pd.concat([pre[pre.index < df.index.min()], df]).sort_index()
+        except Exception:
+            pass  # no pre-2016 extension for this symbol
+    return df
 
 
 def split_adjusted(symbol, asof=None, ca=None):

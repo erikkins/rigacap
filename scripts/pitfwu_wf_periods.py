@@ -18,6 +18,8 @@ os.environ.setdefault("LAMBDA_ROLE", "worker")
 import pandas as pd
 from datetime import datetime
 import pitfwu_veneer as v
+if os.environ.get("PITFWU_EXT"):
+    v.EXT = True  # pre-2016 extended layer (survivorship-biased — label results)
 from app.services.scanner import scanner_service, _EXCLUDED_SET
 from app.services.walk_forward_service import walk_forward_service
 from app.core.database import async_session
@@ -38,6 +40,27 @@ _CONV = 0.0
 _SAMESEC = False
 _SECMAP = {}
 _VOLW = 0.0
+_MOMDAYS = None  # (short_days, long_days) override — e.g. (250, 250) = 12-mo momentum ranking
+_FORCE_QUALITY = False  # True = bypass passes_quality (MA20/50 trend + breakout) — ablation only
+_MKTF = None  # None = leave strategy default; False = disable market regime filter (ablation)
+_REFRESH_TOP_M = None  # P1 deliberate refresh: at period start, drop carried positions
+                       # no longer in the top-M by composite score. None = off.
+_REFRESH_BULL_ONLY = False  # P1b: refresh only when SPY > 200MA at period start
+                            # (deliberate refresh in bulls, frozen book in stress)
+_REFRESH_FACTOR_GATE = None  # P1c: pd.Series[bool] by date — refresh only when the
+                             # MOMENTUM FACTOR is above its own 200d MA (the 2021-22
+                             # unwind was index-invisible; SPY gate missed it)
+_ENTRY_FACTOR_GATE = None    # P1d: block NEW ENTRIES (candidate generation) while the
+                             # factor is below trend. Exits stay free; cash accumulates
+                             # in unwinds. "Exits cheap, re-entries expensive" as a rule.
+_GATE_SUSPENDED = False      # internal: refresh-ranking calls bypass the entry gate
+                             # (else an unhealthy factor would empty top-M and dump the book)
+_STOP_BAN_PERIODS = None     # P2 re-entry discipline: a symbol stopped out (trailing_stop)
+                             # is ineligible for NEW entry for N subsequent periods
+_STOP_BAN = {}               # symbol -> periods of ban remaining (cross-period state)
+_REENTRY_MODE = False        # P3: smart regime re-entry (MA50 reclaim / V-bounce + latch)
+_BEAR_KEEP = 0.0             # P3: keep top fraction of book (by unrealized P&L) on regime exit
+_COOLDOWN_DAYS = 0           # P3: days in cash after regime exit before re-entry allowed
 
 
 def _load_sectors():
@@ -49,9 +72,83 @@ def _load_sectors():
     return _SECMAP
 
 
+_orig_run_backtest = CustomBacktester.run_backtest
+def _patched_run_backtest(self, *args, **kwargs):
+    """P1 refresh: before seeding, drop carried positions whose symbol has
+    fallen out of the top-M composite ranking as of period start. Dropped
+    value becomes cash via the existing carried_value accounting (same path
+    as the 'no data at period start' drop), and the vacancies refill from
+    the current ranking — deliberate book refresh instead of crisis-driven.
+    NOTE: dropped positions don't book a trade record (capital chain stays
+    correct; trade logs lose those exits). Research-only."""
+    global _GATE_SUSPENDED
+    ip = kwargs.get("initial_positions")
+    start = kwargs.get("start_date")
+    if _REFRESH_TOP_M and ip and start:
+        d = pd.Timestamp(start)
+        if _REFRESH_BULL_ONLY:
+            spy = scanner_service.data_cache.get("SPY")
+            row = self._get_row_for_date(spy, d) if spy is not None else None
+            ma = row.get("ma_200") if row is not None else None
+            if row is None or ma is None or pd.isna(ma) or row["close"] <= ma:
+                return _orig_run_backtest(self, *args, **kwargs)  # stress: freeze book
+        if _REFRESH_FACTOR_GATE is not None:
+            seg = _REFRESH_FACTOR_GATE.loc[:d]
+            if len(seg) == 0 or not bool(seg.iloc[-1]):
+                return _orig_run_backtest(self, *args, **kwargs)  # factor stress: freeze book
+        syms = kwargs.get("ticker_list") or list(scanner_service.data_cache.keys())
+        scored = []
+        _GATE_SUSPENDED = True
+        try:
+            for sym in syms:
+                sd = self._calculate_momentum_score(sym, d)
+                if sd:
+                    scored.append((sd["composite_score"], sym))
+        finally:
+            _GATE_SUSPENDED = False
+        scored.sort(reverse=True)
+        top_m = set(s for _, s in scored[:_REFRESH_TOP_M])
+        kept = {k: v for k, v in ip.items() if k in top_m}
+        if len(kept) < len(ip):
+            print(f"[REFRESH] top-{_REFRESH_TOP_M}: dropping {sorted(set(ip) - set(kept))} at {start}", flush=True)
+        kwargs["initial_positions"] = kept
+    result = _orig_run_backtest(self, *args, **kwargs)
+    if _STOP_BAN_PERIODS:
+        # decrement existing bans by one period, then ban this period's stop-outs
+        for sym in list(_STOP_BAN):
+            _STOP_BAN[sym] -= 1
+            if _STOP_BAN[sym] <= 0:
+                del _STOP_BAN[sym]
+        for t in getattr(result, "trades", []) or []:
+            if getattr(t, "exit_reason", None) == "trailing_stop":
+                _STOP_BAN[getattr(t, "symbol", None)] = _STOP_BAN_PERIODS
+    return result
+CustomBacktester.run_backtest = _patched_run_backtest
+
+_orig_calc_score = CustomBacktester._calculate_momentum_score
+def _patched_calc_score(self, symbol, date):
+    if _ENTRY_FACTOR_GATE is not None and not _GATE_SUSPENDED:
+        seg = _ENTRY_FACTOR_GATE.loc[:pd.Timestamp(date)]
+        if len(seg) and not bool(seg.iloc[-1]):
+            return None  # factor below trend: no new entries (exits unaffected)
+    if _STOP_BAN_PERIODS and not _GATE_SUSPENDED and _STOP_BAN.get(symbol, 0) > 0:
+        return None  # recently stopped out: re-entry banned
+    r = _orig_calc_score(self, symbol, date)
+    if r is not None and _FORCE_QUALITY:
+        r["passes_quality"] = True
+    return r
+CustomBacktester._calculate_momentum_score = _patched_calc_score
+
 _orig_configure = CustomBacktester.configure
 def _patched_configure(self, params):
     _orig_configure(self, params)
+    # MIN-PRICE BUG FIX (Jun 10 2026): the backtester re-checks min_price ($15)
+    # against END-adjusted prices — a stock at $150 in 2017 that later split 40:1
+    # shows $3.75 adjusted and is silently excluded from entry (NVDA until 2020,
+    # TSLA until ~2019). The $15 floor is already enforced POINT-IN-TIME at
+    # universe selection (universe_asof_prod), so the bench disables the
+    # adjusted-price re-check entirely. Research-only; prod (live prices) is correct.
+    self.min_price = 0.0
     self.max_hold_days = _MAX_HOLD
     self.profit_lock_pct = _PLOCK
     self.profit_lock_stop_pct = _PLOCK_STOP
@@ -62,6 +159,16 @@ def _patched_configure(self, params):
     self.displacement_same_sector = _SAMESEC
     self.symbol_sectors = _SECMAP
     self.vol_weight = _VOLW
+    if _MOMDAYS is not None:
+        self.short_mom_days, self.long_mom_days = _MOMDAYS
+    # NOTE: regime_reentry_mode/bear_keep_pct are passed through the WF call
+    # (walk_forward_service overwrites backtester attrs at line ~873 from its
+    # own params AFTER configure — setting them here gets stomped).
+    # cooldown: WF line ~877 re-reads strategy_params.regime_cooldown_days,
+    # so mutate the params object itself (shared with that read).
+    if _COOLDOWN_DAYS:
+        params.regime_cooldown_days = _COOLDOWN_DAYS
+        self.regime_cooldown_days = _COOLDOWN_DAYS
 CustomBacktester.configure = _patched_configure
 
 _CA = v.load_corp_actions()
@@ -77,10 +184,20 @@ def _ind(df):
 
 
 def _vix():
+    # Disk-cached — yfinance hangs without timeout (burned 5.5h overnight Jun 10)
+    # and the never-refetch rule applies anyway.
+    cache = os.path.expanduser("~/.cache/pitfwu_close/_VIX_full.parquet")
+    if os.path.exists(cache):
+        return pd.read_parquet(cache)
     import yfinance as yf
-    x = yf.download("^VIX", start="2021-06-01", end="2026-06-05", progress=False, auto_adjust=False)
+    x = yf.download("^VIX", start="2004-12-01", end="2026-06-05", progress=False, auto_adjust=False, timeout=30)
     x.columns = [(c[0] if isinstance(c, tuple) else c).lower() for c in x.columns]
-    x.index = pd.to_datetime(x.index).tz_localize(None).normalize(); return x
+    x.index = pd.to_datetime(x.index).tz_localize(None).normalize()
+    try:
+        x.to_parquet(cache)
+    except Exception:
+        pass
+    return x
 
 
 _VIX = _vix()
@@ -104,13 +221,28 @@ def _bars(sym, end):
 
 
 async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.0, plock_stop=8.0,
-             disp=False, disp_margin=0.0, dgate=None, conv=0.0, samesec=False, uni_n=100, volw=0.0):
-    global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN, _DGATE, _CONV, _SAMESEC, _VOLW
+             disp=False, disp_margin=0.0, dgate=None, conv=0.0, samesec=False, uni_n=100, volw=0.0,
+             dwap_th=5.0, near_hi=3.0, mom_days=None, force_quality=False, raw=False, carry=True,
+             refresh_top_m=None, refresh_bull_only=False, refresh_factor_gate=None,
+             entry_factor_gate=None, stop_ban_periods=None, reentry_mode=False, bear_keep=0.0,
+             cooldown_days=0):
+    global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN, _DGATE, _CONV, _SAMESEC, _VOLW, _MOMDAYS, _FORCE_QUALITY, _REFRESH_TOP_M, _REFRESH_BULL_ONLY, _REFRESH_FACTOR_GATE, _ENTRY_FACTOR_GATE, _STOP_BAN_PERIODS, _STOP_BAN, _REENTRY_MODE, _BEAR_KEEP, _COOLDOWN_DAYS
     _MAX_HOLD, _PLOCK, _PLOCK_STOP = max_hold, plock, plock_stop
     _DISP, _DISP_MARGIN, _DGATE = disp, disp_margin, dgate
     _CONV = conv
     _SAMESEC = samesec
     _VOLW = volw
+    _MOMDAYS = mom_days
+    _FORCE_QUALITY = force_quality
+    _REFRESH_TOP_M = refresh_top_m
+    _REFRESH_BULL_ONLY = refresh_bull_only
+    _REFRESH_FACTOR_GATE = refresh_factor_gate
+    _ENTRY_FACTOR_GATE = entry_factor_gate
+    _STOP_BAN_PERIODS = stop_ban_periods
+    _STOP_BAN = {}  # fresh ban state per run
+    _REENTRY_MODE = reentry_mode
+    _BEAR_KEEP = bear_keep
+    _COOLDOWN_DAYS = cooldown_days
     if samesec:
         _load_sectors()
     periods = walk_forward_service._get_period_dates(start, end, "biweekly")
@@ -127,10 +259,13 @@ async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.
     async with async_session() as db:
         r = await walk_forward_service.run_walk_forward_simulation(
             db, start, end, enable_ai_optimization=False, fixed_strategy_id=6, max_symbols=uni_n,
-            reoptimization_frequency="biweekly", carry_positions=True, n_trials=0,
-            max_positions=max_pos, position_size_pct=size, dwap_threshold_pct=5.0,
-            near_50d_high_pct=3.0, trailing_stop_pct=trail,
-            profit_lock_pct=plock, profit_lock_stop_pct=plock_stop)
+            reoptimization_frequency="biweekly", carry_positions=carry, n_trials=0,
+            max_positions=max_pos, position_size_pct=size, dwap_threshold_pct=dwap_th,
+            near_50d_high_pct=near_hi, trailing_stop_pct=trail,
+            profit_lock_pct=plock, profit_lock_stop_pct=plock_stop,
+            regime_reentry_mode=reentry_mode, bear_keep_pct=bear_keep)
+    if raw:
+        return r
     yrs = (end - start).days / 365.25
     return {"ann": ((1 + r.total_return_pct / 100) ** (1 / yrs) - 1) * 100,
             "sharpe": r.sharpe_ratio, "mdd": r.max_drawdown_pct, "total": r.total_return_pct,
@@ -275,6 +410,270 @@ async def main():
         for name in ("rigacap", "spy", "naive"):
             vv = out["series"][name]["value"]; dd = out["series"][name]["dd"]
             print(f"  {name:8} end=${vv[-1]:,}  worst_dd={min(dd):.1f}%", flush=True)
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == "diag":
+        # Trade-level forensic: run the naive-equivalent frame config over 2020
+        # (clean melt-up year; daily-sim naive made +83.2%) and dump every trade
+        # — exit reasons, P&L, hold time — to find where the frame loses 20pp.
+        import json as _json
+        s = datetime.fromisoformat(sys.argv[2]) if len(sys.argv) > 2 else datetime(2020, 1, 2)
+        e = datetime.fromisoformat(sys.argv[3]) if len(sys.argv) > 3 else datetime(2021, 1, 29)
+        _nocarry = len(sys.argv) > 4 and sys.argv[4] == "nocarry"
+        if _nocarry:
+            r = await wf(s, e, 20, 4.5, 30, 60, conv=0.0, volw=1.0, force_quality=True,
+                         dwap_th=-1000.0, mom_days=(250, 250), carry=False, raw=True)
+        else:
+            r = await wf(s, e, 20, 4.5, 30, 60, conv=0.0, volw=1.0, force_quality=True,
+                         dwap_th=-1000.0, mom_days=(250, 250), disp=True, disp_margin=0.0, raw=True)
+        trades = []
+        for t in r.trades:
+            d = t if isinstance(t, dict) else getattr(t, "__dict__", {"repr": str(t)})
+            trades.append({k: (v.isoformat() if hasattr(v, "isoformat") else v) for k, v in d.items()})
+        out = {"total_return_pct": r.total_return_pct, "max_drawdown_pct": r.max_drawdown_pct,
+               "sharpe": r.sharpe_ratio, "n_trades": len(trades), "trades": trades,
+               "equity_curve": getattr(r, "equity_curve", None)}
+        path = os.path.join(R, "scripts", f"diag_{s.year}_{e.year}_trades.json")
+        with open(path, "w") as f:
+            _json.dump(out, f, default=str)
+        print(f"DIAG {s.date()}->{e.date()}: total={r.total_return_pct:.1f}% mdd={r.max_drawdown_pct:.1f}% trades={len(trades)}")
+        print(f"WROTE {path}", flush=True)
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == "smoke_p3":
+        # 6-month window covering a regime exit+recovery (2022H2-2023H1) with
+        # BOTH new code paths on — verifies the wired read-sites don't crash
+        # and the latch/keep mechanics engage before burning 4 long runs.
+        s, e = datetime(2022, 9, 1), datetime(2023, 3, 31)
+        r = await wf(s, e, 20, 4.5, 30, 60, conv=0.0, volw=1.0, reentry_mode=True, bear_keep=0.5)
+        print(f"SMOKE P3: ann={r['ann']:.1f}% mdd={r['mdd']:.1f}% trades={r['trades']}", flush=True)
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == "egate_t2":
+        # TIER-2 for t30v_egate_only (13.3/0.96/17.4 continuous, fixed bench):
+        # held-out off-grid 2y starts, gate vs no-gate head-to-head per window.
+        import json as _json
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location("ic", os.path.join(R, "scripts", "inversion_campaign.py"))
+        _ic = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_ic)
+        _base = _ic.run(topk=20, full_curve=True)["series"]
+        fgate = (_base > _base.rolling(200, min_periods=100).mean()).fillna(True)
+        print(f"[FGATE] {int(fgate.sum())}/{len(fgate)} days healthy", flush=True)
+        held = [(2022, 3), (2022, 6), (2022, 9), (2022, 12),
+                (2023, 3), (2023, 6), (2023, 9), (2023, 12), (2024, 3), (2024, 6)]
+        se = [(datetime(y, m, 3), datetime(2026, 5, 29) if y + 2 > 2026 else datetime(y + 2, m, 28))
+              for y, m in held]
+        path = os.path.join(R, "scripts", "egate_t2_results.json")
+        results = _json.load(open(path)) if os.path.exists(path) else {}
+        print(f"=== EGATE TIER-2: {len(se)} held-out starts, gate vs base ===", flush=True)
+        for s, e in se:
+            key = str(s.date())
+            if key in results:
+                r = results[key]
+                print(f"  {key} (cached) gate ann={r['gate']['ann']:+6.1f}% mdd={r['gate']['mdd']:.1f}% | "
+                      f"base ann={r['base']['ann']:+6.1f}% mdd={r['base']['mdd']:.1f}%", flush=True)
+                continue
+            rg = await wf(s, e, 20, 4.5, 30, 60, conv=0.0, volw=1.0, entry_factor_gate=fgate)
+            rb = await wf(s, e, 20, 4.5, 30, 60, conv=0.0, volw=1.0)
+            rg.pop("equity_curve", None); rb.pop("equity_curve", None)
+            results[key] = {"gate": rg, "base": rb}
+            with open(path, "w") as f:
+                _json.dump(results, f)
+            print(f"  {key}  gate ann={rg['ann']:+6.1f}% sharpe={rg['sharpe']:.2f} mdd={rg['mdd']:.1f}% | "
+                  f"base ann={rb['ann']:+6.1f}% sharpe={rb['sharpe']:.2f} mdd={rb['mdd']:.1f}%", flush=True)
+        ga = pd.Series([v["gate"]["ann"] for v in results.values()])
+        ba = pd.Series([v["base"]["ann"] for v in results.values()])
+        gm = pd.Series([v["gate"]["mdd"] for v in results.values()])
+        bm = pd.Series([v["base"]["mdd"] for v in results.values()])
+        gs = pd.Series([v["gate"]["sharpe"] for v in results.values()])
+        bs = pd.Series([v["base"]["sharpe"] for v in results.values()])
+        print(f"\n  GATE: ann={ga.mean():5.1f}% sharpe={gs.mean():.2f} mdd={gm.mean():.1f}%/worst {gm.max():.1f}% min_ann={ga.min():+.1f}%")
+        print(f"  BASE: ann={ba.mean():5.1f}% sharpe={bs.mean():.2f} mdd={bm.mean():.1f}%/worst {bm.max():.1f}% min_ann={ba.min():+.1f}%")
+        print(f"  gate wins ann on {int((ga.values > ba.values).sum())}/{len(ga)} windows", flush=True)
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == "ablate":
+        # t30v control ablation on the CONTINUOUS 2017-2026 lens — which gate is
+        # the drawdown technology, and what does each cost in CAGR? Inversion
+        # campaign (Jun 9) proved naive+overlays can't get MDD under ~40%; t30v
+        # held 17.9% through the same 2021-23 factor unwind. Decompose why.
+        # Disable values: dwap_th=-1000 -> pct_above_dwap >= -10 always true;
+        # near_hi=1000 -> dist_from_high >= -1000 always true.
+        import json as _json
+        s, e = datetime(2017, 1, 3), datetime(2026, 5, 29)
+        if os.environ.get("PITFWU_EXT"):
+            # Extended-history runs (2007+, survivorship-biased pre-2016 — label
+            # results). Only the decision-critical configs; results to _ext file.
+            s = datetime(2007, 1, 3)
+            CONFIGS = [
+                ("t30v_base_FIXED", dict()),
+                ("t30v_egate_only", dict(entry_gate_factor=True)),
+            ]
+            path = os.path.join(R, "scripts", "ablation_results_ext.json")
+            results = _json.load(open(path)) if os.path.exists(path) else {}
+            print(f"=== EXT ABLATION (continuous {s.date()} -> {e.date()}, survivorship-biased pre-2016) ===", flush=True)
+            for name, kw in CONFIGS:
+                if name in results:
+                    r = results[name]
+                    print(f"  {name:18} ann={r['ann']:5.1f}% sharpe={r['sharpe']:5.2f} mdd={r['mdd']:5.1f}%  (cached)", flush=True)
+                    continue
+                ef = kw.pop("entry_gate_factor", False)
+                fgate = None
+                if ef:
+                    import importlib.util as _ilu
+                    _spec = _ilu.spec_from_file_location("ic", os.path.join(R, "scripts", "inversion_campaign.py"))
+                    _ic = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_ic)
+                    _b = _ic.run(topk=20, full_curve=True)["series"]
+                    fgate = (_b > _b.rolling(200, min_periods=100).mean()).fillna(True)
+                    print(f"[FGATE-EXT] {int(fgate.sum())}/{len(fgate)} days healthy", flush=True)
+                r = await wf(s, e, 20, 4.5, 30, 60, conv=0.0, volw=1.0, entry_factor_gate=fgate, **kw)
+                r.pop("equity_curve", None)
+                results[name] = r
+                with open(path, "w") as f:
+                    _json.dump(results, f)
+                print(f"  {name:18} ann={r['ann']:5.1f}% sharpe={r['sharpe']:5.2f} mdd={r['mdd']:5.1f}% trades={r['trades']}", flush=True)
+            print(f"WROTE {path}", flush=True)
+            return
+        CONFIGS = [
+            ("no_nearhigh",  dict(near_hi=1000.0)),
+            ("no_dwap",      dict(dwap_th=-1000.0)),
+            ("no_gates",     dict(dwap_th=-1000.0, near_hi=1000.0)),
+            ("no_volw",      dict(volw=0.0)),
+            ("trail40",      dict(trail_override=40.0)),
+            # Ranking-horizon hybrids: gates ADD return (no_nearhigh/no_dwap both
+            # WORSE than base), so the gap vs naive-250d's 28.8% is likely the
+            # 10d/60d composite horizon. t30v discipline + 12-mo momentum ranking:
+            ("m250",         dict(mom_days=(250, 250))),
+            ("m120_250",     dict(mom_days=(120, 250))),
+            # m250 barely moved the needle (10.7% vs 9.8%) -> the 19pp gap to
+            # naive-250d (29.9%) is the FRAME, not the ranking. Biggest unablated
+            # structural constraint: max_hold=60 force-closes every position at
+            # ~3mo — momentum winners run 6-12mo. Let winners run:
+            ("hold_inf",      dict(max_hold_override=9999)),
+            ("m250_hold_inf", dict(mom_days=(250, 250), max_hold_override=9999)),
+            # hold_inf == base exactly -> max_hold never binds (period carry
+            # resets entry age; no-op like cb_tighten). Gap must be the FILTERS
+            # or the frame mechanics. Decompose:
+            ("no_quality",        dict(force_quality=True)),                         # trend+breakout off, DWAP on
+            ("no_filters_at_all", dict(force_quality=True, dwap_th=-1000.0)),        # pure 10/60 score in frame
+            ("m250_no_filters",   dict(force_quality=True, dwap_th=-1000.0,
+                                       mom_days=(250, 250))),                        # naive selection in t30v frame
+            # no_filters_at_all still ~8% -> the gap is FRAME MECHANICS, prime
+            # suspect = NO INCUMBENT DISPLACEMENT (stale book; naive rotates
+            # wholesale monthly; cf. May 29 displacement-gap finding). Close the loop:
+            ("m250_nf_disp0",  dict(force_quality=True, dwap_th=-1000.0,
+                                    mom_days=(250, 250), disp=True, disp_margin=0.0)),
+            ("m250_nf_disp10", dict(force_quality=True, dwap_th=-1000.0,
+                                    mom_days=(250, 250), disp=True, disp_margin=10.0)),
+            # and displacement ON TOP of full t30v (filters intact) — the actual
+            # relaxed-product candidate if disp is the lever:
+            ("t30v_disp10",    dict(disp=True, disp_margin=10.0)),
+            # Jun 10 forensic: disp0 = noise-churn (median hold 5d, −0.57%/swap);
+            # vacancy-only = stagnation. The frame's missing mode is WHOLESALE
+            # PERIODIC ROTATION = carry_positions=False (biweekly naive):
+            ("m250_nf_nocarry", dict(force_quality=True, dwap_th=-1000.0,
+                                     mom_days=(250, 250), carry=False)),
+            # and the same periodic-rotation mode with t30v's filters back ON
+            # (the candidate product shape: disciplined periodic rotation):
+            ("t30v_m250_nocarry", dict(mom_days=(250, 250), carry=False)),
+            # Jun 10: leak forensic showed the REGIME FILTER is the dominant
+            # return tax (V-recovery re-entry lag: Jan-2019 cash through the
+            # V-bottom, May/Aug-2019 whipsaws, Jan-2020 virus-dip). Price the
+            # insurance exactly — same strategies, market filter OFF:
+            ("m250_nf_nocarry_noreg", dict(force_quality=True, dwap_th=-1000.0,
+                                           mom_days=(250, 250), carry=False, no_mktf=True)),
+            ("t30v_noregime",         dict(no_mktf=True)),
+            # P1 DELIBERATE REFRESH (Jun 10, Erik-approved program): carried t30v
+            # + drop holdings out of top-M at period boundaries. Crisis-independent
+            # book refresh — t30v_noregime (0.8%) proved regime flushes were the
+            # only refresher. M sweep; regime stays ON.
+            ("t30v_refresh60", dict(refresh_top_m=60)),
+            ("t30v_refresh40", dict(refresh_top_m=40)),
+            ("t30v_refresh30", dict(refresh_top_m=30)),
+            # P1b: unconditional refresh worsened MDD 9-15pp (rotating into
+            # unwind bounces). Gate the refresh on SPY>200MA at the boundary:
+            # deliberate refresh in bulls, frozen book in stress.
+            ("t30v_refresh60_bull", dict(refresh_top_m=60, refresh_bull_only=True)),
+            ("t30v_refresh40_bull", dict(refresh_top_m=40, refresh_bull_only=True)),
+            # P1c: SPY gate didn't cut MDD (refresh60_bull 11.3/26.9) — the 2021-22
+            # unwind is INDEX-invisible. Gate refresh on the FACTOR's own 200d trend
+            # (wrong gate = postponed refresh, never a forced trade):
+            ("t30v_refresh60_factor", dict(refresh_top_m=60, factor_gate=True)),
+            ("t30v_refresh40_factor", dict(refresh_top_m=40, factor_gate=True)),
+            # MIN-PRICE FIX BASELINE: t30v base re-run on the fixed bench
+            # (min_price=0; NVDA/TSLA no longer excluded pre-2020). All configs
+            # cached ABOVE this line ran on the bugged bench — within-file
+            # comparisons above are consistent; new-vs-old are NOT. This is the
+            # corrected continuous t30v number (race 9.8% is biased low).
+            ("t30v_base_FIXED", dict()),
+            # P1d (fixed bench): "exits cheap, re-entries expensive" as a rule.
+            # Drop out-of-top-M ALWAYS (drops are exits — safe); block NEW
+            # ENTRIES while the factor is below trend (cash accumulates in
+            # unwinds instead of refilling into bounces).
+            ("t30v_drop60_egate",  dict(refresh_top_m=60, entry_gate_factor=True)),
+            ("t30v_egate_only",    dict(entry_gate_factor=True)),
+            # P2 RE-ENTRY DISCIPLINE (fixed bench, from base): a trailing-stop
+            # exit bans the symbol from re-entry for N periods (2/4/8 weeks).
+            ("t30v_ban1", dict(stop_ban_periods=1)),
+            ("t30v_ban2", dict(stop_ban_periods=2)),
+            ("t30v_ban4", dict(stop_ban_periods=4)),
+            # P2 verdict: bans redundant (near-high gate already enforces re-entry
+            # discipline; ban1≡base exactly). P3 REGIME RE-ENTRY SPEED — newly
+            # wired read-sites (regime_reentry_mode/_check_regime_reentry,
+            # bear_keep_pct, cash_mode_day_count were ALL dead wires):
+            ("t30v_smartreentry",  dict(reentry_mode=True)),
+            ("t30v_bearkeep50",    dict(bear_keep=0.5)),
+            ("t30v_smart_keep50",  dict(reentry_mode=True, bear_keep=0.5)),
+            ("t30v_cooldown10",    dict(cooldown_days=10)),
+        ]
+        path = os.path.join(R, "scripts", "ablation_results.json")
+        results = _json.load(open(path)) if os.path.exists(path) else {}
+        print("=== t30v ABLATION (continuous 2017-2026) — base ref: 9.8% CAGR / 17.9% DD (race) ===", flush=True)
+        for name, kw in CONFIGS:
+            if name in results:
+                r = results[name]
+                print(f"  {name:14} ann={r['ann']:5.1f}% sharpe={r['sharpe']:5.2f} mdd={r['mdd']:5.1f}%  (cached)", flush=True)
+                continue
+            tr = kw.pop("trail_override", 30.0)
+            vw = kw.pop("volw", 1.0)
+            mh = kw.pop("max_hold_override", 60)
+            fq = kw.pop("force_quality", False)
+            nm = kw.pop("no_mktf", False)
+            rm = kw.pop("refresh_top_m", None)
+            rb = kw.pop("refresh_bull_only", False)
+            fg = kw.pop("factor_gate", False)
+            ef = kw.pop("entry_gate_factor", False)
+            sb = kw.pop("stop_ban_periods", None)
+            rmode = kw.pop("reentry_mode", False)
+            bk = kw.pop("bear_keep", 0.0)
+            cd = kw.pop("cooldown_days", 0)
+            fgate = None
+            if fg or ef:
+                global _FGATE_SERIES
+                if "_FGATE_SERIES" not in globals() or _FGATE_SERIES is None:
+                    import importlib.util as _ilu
+                    _spec = _ilu.spec_from_file_location("ic", os.path.join(R, "scripts", "inversion_campaign.py"))
+                    _ic = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_ic)
+                    _base = _ic.run(topk=20, full_curve=True)["series"]
+                    _ma = _base.rolling(200, min_periods=100).mean()
+                    _FGATE_SERIES = (_base > _ma).fillna(True)
+                    print(f"[FGATE] factor-trend gate built: {int(_FGATE_SERIES.sum())}/{len(_FGATE_SERIES)} days healthy", flush=True)
+                fgate = _FGATE_SERIES
+            from app.core.config import settings as _settings
+            _old_mf = _settings.MARKET_FILTER_ENABLED
+            if nm:
+                _settings.MARKET_FILTER_ENABLED = False
+            try:
+                r = await wf(s, e, 20, 4.5, tr, mh, conv=0.0, volw=vw, force_quality=fq,
+                             refresh_top_m=rm, refresh_bull_only=rb,
+                             refresh_factor_gate=fgate if fg else None,
+                             entry_factor_gate=fgate if ef else None,
+                             stop_ban_periods=sb, reentry_mode=rmode, bear_keep=bk,
+                             cooldown_days=cd, **kw)
+            finally:
+                _settings.MARKET_FILTER_ENABLED = _old_mf
+            r.pop("equity_curve", None)
+            results[name] = r
+            with open(path, "w") as f:    # checkpoint after EVERY config
+                _json.dump(results, f)
+            print(f"  {name:14} ann={r['ann']:5.1f}% sharpe={r['sharpe']:5.2f} mdd={r['mdd']:5.1f}% trades={r['trades']}", flush=True)
+        print(f"WROTE {path}", flush=True)
         return
     if len(sys.argv) > 1 and sys.argv[1] == "naive":
         # factor decomposition: pure momentum factor vs t30v (implementation edge = the gap)
