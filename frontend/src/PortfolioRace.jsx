@@ -222,7 +222,7 @@ export default function PortfolioRace() {
                     <line x1={x(a)} x2={x(bEff)} y1={yc} y2={yc} stroke={s.color} strokeWidth={wd}
                       strokeDasharray="2 5" opacity="0.55" />
                     {wide && (
-                      <text x={(x(a) + x(bEff)) / 2} y={yc - 6} textAnchor="middle" fontSize="10.5"
+                      <text x={(x(a) + x(bEff)) / 2} y={s.key === 'spy' ? yc + 20 : yc - 14} textAnchor="middle" fontSize="10.5"
                         fontStyle="italic" fill={s.color} opacity="0.85" fontFamily="Fraunces, serif">
                         in cash, waiting to feel safe
                       </text>
@@ -244,15 +244,16 @@ export default function PortfolioRace() {
         <text x={Math.min(x(ci), W - 36)} y={PAD_T - 4} textAnchor="middle" fontSize="13" fontWeight="600" fill="#141210" fontFamily="IBM Plex Mono, monospace">
           {data.dates[ci].slice(0, 4)}
         </text>
-        {activeEra && (
-          <text x={x(activeEra.i0) + 4} y={PAD_T + 16} fontSize="12" fontStyle="italic" fill="#8F2D3D" fontFamily="Fraunces, serif">
-            {activeEra.label}
+        {eras.filter(e => ci >= e.i0).map(e => (
+          <text key={e.label} x={x(e.i0) + 4} y={PAD_T + 16} fontSize="11.5" fontStyle="italic"
+            fill="#8F2D3D" opacity={activeEra?.label === e.label ? 1 : 0.65} fontFamily="Fraunces, serif">
+            {e.label}
           </text>
-        )}
+        ))}
       </svg>
 
       {act === 'done' && !robot && (
-        <p className="mt-4 text-[0.95rem] text-ink leading-[1.65] max-w-[70ch]">
+        <p className="mt-4 text-[0.95rem] text-ink leading-[1.65]">
           The animated path sells at &minus;25% and re-enters at the old peak; the ranges above span three
           re-entry temperaments, from &ldquo;jumped back in quickly&rdquo; to &ldquo;sat out a year.&rdquo;
           <strong className="font-medium"> Raw momentum's outcome is a lottery on your own nerve &mdash; a spread of
