@@ -112,7 +112,7 @@ export default function TrackRecordPageV2() {
               </tbody>
             </table>
           </div>
-          <p className="mb-12 text-[0.9rem] text-ink leading-[1.65] max-w-[68ch]">
+          <p className="mb-12 text-[0.9rem] text-ink leading-[1.65]">
             June 2024 through May 2026, a held-out walk-forward window (backtested, not yet live money):
             <strong className="font-medium"> RigaCap beat the index by 12 points a year at well under half its drawdown</strong> &mdash;
             twice the S&amp;P's Sharpe, three-and-a-half times its Calmar. Raw momentum earned more, gross of costs &mdash;

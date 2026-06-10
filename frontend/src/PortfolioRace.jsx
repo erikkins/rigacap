@@ -57,10 +57,11 @@ const fmtMoney = v => (v >= 1e6 ? `$${(v / 1e6).toFixed(2)}M` : `$${Math.round(v
 export default function PortfolioRace() {
   const [data, setData] = useState(null);
   const [cursor, setCursor] = useState(0);
-  const [act, setAct] = useState('idle'); // idle | run | done
+  const [act, setAct] = useState('idle'); // idle | run | scrub | done
   const [robot, setRobot] = useState(false);
   const rafRef = useRef();
   const boxRef = useRef();
+  const svgRef = useRef();
   const startedRef = useRef(false);
 
   useEffect(() => {
@@ -139,6 +140,31 @@ export default function PortfolioRace() {
   }
   const restart = () => { setCursor(0); setRobot(false); setAct('run'); };
 
+  // drag / click anywhere on the chart to scrub to that point in time
+  const scrubTo = clientX => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const r = svg.getBoundingClientRect();
+    const xv = ((clientX - r.left) / r.width) * W;
+    const frac = Math.max(0, Math.min(1, (xv - PAD_L) / (W - PAD_L - PAD_R)));
+    setCursor(frac * (n - 1));
+  };
+  const onPointerDown = e => {
+    cancelAnimationFrame(rafRef.current);
+    setAct('scrub');
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    scrubTo(e.clientX);
+  };
+  const onPointerMove = e => {
+    if (e.buttons & 1) scrubTo(e.clientX);
+  };
+  const onPointerUp = () => {
+    setCursor(c => {
+      if (c >= n - 2) { setAct('done'); return n - 1; }
+      return c;
+    });
+  };
+
   const title = robot
     ? 'The theoretical race — if a robot held every dip.'
     : act === 'done' ? 'What humans actually collect.'
@@ -155,11 +181,18 @@ export default function PortfolioRace() {
             {title}
           </div>
         </div>
-        {(act === 'done' || act === 'idle') && (
-          <button onClick={restart} className="text-[0.8rem] px-3 py-1.5 border border-rule-dark text-ink-mute hover:text-ink transition-colors">
-            {act === 'done' ? '↻ Replay' : '▶ Play'}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {act === 'scrub' && (
+            <button onClick={() => setAct('run')} className="text-[0.8rem] px-3 py-1.5 border border-rule-dark text-ink-mute hover:text-ink transition-colors">
+              ▶ Resume
+            </button>
+          )}
+          {(act === 'done' || act === 'idle' || act === 'scrub') && (
+            <button onClick={restart} className="text-[0.8rem] px-3 py-1.5 border border-rule-dark text-ink-mute hover:text-ink transition-colors">
+              {act === 'idle' ? '▶ Play' : '↻ Replay'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Scoreboard buckets — money ticks here, not on the chart */}
@@ -194,8 +227,11 @@ export default function PortfolioRace() {
         })}
       </div>
 
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img"
-        aria-label="Animated comparison of $100,000 in RigaCap, the S&P 500, and raw momentum, 2007 to 2026, with panic-selling behavior modeled">
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full cursor-ew-resize select-none"
+        style={{ touchAction: 'pan-y' }}
+        onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
+        role="img"
+        aria-label="Comparison of $100,000 in RigaCap, the S&P 500, and raw momentum, 2007 to 2026, with panic-selling behavior modeled. Drag to scrub through time.">
         {eras.map(e => (
           <rect key={e.label} x={x(e.i0)} y={PAD_T} width={Math.max(0, x(Math.min(e.i1, ci)) - x(e.i0))}
             height={H - PAD_T - PAD_B} fill="#8F2D3D" opacity={ci >= e.i0 ? 0.06 : 0} />
