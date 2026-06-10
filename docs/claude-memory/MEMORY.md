@@ -1,6 +1,9 @@
 # Stocker App - Key Learnings
 
-## ▶▶▶ RESUME HERE (Jun 10 2026 EVENING) — t30v IS LIVE, site on 21-year canon
+## ▶▶▶ RESUME HERE — NEXT SESSION = SOCIAL REWORK (Erik-confirmed Jun 10 night)
+- **Social rework spec:** humble/first-person/vulnerable voice (rebuild-story hook), DROP must-cite-a-number rule, re-ground engagement_service prompt + social_content_service templates + profiles/bios + 5 launch graphics in the 21-year/behavioral story (nerve-range $473k vs $206k–$1M; 2008 −0.5%; "removes your own behavior as the biggest risk"). Templates' "not a backtest" phrasing flagged (OK for live-flagged signals, awkward vs site language). Beta email TESTED (sent to erik@ via prod SMTP) — Erik sends when ready, ideally after Day-1 scan Jun 11 4:30 PM. Also pending: egate fast-follow ("factor health check": tracker seeded from bench curve, gates SIGNALS, shadow days first), investor/tech-doc PDF sweep (agent ran Jun 10 night — verify committed), firm-licensing one-pager after family-RIA feedback on /for-advisers.
+
+## (same day, context) Jun 10 EVENING — t30v IS LIVE, site on 21-year canon
 - **[Campaign + cutover + 21y canon (THE file — read first)](project_inversion_campaign_jun9.md)** — t30v WENT LIVE Jun 10 22:00 UTC (cutover: books wiped to $100k, strategy 6 = 20×4.5/trail30/volw1.0, adaptive-params row superseded — the live trail reads THAT table, not the strategy row!). Day 1 = Jun 11 scan. Site fully on 21y continuous canon (8.3%/0.73/19% vs naive-net 13.2%/57% vs SPY 9.8%/55%; last-24mo +32%/2.20; 2022 = **−7.5%** NOT positive — old claim was window-framing). Race animation live (human-first, nerve-range finale). QUEUE: egate fast-follow ("factor health check": tracker seeded from bench curve, gate SIGNALS, shadow first) → beta email → social voice. Erik's family RIA to review /for-advisers.
 
 ## ▶ (superseded) Jun 9 reckoning — resolved by the above
