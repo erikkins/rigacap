@@ -133,6 +133,27 @@ export default function PortfolioRace() {
   };
 
   const activeEra = eras.find(e => ci >= e.i0 && ci <= e.i1);
+
+  // collision-aware label placement: try offsets above/below until the slot
+  // clears every visible curve within a small horizontal window
+  const activeArrs = series.map(s => (robot ? s.raw : s.curve));
+  const idxWin = Math.max(2, Math.ceil((16 / (W - PAD_L - PAD_R)) * n));
+  const clearY = (i, baseY, preferUp = true) => {
+    const offs = preferUp ? [-22, 26, -34, 38, -46, 50] : [26, -22, 38, -34, 50, -46];
+    for (const off of offs) {
+      const cand = baseY + off;
+      if (cand < PAD_T + 10 || cand > H - PAD_B - 6) continue;
+      let ok = true;
+      for (const arr of activeArrs) {
+        for (let j = Math.max(0, i - idxWin); j <= Math.min(n - 1, i + idxWin); j++) {
+          if (Math.abs(y(arr[j]) - cand) < 9) { ok = false; break; }
+        }
+        if (!ok) break;
+      }
+      if (ok) return cand;
+    }
+    return baseY + offs[0];
+  };
   const yearTicks = [];
   for (let yr = 2008; yr <= 2026; yr += 3) {
     const idx = data.dates.findIndex(d => d.startsWith(String(yr)));
@@ -214,7 +235,7 @@ export default function PortfolioRace() {
               <div className="h-5 text-[0.72rem] font-mono mt-0.5">
                 {act === 'done' && !robot ? (
                   s.sellsRange[1] > 0
-                    ? <span className="text-ink-light">sold {s.sellsRange[0]}–{s.sellsRange[1]}× · depends on your nerve</span>
+                    ? <span className="text-ink-light">sold {s.sellsRange[0] === s.sellsRange[1] ? `${s.sellsRange[1]}×` : `${s.sellsRange[0]}–${s.sellsRange[1]}×`} · depends on your nerve</span>
                     : <span style={{ color: '#2D5F3F' }}>never panic-sold · no nerve required</span>
                 ) : robot && ddNow < -15 ? (
                   <span style={{ color: '#8F2D3D' }}>▼ {Math.abs(ddNow).toFixed(0)}% from peak</span>
@@ -259,7 +280,8 @@ export default function PortfolioRace() {
                     <line x1={x(a)} x2={x(bEff)} y1={yc} y2={yc} stroke={s.color} strokeWidth={wd}
                       strokeDasharray="2 5" opacity="0.55" />
                     {wide && (
-                      <text x={(x(a) + x(bEff)) / 2} y={s.key === 'spy' ? yc + 22 : yc - 22} textAnchor="middle" fontSize="10.5"
+                      <text x={(x(a) + x(bEff)) / 2} y={clearY(Math.floor((a + bEff) / 2), yc, s.key !== 'spy')}
+                        textAnchor="middle" fontSize="10.5"
                         fontStyle="italic" fill={s.color} opacity="0.85" fontFamily="Fraunces, serif">
                         in cash, waiting to feel safe
                       </text>
@@ -268,12 +290,17 @@ export default function PortfolioRace() {
                 );
               })}
               <circle cx={x(ci)} cy={y(arr[ci])} r="3.5" fill={s.color} />
-              {!robot && s.sells.filter(i => i <= ci).map(i => (
-                <g key={i}>
-                  <circle cx={x(i)} cy={y(arr[i])} r="4" fill="none" stroke="#8F2D3D" strokeWidth="1.5" />
-                  <text x={x(i)} y={y(arr[i]) - 8} textAnchor="middle" fontSize="9.5" fill="#8F2D3D" fontFamily="IBM Plex Mono, monospace">sold</text>
-                </g>
-              ))}
+              {!robot && s.sells.filter(i => i <= ci).map(i => {
+                const ly = clearY(i, y(arr[i]), true);
+                return (
+                  <g key={i}>
+                    <circle cx={x(i)} cy={y(arr[i])} r="4" fill="none" stroke="#8F2D3D" strokeWidth="1.5" />
+                    <line x1={x(i)} x2={x(i)} y1={y(arr[i]) + (ly > y(arr[i]) ? 5 : -5)} y2={ly + (ly > y(arr[i]) ? -9 : 3)}
+                      stroke="#8F2D3D" strokeWidth="0.6" opacity="0.5" />
+                    <text x={x(i)} y={ly} textAnchor="middle" fontSize="9.5" fill="#8F2D3D" fontFamily="IBM Plex Mono, monospace">sold</text>
+                  </g>
+                );
+              })}
             </g>
           );
         })}
