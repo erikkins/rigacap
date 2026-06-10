@@ -53,7 +53,7 @@ const HeroSection = ({ onGetStarted }) => (
       </p>
 
       <p className="text-[0.95rem] text-ink-mute leading-relaxed max-w-[640px] mb-10">
-        Nine years of survivorship-free, walk-forward validation. Built by a former <strong className="text-ink font-medium">Chief Innovation Officer</strong> with 15 years of quantitative research as a parallel practice. <strong className="text-ink font-medium">$129/month.</strong>
+        Twenty-one years of walk-forward validation — through 2008, COVID, and 2022. Built by a former <strong className="text-ink font-medium">Chief Innovation Officer</strong> with 15 years of quantitative research as a parallel practice. <strong className="text-ink font-medium">$129/month.</strong>
       </p>
 
       <div className="flex flex-wrap gap-4 items-center mb-0">
@@ -72,7 +72,7 @@ const HeroSection = ({ onGetStarted }) => (
       </div>
 
       {/* SURFACE-MARKER:landing-hero-stats-START */}
-      <div className="flex flex-wrap gap-12 mt-20 pt-8 border-t border-rule">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-7 mt-20 pt-8 border-t border-rule">
         {[
           ['+32%', 'Last 24 months, annualized · vs S&P +20% · backtest*'],
           ['2.20', 'Sharpe, last 24 months · vs S&P 1.18'],
