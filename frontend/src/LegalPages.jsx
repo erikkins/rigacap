@@ -1,23 +1,21 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import TopNav from './components/TopNav';
 
+// Editorial paper theme (same conventions as LandingPageV2 / MethodologyPageV2).
+// The legal LANGUAGE in the page bodies below is canonical — presentation only here.
 const PageWrapper = ({ title, children }) => (
-  <div className="min-h-screen bg-gray-950 text-gray-300">
-    <nav className="bg-gray-900 border-b border-gray-800">
-      <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-        <Link to="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
-          <ArrowLeft size={18} />
-          <span className="text-sm">Back to RigaCap</span>
-        </Link>
+  <div className="min-h-screen bg-paper text-ink">
+    <TopNav />
+    <div className="max-w-[800px] mx-auto px-4 sm:px-8 py-14">
+      <div className="flex items-center gap-3 mb-5">
+        <span className="inline-block w-6 h-px bg-claret" />
+        <span className="font-body text-[0.78rem] font-medium tracking-[0.18em] uppercase text-ink-mute">RigaCap, LLC</span>
       </div>
-    </nav>
-    <div className="max-w-4xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-white mb-8">{title}</h1>
-      <div className="prose prose-invert prose-gray max-w-none space-y-6 text-gray-400 leading-relaxed">
+      <h1 className="font-display font-normal text-ink mb-10 tracking-[-0.02em]" style={{ fontSize: 'clamp(2rem, 4vw, 2.8rem)', fontVariationSettings: '"opsz" 96' }}>{title}</h1>
+      <div className="space-y-6 text-ink-mute leading-[1.7] text-[0.98rem]">
         {children}
       </div>
-      <div className="mt-16 pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
+      <div className="mt-16 pt-8 border-t border-rule text-center text-sm text-ink-light">
         &copy; {new Date().getFullYear()} RigaCap, LLC. All rights reserved.
       </div>
     </div>
@@ -26,7 +24,7 @@ const PageWrapper = ({ title, children }) => (
 
 const Section = ({ title, children }) => (
   <div>
-    <h2 className="text-xl font-semibold text-white mt-8 mb-3">{title}</h2>
+    <h2 className="font-display text-[1.25rem] font-medium text-ink mt-10 mb-3 pb-2 border-b border-rule" style={{ fontVariationSettings: '"opsz" 48' }}>{title}</h2>
     {children}
   </div>
 );
@@ -34,16 +32,16 @@ const Section = ({ title, children }) => (
 export function PrivacyPage() {
   return (
     <PageWrapper title="Privacy Policy">
-      <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+      <p className="text-sm text-ink-light">Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
 
       <Section title="Overview">
         <p>RigaCap, LLC ("we", "us", "our") operates the rigacap.com website and related services. This policy describes how we collect, use, and protect your personal information.</p>
       </Section>
 
       <Section title="Information We Collect">
-        <p><strong className="text-gray-200">Account Information:</strong> When you create an account, we collect your name, email address, and authentication credentials (via Google, Apple, or email sign-up).</p>
-        <p><strong className="text-gray-200">Usage Data:</strong> We collect anonymized usage data including pages visited, features used, and interaction patterns to improve our service.</p>
-        <p><strong className="text-gray-200">Payment Information:</strong> Payment processing is handled by Stripe. We do not store your credit card number or payment details on our servers. Stripe's privacy policy governs payment data handling.</p>
+        <p><strong className="text-ink font-medium">Account Information:</strong> When you create an account, we collect your name, email address, and authentication credentials (via Google, Apple, or email sign-up).</p>
+        <p><strong className="text-ink font-medium">Usage Data:</strong> We collect anonymized usage data including pages visited, features used, and interaction patterns to improve our service.</p>
+        <p><strong className="text-ink font-medium">Payment Information:</strong> Payment processing is handled by Stripe. We do not store your credit card number or payment details on our servers. Stripe's privacy policy governs payment data handling.</p>
       </Section>
 
       <Section title="How We Use Your Information">
@@ -64,9 +62,9 @@ export function PrivacyPage() {
       <Section title="Data Sharing">
         <p>We do not sell, rent, or trade your personal information. We share data only with:</p>
         <ul className="list-disc pl-6 space-y-1">
-          <li><strong className="text-gray-200">Stripe</strong> — for payment processing</li>
-          <li><strong className="text-gray-200">AWS</strong> — for hosting and infrastructure</li>
-          <li><strong className="text-gray-200">Google/Apple</strong> — for authentication (only the data needed to verify your identity)</li>
+          <li><strong className="text-ink font-medium">Stripe</strong> — for payment processing</li>
+          <li><strong className="text-ink font-medium">AWS</strong> — for hosting and infrastructure</li>
+          <li><strong className="text-ink font-medium">Google/Apple</strong> — for authentication (only the data needed to verify your identity)</li>
         </ul>
       </Section>
 
@@ -91,7 +89,7 @@ export function PrivacyPage() {
       </Section>
 
       <Section title="Contact">
-        <p>For privacy-related questions or requests, contact us at <a href="mailto:info@rigacap.com" className="text-amber-400 hover:text-amber-300">info@rigacap.com</a>.</p>
+        <p>For privacy-related questions or requests, contact us at <a href="mailto:info@rigacap.com" className="text-claret underline underline-offset-2 decoration-1 hover:text-claret-light">info@rigacap.com</a>.</p>
       </Section>
     </PageWrapper>
   );
@@ -100,7 +98,7 @@ export function PrivacyPage() {
 export function TermsPage() {
   return (
     <PageWrapper title="Terms of Service">
-      <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+      <p className="text-sm text-ink-light">Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
 
       <Section title="Agreement">
         <p>By accessing or using RigaCap ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.</p>
@@ -111,7 +109,7 @@ export function TermsPage() {
       </Section>
 
       <Section title="Not Investment Advice">
-        <p className="text-amber-400/80 font-medium">RigaCap, LLC is not a registered investment advisor, broker-dealer, or financial planner. The signals, data, content, and methodology provided through the Service are for information purposes only and are not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest. They do not constitute investment advice, financial advice, trading advice, or any other kind of advice.</p>
+        <p className="text-claret font-medium">RigaCap, LLC is not a registered investment advisor, broker-dealer, or financial planner. The signals, data, content, and methodology provided through the Service are for information purposes only and are not a solicitation to invest, purchase, or sell securities in which RigaCap has an interest. They do not constitute investment advice, financial advice, trading advice, or any other kind of advice.</p>
         <p>You are solely responsible for your own investment decisions. Trading stocks involves substantial risk of loss and is not suitable for every investor. Past performance of our algorithms does not guarantee future results.</p>
       </Section>
 
@@ -161,7 +159,7 @@ export function TermsPage() {
       </Section>
 
       <Section title="Contact">
-        <p>Questions about these Terms? Contact us at <a href="mailto:info@rigacap.com" className="text-amber-400 hover:text-amber-300">info@rigacap.com</a>.</p>
+        <p>Questions about these Terms? Contact us at <a href="mailto:info@rigacap.com" className="text-claret underline underline-offset-2 decoration-1 hover:text-claret-light">info@rigacap.com</a>.</p>
       </Section>
     </PageWrapper>
   );
@@ -174,21 +172,21 @@ export function ContactPage() {
 
       <Section title="Email">
         <p>For all inquiries — general questions, support, privacy requests, or feedback:</p>
-        <p><a href="mailto:info@rigacap.com" className="text-amber-400 hover:text-amber-300">info@rigacap.com</a></p>
+        <p><a href="mailto:info@rigacap.com" className="text-claret underline underline-offset-2 decoration-1 hover:text-claret-light">info@rigacap.com</a></p>
       </Section>
 
       <Section title="Social Media">
         <div className="space-y-2">
-          <p><a href="https://twitter.com/rigacap" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:text-amber-300">Twitter / X — @rigacap</a></p>
-          <p><a href="https://instagram.com/rigacapital" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:text-amber-300">Instagram — @rigacapital</a></p>
+          <p><a href="https://twitter.com/rigacap" target="_blank" rel="noopener noreferrer" className="text-claret underline underline-offset-2 decoration-1 hover:text-claret-light">Twitter / X — @rigacap</a></p>
+          <p><a href="https://instagram.com/rigacapital" target="_blank" rel="noopener noreferrer" className="text-claret underline underline-offset-2 decoration-1 hover:text-claret-light">Instagram — @rigacapital</a></p>
         </div>
       </Section>
 
       <Section title="Mailing Address">
-        <p className="text-gray-500">RigaCap, LLC<br/>United States</p>
+        <p className="text-ink-light">RigaCap, LLC<br/>United States</p>
       </Section>
 
-      <p className="text-sm text-gray-500 mt-8">We typically respond within 1 business day.</p>
+      <p className="text-sm text-ink-light mt-8">We typically respond within 1 business day.</p>
     </PageWrapper>
   );
 }
