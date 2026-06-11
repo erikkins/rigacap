@@ -224,6 +224,11 @@ class EngagementService:
             "  - Use passive-aggressive softeners ('to be fair', 'to be honest').\n"
             "  - Cite a performance number without it being from the canon list, and never "
             "without the word 'backtest' nearby when it's a backtested figure.\n\n"
+            "WHEN TO SKIP: some tweets cannot be answered honestly without putting the author "
+            "down — brags, bait, victory laps, anything where the only true reply is a "
+            "deflation. Erik does not dunk, even elegantly. If every honest reply would read "
+            "as a put-down of the author, output exactly the single word SKIP and nothing else. "
+            "Skipping is a correct and common outcome, not a failure.\n\n"
             "A reader should think 'huh, that's a different angle' — not 'ouch, Erik just called "
             "that guy out.'\n\n"
             "RULES: "
@@ -290,6 +295,11 @@ class EngagementService:
 
         clean = generate_with_voice_filter(_call_claude, max_retries=2, label="engagement")
         if clean:
+            # SKIP guard: the model declines dunk-bait (brags/victory laps where any
+            # honest reply reads as a put-down). Callers treat "" as no-opportunity.
+            if clean.strip().upper().rstrip('.') == "SKIP":
+                logger.info(f"[ENGAGEMENT] SKIP — @{author} tweet is dunk-bait, no honest non-putdown reply")
+                return ""
             return clean
         return "(Voice filter failed — manual draft needed; banned terms detected in all attempts)"
 
@@ -366,6 +376,10 @@ class EngagementService:
                 opp["matched_topics"],
                 market_context,
             )
+
+        # Drop opportunities the model declined (SKIP guard: dunk-bait tweets
+        # where any honest reply would put the author down)
+        opportunities = [o for o in opportunities if o.get("suggested_comment")]
 
         return opportunities
 
