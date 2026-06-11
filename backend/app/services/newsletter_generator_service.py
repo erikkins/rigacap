@@ -35,42 +35,57 @@ EDUCATIONAL_TOPICS = [
     {
         "slug": "walk-forward",
         "title": "Why walk-forward validation matters — and why most backtests are lying to you.",
-        "seed": "Explain walk-forward simulation vs naive backtesting. Why optimizing on all data is cheating. What you get instead: numbers you can trust, even if they're lower.",
+        "seed": "Explain walk-forward simulation vs naive backtesting. Why optimizing on all data is cheating. The credibility test: when cleaner data made our own numbers smaller, we published the smaller numbers. What you get instead: figures you can trust, even when they're lower.",
     },
     {
-        "slug": "trailing-stops",
-        "title": "The exit strategy that lets winners run.",
-        "seed": "Explain trailing stops vs fixed stop losses. Why a 12% trailing stop is the Goldilocks number. How it changes your relationship with volatile stocks.",
-    },
-    {
-        "slug": "regime-detection",
-        "title": "Most investors think bull or bear. Reality has seven moods.",
-        "seed": "Explain our 7 market regimes — by their actual names: Strong Bull, Weak Bull, Rotating Bull, Range-Bound, Weak Bear, Panic / Crash, and Recovery. Each calls for different behavior. How regime detection prevents the biggest mistake retail investors make: applying Strong Bull tactics in a Weak Bear or a Panic / Crash. NEVER substitute generic names like 'Bull' or 'Bear' or 'Neutral' or 'Strong Bear' — those are not our regimes.",
-    },
-    {
-        "slug": "position-sizing",
-        "title": "Why 6 positions at 15% each beats 30 positions at 3%.",
-        "seed": "Explain concentrated vs diversified position sizing. Why over-diversification kills returns. How our system sizes positions based on conviction, not comfort.",
-    },
-    {
-        "slug": "momentum-ranking",
-        "title": "The math behind 'buy what's going up.'",
-        "seed": "Explain momentum as a factor. Why 10-day and 60-day momentum windows capture different things. How composite scoring filters noise from signal.",
+        "slug": "behavioral-gap",
+        "title": "The return your strategy earned isn't the return you collected.",
+        "seed": "Explain the investor behavior gap: Morningstar measures it around 1.2 percentage points a year; in crash years it's far worse. Investors collect less than their strategies earn because they sell at bottoms and re-enter late. The punchline: the best strategy is not the one with the biggest number — it's the one whose path never hands you a reason to quit.",
     },
     {
         "slug": "drawdown-math",
         "title": "A 50% loss requires a 100% gain to recover. That's not symmetry — that's the trap.",
-        "seed": "Explain drawdown math and why protecting capital matters more than maximizing returns. How our max drawdown of ~24% compares to buy-and-hold's ~34% in 2022.",
+        "seed": "Explain drawdown math and why protecting capital matters more than maximizing returns. In our 21-year backtest the worst drawdown was 19%, while the index lost more than half its value twice in the same span. Label all figures as backtested.",
+    },
+    {
+        "slug": "wide-stops",
+        "title": "Why our stops are wide — tight stops feel safe and bleed you dry.",
+        "seed": "Explain trailing stops vs fixed stop losses, and why TIGHT trailing stops are a trap: every wiggle stops you out, you pay the whipsaw tax, and you miss the recovery. Wide trailing stops give winners room to breathe and only act on genuine trend breaks. Don't cite specific stop percentages — explain the principle.",
+    },
+    {
+        "slug": "diversified-sizing",
+        "title": "Concentration looks brave. Mostly it's just loud.",
+        "seed": "Explain position sizing: why a book of roughly twenty volatility-sized positions beats a handful of big concentrated bets. Concentration amplifies both your best idea and your worst, and the worst is the one that ends the ride. Sizing by volatility means every position carries similar risk, not similar dollars.",
+    },
+    {
+        "slug": "cash-position",
+        "title": "Cash is a position. Sometimes it's the only correct one.",
+        "seed": "Explain why the system moves entirely to cash when market conditions turn hostile, and stays out until conditions recover. The hardest part isn't the math — it's that sitting out feels like failing while markets bounce. Reference the 2008 result: our backtest ended that year roughly flat while the index fell 38%, because it had gone to cash early. Label as backtested.",
     },
     {
         "slug": "signal-vs-noise",
-        "title": "Why the system was quiet this month — and why that's the feature, not the bug.",
-        "seed": "Explain why 3-4 signals per month is optimal. What happens when systems over-trade. Why quiet months are the discipline working, not broken.",
+        "title": "Why the system was quiet this week — and why that's the feature, not the bug.",
+        "seed": "Explain selectivity: the system only acts when its entry conditions all align, and most days they don't. What happens when systems over-trade. Why quiet stretches are the discipline working, not broken. Never cite a specific signals-per-month cadence.",
     },
     {
         "slug": "ensemble-approach",
         "title": "One signal is a guess. Three signals agreeing is a system.",
-        "seed": "Explain ensemble methodology — combining timing, momentum quality, and confirmation. Why no single indicator is trusted alone. How disagreement between signals keeps you out of bad trades.",
+        "seed": "Explain ensemble methodology — combining timing, momentum quality, and confirmation. Why no single indicator is trusted alone. How disagreement between signals keeps you out of bad trades. Describe the structure only — never specific thresholds or formulas.",
+    },
+    {
+        "slug": "momentum-explained",
+        "title": "The math behind 'buy what's going up.'",
+        "seed": "Explain momentum as a factor: it's one of the most persistent effects in markets, and also one of the most violent when it unwinds. How our approach looks for recent acceleration inside an established longer trend, penalized for volatility — structure only, no specific lookback windows or weights. Why raw, unmanaged momentum is almost impossible for a human to hold: in our 21-year backtest the raw factor drew down 57%.",
+    },
+    {
+        "slug": "sharpe-over-decades",
+        "title": "What a 'good' Sharpe ratio actually looks like over twenty years.",
+        "seed": "Explain why Sharpe ratios above 1 live in short windows and overfit backtests, while long-horizon Sharpes compress: the S&P 500 scored 0.54 over the last 21 years, Warren Buffett's lifetime figure is about 0.79 ('Buffett's Alpha', Frazzini/Kabiller/Pedersen 2018) — the best ever measured over 30+ years. Our 21-year backtested figure is 0.73. State plainly that ours is backtested where Buffett's is real.",
+    },
+    {
+        "slug": "the-premium",
+        "title": "We trail the index most years. On purpose. Here's the deal.",
+        "seed": "Explain the structural trade: a defensive momentum strategy behaves like insurance — it pays its premium in bull-run underperformance and collects in crashes. In our 21-year backtest the strategy beat the index in only about a third of rolling 3-year windows; its wins concentrate almost entirely in periods containing a crash. If you need to beat the market every year, this is the wrong product — and saying so up front is the point.",
     },
 ]
 
@@ -99,6 +114,16 @@ THE SEVEN REGIMES (these are the EXACT names — never substitute or invent othe
   6. Panic / Crash     — disorderly selling; volatility spike
   7. Recovery          — turning up off a panic low; early signs of a base
 NEVER use generic substitutes like "Bull," "Bear," "Strong Bear," "Neutral." Use the seven names above verbatim. If you must compress, "panic_crash" can be written "Panic Crash" but never just "Bear."
+
+POSITIONING (June 2026): RigaCap is behavioral capital insurance — a momentum strategy built so subscribers never get a reason to panic-sell. The newsletter's job is demonstrating discipline in real time, never predicting.
+
+PERFORMANCE NUMBERS — these are the ONLY ones you may cite, and any of them must carry the word "backtest" or "backtested" nearby:
+- 21-year walk-forward backtest (2007-2026): 8.3% a year, worst drawdown 19%
+- The index lost more than half its value twice in that span; raw momentum drew down 57%
+- 2008: the backtest ended the year roughly flat (-0.5%) while the index fell 38%
+- Last 24 months (held-out): +32% annualized
+- The LIVE record began June 11, 2026 — it is days old, and we say so plainly
+Never cite any other performance figure, including from older marketing.
 
 The newsletter has four sections. Each has a job:
 §01 "The Week in Focus" — what the system is seeing right now, in plain English
@@ -182,7 +207,33 @@ class NewsletterGeneratorService:
             logger.warning(f"Failed to load dashboard data: {e}")
             return {}
 
-    def generate_draft(self, target_date: Optional[datetime] = None, force: bool = False) -> dict:
+    LEAD_STORY_KEY = "newsletter/next_lead_story.json"
+
+    def get_pending_lead_story(self) -> Optional[str]:
+        """Optional operator-set focus for the next issue (set via the
+        set_newsletter_lead_story Lambda event). Consumed on use."""
+        try:
+            obj = self.s3.get_object(Bucket=S3_BUCKET, Key=self.LEAD_STORY_KEY)
+            return json.loads(obj["Body"].read()).get("concept") or None
+        except Exception:
+            return None
+
+    def set_lead_story(self, concept: str) -> None:
+        self.s3.put_object(Bucket=S3_BUCKET, Key=self.LEAD_STORY_KEY,
+                           Body=json.dumps({"concept": concept}).encode())
+
+    def _consume_lead_story(self, date_str: str) -> None:
+        try:
+            obj = self.s3.get_object(Bucket=S3_BUCKET, Key=self.LEAD_STORY_KEY)
+            self.s3.put_object(Bucket=S3_BUCKET,
+                               Key=f"newsletter/used_lead_stories/{date_str}.json",
+                               Body=obj["Body"].read())
+            self.s3.delete_object(Bucket=S3_BUCKET, Key=self.LEAD_STORY_KEY)
+        except Exception:
+            pass
+
+    def generate_draft(self, target_date: Optional[datetime] = None, force: bool = False,
+                       lead_story: Optional[str] = None) -> dict:
         if target_date is None:
             # Newsletter publishes on Sunday. Find the upcoming Sunday — including
             # today if today IS Sunday — so the filename matches the publish date.
@@ -334,11 +385,21 @@ class NewsletterGeneratorService:
         if market_context:
             market_summary += f"\n\nAI market briefing from the system: {market_context}"
 
+        # Operator-set lead story: explicit param wins, else the pending S3 concept
+        lead_story = lead_story or self.get_pending_lead_story()
+        lead_note = ""
+        if lead_story:
+            lead_note = (
+                f"\n\nTHIS ISSUE HAS A LEAD STORY (set by Erik): {lead_story}\n"
+                "Weave its theme into this section where it is natural to do so — "
+                "the week's data is still the spine, but the lead story is the angle."
+            )
+
         # §01 — The Week in Focus
         s1_prompt = f"""Write §01 "The Week in Focus" for this week's newsletter.
 
 Market data:
-{market_summary}{prev_week_context}
+{market_summary}{prev_week_context}{lead_note}
 
 Write 2-3 paragraphs explaining what the system is seeing in plain English. Translate the regime and data into something a smart non-trader would understand. Don't just list numbers — interpret them. What does this regime mean for how the system is behaving?
 
@@ -353,7 +414,12 @@ IMPORTANT: Output ONLY the body paragraphs. Do NOT include any section header, t
         s1_text = self._clean_body(self._call_claude(s1_prompt))
 
         # §02 — One Idea, Explained
-        topic = self._get_topic_for_week(target_date)
+        if lead_story:
+            topic = {"slug": "lead-story",
+                     "title": "This week's lead story.",
+                     "seed": lead_story + "\n\n(Also propose nothing about topics outside this lead story — this section IS the lead story this week.)"}
+        else:
+            topic = self._get_topic_for_week(target_date)
         s2_prompt = f"""Write §02 "One Idea, Explained" about this topic:
 
 Title: {topic['title']}
@@ -577,6 +643,9 @@ IMPORTANT: Output ONLY the personal note text. Do NOT include any section header
             Body=json.dumps(draft).encode(),
             ContentType="application/json",
         )
+
+        if lead_story:
+            self._consume_lead_story(date_str)
 
         logger.warning(f"Newsletter draft generated for {date_str}: {draft['word_count']} words")
         return draft

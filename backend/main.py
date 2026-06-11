@@ -7273,6 +7273,15 @@ def handler(event, context):
         result = _run_async(_save_wf())
         return {"status": "ok", "simulation": result}
 
+    if event.get("set_newsletter_lead_story"):
+        from app.services.newsletter_generator_service import newsletter_generator
+        concept = (event["set_newsletter_lead_story"] or {}).get("concept", "")
+        if not concept:
+            return {"status": "error", "error": "concept required"}
+        newsletter_generator.set_lead_story(concept)
+        print(f"📰 Newsletter lead story set ({len(concept)} chars)")
+        return {"status": "success", "lead_story_set": True, "chars": len(concept)}
+
     if event.get("generate_newsletter"):
         from app.services.newsletter_generator_service import newsletter_generator
         from app.services.email_service import admin_email_service
@@ -7283,8 +7292,12 @@ def handler(event, context):
         def _strip_html(s):
             return _re.sub(r"<[^>]+>", "", s or "") if s else ""
 
+        _nl_cfg = event["generate_newsletter"] if isinstance(event["generate_newsletter"], dict) else {}
         try:
-            draft = newsletter_generator.generate_draft()
+            draft = newsletter_generator.generate_draft(
+                force=bool(_nl_cfg.get("force")),
+                lead_story=_nl_cfg.get("lead_story"),
+            )
         except ValueError as ve:
             # Lock-protection guardrail — refusing to overwrite a locked draft
             print(f"⚠️ Newsletter generate refused: {ve}")
