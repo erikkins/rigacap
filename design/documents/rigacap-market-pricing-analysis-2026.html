@@ -597,16 +597,6 @@
     <div class="component">
       <div class="component-num">05</div>
       <div>
-        <div class="component-title">Pricing conflicts: found and reconciled (June 10&ndash;11, 2026).</div>
-        <div class="component-desc">This analysis surfaced stale $39/$349 pricing on a legacy landing route
-        (<code>/v1</code>, since removed), in the v1 investor report, and in the marketing playbook. All are
-        now reconciled to the $129 / $59-founding / $1,099 structure; the live landing page and checkout were
-        verified correct throughout. Status table in Section 06.</div>
-      </div>
-    </div>
-    <div class="component">
-      <div class="component-num">06</div>
-      <div>
         <div class="component-title">The honest moat is the honesty.</div>
         <div class="component-desc">Signals are copyable and the live record is days old. What competitors cannot
         cheaply replicate: a 21-year continuous walk-forward with disclosed caveats, a quantified behavioral stress
@@ -625,9 +615,8 @@
     <div class="toc-item"><span class="toc-title">03 &middot; The adviser market &mdash; research, models, tools</span><span class="toc-page">08</span></div>
     <div class="toc-item"><span class="toc-title">04 &middot; Willingness to pay &mdash; two anchors</span><span class="toc-page">11</span></div>
     <div class="toc-item"><span class="toc-title">05 &middot; Pricing recommendations</span><span class="toc-page">13</span></div>
-    <div class="toc-item"><span class="toc-title">06 &middot; Pricing conflicts to reconcile</span><span class="toc-page">17</span></div>
-    <div class="toc-item"><span class="toc-title">07 &middot; Moats &amp; risks &mdash; the honest section</span><span class="toc-page">18</span></div>
-    <div class="toc-item"><span class="toc-title">Appendix &middot; Sources &amp; disclosures</span><span class="toc-page">20</span></div>
+    <div class="toc-item"><span class="toc-title">06 &middot; Moats &amp; risks &mdash; the honest section</span><span class="toc-page">17</span></div>
+    <div class="toc-item"><span class="toc-title">Appendix &middot; Sources &amp; disclosures</span><span class="toc-page">19</span></div>
   </div>
 </div>
 
@@ -1151,68 +1140,10 @@
 </div>
 
 <!-- ============================================================
-     SECTION 06 - PRICING CONFLICTS
-     ============================================================ -->
-<div class="content page-break">
-  <span class="kicker">06 &middot; Housekeeping</span>
-  <h2>Pricing conflicts to <em>reconcile.</em></h2>
-
-  <p class="lead">
-    The repositioning left a trail of stale prices. All items below were reconciled to the
-    $129 / $59-founding / $1,099 structure on June 10&ndash;11, 2026; the table is preserved
-    as the audit record.
-  </p>
-
-  <table class="text-table">
-    <thead>
-      <tr><th>Location</th><th>Stale content</th><th>Resolution</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><code>frontend/src/LandingPage.jsx</code> (legacy)</td>
-        <td>Displayed $39/mo and $349/yr on the legacy <code>/v1</code> route</td>
-        <td><strong>Resolved June 10.</strong> The legacy route and component were removed entirely;
-        the live landing page (V2) carried correct pricing throughout. Stripe products verified
-        against the $129/$59/$1,099 structure.</td>
-      </tr>
-      <tr>
-        <td><code>design/documents/rigacap-pricing-analysis.html</code></td>
-        <td>Entire document priced at $39/mo &middot; $349/yr; ARR table built on $39</td>
-        <td><strong>Resolved June 11.</strong> Deleted &mdash; superseded by this document.</td>
-      </tr>
-      <tr>
-        <td><code>design/documents/rigacap-investor-report.html</code> (v1)</td>
-        <td>$39/month and $349/year in the pricing table (lines ~1097&ndash;1102)</td>
-        <td><strong>Resolved June 11.</strong> v1 pricing table updated to $129/$59-founding/$1,099 with the
-        adviser firm-license row added.</td>
-      </tr>
-      <tr>
-        <td><code>design/documents/rigacap-marketing-playbook.html</code></td>
-        <td>Persona copy: &ldquo;Will pay $39/mo for a real edge&rdquo; (line ~666); $349&ndash;468 LTV figure (line ~1044)</td>
-        <td><strong>Resolved June 10.</strong> Persona and LTV updated ($129/mo; $1,099&ndash;1,548 LTV band).</td>
-      </tr>
-      <tr>
-        <td>investor-report-v2 ($39 check)</td>
-        <td>No $39 found &mdash; v2 is clean ($129/$59/$1,099 at lines ~978&ndash;979). The remembered &ldquo;$39 in
-        investor-report&rdquo; is in <em>v1</em> and the old pricing analysis.</td>
-        <td>No change needed in v2; confirm v2 is the only version circulated.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="callout">
-    <p><strong>One structural note on the founding price.</strong> $59 founding against $129 standard is a
-    54% discount &mdash; defensible only while the live record is thin. Documents should consistently frame
-    it as compensation for early trust (&ldquo;you are joining before the live record exists&rdquo;), never as
-    a sale. The two framings demand different copy, and only one of them survives the honesty positioning.</p>
-  </div>
-</div>
-
-<!-- ============================================================
      SECTION 07 - MOATS & RISKS
      ============================================================ -->
 <div class="content page-break">
-  <span class="kicker">07 &middot; Moats &amp; risks</span>
+  <span class="kicker">06 &middot; Moats &amp; risks</span>
   <h2>The <em>honest</em> section.</h2>
 
   <p class="lead">
