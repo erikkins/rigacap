@@ -135,8 +135,8 @@ function drawSegments(ctx, segs, x, y, align) {
 // Wordmark: "RigaCap." serif bold ink with claret period (replaces halo logo).
 function drawWordmark(ctx, x, y, size, align) {
   drawSegments(ctx, [
-    { text: 'RigaCap', font: 'bold ' + size + 'px ' + SERIF, color: INK },
-    { text: '.', font: 'bold ' + size + 'px ' + SERIF, color: CLARET },
+    { text: 'RigaCap', font: '600 ' + size + 'px ' + SERIF, color: INK },
+    { text: '.', font: '600 ' + size + 'px ' + SERIF, color: CLARET },
   ], x, y, align || 'left');
 }
 
@@ -206,7 +206,7 @@ function drawAllCards() {
   ctx.fillStyle = MUTED;
   ctx.textAlign = 'center';
   fitText(ctx, 'RigaCap — fifteen years of building, live since June 2026', w / 2, 660, 900,
-    '30px ' + SANS);
+    'italic 32px ' + SERIF);
 
   hairline(ctx, 160, w - 160, 738);
 
@@ -654,6 +654,7 @@ document.fonts.load('bold 130px Fraunces').then(() =>
   Promise.all([
     document.fonts.load('italic 700 130px Fraunces'),
     document.fonts.load('600 30px "IBM Plex Sans"'),
+    document.fonts.load('600 48px Fraunces'),
     document.fonts.load('bold 30px "IBM Plex Mono"'),
   ])).then(() => document.fonts.ready).then(() => drawAllCards());
 </script>
