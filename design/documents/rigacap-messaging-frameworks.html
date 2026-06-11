@@ -526,6 +526,16 @@
     left: 0;
     color: var(--gray);
   }
+
+  /* PDF/print: institutional ink-on-white. The cream paper is a screen brand
+     device; print convention is white with accent color as punctuation.
+     (Also: toner.) Branded covers keep their explicit backgrounds. */
+  @media print {
+    :root { --paper: #ffffff; --paper-card: #ffffff; --paper-deep: #ffffff; --cream: #ffffff; }
+    body { background: #ffffff !important; }
+    [style*="F5F1E8"], [style*="FAF7F0"], [style*="EDE7D8"],
+    [style*="f5f1e8"], [style*="faf7f0"], [style*="ede7d8"] { background: #ffffff !important; }
+  }
 </style>
 </head>
 <body>
