@@ -814,21 +814,21 @@
       </tr>
       <tr>
         <td>Short momentum</td>
-        <td><code>(p / p[t-10] - 1)</code></td>
-        <td>10d</td>
-        <td>Short-term acceleration</td>
+        <td><code>(p / p[t-5] - 1)</code></td>
+        <td>5d</td>
+        <td>Short-term acceleration &middot; weight 0.3</td>
       </tr>
       <tr>
         <td>Long momentum</td>
         <td><code>(p / p[t-60] - 1)</code></td>
         <td>60d</td>
-        <td>Sustained trend strength</td>
+        <td>Sustained trend strength &middot; weight 0.2</td>
       </tr>
       <tr>
         <td>Volatility</td>
         <td><code>&sigma;(returns,20) &times; &radic;252</code></td>
         <td>20d</td>
-        <td>Risk penalty in composite</td>
+        <td>Risk penalty in composite &middot; weight 0.15</td>
       </tr>
       <tr>
         <td>Distance from high</td>
@@ -932,9 +932,19 @@
   <h3>Factor 2 &mdash; momentum quality.</h3>
   <p>
     Candidates that pass timing are ranked by a composite momentum score combining short-term
-    acceleration (10-day), long-term trend strength (60-day), and a volatility penalty. Only
-    top-ranked names are eligible. The composite weights the long horizon higher than the
-    short to penalise candidates that are merely whipsawing.
+    acceleration (5-day), longer-term trend strength (60-day), and a volatility penalty.
+    The production formula, exactly as it runs live:
+  </p>
+  <p style="text-align:center; font-family: 'IBM Plex Mono', monospace; font-size: 0.95em; background: #FAF7F0; border: 1px solid #DDD5C7; padding: 12px 18px;">
+    score &nbsp;=&nbsp; 0.3 &times; r<sub>5d</sub> &nbsp;+&nbsp; 0.2 &times; r<sub>60d</sub> &nbsp;&minus;&nbsp; 0.15 &times; &sigma;<sub>20d</sub>
+  </p>
+  <p>
+    where r<sub>5d</sub> and r<sub>60d</sub> are trailing returns in percent and &sigma;<sub>20d</sub> is
+    20-day annualised volatility in percent. Only top-ranked names are eligible. Note the weighting:
+    the <strong>short horizon carries the higher weight</strong> &mdash; the composite rewards fresh
+    acceleration within an established 60-day trend, while the volatility penalty disqualifies
+    candidates whose &ldquo;momentum&rdquo; is really just whipsaw. Candidates must additionally trade
+    above their 20-day and 50-day moving averages (the trend-quality gate).
   </p>
 
   <h3>Factor 3 &mdash; confirmation.</h3>
@@ -998,7 +1008,7 @@
 
       <circle cx="430" cy="180" r="105" fill="#2D5F3F" fill-opacity="0.10" stroke="#2D5F3F" stroke-width="1.4"/>
       <text x="500" y="125" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-size="13" font-weight="500" fill="#2D5F3F">Momentum quality</text>
-      <text x="500" y="142" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="#5A544E">10d + 60d composite</text>
+      <text x="500" y="142" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="#5A544E">5d + 60d composite</text>
 
       <circle cx="350" cy="240" r="105" fill="#5A544E" fill-opacity="0.08" stroke="#5A544E" stroke-width="1.4"/>
       <text x="350" y="312" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-size="13" font-weight="500" fill="#141210">Confirmation</text>
