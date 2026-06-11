@@ -97,6 +97,30 @@ export default function ForAdvisersPage() {
           </div>
         </section>
 
+        {/* Independent analyst review pull-quotes */}
+        <section className="py-12 border-t border-rule">
+          <Eyebrow>From an independent analyst's review · June 2026</Eyebrow>
+          <div className="mt-7 grid sm:grid-cols-[1.3fr_1fr] gap-10 items-start">
+            <blockquote className="font-display italic text-ink leading-[1.5] tracking-[-0.01em]" style={{ fontSize: 'clamp(1.3rem, 2.4vw, 1.7rem)', fontVariationSettings: '"opsz" 72' }}>
+              &ldquo;You are structurally buying a put option on the market &mdash; and the premium is paid in
+              underperformance during extended bull runs. Sold as behavioral capital insurance to wealthy
+              individuals and RIAs, it is a <em className="text-claret">world-class offering.</em>&rdquo;
+            </blockquote>
+            <div className="space-y-4">
+              <div className="bg-paper-card border-l-[3px] border-claret p-5">
+                <div className="font-display text-[1.6rem] text-ink" style={{ fontVariationSettings: '"opsz" 96' }}>A&minus;</div>
+                <div className="text-[0.82rem] text-ink-mute leading-snug mt-1">&ldquo;Elite Behavior-Adjusted Alpha&rdquo; &mdash; final grade after full diligence, including the strategy's relative-underperformance disclosures</div>
+              </div>
+              <p className="text-[0.85rem] text-ink-light leading-relaxed">
+                &ldquo;Wealth managers are desperate for tools that stop clients from calling and panicking during
+                crashes&hellip; an outsourced, institutional-grade risk-mitigation narrative.&rdquo; The full review
+                pressed hardest on our weakest numbers &mdash; all of which are published on the
+                {' '}<a href="/methodology" className="text-claret underline underline-offset-2 decoration-1">methodology page</a>.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* The months clients call about */}
         <section className="py-12 border-t border-rule">
           <Eyebrow>When clients call</Eyebrow>
