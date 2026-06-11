@@ -26,6 +26,9 @@ Erik's analyst friend graded the product through 3 rounds → **A- "Elite Behavi
 - **[Always checkpoint paid/long-running scripts](feedback_never_keep_paid_work_in_memory.md)** — any script that costs money OR runs >5 min MUST write incremental disk checkpoints. Jun 3 2026: Haiku scorer ran 50 min / $2.43, killed mid-run, ALL work lost because results accumulated in memory. Cheap durable saves beat elegant end-of-run writes EVERY TIME.
 - **[Smoke backtester.py edits locally before pushing](feedback_smoke_locally_before_deploy.md)** — Lambda deploy is auto-CI/CD; a buggy hot-path commit triggers prod-worker error alarms on next invocation. 30 sec local smoke catches 90% of trivial bugs. Jun 3 2026: sentiment-exit `pos['symbol']` KeyError.
 
+## CRITICAL — BRAND
+- [Paper brand EVERYWHERE](feedback_paper_brand_everywhere.md) — paper #F5F1E8 / ink #141210 / claret #7A2430, serif display. Navy/gold (#172554/#f59e0b) is the DEAD old brand; never generate/'preserve' assets in it (Jun 11: launch cards rebuilt in old brand, Erik caught it). 'Preserve the visual system' ≠ preserve a dead brand.
+
 ## CRITICAL — NEVER COMMIT SECRETS
 - **[Never check in credentials](feedback_never_check_in_secrets.md)** — grep every file for password/postgres://*creds*/api.key/AKIA/sk-/whsec_ BEFORE `git add`. Never `git add .`. RDS master pw was leaked Apr 16 2026 via this exact failure mode; rotated same day. Scripts must read DATABASE_URL from env, never hardcode.
 
