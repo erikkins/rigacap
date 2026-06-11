@@ -189,7 +189,7 @@ export default function TrackRecordPageV2() {
               ].map(([regime, window, ret, dd]) => (
                 <div key={regime} className="flex items-center justify-between py-3 border-b border-rule text-[0.95rem]">
                   <div><span className="font-medium text-ink">{regime}</span> <span className="text-ink-light text-[0.8rem]">· {window}</span></div>
-                  <div className="flex gap-6 sm:gap-10 font-mono text-[0.9rem]"><span style={{ color: ret.startsWith('−') || ret.startsWith('-') ? '#8F2D3D' : '#2D5F3F' }}>{ret}</span><span className="text-ink-mute italic font-body">{dd}</span></div>
+                  <div className="flex font-mono text-[0.9rem]"><span className="w-20 text-right" style={{ color: ret.startsWith('−') || ret.startsWith('-') ? '#8F2D3D' : '#2D5F3F' }}>{ret}</span><span className="w-44 sm:w-48 text-right text-ink-mute italic font-body">{dd}</span></div>
                 </div>
               ))}
             </div>
