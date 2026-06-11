@@ -27,24 +27,24 @@
     <p class="hint">We're Live</p>
   </div>
   <div class="card-wrapper">
-    <h3>2. Performance Stats</h3>
+    <h3>2. 21-Year Results</h3>
     <canvas id="card2" width="1080" height="1350"></canvas>
-    <p class="hint">Walk-Forward Results</p>
+    <p class="hint">Twenty-one years, walk-forward</p>
   </div>
   <div class="card-wrapper">
-    <h3>3. How It Works</h3>
+    <h3>3. How the System Works</h3>
     <canvas id="card3" width="1080" height="1350"></canvas>
-    <p class="hint">3-Factor Ensemble</p>
+    <p class="hint">3-Factor Entry + Exits</p>
   </div>
   <div class="card-wrapper">
-    <h3>4. 7 Market Regimes</h3>
+    <h3>4. The Months That Matter</h3>
     <canvas id="card4" width="1080" height="1350"></canvas>
-    <p class="hint">Regime Detection</p>
+    <p class="hint">Worst months vs the system</p>
   </div>
   <div class="card-wrapper">
     <h3>5. Signal Teaser</h3>
     <canvas id="card5" width="1080" height="1350"></canvas>
-    <p class="hint">Subscribe CTA</p>
+    <p class="hint">Trial CTA</p>
   </div>
 </div>
 
@@ -56,6 +56,8 @@ const GOLD_LIGHT = '#fbbf24';
 const WHITE = '#ffffff';
 const GRAY_LIGHT = '#94a3b8';
 const GRAY_DARK = '#334155';
+const GREEN = '#22c55e';
+const RED = '#ef4444';
 
 const haloImg = new Image();
 
@@ -82,6 +84,17 @@ function drawGoldLine(ctx, y, w) {
   ctx.stroke();
 }
 
+// Draw text, shrinking the font size until it fits maxWidth.
+function fitText(ctx, text, x, y, maxWidth, font) {
+  ctx.font = font;
+  let size = parseInt(font.match(/(\d+)px/)[1], 10);
+  while (ctx.measureText(text).width > maxWidth && size > 14) {
+    size -= 1;
+    ctx.font = font.replace(/\d+px/, size + 'px');
+  }
+  ctx.fillText(text, x, y);
+}
+
 function drawAllCards() {
 // ── Card 1: Launch Announcement ──
 (function() {
@@ -105,23 +118,24 @@ function drawAllCards() {
   ctx.fillText("We're Live.", w/2, 620);
 
   ctx.fillStyle = GOLD;
-  ctx.font = '600 36px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('RigaCap Trading System', w/2, 685);
+  fitText(ctx, 'RigaCap — fifteen years of building, live since June 2026', w/2, 688, 920,
+    '600 32px -apple-system, BlinkMacSystemFont, sans-serif');
 
-  drawGoldLine(ctx, 730, w);
+  drawGoldLine(ctx, 735, w);
 
   ctx.fillStyle = WHITE;
-  ctx.font = 'bold 34px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('+384% over 5 years. ~37% annualized. 1.19 Sharpe.', w/2, 800);
+  fitText(ctx, '21-year walk-forward backtest · 8.3% annualized · worst drawdown 19%', w/2, 805, 940,
+    'bold 30px -apple-system, BlinkMacSystemFont, sans-serif');
 
   ctx.fillStyle = GRAY_LIGHT;
-  ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('Walk-forward verified. Positive in 2022 when S&P fell 20%.', w/2, 855);
-  ctx.fillText('No hindsight. No hand-waving. Just math.', w/2, 900);
+  fitText(ctx, 'Through 2008, COVID, and 2022 — the index lost half its value twice.', w/2, 862, 920,
+    '28px -apple-system, BlinkMacSystemFont, sans-serif');
+  fitText(ctx, 'Every number labeled. Losers posted too.', w/2, 907, 920,
+    '28px -apple-system, BlinkMacSystemFont, sans-serif');
 
   ctx.fillStyle = GOLD;
   ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('rigacap.com', w/2, 970);
+  ctx.fillText('rigacap.com', w/2, 980);
 
   // Decorative corners
   ctx.strokeStyle = GOLD;
@@ -136,7 +150,7 @@ function drawAllCards() {
   ctx.beginPath(); ctx.moveTo(w-80, h-40); ctx.lineTo(w-40, h-40); ctx.lineTo(w-40, h-80); ctx.stroke();
 })();
 
-// ── Card 2: Performance Stats ──
+// ── Card 2: Twenty-one Years, Walk-Forward ──
 (function() {
   const c = document.getElementById('card2');
   const ctx = c.getContext('2d');
@@ -148,132 +162,121 @@ function drawAllCards() {
   ctx.fillStyle = WHITE;
   ctx.font = 'bold 42px -apple-system, BlinkMacSystemFont, sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('Walk-Forward Results', 140, 112);
+  ctx.fillText('Twenty-one years, walk-forward.', 140, 112);
 
   ctx.fillStyle = GRAY_LIGHT;
-  ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('5 years | No hindsight bias | Ensemble Strategy', 140, 152);
+  fitText(ctx, '2007–2026 · backtested · price returns · no hindsight', 140, 152, 840,
+    '24px -apple-system, BlinkMacSystemFont, sans-serif');
 
   drawGoldLine(ctx, 192, w);
 
   // Table
-  const rows = [
-    { period: '2021', ret: '+8.3%', spy: '+21.0%', note: '', color: '#22c55e' },
-    { period: '2022', ret: '+6.0%', spy: '-20.4%', note: 'SPY fell 20%', color: '#22c55e' },
-    { period: '2023', ret: '+4.5%', spy: '+23.4%', note: '', color: '#22c55e' },
-    { period: '2024', ret: '+20.3%', spy: '+23.8%', note: '', color: '#22c55e' },
-    { period: '2025', ret: '+57.4%', spy: '+18.3%', note: '3x SPY', color: '#22c55e' },
-  ];
-
-  const colX = [100, 350, 560, 800];
-  const headers = ['Year', 'RigaCap', 'S&P 500', ''];
-  let y = 280;
+  const colX = [110, 545, 735, 920];
+  let y = 290;
 
   // Table header
   ctx.fillStyle = GOLD;
-  ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, sans-serif';
-  headers.forEach((h, i) => {
-    ctx.textAlign = i === 0 ? 'left' : 'center';
-    ctx.fillText(h, colX[i], y);
-  });
+  ctx.font = 'bold 26px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Strategy', colX[0], y);
+  ctx.textAlign = 'center';
+  ctx.fillText('Annualized', colX[1], y);
+  ctx.fillText('Sharpe', colX[2], y);
+  ctx.fillText('Worst drawdown', colX[3], y);
 
   ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)';
   ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(80, y + 16); ctx.lineTo(w - 80, y + 16); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(80, y + 18); ctx.lineTo(w - 80, y + 18); ctx.stroke();
 
-  // Table rows — more vertical space
-  y += 80;
-  rows.forEach(row => {
-    ctx.textAlign = 'left';
-    ctx.fillStyle = WHITE;
-    ctx.font = '32px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(row.period, colX[0], y);
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = row.color;
-    ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(row.ret, colX[1], y);
-
-    ctx.fillStyle = row.spy.startsWith('-') ? '#ef4444' : GRAY_LIGHT;
-    ctx.font = '32px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(row.spy, colX[2], y);
-
-    if (row.note) {
-      ctx.fillStyle = GOLD;
-      ctx.font = 'italic 24px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText(row.note, colX[3], y);
-    }
-
-    y += 75;
-  });
-
-  // Total row
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(80, y - 20); ctx.lineTo(w - 80, y - 20); ctx.stroke();
-  y += 25;
-
-  ctx.textAlign = 'left';
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('5-Year Avg', colX[0], y);
-
-  ctx.textAlign = 'center';
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('+152%', colX[1], y);
-
-  ctx.fillStyle = GRAY_LIGHT;
-  ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('+84%', colX[2], y);
-
-  // Bottom stats
-  y += 100;
-  const bottomStats = [
-    { label: 'Annualized', value: '~37%', color: '#22c55e' },
-    { label: '5-Year', value: '+384%', color: GOLD },
-    { label: 'Max DD', value: '30%', color: '#fbbf24' },
+  const rows = [
+    { name: 'RigaCap', ann: '8.3%', sharpe: '0.73', dd: '−19%', highlight: true },
+    { name: 'Raw momentum, net', ann: '13.2%', sharpe: '0.69', dd: '−57%', highlight: false },
+    { name: 'S&P 500', ann: '9.8%', sharpe: '—', dd: '−55%', highlight: false },
   ];
 
-  const boxW = 260;
-  const startX = (w - boxW * 3 - 40 * 2) / 2;
-  bottomStats.forEach((stat, i) => {
-    const bx = startX + i * (boxW + 40);
-    const by = y;
+  y += 105;
+  rows.forEach(row => {
+    if (row.highlight) {
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.10)';
+      ctx.beginPath();
+      ctx.roundRect(80, y - 52, w - 160, 82, 12);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(80, y - 52, w - 160, 82, 12);
+      ctx.stroke();
+    }
 
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
-    ctx.beginPath();
-    ctx.roundRect(bx, by, boxW, 110, 12);
-    ctx.fill();
+    ctx.textAlign = 'left';
+    ctx.fillStyle = row.highlight ? GOLD_LIGHT : WHITE;
+    ctx.font = (row.highlight ? 'bold ' : '') + '32px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(row.name, colX[0], y);
 
-    ctx.strokeStyle = 'rgba(245, 158, 11, 0.2)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.roundRect(bx, by, boxW, 110, 12);
-    ctx.stroke();
-
-    ctx.fillStyle = stat.color;
-    ctx.font = 'bold 44px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(stat.value, bx + boxW/2, by + 55);
+    ctx.fillStyle = row.highlight ? WHITE : GRAY_LIGHT;
+    ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(row.ann, colX[1], y);
+    ctx.fillText(row.sharpe, colX[2], y);
 
-    ctx.fillStyle = GRAY_LIGHT;
-    ctx.font = '20px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(stat.label, bx + boxW/2, by + 90);
+    ctx.fillStyle = row.highlight ? GREEN : RED;
+    ctx.fillText(row.dd, colX[3], y);
+
+    y += 110;
   });
+
+  // Drawdown bar comparison — the point of the card
+  let by = y + 50;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = GOLD;
+  ctx.font = 'bold 26px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.fillText('Worst drawdown, visualized (backtest)', 110, by);
+
+  const bars = [
+    { name: 'RigaCap', dd: 19, color: GREEN, label: '−19%' },
+    { name: 'Raw momentum', dd: 57, color: RED, label: '−57%' },
+    { name: 'S&P 500', dd: 55, color: RED, label: '−55%' },
+  ];
+  const barX = 360, barMaxW = 520, barH = 40, ddMax = 57;
+  by += 55;
+  bars.forEach(b => {
+    ctx.fillStyle = GRAY_LIGHT;
+    ctx.font = '26px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(b.name, 110, by + barH/2 + 9);
+
+    const bw = Math.max(30, barMaxW * b.dd / ddMax);
+    ctx.fillStyle = b.color;
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath();
+    ctx.roundRect(barX, by, bw, barH, 6);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = WHITE;
+    ctx.font = 'bold 26px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(b.label, barX + bw + 18, by + barH/2 + 9);
+
+    by += barH + 30;
+  });
+
+  // Pull line
+  ctx.fillStyle = WHITE;
+  ctx.textAlign = 'center';
+  fitText(ctx, 'The return you can hold through is the one you collect.', w/2, by + 110, 920,
+    'italic 600 32px -apple-system, BlinkMacSystemFont, sans-serif');
 
   // Footer
   ctx.fillStyle = GRAY_LIGHT;
   ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('Walk-forward tested: no future data used in any period.', w/2, h - 70);
+  ctx.fillText('Walk-forward backtest: no future data used in any period.', w/2, h - 70);
 
   ctx.fillStyle = GOLD;
   ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, sans-serif';
   ctx.fillText('rigacap.com', w/2, h - 40);
 })();
 
-// ── Card 3: How It Works (3-Factor) ──
+// ── Card 3: How the System Works (3-Factor) ──
 (function() {
   const c = document.getElementById('card3');
   const ctx = c.getContext('2d');
@@ -285,11 +288,11 @@ function drawAllCards() {
   ctx.fillStyle = WHITE;
   ctx.font = 'bold 42px -apple-system, BlinkMacSystemFont, sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('How the Ensemble Works', 140, 112);
+  ctx.fillText('How the System Works', 140, 112);
 
   ctx.fillStyle = GRAY_LIGHT;
   ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('3-factor entry system for high-conviction trades', 140, 152);
+  ctx.fillText('Three factors decide every entry', 140, 152);
 
   drawGoldLine(ctx, 192, w);
 
@@ -297,31 +300,29 @@ function drawAllCards() {
   const factors = [
     {
       num: '1',
-      title: 'Breakout Timing',
-      desc: 'Proprietary accumulation breakout detection',
-      detail1: 'Catches early breakouts before the crowd.',
-      detail2: '200-day weighted price anchors entry timing.',
+      title: 'Timing',
+      line1: 'Price breaks 5% above its 200-day weighted',
+      line2: 'average — early strength, confirmed',
     },
     {
       num: '2',
-      title: 'Momentum Quality',
-      desc: 'Top composite momentum ranking',
-      detail1: '10-day + 60-day momentum score, filtered',
-      detail2: 'for low volatility and volume confirmation.',
+      title: 'Quality',
+      line1: 'Momentum composite — 5-day acceleration inside',
+      line2: 'a 60-day trend, volatility-penalized',
     },
     {
       num: '3',
-      title: 'Regime Filter',
-      desc: '7-regime market detection',
-      detail1: 'Adapts position sizing and entry rules across',
-      detail2: 'bull, bear, crash, and recovery regimes.',
+      title: 'Confirmation',
+      line1: 'Within 3% of the 50-day high,',
+      line2: 'above the 20/50-day averages',
     },
   ];
 
-  let fy = 260;
+  const fy = 250;
+  const cardH = 235;
+  const cardGap = 26;
   factors.forEach((f, i) => {
-    const cardH = 260;
-    const cardY = fy + i * (cardH + 30);
+    const cardY = fy + i * (cardH + cardGap);
 
     // Card background
     ctx.fillStyle = 'rgba(255,255,255,0.04)';
@@ -349,23 +350,16 @@ function drawAllCards() {
     ctx.textAlign = 'left';
     ctx.fillStyle = GOLD;
     ctx.font = 'bold 34px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(f.title, 230, cardY + 65);
+    ctx.fillText(f.title, 230, cardY + 72);
 
     ctx.fillStyle = WHITE;
-    ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(f.desc, 230, cardY + 115);
-
-    ctx.fillStyle = GRAY_LIGHT;
-    ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(f.detail1, 230, cardY + 170);
-    ctx.fillText(f.detail2, 230, cardY + 205);
+    fitText(ctx, f.line1, 230, cardY + 132, 750, '27px -apple-system, BlinkMacSystemFont, sans-serif');
+    fitText(ctx, f.line2, 230, cardY + 176, 750, '27px -apple-system, BlinkMacSystemFont, sans-serif');
   });
 
   // Dashed line connecting the three number circles and down to result box
   const lineX = 160;
   const circleR = 40;
-  const cardH = 260;
-  const cardGap = 30;
   const cy1 = fy + cardH/2;
   const cy2 = fy + (cardH + cardGap) + cardH/2;
   const cy3 = fy + 2*(cardH + cardGap) + cardH/2;
@@ -394,7 +388,14 @@ function drawAllCards() {
   ctx.fillStyle = GOLD;
   ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('All 3 must align = High-conviction entry', w/2, arrowY + 55);
+  ctx.fillText('All 3 must align = entry signal', w/2, arrowY + 55);
+
+  // Exit rules
+  ctx.fillStyle = WHITE;
+  fitText(ctx, 'Exits: 30% trailing stops across ~20 volatility-sized positions.', w/2, arrowY + 160, 920,
+    '26px -apple-system, BlinkMacSystemFont, sans-serif');
+  fitText(ctx, 'In hostile regimes, the system holds cash.', w/2, arrowY + 200, 920,
+    '26px -apple-system, BlinkMacSystemFont, sans-serif');
 
   // Footer
   ctx.fillStyle = GRAY_LIGHT;
@@ -406,7 +407,7 @@ function drawAllCards() {
 
 })();
 
-// ── Card 4: 7 Market Regimes ──
+// ── Card 4: The Months That Matter ──
 (function() {
   const c = document.getElementById('card4');
   const ctx = c.getContext('2d');
@@ -418,69 +419,78 @@ function drawAllCards() {
   ctx.fillStyle = WHITE;
   ctx.font = 'bold 42px -apple-system, BlinkMacSystemFont, sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('7 Market Regimes', 140, 112);
+  ctx.fillText('The months that matter.', 140, 112);
 
   ctx.fillStyle = GRAY_LIGHT;
-  ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('Adaptive strategy for every market condition', 140, 152);
+  fitText(ctx, "The index's six worst months in 21 years — and where the system was (backtest)", 140, 152, 860,
+    '22px -apple-system, BlinkMacSystemFont, sans-serif');
 
   drawGoldLine(ctx, 192, w);
 
-  const regimes = [
-    { name: 'Strong Bull', color: '#22c55e', desc: 'Broad rally, high breadth', action: 'Full exposure' },
-    { name: 'Weak Bull', color: '#86efac', desc: 'Narrow leadership', action: 'Selective entries' },
-    { name: 'Rotating Bull', color: '#a3e635', desc: 'Sector rotation active', action: 'Follow momentum' },
-    { name: 'Range Bound', color: '#facc15', desc: 'Choppy, no trend', action: 'Reduce size' },
-    { name: 'Weak Bear', color: '#fb923c', desc: 'Drifting lower', action: 'Tighten stops' },
-    { name: 'Panic / Crash', color: '#ef4444', desc: 'Sharp sell-off', action: 'Exit all' },
-    { name: 'Recovery', color: '#38bdf8', desc: 'Bottom reversal', action: 'Scale back in' },
+  // Table header
+  const colX = [110, 520, 760];
+  let y = 275;
+  ctx.fillStyle = GOLD;
+  ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Month', colX[0], y);
+  ctx.textAlign = 'center';
+  ctx.fillText('S&P 500', colX[1], y);
+  ctx.fillText('RigaCap', colX[2], y);
+
+  ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(80, y + 18); ctx.lineTo(w - 80, y + 18); ctx.stroke();
+
+  const rows = [
+    { month: 'Oct 2008', spy: '−16.5%', riga: '0.0%', cash: true },
+    { month: 'Mar 2020', spy: '−13.1%', riga: '−4.7%', cash: false },
+    { month: 'Feb 2009', spy: '−10.7%', riga: '0.0%', cash: true },
+    { month: 'Sep 2008', spy: '−9.9%', riga: '0.0%', cash: true },
+    { month: 'Sep 2022', spy: '−9.6%', riga: '0.0%', cash: true },
+    { month: 'Dec 2018', spy: '−9.3%', riga: '−1.3%', cash: false },
   ];
 
-  const rowH = 125;
-  let ry = 260;
-
-  regimes.forEach((r, i) => {
-    const rowY = ry + i * (rowH + 14);
-
-    // Row background
+  const rowStep = 112;
+  y += 95;
+  rows.forEach((r, i) => {
+    // Alternating row background
     ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent';
-    ctx.fillRect(80, rowY, w - 160, rowH);
+    ctx.fillRect(80, y - 52, w - 160, 82);
 
-    // Color bar
-    ctx.fillStyle = r.color;
-    ctx.beginPath();
-    ctx.roundRect(100, rowY + 18, 8, rowH - 36, 4);
-    ctx.fill();
-
-    // Regime name
-    ctx.fillStyle = r.color;
-    ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(r.name, 132, rowY + 52);
-
-    // Description
-    ctx.fillStyle = GRAY_LIGHT;
-    ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(r.desc, 132, rowY + 92);
-
-    // Action badge
-    ctx.font = '600 24px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    const badgeW = ctx.measureText(r.action).width + 36;
-    ctx.beginPath();
-    ctx.roundRect(w - 120 - badgeW, rowY + 35, badgeW, 44, 8);
-    ctx.fill();
-
     ctx.fillStyle = WHITE;
+    ctx.font = '32px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(r.month, colX[0], y);
+
     ctx.textAlign = 'center';
-    ctx.fillText(r.action, w - 120 - badgeW/2, rowY + 64);
+    ctx.fillStyle = RED;
+    ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(r.spy, colX[1], y);
+
+    ctx.fillStyle = r.cash ? GREEN : GOLD_LIGHT;
+    ctx.fillText(r.riga, colX[2], y);
+
+    if (r.cash) {
+      ctx.textAlign = 'left';
+      ctx.fillStyle = GOLD;
+      ctx.font = 'italic 24px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText('— in cash', 845, y);
+    }
+
+    y += rowStep;
   });
+
+  // Punch line
+  ctx.fillStyle = GOLD;
+  ctx.textAlign = 'center';
+  fitText(ctx, 'Four of the six, it had already gone to cash.', w/2, y + 80, 920,
+    'bold 34px -apple-system, BlinkMacSystemFont, sans-serif');
 
   // Footer
   ctx.fillStyle = GRAY_LIGHT;
   ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('Regime detected daily using SPY price action, breadth, and volatility.', w/2, h - 70);
+  ctx.fillText('Backtested monthly returns, 2007–2026. Not investment advice.', w/2, h - 70);
 
   ctx.fillStyle = GOLD;
   ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, sans-serif';
@@ -528,13 +538,13 @@ function drawAllCards() {
 
   // Fake data rows with blur effect
   const fakeRows = [
-    { sym: 'NVDA', score: '94.2', signal: 'BUY', color: '#22c55e' },
-    { sym: 'AVGO', score: '91.8', signal: 'BUY', color: '#22c55e' },
-    { sym: 'CRWD', score: '88.5', signal: 'BUY', color: '#22c55e' },
-    { sym: 'META', score: '86.1', signal: 'BUY', color: '#22c55e' },
-    { sym: '????', score: '???.?', signal: '???', color: '#94a3b8' },
-    { sym: '????', score: '???.?', signal: '???', color: '#94a3b8' },
-    { sym: '????', score: '???.?', signal: '???', color: '#94a3b8' },
+    { sym: 'NVDA', score: '94.2', signal: 'BUY', entry: '$412.86', color: '#22c55e' },
+    { sym: 'AVGO', score: '91.8', signal: 'BUY', entry: '$287.40', color: '#22c55e' },
+    { sym: 'CRWD', score: '88.5', signal: 'BUY', entry: '', color: '#22c55e' },
+    { sym: 'META', score: '86.1', signal: 'BUY', entry: '', color: '#22c55e' },
+    { sym: '????', score: '???.?', signal: '???', entry: '', color: '#94a3b8' },
+    { sym: '????', score: '???.?', signal: '???', entry: '', color: '#94a3b8' },
+    { sym: '????', score: '???.?', signal: '???', entry: '', color: '#94a3b8' },
   ];
 
   fakeRows.forEach((row, i) => {
@@ -565,8 +575,11 @@ function drawAllCards() {
 
       ctx.fillStyle = GRAY_LIGHT;
       ctx.font = '20px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText('$' + (Math.random() * 500 + 100).toFixed(2), 580, ry + 36);
-      ctx.fillText('Strong Bull', 730, ry + 36);
+      ctx.fillText(row.entry, 580, ry + 36);
+
+      // Regime — redacted pill (no hardcoded regime claim)
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.beginPath(); ctx.roundRect(730, ry + 18, 90, 20, 4); ctx.fill();
 
       ctx.fillStyle = '#22c55e';
       ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, sans-serif';
@@ -609,20 +622,21 @@ function drawAllCards() {
   ctx.fillText('Want the full signal list?', w/2, ctaY + 110);
 
   ctx.fillStyle = GRAY_LIGHT;
-  ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('3\u20134 high-conviction signals per month.', w/2, ctaY + 170);
-  ctx.fillText('Momentum scores, regime alerts, trailing stops.', w/2, ctaY + 215);
+  fitText(ctx, 'Fresh signals after every close — entries, stops, and sizing included.', w/2, ctaY + 170, 940,
+    '28px -apple-system, BlinkMacSystemFont, sans-serif');
+  fitText(ctx, 'Momentum scores, regime alerts, trailing stops.', w/2, ctaY + 215, 940,
+    '28px -apple-system, BlinkMacSystemFont, sans-serif');
 
   // CTA button
   ctx.fillStyle = GOLD;
-  const btnW = 380, btnH = 68;
+  const btnW = 400, btnH = 68;
   ctx.beginPath();
   ctx.roundRect(w/2 - btnW/2, ctaY + 270, btnW, btnH, 12);
   ctx.fill();
 
   ctx.fillStyle = NAVY;
   ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('Subscribe Now', w/2, ctaY + 312);
+  ctx.fillText('Start the 7-day trial', w/2, ctaY + 312);
 
   ctx.fillStyle = GRAY_LIGHT;
   ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
