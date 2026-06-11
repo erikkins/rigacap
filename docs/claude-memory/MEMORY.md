@@ -1,6 +1,7 @@
 # Stocker App - Key Learnings
 
 ## ▶▶▶ RESUME HERE — NEXT SESSION = SOCIAL REWORK (Erik-confirmed Jun 10 night)
+- **Social agenda add (Erik, Jun 10 night): evaluate HeyGen (AI avatar video) as a channel** — fit vs the honest/human brand voice, cost, founder-likeness vs stock avatar, short-form market commentary use case.
 - **Social rework spec:** humble/first-person/vulnerable voice (rebuild-story hook), DROP must-cite-a-number rule, re-ground engagement_service prompt + social_content_service templates + profiles/bios + 5 launch graphics in the 21-year/behavioral story (nerve-range $473k vs $206k–$1M; 2008 −0.5%; "removes your own behavior as the biggest risk"). Templates' "not a backtest" phrasing flagged (OK for live-flagged signals, awkward vs site language). Beta email TESTED (sent to erik@ via prod SMTP) — Erik sends when ready, ideally after Day-1 scan Jun 11 4:30 PM. Also pending: egate fast-follow ("factor health check": tracker seeded from bench curve, gates SIGNALS, shadow days first), investor/tech-doc PDF sweep (agent ran Jun 10 night — verify committed), firm-licensing one-pager after family-RIA feedback on /for-advisers.
 
 ## (same day, context) Jun 10 EVENING — t30v IS LIVE, site on 21-year canon
