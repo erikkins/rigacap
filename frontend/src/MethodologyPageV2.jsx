@@ -89,6 +89,18 @@ export default function MethodologyPageV2() {
               ever used, and no per-period re-tuning hides hindsight bias.
             </p>
             <p>
+              <strong className="font-medium">The premium, stated plainly:</strong> this strategy is structurally
+              defensive &mdash; it behaves like insurance, and insurance has a premium. In the 21-year backtest it beat
+              the S&amp;P in only <strong className="font-medium">39% of rolling one-year windows, 34% of three-year
+              windows, and 23% of five-year windows</strong>; its wins concentrate almost entirely in periods containing
+              a crash. Measured from its single best relative moment (the March 2009 market bottom, with the strategy in
+              cash against a halved index), it has never reclaimed that relative high. The longest stretch a subscriber
+              would have waited for their own account to make a new high was <strong className="font-medium">2.7
+              years</strong> (the index's own worst wait was 5.5). If you need to beat the index most years, this is the
+              wrong product &mdash; the premium buys a 19% worst drawdown across two decades that included two 50%+
+              index crashes.
+            </p>
+            <p>
               <strong className="font-medium">Data honesty, stated plainly:</strong> from 2016 onward our research data is
               survivorship-free &mdash; it includes companies that later delisted, ranked exactly as they appeared at the time.
               The 2005&ndash;2015 extension is built from a source that only covers companies still listed today, so
