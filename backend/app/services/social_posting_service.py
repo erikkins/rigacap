@@ -35,11 +35,12 @@ class SocialPostingService:
     # Instagram Graph API
     # Instagram-with-Instagram-Login flow: tokens come from the Meta
     # Developer console's "Manage messaging and content on Instagram" use
-    # case (token starts with IGAA...). The token is already long-lived
-    # (60 days) and refreshes via /refresh_access_token?grant_type=ig_refresh_token.
-    # Use graph.instagram.com — graph.facebook.com only accepts FB Page
-    # tokens from the older FB-linked-IG flow, which we no longer use.
-    INSTAGRAM_API_BASE = "https://graph.instagram.com/v21.0"
+    # FB-platform flow (June 2026): Meta invalidated the Instagram-Login
+    # session (IGAA tokens) during an account-security sweep, and the app
+    # now mints FB Page tokens via the meta_token_setup handler
+    # (/me/accounts -> page token, effectively non-expiring). Page tokens
+    # publish via graph.facebook.com; graph.instagram.com cannot parse them.
+    INSTAGRAM_API_BASE = "https://graph.facebook.com/v21.0"
 
     # Threads API
     THREADS_API_BASE = "https://graph.threads.net/v1.0"

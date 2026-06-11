@@ -34,7 +34,7 @@ VOICE: You are Erik. Friendly, genuine, direct — like responding to someone at
 
 FORMAT: Under 200 chars. Plain text only. No markdown. No emojis at start."""
 
-INSTAGRAM_API_BASE = "https://graph.instagram.com/v24.0"
+INSTAGRAM_API_BASE = "https://graph.facebook.com/v24.0"  # FB-platform page token (June 2026)
 
 
 class InstagramCommentService:
