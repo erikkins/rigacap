@@ -152,6 +152,26 @@ function drawFooter(ctx, w, h, note) {
 }
 
 // Draw text, shrinking the font size until it fits maxWidth.
+function sharpieEllipse(ctx, cx, cy, rx, ry) {
+  ctx.save();
+  ctx.strokeStyle = CLARET;
+  ctx.lineWidth = 3.5;
+  ctx.lineCap = 'round';
+  for (let pass = 0; pass < 2; pass++) {
+    ctx.beginPath();
+    const rot = -0.06 + pass * 0.045;
+    const jr = pass * 4;
+    for (let a = -0.35; a <= Math.PI * 2 + 0.15; a += 0.16) {
+      const wob = Math.sin(a * 3.1 + pass * 1.7) * 2.4;
+      const x = cx + (rx + jr + wob) * Math.cos(a) * Math.cos(rot) - (ry + wob) * Math.sin(a) * Math.sin(rot);
+      const yy = cy + (rx + jr + wob) * Math.cos(a) * Math.sin(rot) + (ry + wob) * Math.sin(a) * Math.cos(rot);
+      if (a <= -0.35 + 0.001) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function fitText(ctx, text, x, y, maxWidth, font) {
   ctx.font = font;
   let size = parseInt(font.match(/(\d+)px/)[1], 10);
@@ -187,16 +207,20 @@ function drawAllCards() {
 
   hairline(ctx, 160, w - 160, 738);
 
-  // Stat line — mono, ink
+  // Lead: behavioral-insurance framing + the recent held-out window;
+  // the 21-year foundation grounds it (8.3 alone reads 'meh' — analyst feedback)
   ctx.fillStyle = INK;
-  fitText(ctx, '21-year walk-forward backtest · 8.3% annualized · worst drawdown 19%', w / 2, 822, 920,
+  fitText(ctx, 'Behavioral capital insurance for your portfolio.', w / 2, 808, 920,
+    'bold italic 36px ' + SERIF);
+  ctx.fillStyle = FOREST;
+  fitText(ctx, 'Last 24 months: +32% annualized · 2.20 Sharpe (held-out backtest)', w / 2, 872, 920,
     'bold 27px ' + MONO);
-
+  ctx.fillStyle = INK;
+  fitText(ctx, '21-year foundation: worst drawdown 19% — the index lost half, twice', w / 2, 920, 920,
+    '26px ' + MONO);
   ctx.fillStyle = MUTED;
-  fitText(ctx, 'Through 2008, COVID, and 2022 — the index lost half its value twice.', w / 2, 905, 900,
-    '27px ' + SANS);
-  fitText(ctx, 'Every number labeled. Losers posted too.', w / 2, 953, 900,
-    '27px ' + SANS);
+  fitText(ctx, 'Through 2008, COVID, and 2022. Every number labeled. Losers posted too.', w / 2, 985, 900,
+    '26px ' + SANS);
 
   drawFooter(ctx, w, h, null);
 })();
@@ -218,7 +242,7 @@ function drawAllCards() {
   hairline(ctx, 100, w - 100, 318);
 
   // Table header — tracked uppercase, mono numbers right-aligned
-  const nameX = 110, annX = 620, shX = 780, ddX = 980;
+  const nameX = 110, annX = 560, shX = 720, ddX = 980;
   let y = 405;
   ctx.fillStyle = FAINT;
   ctx.font = '500 19px ' + SANS;
@@ -227,7 +251,7 @@ function drawAllCards() {
   ctx.textAlign = 'right';
   drawTracked(ctx, 'Annualized', annX, y, 3);
   drawTracked(ctx, 'Sharpe', shX, y, 3);
-  drawTracked(ctx, 'Worst drawdown', ddX, y, 3);
+  drawTracked(ctx, 'Worst DD', ddX, y, 3);
   hairline(ctx, 100, w - 100, y + 22);
 
   const rows = [
@@ -259,6 +283,10 @@ function drawAllCards() {
     ctx.font = (row.highlight ? 'bold ' : '') + '30px ' + MONO;
     ctx.fillText(row.dd, ddX, y);
 
+    if (row.highlight) {
+      // hand-drawn sharpie circle around the number that is the product
+      sharpieEllipse(ctx, ddX - 58, y - 10, 98, 42);
+    }
     hairline(ctx, 100, w - 100, y + 32);
     y += 96;
   });
@@ -321,20 +349,20 @@ function drawAllCards() {
     {
       num: '1',
       title: 'Timing',
-      line1: 'Price breaks 5% above its 200-day weighted',
-      line2: 'average — early strength, confirmed',
+      line1: 'Price breaking out above its long-term',
+      line2: 'weighted average — early strength, confirmed',
     },
     {
       num: '2',
       title: 'Quality',
-      line1: 'Momentum composite — 5-day acceleration inside',
-      line2: 'a 60-day trend, volatility-penalized',
+      line1: 'Momentum that is accelerating inside an',
+      line2: 'established trend — volatility-penalized',
     },
     {
       num: '3',
       title: 'Confirmation',
-      line1: 'Within 3% of the 50-day high,',
-      line2: 'above the 20/50-day averages',
+      line1: 'Strength near recent highs, in an uptrend —',
+      line2: 'never catching falling knives',
     },
   ];
 
