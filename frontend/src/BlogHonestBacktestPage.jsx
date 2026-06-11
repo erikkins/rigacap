@@ -93,8 +93,11 @@ export default function BlogHonestBacktestPage() {
             <p className="text-paper/90 text-[1.05rem] leading-[1.7] mb-5">
               Stripped of the inflation, our strategy compounds at <strong className="text-paper font-semibold">8.3% a year</strong> across <strong className="text-paper font-semibold">21 years (2007–2026)</strong>, with a worst drawdown of <strong className="text-paper font-semibold">19%</strong> and a Sharpe ratio of <strong className="text-paper font-semibold">0.73</strong> — tested through the 2008 financial crisis, the COVID crash, and the 2022 bear.
             </p>
-            <p className="text-paper/70 text-[0.95rem] leading-[1.65] mb-0">
+            <p className="text-paper/70 text-[0.95rem] leading-[1.65] mb-5">
               Lower than what we used to show. More conservative than we'd hoped. And — as far as we can make it — true. (Our data from 2016 onward is survivorship-free and point-in-time; the pre-2016 extension carries a survivorship caveat, disclosed in our methodology.)
+            </p>
+            <p className="text-paper/90 text-[0.98rem] leading-[1.65] mb-0 border-t border-paper/20 pt-5">
+              And here's what we learned <em>after</em> we stopped flinching at it: over two decades, 0.73 is not a weak number — it's a different universe from backtest-marketing Sharpes. The S&amp;P 500 over the same 21 years scored <strong className="text-paper font-semibold">0.54</strong>. Warren Buffett's lifetime figure — the highest ever measured for any stock or fund with 30+ years of history — is <strong className="text-paper font-semibold">0.79</strong> (Frazzini, Kabiller &amp; Pedersen, <em>"Buffett's Alpha,"</em> 2018). Sharpe ratios above 1 live in short windows and overfit backtests; the ones that survive decades live here. Ours is backtested and his is real — that distinction stands — but this is the neighborhood the honest number turned out to be in.
             </p>
           </div>
 

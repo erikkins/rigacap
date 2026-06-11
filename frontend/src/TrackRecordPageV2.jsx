@@ -163,6 +163,17 @@ export default function TrackRecordPageV2() {
             See <Link to="/methodology" className="text-claret underline underline-offset-2 decoration-1">full methodology</Link> for all assumptions.
           </p>
 
+          <div className="mt-6 border-l-[3px] border-claret pl-5 py-1">
+            <p className="text-[0.95rem] text-ink leading-relaxed mb-0">
+              <span className="font-medium">For context on that 0.73:</span> Sharpe ratios above 1 live in short windows and
+              overfit backtests &mdash; over decades, the scale compresses. The S&amp;P 500 scored <span className="font-mono">0.54</span> across
+              this same 21-year window. The highest lifetime figure ever measured for any stock or fund with 30+ years of
+              history is Warren Buffett's <span className="font-mono">0.79</span> (Frazzini, Kabiller &amp; Pedersen,
+              &ldquo;Buffett&rsquo;s Alpha,&rdquo; 2018). Ours is backtested and his is real &mdash; but that is the
+              neighborhood two honest decades put you in.
+            </p>
+          </div>
+
 
           {/* Per-regime resilience */}
           <div className="mt-12 bg-paper-card border-l-[3px] border-claret p-8">
