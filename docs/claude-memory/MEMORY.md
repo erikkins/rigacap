@@ -27,6 +27,7 @@ Erik's analyst friend graded the product through 3 rounds → **A- "Elite Behavi
 - **[Smoke backtester.py edits locally before pushing](feedback_smoke_locally_before_deploy.md)** — Lambda deploy is auto-CI/CD; a buggy hot-path commit triggers prod-worker error alarms on next invocation. 30 sec local smoke catches 90% of trivial bugs. Jun 3 2026: sentiment-exit `pos['symbol']` KeyError.
 
 ## CRITICAL — BRAND
+- [NEVER publish the recipe](feedback_never_publish_recipe.md) — public surfaces get signal STRUCTURE, never coefficients (DWAP 5%, 5d/60d weights, 3% near-high). Jun 11: launch cards leaked the thresholds, Erik caught it. Classify surface public/private before propagating canon.
 - [Paper brand EVERYWHERE](feedback_paper_brand_everywhere.md) — paper #F5F1E8 / ink #141210 / claret #7A2430, serif display. Navy/gold (#172554/#f59e0b) is the DEAD old brand; never generate/'preserve' assets in it (Jun 11: launch cards rebuilt in old brand, Erik caught it). 'Preserve the visual system' ≠ preserve a dead brand.
 
 ## CRITICAL — NEVER COMMIT SECRETS
