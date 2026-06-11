@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap &mdash; Market &amp; Pricing Analysis 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* --- Design tokens ------------------------------------------------- */
+  :root {
+    --paper:        #F5F1E8;
+    --paper-card:   #FAF7F0;
+    --rule:         #DDD5C7;
+    --rule-dark:    #C9BFAC;
+    --ink:          #141210;
+    --ink-mute:     #5A544E;
+    --ink-light:    #8A8279;
+    --claret:       #7A2430;
+    --claret-light: #A23A47;
+    --positive:     #2D5F3F;
+
+    --serif:  'Fraunces', Georgia, 'Times New Roman', serif;
+    --sans:   'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono:   'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.6;
+    font-size: 16px;
+    font-weight: 300;
+  }
+
+  /* --- Print / PDF --------------------------------------------------- */
+  @page {
+    size: letter;
+    margin: 0.6in 0.7in;
+  }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: var(--paper); }
+    .page-break { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+  }
+
+  /* --- Layout -------------------------------------------------------- */
+  .content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  /* --- Typography ---------------------------------------------------- */
+  h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-variation-settings: '"opsz" 144';
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 2rem;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    font-variation-settings: '"opsz" 96';
+    margin-top: 3rem;
+    margin-bottom: 1.25rem;
+    color: var(--ink);
+  }
+  h2 em { color: var(--claret); font-style: italic; }
+  h3 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.3rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  h4 {
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 0.5rem;
+  }
+  p {
+    font-size: 1rem;
+    line-height: 1.65;
+    margin-bottom: 1rem;
+    color: var(--ink);
+  }
+  p strong { font-weight: 500; }
+  em { font-style: italic; }
+  .lead {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: var(--ink-mute);
+    margin-bottom: 1.5rem;
+  }
+  .kicker {
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .kicker::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--claret);
+  }
+
+  /* --- COVER PAGE ---------------------------------------------------- */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 4rem 3.5rem 3rem;
+    background: var(--paper);
+    position: relative;
+  }
+  .cover-rule {
+    border-top: 3px solid var(--ink);
+    padding-top: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cover-rule .brand {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .cover-rule .brand .dot { color: var(--claret); }
+  .cover-rule .meta {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .cover h1 {
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    margin-top: 4rem;
+    max-width: 16ch;
+  }
+  .cover h1 em { color: var(--claret); font-style: italic; }
+  .cover .cover-sub {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.5rem;
+    line-height: 1.45;
+    color: var(--ink-mute);
+    max-width: 40ch;
+    margin-top: 2rem;
+    margin-bottom: auto;
+  }
+  .cover-stats {
+    display: flex;
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 1.5rem 0;
+    margin-top: 3rem;
+  }
+  .cover-stat {
+    flex: 1;
+    padding: 0 1.5rem;
+    border-right: 1px solid var(--rule);
+  }
+  .cover-stat:first-child { padding-left: 0; }
+  .cover-stat:last-child { padding-right: 0; border-right: none; }
+  .cover-stat .label {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 0.4rem;
+  }
+  .cover-stat .value {
+    font-family: var(--serif);
+    font-size: 2.4rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .cover-stat .value.pos { color: var(--positive); }
+  .cover-stat .sub {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--ink-light);
+    margin-top: 0.4rem;
+    letter-spacing: 0.05em;
+  }
+  .cover-footer {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--ink-mute);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* --- Tables -------------------------------------------------------- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-feature-settings: "tnum";
+  }
+  thead th {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    border-bottom: 2px solid var(--rule-dark);
+    padding: 0.6rem 0.5rem;
+    text-align: right;
+  }
+  thead th:first-child { text-align: left; padding-left: 0; }
+  tbody td {
+    padding: 0.85rem 0.5rem;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.95rem;
+    text-align: right;
+    font-family: var(--mono);
+    vertical-align: top;
+  }
+  tbody td:first-child {
+    text-align: left;
+    padding-left: 0;
+    font-family: var(--sans);
+    font-weight: 400;
+  }
+  tbody tr.headline-row {
+    background: var(--paper-card);
+  }
+  tbody tr.headline-row td {
+    font-weight: 500;
+    color: var(--ink);
+  }
+  tbody tr.headline-row td:first-child {
+    font-family: var(--serif);
+    font-weight: 500;
+  }
+  tbody tr.benchmark-row td {
+    color: var(--ink-mute);
+    font-style: italic;
+  }
+  tbody tr.benchmark-row td:first-child {
+    font-style: italic;
+  }
+  /* Text-heavy comparison table — overrides the default numeric/mono style */
+  table.text-table tbody td {
+    text-align: left;
+    font-family: var(--sans);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  table.text-table thead th {
+    text-align: left;
+    padding-left: 0.5rem;
+  }
+  table.text-table thead th:first-child { padding-left: 0; }
+  table.text-table tbody td:first-child {
+    font-weight: 500;
+    width: 28%;
+  }
+  caption, .table-caption {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    color: var(--ink-light);
+    text-align: left;
+    margin-top: 0.5rem;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* --- Pull-quote ---------------------------------------------------- */
+  .pullquote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.4rem;
+    line-height: 1.4;
+    color: var(--claret);
+    border-left: 3px solid var(--claret);
+    padding: 0.5rem 0 0.5rem 1.5rem;
+    margin: 2rem 0;
+    max-width: 32ch;
+  }
+
+  /* --- Callout ------------------------------------------------------- */
+  .callout {
+    background: var(--paper-card);
+    border-left: 3px solid var(--claret);
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .callout p { margin-bottom: 0.5rem; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout p strong { color: var(--claret); font-weight: 500; }
+
+  /* --- Stat row ------------------------------------------------------ */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin: 1.5rem 0;
+  }
+  .stat-row.three { grid-template-columns: repeat(3, 1fr); }
+  .stat-row .stat {
+    padding: 1rem 1.25rem;
+    border-right: 1px solid var(--rule);
+  }
+  .stat-row .stat:last-child { border-right: none; }
+  .stat-row .stat-num {
+    font-family: var(--serif);
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .stat-row .stat-num.pos { color: var(--positive); }
+  .stat-row .stat-label {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-top: 0.5rem;
+  }
+
+  /* --- Section divider ---------------------------------------------- */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--rule-dark);
+    margin: 3rem 0;
+  }
+
+  /* --- Lists --------------------------------------------------------- */
+  ul, ol {
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+  }
+  ul li, ol li {
+    margin-bottom: 0.5rem;
+    line-height: 1.65;
+  }
+
+  /* --- Numbered components ------------------------------------------ */
+  .components { margin-top: 1.5rem; }
+  .component {
+    display: grid;
+    grid-template-columns: 4ch 1fr;
+    gap: 1.5rem;
+    padding: 1.25rem 0;
+    border-top: 1px solid var(--rule);
+  }
+  .component:last-child { border-bottom: 1px solid var(--rule); }
+  .component-num {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--claret);
+    letter-spacing: 0.15em;
+    padding-top: 0.3rem;
+  }
+  .component-title {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.01em;
+  }
+  .component-desc {
+    font-size: 0.95rem;
+    color: var(--ink-mute);
+    line-height: 1.6;
+  }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    background: var(--paper-card);
+    padding: 0.1rem 0.35rem;
+    border-radius: 2px;
+    color: var(--claret);
+  }
+
+  /* --- Feature card -------------------------------------------------- */
+  .feature-card {
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--claret);
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+  }
+  .feature-card h4 {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: -0.01em;
+  }
+  .feature-card p {
+    font-size: 0.92rem;
+    color: var(--ink-mute);
+    line-height: 1.6;
+    margin-bottom: 0;
+  }
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+  }
+  @media (max-width: 700px) { .feature-grid { grid-template-columns: 1fr; } }
+
+  /* --- TOC ----------------------------------------------------------- */
+  .toc { margin: 1.5rem 0; }
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.45rem 0;
+    border-bottom: 1px dotted var(--rule);
+    font-size: 0.95rem;
+  }
+  .toc-item .toc-title { color: var(--ink); }
+  .toc-item .toc-page { color: var(--ink-light); font-family: var(--mono); font-size: 0.78rem; }
+  .toc-item.toc-section {
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--claret);
+    border-bottom: 1px solid var(--rule-dark);
+    margin-top: 1rem;
+    padding-bottom: 0.4rem;
+  }
+
+  /* --- Footer / disclosures ----------------------------------------- */
+  .disclosures {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.78rem;
+    color: var(--ink-light);
+    line-height: 1.55;
+  }
+  .disclosures p { font-size: 0.78rem; margin-bottom: 0.6rem; }
+
+  /* PDF/print: institutional ink-on-white. The cream paper is a screen brand
+     device; print convention is white with accent color as punctuation.
+     (Also: toner.) Branded covers keep their explicit backgrounds. */
+  @media print {
+    :root { --paper: #ffffff; --paper-card: #ffffff; --paper-deep: #ffffff; --cream: #ffffff; }
+    body { background: #ffffff !important; }
+    [style*="F5F1E8"], [style*="FAF7F0"], [style*="EDE7D8"],
+    [style*="f5f1e8"], [style*="faf7f0"], [style*="ede7d8"] { background: #ffffff !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     COVER
+     ============================================================ -->
+<section class="cover">
+  <div class="cover-rule">
+    <span class="brand">RigaCap<span class="dot">.</span></span>
+    <span class="meta">Market &amp; Pricing Analysis &middot; June 2026</span>
+  </div>
+
+  <div>
+    <h1>What the <em>discipline</em> is worth.</h1>
+    <p class="cover-sub">
+      A market and pricing analysis for a product that sells drawdown control and
+      behavioral protection &mdash; not headline returns. Two audiences, two anchors,
+      one honest set of numbers.
+    </p>
+  </div>
+
+  <div>
+    <div class="cover-stats">
+      <div class="cover-stat">
+        <div class="label">Retail Standard</div>
+        <div class="value">$129<span style="font-size:1rem;">/mo</span></div>
+        <div class="sub">$59 founding &middot; $1,099/yr</div>
+      </div>
+      <div class="cover-stat">
+        <div class="label">Adviser License</div>
+        <div class="value">$449<span style="font-size:1rem;">/mo</span></div>
+        <div class="sub">Recommended &middot; small firm, flat</div>
+      </div>
+      <div class="cover-stat">
+        <div class="label">Behavior Gap</div>
+        <div class="value">1.2<span style="font-size:1rem;">pp/yr</span></div>
+        <div class="sub">Morningstar, 10y to 2024</div>
+      </div>
+      <div class="cover-stat">
+        <div class="label">Worst Drawdown</div>
+        <div class="value">19%</div>
+        <div class="sub">21y walk-forward, backtested</div>
+      </div>
+    </div>
+
+    <div class="cover-footer">
+      <span>Confidential &middot; Internal Strategy</span>
+      <span>rigacap.com</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     EXECUTIVE SUMMARY
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">Executive Summary</span>
+  <h2>One page, <em>six</em> conclusions.</h2>
+
+  <p class="lead">
+    The product changed; the pricing thesis has to change with it. RigaCap no longer sells
+    a return story &mdash; it sells a 19% worst drawdown across 21 backtested years and a
+    quantified answer to the question &ldquo;will I actually stick with this?&rdquo;
+    That product prices against the cost of bad behavior, not against stock-pick newsletters.
+  </p>
+
+  <div class="components">
+    <div class="component">
+      <div class="component-num">01</div>
+      <div>
+        <div class="component-title">Keep retail at $129/mo. Do not drift back toward $39.</div>
+        <div class="component-desc">$39 anchored RigaCap against Motley Fool ($99 first-year) and Zacks ($249/yr)
+        &mdash; the mass pick-newsletter shelf. A drawdown-control product is only worth buying on a six-figure
+        portfolio, where the behavior-gap math clears $129/mo with room to spare. The price is the positioning.</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">02</div>
+      <div>
+        <div class="component-title">The value anchor is behavioral: ~2&times; the price on a $250k portfolio, ~8&times; at $1M.</div>
+        <div class="component-desc">Morningstar puts the investor behavior gap at ~1.22pp/yr over the decade to 2024;
+        Vanguard values behavioral coaching at ~150bp/yr; DALBAR's single-year gaps run as high as 848bp. On $250k,
+        1.22pp is ~$3,050/yr against a $1,548/yr price. Breakeven portfolio at the Morningstar rate: ~$127k.</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">03</div>
+      <div>
+        <div class="component-title">Adviser tier: price as software-per-firm-size, never as basis points.</div>
+        <div class="component-desc">The $399&ndash;499 flat hypothesis is right for solo-to-3-adviser firms and
+        underpriced above that. Recommended: $449/mo (1&ndash;3 advisers), $899/mo (4&ndash;10), custom above &mdash;
+        annual-first. AUM-linked pricing would walk the product toward sub-advisory optics and out of the
+        publisher's exemption; flat licensing keeps the legal posture clean.</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">04</div>
+      <div>
+        <div class="component-title">One retained client funds the adviser license for a year.</div>
+        <div class="component-desc">A $500k client at a 1% AUM fee is $5,000/yr; the recommended small-firm license
+        is $5,388/yr. Vanguard's own framework says behavioral coaching is the largest single component of advisory
+        value. The sale is client retention through drawdowns, not alpha.</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">05</div>
+      <div>
+        <div class="component-title">Pricing conflicts are live on the website today.</div>
+        <div class="component-desc">The production landing page still displays $39/mo and $349/yr while
+        investor-report-v2 states $129/$59-founding/$1,099. Four documents plus the live frontend disagree.
+        Reconciliation list in Section 06 &mdash; this should be fixed before any adviser or investor sees both.</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">06</div>
+      <div>
+        <div class="component-title">The honest moat is the honesty.</div>
+        <div class="component-desc">Signals are copyable and the live record is days old. What competitors cannot
+        cheaply replicate: a 21-year continuous walk-forward with disclosed caveats, a quantified behavioral stress
+        test, and a cost structure with no custody, no discretion, and no per-client compliance burden. Price for
+        the discipline; let the live book earn the rest.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="toc">
+    <div class="toc-item toc-section"><span class="toc-title">Contents</span></div>
+    <div class="toc-item"><span class="toc-title">01 &middot; The product we are pricing now</span><span class="toc-page">03</span></div>
+    <div class="toc-item"><span class="toc-title">02 &middot; The retail market &mdash; signals &amp; newsletters</span><span class="toc-page">05</span></div>
+    <div class="toc-item"><span class="toc-title">03 &middot; The adviser market &mdash; research, models, tools</span><span class="toc-page">08</span></div>
+    <div class="toc-item"><span class="toc-title">04 &middot; Willingness to pay &mdash; two anchors</span><span class="toc-page">11</span></div>
+    <div class="toc-item"><span class="toc-title">05 &middot; Pricing recommendations</span><span class="toc-page">13</span></div>
+    <div class="toc-item"><span class="toc-title">06 &middot; Pricing conflicts to reconcile</span><span class="toc-page">17</span></div>
+    <div class="toc-item"><span class="toc-title">07 &middot; Moats &amp; risks &mdash; the honest section</span><span class="toc-page">18</span></div>
+    <div class="toc-item"><span class="toc-title">Appendix &middot; Sources &amp; disclosures</span><span class="toc-page">20</span></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SECTION 01 - THE PRODUCT
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">01 &middot; The product</span>
+  <h2>The product we are <em>pricing</em> now.</h2>
+
+  <p class="lead">
+    The April 2026 pricing analysis priced a stock-pick newsletter. That product no longer
+    exists. What exists in June 2026 is a momentum signal service whose core value
+    proposition is drawdown control and behavioral protection &mdash; and the pricing logic
+    has to be rebuilt from that premise.
+  </p>
+
+  <h3>The canon numbers (all backtested).</h3>
+  <table>
+    <thead>
+      <tr><th>Series, 2007&ndash;2026 (price returns)</th><th>Ann. return</th><th>Sharpe</th><th>Worst drawdown</th></tr>
+    </thead>
+    <tbody>
+      <tr class="headline-row"><td>RigaCap (continuous walk-forward, backtested)</td><td>8.3%</td><td>0.73</td><td>&minus;19%</td></tr>
+      <tr><td>Raw 12-mo momentum (net, backtested)</td><td>13.2%</td><td>&mdash;</td><td>&minus;57%</td></tr>
+      <tr class="benchmark-row"><td>S&amp;P 500 (price)</td><td>9.8%</td><td>&mdash;</td><td>&minus;55%</td></tr>
+    </tbody>
+  </table>
+  <p class="table-caption">
+    Single continuous walk-forward path through 2008, COVID, and 2022. Backtested; no live capital
+    over this window. Data 2016+ is survivorship-free; pre-2016 carries a disclosed survivorship caveat.
+    Held-out last-24-months window: +32% annualized / 2.20 Sharpe / 8.5% drawdown (backtested).
+    Monthly correlation to the S&amp;P 500: 0.43. Live model book opens June 11, 2026 with a fresh $100k;
+    everything prior is labeled backtest.
+  </p>
+
+  <p>
+    Read the table the way a buyer would. RigaCap's backtested 8.3% trails the index's 9.8%
+    and trails raw momentum's 13.2%. If the pitch were return, the product would lose its own
+    comparison table. The pitch is the third column: a worst drawdown of 19% across 21 years
+    in which both alternatives lost more than half their value &mdash; and a behavioral claim
+    built on it.
+  </p>
+
+  <div class="callout">
+    <p><strong>The behavioral stress test (backtested).</strong> Model a $100k investor who panic-sells
+    whenever their portfolio is down 25% from its peak. Under every re-entry rule tested, that investor
+    collects <strong>$473k from RigaCap</strong> over the window &mdash; because the &minus;25% tripwire
+    never fires. The same investor in raw momentum finishes anywhere from <strong>$206k to $1.02M</strong>
+    depending entirely on their nerve and re-entry timing; in the index, <strong>$210k to $399k</strong>.
+    RigaCap's number is the only one that does not depend on the investor's behavior under stress.
+    This is the product, quantified.</p>
+  </div>
+
+  <h3>Two audiences, one engine.</h3>
+  <table class="text-table">
+    <thead>
+      <tr><th>Audience</th><th>What they buy</th><th>Current pricing</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Self-directed retail (meaningful portfolios)</td>
+        <td>Daily signals, explicit sells, regime context, the discipline they cannot manufacture alone</td>
+        <td>$129/mo standard &middot; $59/mo founding (first 100) &middot; $1,099/yr</td>
+      </tr>
+      <tr>
+        <td>Registered investment advisers (firm license)</td>
+        <td>Internal-use research license: signals + regime engine applied across client accounts at the adviser's discretion</td>
+        <td>TBD &mdash; working hypothesis $399&ndash;499/mo flat; pressure-tested in Section 05</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Legal posture constrains pricing design.</h3>
+  <p>
+    RigaCap operates under the Investment Advisers Act &sect;202(a)(11)(D) publisher's exemption:
+    impersonal signals, regular circulation, no custody, no discretion, no personalized advice.
+    The adviser channel must remain an <strong>internal-use research license</strong> &mdash; the adviser
+    reads the research and makes their own decisions for their clients. Two pricing structures
+    would undermine that posture and are ruled out by construction:
+  </p>
+  <ul>
+    <li><strong>AUM-linked (basis-point) pricing.</strong> Charging on assets makes the economic
+    relationship look like sub-advisory or model-provider compensation, the exact categories the
+    license must avoid.</li>
+    <li><strong>Per-client or per-account pricing.</strong> Metering by the adviser's clients implies
+    the service is delivered to those clients rather than to the firm.</li>
+  </ul>
+  <p>
+    Flat firm licensing, banded by adviser headcount, is the structure that prices the channel
+    without touching the exemption. This constraint turns out to be commercially convenient
+    &mdash; Section 03 shows the adviser-software market already prices this way.
+  </p>
+</div>
+
+<!-- ============================================================
+     SECTION 02 - RETAIL MARKET
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">02 &middot; The retail market</span>
+  <h2>Signals &amp; newsletters &mdash; <em>the shelf</em> RigaCap sits on.</h2>
+
+  <p class="lead">
+    The retail market for paid stock research is large, mature, and priced in three distinct bands.
+    Knowing which band you are in matters more than where you sit within it.
+  </p>
+
+  <h3>Current competitor pricing.</h3>
+  <table>
+    <thead>
+      <tr><th>Service</th><th>List price</th><th>Eff. monthly</th><th>Notes (as of June 10, 2026)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Motley Fool Stock Advisor</td><td>$199/yr ($99 intro)</td><td>$8&ndash;17</td><td>500k+ subs; buy-and-hold picks; no sells, no risk framework</td></tr>
+      <tr><td>Zacks Premium</td><td>$249/yr</td><td>~$21</td><td>Rank system; research breadth, no portfolio discipline</td></tr>
+      <tr><td>Seeking Alpha Premium</td><td>$299/yr ($225 promo)</td><td>~$25</td><td>Research platform, not a signal service</td></tr>
+      <tr><td>Motley Fool Epic</td><td>$499/yr ($299 intro)</td><td>$25&ndash;42</td><td>Bundle of four pick services</td></tr>
+      <tr><td>Seeking Alpha Alpha Picks</td><td>$499/yr ($375 promo)</td><td>$31&ndash;42</td><td>Quant picks; markets raw return (+405% claimed since 2022); no drawdown story</td></tr>
+      <tr><td>Mindful Trader</td><td>$47/mo</td><td>$47</td><td>Swing-trade alerts, radical transparency, ~3k members</td></tr>
+      <tr><td>IBD Leaderboard</td><td>$699/yr or $69/mo</td><td>$58&ndash;69</td><td>CAN SLIM growth list with entry/exit annotations</td></tr>
+      <tr class="headline-row"><td>RigaCap (standard)</td><td>$129/mo &middot; $1,099/yr</td><td>$92&ndash;129</td><td>Signals + explicit sells + regime engine; 19% worst DD across 21y (backtested)</td></tr>
+      <tr><td>Trade Ideas (TI Premium)</td><td>$254/mo ($178 annual rate)</td><td>$178&ndash;254</td><td>AI scanner platform for active day traders</td></tr>
+      <tr><td>Motley Fool Epic Plus</td><td>$1,999/yr ($1,399 intro)</td><td>$117&ndash;167</td><td>Top retail tier of the largest publisher</td></tr>
+      <tr><td>Zacks Ultimate</td><td>$2,995/yr</td><td>~$250</td><td>All Zacks portfolios; the brand's ceiling tier</td></tr>
+      <tr><td>Seeking Alpha Pro</td><td>$2,400/yr ($1,800 promo)</td><td>$150&ndash;200</td><td>Pro/semi-institutional research tier</td></tr>
+    </tbody>
+  </table>
+  <p class="table-caption">
+    Prices gathered by web research June 10, 2026; intro/promo prices noted where the vendor leads with them.
+    All RigaCap performance figures are backtested.
+  </p>
+
+  <h3>Three price bands, three different products.</h3>
+  <div class="feature-grid no-break">
+    <div class="feature-card">
+      <h4>$8&ndash;42/mo &mdash; the pick shelf</h4>
+      <p>Motley Fool, Zacks, Alpha Picks. Mass-market, return-marketed, sold on intro discounts and
+      churned hard. Buyers here shop on headline performance claims. RigaCap loses this comparison
+      on its own honest numbers &mdash; and should not be on this shelf.</p>
+    </div>
+    <div class="feature-card">
+      <h4>$47&ndash;130/mo &mdash; the discipline shelf</h4>
+      <p>Mindful Trader, IBD Leaderboard, RigaCap. Smaller audiences, explicit methodology, sell
+      rules, transparency as the brand. Buyers here have real portfolios and have usually been
+      burned once. This is RigaCap's band.</p>
+    </div>
+    <div class="feature-card">
+      <h4>$150&ndash;250/mo &mdash; the platform shelf</h4>
+      <p>Trade Ideas, Zacks Ultimate, SA Pro, Epic Plus. Tools and firehoses for very active
+      traders. Validates that retail individuals routinely pay $1,800&ndash;3,000/yr &mdash; the
+      ceiling is far above $129/mo.</p>
+    </div>
+    <div class="feature-card">
+      <h4>~$30&ndash;40/mo &mdash; the quant-DIY corner</h4>
+      <p>Allocate Smartly (&ldquo;about $1 a day&rdquo;) tracks tactical asset-allocation strategies
+      with drawdown and Ulcer-Index stats &mdash; the closest philosophical neighbor. But it is an
+      ETF-allocation research tool for DIY quants, not a stock signal service with sells.</p>
+    </div>
+  </div>
+
+  <h3>Where drawdown-first positioning sits today: almost nowhere.</h3>
+  <p>
+    Surveying the retail shelf, nobody leads with &ldquo;you will actually stick with this.&rdquo;
+    Alpha Picks markets cumulative return. Motley Fool markets its winners. IBD markets methodology.
+    The only places behavioral framing is sold explicitly are (a) Allocate Smartly's tactical-allocation
+    corner, which is asset-allocation research rather than equity signals, and (b) the <em>adviser</em>
+    market, where Nitrogen (n&eacute;e Riskalyze) built a $99&ndash;450/mo per-seat business on
+    aligning portfolios to client risk tolerance so clients don't bolt. The behavioral frame is
+    proven willingness-to-pay &mdash; but it has been sold to advisers, not directly to retail.
+    RigaCap's retail positioning is genuinely open ground.
+  </p>
+
+  <div class="pullquote">
+    Nobody on the retail shelf sells the ability to hold on. That is either an open market
+    or a hard education problem &mdash; in practice, both.
+  </div>
+
+  <h3>Honest market sizing.</h3>
+  <p>
+    The April document claimed a $2.5&ndash;6.5B TAM. That number described the entire paid-research
+    market, most of which shops on return claims RigaCap deliberately refuses to make. The honest
+    serviceable market is narrower: US self-directed investors with roughly $100k+ in equities who
+    already pay for research <em>and</em> who can be persuaded to buy risk discipline over return
+    promises. Reference points: Motley Fool alone holds 500k+ paid subscribers; single-author
+    newsletters have reached 40k+ paid subscribers and $3M+ ARR; Alpha Picks built a large base
+    in under four years inside an existing platform. A defensible planning frame:
+  </p>
+  <table>
+    <thead>
+      <tr><th>Milestone</th><th>Retail subs</th><th>Blended ARR/sub</th><th>Retail ARR</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Founding cohort full</td><td>100</td><td>$708 ($59/mo)</td><td>$71k</td></tr>
+      <tr><td>Year 1 credible</td><td>500</td><td>~$1,250</td><td>~$625k</td></tr>
+      <tr><td>Year 2&ndash;3</td><td>2,000</td><td>~$1,350</td><td>~$2.7M</td></tr>
+      <tr class="headline-row"><td>Scale case</td><td>5,000</td><td>~$1,400</td><td>~$7M</td></tr>
+    </tbody>
+  </table>
+  <p class="table-caption">
+    Blended ARR assumes a mix of monthly, annual, and grandfathered founding seats. At $129/mo the
+    5,000-subscriber scale case is ~3&times; the ARR the same subscriber count produced under $39 pricing
+    &mdash; the strongest practical argument for the repositioning.
+  </p>
+</div>
+
+<!-- ============================================================
+     SECTION 03 - ADVISER MARKET
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">03 &middot; The adviser market</span>
+  <h2>What RIAs <em>already</em> pay for.</h2>
+
+  <p class="lead">
+    The adviser channel is not a bigger retail channel. It is a different market with different
+    anchors: per-seat software, basis-point platforms, and &mdash; critically &mdash; free model
+    portfolios subsidized by fund fees. RigaCap has to price between those forces.
+  </p>
+
+  <h3>The adviser's current spend, by category.</h3>
+  <table>
+    <thead>
+      <tr><th>Category</th><th>Representative pricing</th><th>What it buys</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Research/analytics terminals (YCharts)</td><td>$300&ndash;500/mo per seat</td><td>Data, charting, proposals; ~$50k/yr for a 10-adviser firm</td></tr>
+      <tr><td>Portfolio analytics (Kwanti)</td><td>Per-adviser license, volume discounts</td><td>Model analytics, client reporting</td></tr>
+      <tr><td>Risk-alignment software (Nitrogen)</td><td>$99&ndash;450/mo per seat ($395/mo Elite bundle)</td><td>Risk tolerance, proposals, behavioral client alignment</td></tr>
+      <tr><td>TAMPs (outsourced management)</td><td>20&ndash;100bp on AUM (next-gen 30&ndash;50bp)</td><td>Full outsourced models + admin; $100M AUM at 50bp = $500k/yr</td></tr>
+      <tr><td>Asset-manager model portfolios</td><td>Often free</td><td>BlackRock/Vanguard/WisdomTree models, monetized via fund expense ratios</td></tr>
+      <tr><td>Independent research shops</td><td>Hundreds to thousands $/yr (retail arms); institutional contracts five figures+</td><td>Hedgeye, Fundstrat/FS Insight, Ned Davis-class macro &amp; strategy research</td></tr>
+    </tbody>
+  </table>
+  <p class="table-caption">Pricing gathered by web research June 10, 2026. TAMP ranges per Kitces, Orion, and industry surveys.</p>
+
+  <h3>Three implications for RigaCap's adviser tier.</h3>
+  <div class="components">
+    <div class="component">
+      <div class="component-num">3.1</div>
+      <div>
+        <div class="component-title">$399&ndash;499/mo is inside the proven software band, not above it.</div>
+        <div class="component-desc">A solo adviser already pays Nitrogen up to $450/mo and YCharts up to
+        $500/mo &mdash; per seat. A flat firm license at $449/mo prices like one more seat of standard
+        adviser software. For a 5-adviser firm it is dramatically cheaper than any per-seat comparable.
+        The hypothesis is not aggressive; if anything it leaves money on the table at the high end.</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">3.2</div>
+      <div>
+        <div class="component-title">Free model portfolios are the real competitor &mdash; and the real opening.</div>
+        <div class="component-desc">Asset managers give allocation models away because the ETFs inside pay
+        them. What they cannot give away is a tactical momentum sleeve with a 19% backtested worst drawdown,
+        explicit sells, and a regime engine &mdash; free models are strategic-allocation products. RigaCap is
+        not competing with free; it is the sleeve free models don't offer. The pitch: &ldquo;your 5&ndash;10%
+        satellite sleeve, with the drawdown discipline your clients' nerves require.&rdquo;</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">3.3</div>
+      <div>
+        <div class="component-title">TAMP basis points define the ceiling RigaCap must stay far below.</div>
+        <div class="component-desc">At 30&ndash;100bp, a TAMP on a $50M book costs $150k&ndash;500k/yr &mdash;
+        but delivers trading, custody integration, and administration. RigaCap delivers research only. Staying
+        flat-priced in the low thousands per year keeps the license an easy line-item approval (often below
+        the threshold requiring partner sign-off) and reinforces that it is not asset management.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Market size, honestly.</h3>
+  <p>
+    There are roughly 15,000+ SEC-registered investment advisers plus a similar order of
+    state-registered firms; the median firm is small (a handful of advisers). The realistic
+    early market is the long tail: solo and small RIAs who cannot afford an in-house quant
+    and who feel client-retention pain in every drawdown. One hundred small-firm licenses at
+    $449/mo is ~$540k ARR &mdash; material against the retail base, achievable without
+    enterprise sales motion. The constraint is trust-building time, not seat count:
+    advisers will want to watch the live book before licensing it.
+  </p>
+</div>
+
+<!-- ============================================================
+     SECTION 04 - WILLINGNESS TO PAY
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">04 &middot; Willingness to pay</span>
+  <h2>Two anchors, both <em>behavioral.</em></h2>
+
+  <p class="lead">
+    A drawdown-control product is priced against the cost of bad behavior. That cost is
+    among the best-documented numbers in retail finance &mdash; and it is large relative
+    to both of RigaCap's price points.
+  </p>
+
+  <h3>The retail anchor: the behavior gap.</h3>
+  <table>
+    <thead>
+      <tr><th>Source</th><th>Estimate</th><th>Window</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Morningstar &ldquo;Mind the Gap&rdquo;</td><td>~1.22pp/yr forfeited</td><td>10 years to Dec 2024 (~15% of total potential returns)</td></tr>
+      <tr><td>Vanguard Advisor's Alpha &mdash; behavioral coaching</td><td>~1.50pp/yr value</td><td>Largest single component of advisory value; &ldquo;tens of percentage points&rdquo; in panic years</td></tr>
+      <tr><td>DALBAR QAIB &mdash; single bad year</td><td>8.48pp gap (2024)</td><td>Avg. equity investor 16.54% vs S&amp;P 25.05%; Guess Right Ratio at a record-low 25%</td></tr>
+      <tr><td>DALBAR QAIB &mdash; single calm year</td><td>0.72pp gap (2025)</td><td>Narrowest since 2012 &mdash; the gap is episodic, concentrated in stress years</td></tr>
+    </tbody>
+  </table>
+  <p class="table-caption">As published; gathered June 10, 2026. DALBAR's methodology is debated &mdash; treat the 1.2&ndash;1.5pp structural estimates as the conservative planning numbers and the 8.5pp year as the tail event RigaCap is built for.</p>
+
+  <p>
+    Convert the conservative estimate to dollars against the $1,548/yr standard price
+    ($129 &times; 12):
+  </p>
+  <table>
+    <thead>
+      <tr><th>Equity portfolio</th><th>Behavior cost @1.22pp/yr</th><th>Multiple of $1,548 price</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>$100k</td><td>$1,220</td><td>0.8&times;</td></tr>
+      <tr class="headline-row"><td>$250k</td><td>$3,050</td><td>2.0&times;</td></tr>
+      <tr><td>$500k</td><td>$6,100</td><td>3.9&times;</td></tr>
+      <tr><td>$1M</td><td>$12,200</td><td>7.9&times;</td></tr>
+    </tbody>
+  </table>
+  <p class="table-caption">
+    Breakeven portfolio: ~$127k at the Morningstar rate, ~$103k at the Vanguard rate. The product
+    is rationally priced for portfolios of roughly $150k and up &mdash; which is exactly the buyer
+    the positioning targets. Below $100k, $129/mo is genuinely expensive; the founding $59 seat
+    and the annual price soften but do not eliminate that.
+  </p>
+
+  <p>
+    And the episodic framing is stronger than the annualized one. RigaCap's behavioral stress
+    test (backtested) shows the panic-seller's outcome spread: $206k&ndash;$1.02M in raw momentum,
+    $210k&ndash;$399k in the index, a single nerve-independent $473k in RigaCap. The buyer is not
+    paying $1,548/yr for 122bp of average drag &mdash; they are paying to delete the left tail of
+    their own behavior in the one year it matters. Insurance framing, with the premium an order
+    of magnitude below the insured loss.
+  </p>
+
+  <h3>The adviser anchor: one retained client.</h3>
+  <p>
+    The adviser does not buy returns either &mdash; they buy client retention through drawdowns.
+    The arithmetic is short:
+  </p>
+  <div class="stat-row three no-break">
+    <div class="stat">
+      <div class="stat-num">$5,000<span style="font-size:0.9rem;">/yr</span></div>
+      <div class="stat-label">1% AUM fee on one $500k client</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">$50k+</div>
+      <div class="stat-label">~Lifetime revenue of that client (10y horizon)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">$5,388<span style="font-size:0.9rem;">/yr</span></div>
+      <div class="stat-label">Recommended small-firm license ($449/mo)</div>
+    </div>
+  </div>
+  <p>
+    If the regime engine and the drawdown story keep <em>one</em> $500k client from firing the
+    firm in one bad year, the license pays for itself that year; the client's remaining lifetime
+    is margin. Vanguard's framework makes the same argument from the other direction: behavioral
+    coaching is the largest component of advisory value (~150bp), and a tool that arms the
+    adviser's coaching conversation with a 21-year drawdown record (backtested, disclosed) is a
+    direct input to that 150bp. Nitrogen built exactly this sale &mdash; risk alignment as client
+    retention &mdash; into a per-seat business at $99&ndash;450/mo. RigaCap's adviser tier rides
+    a willingness-to-pay that already exists.
+  </p>
+
+  <div class="callout">
+    <p><strong>The caveat that keeps us honest.</strong> Both anchors assume the buyer believes
+    the backtest. Until the live book (opened June 11, 2026) has quarters on it, the
+    willingness-to-pay is theoretical for skeptics and real only for buyers who accept
+    walk-forward methodology. Pricing should hold; <em>conversion</em> will lag price-justification
+    until the live record exists. That is a marketing problem, not a pricing problem.</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     SECTION 05 - PRICING RECOMMENDATIONS
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">05 &middot; Pricing recommendations</span>
+  <h2>The <em>recommended</em> structure.</h2>
+
+  <p class="lead">
+    Hold the retail structure with two refinements. Build the adviser tier as flat,
+    headcount-banded, annual-first firm licenses. Never price on assets.
+  </p>
+
+  <h3>Retail: hold $129, with discipline.</h3>
+  <table class="text-table">
+    <thead>
+      <tr><th>Element</th><th>Verdict</th><th>Reasoning</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>$129/mo standard</td>
+        <td><strong>Keep.</strong></td>
+        <td>Sits at the top of the discipline shelf ($47&ndash;130), well under the platform shelf
+        ($150&ndash;250). Clears the behavior-gap value test 2&ndash;4&times; on the target $250k&ndash;$500k
+        portfolio. The price itself filters for the buyer the product is honest for &mdash; a $39 price
+        would re-attract small-portfolio return-shoppers who will churn on the first flat month.</td>
+      </tr>
+      <tr>
+        <td>$1,099/yr annual</td>
+        <td><strong>Keep.</strong></td>
+        <td>29% off monthly (~8.5 months) is richer than the 15&ndash;20% SaaS norm, but for a behavioral
+        product the annual commitment IS the product &mdash; a subscriber locked in for 12 months cannot
+        rage-quit the strategy in month three of a drawdown. Treat the extra discount as paying for
+        retention and (honestly) for the commitment device. Push annual hard at checkout.</td>
+      </tr>
+      <tr>
+        <td>$59/mo founding, first 100</td>
+        <td><strong>Keep; tighten mechanics.</strong></td>
+        <td>Right price for buyers asked to trust a days-old live book. Make the scarcity real and visible:
+        a public seat counter, lock-for-life framing (&ldquo;founding rate never increases while you stay
+        subscribed&rdquo;), and a hard close at seat 100 with no silent extensions &mdash; an extended
+        &ldquo;limited&rdquo; offer reads as a fake one and corrodes the honesty brand. Expect founding
+        churn to be the lowest of any cohort; these are also the testimonial engine.</td>
+      </tr>
+      <tr>
+        <td>A cheaper paid tier (e.g., $39&ndash;49 &ldquo;lite&rdquo;)</td>
+        <td><strong>Reject.</strong></td>
+        <td>It would split the audience, anchor the brand back to the pick shelf, and serve buyers for
+        whom the math doesn't work. The correct low-end offer is <em>free</em>: the weekly regime report
+        as the funnel (already in the growth plan), converting to one paid tier.</td>
+      </tr>
+      <tr>
+        <td>Price increase path</td>
+        <td><strong>Plan, don't announce.</strong></td>
+        <td>After 12 months of live record at or near the backtested risk profile, $149&ndash;179/mo is
+        defensible against the same anchors. Grandfather existing subscribers; the founding cohort makes
+        the &ldquo;price only goes up&rdquo; story credible from day one.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Adviser: flat firm licenses, banded by headcount.</h3>
+  <table>
+    <thead>
+      <tr><th>Tier</th><th>Advisers</th><th>Monthly</th><th>Annual (2 mo. free)</th></tr>
+    </thead>
+    <tbody>
+      <tr class="headline-row"><td>Firm &mdash; Small</td><td>1&ndash;3</td><td>$449</td><td>$4,490</td></tr>
+      <tr><td>Firm &mdash; Group</td><td>4&ndash;10</td><td>$899</td><td>$8,990</td></tr>
+      <tr><td>Firm &mdash; Enterprise</td><td>11+</td><td colspan="2">Custom; floor ~$15k/yr</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>Why these numbers.</strong></p>
+  <ul>
+    <li><strong>$449 splits the $399&ndash;499 hypothesis</strong> and prices one notch above Nitrogen's
+    $395/mo Elite per-seat bundle &mdash; the closest behavioral-positioning comparable &mdash; while the
+    license covers up to three advisers. Per-adviser-equivalent cost at full utilization (~$150/mo) is
+    roughly half of one Nitrogen seat and under a third of one YCharts Pro seat. Easy to approve, hard
+    to call expensive.</li>
+    <li><strong>The 4&ndash;10 band at $899 captures firm value without per-seat friction.</strong> Headcount
+    bands approximate per-seat economics with none of the metering, seat-audit, or compliance complexity.
+    A 6-adviser firm at $899/mo pays ~$150/adviser &mdash; consistent with the small tier, double the
+    absolute revenue.</li>
+    <li><strong>Annual-first.</strong> Advisers procure annually and churn decisions are made annually.
+    Quote the annual price first; monthly exists as an on-ramp. Ten months for twelve mirrors the retail
+    structure.</li>
+    <li><strong>Flat, never bps</strong> &mdash; the legal constraint from Section 01, restated as a sales
+    feature: &ldquo;we never touch your AUM economics; this is a research subscription, full stop.&rdquo;</li>
+    <li><strong>What justifies ~3.5&times; retail:</strong> firm-wide internal-use rights (retail is personal-use),
+    a compliance-ready disclosure pack (methodology document, backtest provenance, survivorship caveats
+    in citable form &mdash; an artifact retail doesn't need and advisers must have), adviser-facing
+    regime commentary suitable for client conversations, and priority support. These are cheap to build
+    and are the difference between &ldquo;expensive retail account&rdquo; and &ldquo;firm license.&rdquo;</li>
+  </ul>
+
+  <div class="callout">
+    <p><strong>Founding-firm program (recommended).</strong> Mirror the retail mechanics: first 10 firms
+    at $299/mo (small tier) locked while subscribed, in exchange for a quarterly feedback call and
+    permission to reference the relationship anonymously (&ldquo;licensed by 10 RIA firms&rdquo;).
+    The adviser channel needs reference customers more than it needs the first $150/mo of margin,
+    and the live-book trust deficit is largest exactly now.</p>
+  </div>
+
+  <h3>Revenue outlook under the recommended structure.</h3>
+  <p>
+    End-of-year run-rate ARR by stream, base case. These are <strong>targets conditional on
+    distribution</strong>, not forecasts &mdash; the live record began June 11, 2026, and Year&nbsp;1
+    is constrained by reach, not pricing.
+  </p>
+  <table>
+    <thead>
+      <tr><th>Year</th><th>Retail subs</th><th>Retail ARR</th><th>Adviser firms</th><th>Adviser ARR</th><th>Total ARR</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Year 1</td><td>500</td><td>~$0.63M</td><td>10 (founding)</td><td>~$0.04M</td><td>~$0.67M</td></tr>
+      <tr><td>Year 2</td><td>2,000</td><td>~$2.8M</td><td>50</td><td>~$0.30M</td><td>~$3.1M</td></tr>
+      <tr><td>Year 3</td><td>~3,300</td><td>~$4.7M</td><td>~90</td><td>~$0.57M</td><td>~$5.3M</td></tr>
+      <tr class="headline-row"><td>Year 5 (scale)</td><td>5,000</td><td>~$7.0M</td><td>150</td><td>~$0.90M</td><td>~$7.9M</td></tr>
+    </tbody>
+  </table>
+  <p class="table-caption">
+    Assumptions: retail blends to ~$1,400/sub/yr at steady state (mix of $129 monthly, $1,099 annual,
+    grandfathered $59 founding seats; Year&nbsp;1 blends ~$1,250 as founding seats dominate); adviser
+    blends ~$6k/firm/yr ($449 small / $899 group / first ten at founding $299); churn inside the net
+    counts (&lt;5%/mo target); Year&nbsp;3 interpolated between the 24-month and scale milestones.
+  </p>
+  <p>
+    <strong>Bands.</strong> Conservative (growth at half the curve &mdash; the live record converts slower):
+    Y1 ~$0.3M &middot; Y2 ~$1.4M &middot; Y3 ~$2.4M &middot; Y5 ~$3.7M. Upside (price step to
+    $149&ndash;179 for new subscribers after 12 months of live record, plus a handful of 11+ adviser
+    firms at the ~$15k floor): Y3 ~$6.5M &middot; Y5 ~$9&ndash;10M.
+  </p>
+  <p>
+    Three structural reads matter more than the point estimates. <strong>Retail carries the model</strong>
+    (~90% of scale ARR), but <strong>the adviser dollar is the highest-leverage dollar</strong> &mdash;
+    ~10% of revenue from ~3% of customers, near-zero support load, and every firm markets the product
+    to dozens of end clients at no acquisition cost; five 11+ firms roughly double the adviser line.
+    <strong>The Year&nbsp;1&rarr;2 jump is the whole game</strong> &mdash; it depends on the live record
+    compounding with the marketing engine. And the 5,000-subscriber scale case is the same subscriber
+    count that produced ~$2.3M under the old $39 pricing: the repositioning to the discipline shelf is
+    worth ~3&times; revenue at identical scale.
+  </p>
+</div>
+
+<!-- ============================================================
+     SECTION 06 - PRICING CONFLICTS
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">06 &middot; Housekeeping</span>
+  <h2>Pricing conflicts to <em>reconcile.</em></h2>
+
+  <p class="lead">
+    The repositioning left a trail of stale prices. One of them is live on the production
+    website. Reconcile all of these to the $129 / $59-founding / $1,099 structure before
+    any adviser, journalist, or investor sees two documents side by side.
+  </p>
+
+  <table class="text-table">
+    <thead>
+      <tr><th>Location</th><th>Stale content</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>frontend/src/LandingPage.jsx</code> (LIVE SITE)</td>
+        <td>Displays $39/mo (line ~314) and $349/yr with &ldquo;Save $119&rdquo; (lines ~350&ndash;354)</td>
+        <td><strong>Highest priority.</strong> The production landing page contradicts the stated pricing.
+        Update to $129/$1,099 (or $59 founding presentation) and verify Stripe products/prices match
+        what checkout actually charges.</td>
+      </tr>
+      <tr>
+        <td><code>design/documents/rigacap-pricing-analysis.html</code></td>
+        <td>Entire document priced at $39/mo &middot; $349/yr; ARR table built on $39</td>
+        <td>Superseded by this document. Mark deprecated or delete; do not patch again.</td>
+      </tr>
+      <tr>
+        <td><code>design/documents/rigacap-investor-report.html</code> (v1)</td>
+        <td>$39/month and $349/year in the pricing table (lines ~1097&ndash;1102)</td>
+        <td>v2 already carries $129/$59/$1,099. Retire v1 or clearly mark it superseded.</td>
+      </tr>
+      <tr>
+        <td><code>design/documents/rigacap-marketing-playbook.html</code></td>
+        <td>Persona copy: &ldquo;Will pay $39/mo for a real edge&rdquo; (line ~666); $349&ndash;468 LTV figure (line ~1044)</td>
+        <td>Rewrite persona willingness-to-pay and LTV math at $129/$1,099 (LTV roughly 3&times; the stated figure).</td>
+      </tr>
+      <tr>
+        <td>investor-report-v2 ($39 check)</td>
+        <td>No $39 found &mdash; v2 is clean ($129/$59/$1,099 at lines ~978&ndash;979). The remembered &ldquo;$39 in
+        investor-report&rdquo; is in <em>v1</em> and the old pricing analysis.</td>
+        <td>No change needed in v2; confirm v2 is the only version circulated.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <p><strong>One structural note on the founding price.</strong> $59 founding against $129 standard is a
+    54% discount &mdash; defensible only while the live record is thin. Documents should consistently frame
+    it as compensation for early trust (&ldquo;you are joining before the live record exists&rdquo;), never as
+    a sale. The two framings demand different copy, and only one of them survives the honesty positioning.</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     SECTION 07 - MOATS & RISKS
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">07 &middot; Moats &amp; risks</span>
+  <h2>The <em>honest</em> section.</h2>
+
+  <p class="lead">
+    A pricing analysis that flatters the product misprices it. Here is what is defensible,
+    what is not, and what each implies for price.
+  </p>
+
+  <h3>Defensible.</h3>
+  <div class="components">
+    <div class="component">
+      <div class="component-num">M1</div>
+      <div>
+        <div class="component-title">The 21-year honest backtest is expensive to fake and rare to find.</div>
+        <div class="component-desc">A continuous walk-forward through 2008, COVID, and 2022, with disclosed
+        survivorship caveats and no window-shopping, is methodologically out of reach of the marketing-led
+        newsletter shelf &mdash; not because the math is hard, but because honest methodology produces
+        un-marketable numbers (8.3% backtested vs the index's 9.8%) and almost nobody will publish that.
+        The willingness to publish it IS the differentiation. Supports premium pricing with sophisticated
+        buyers; does nothing for buyers who shop headline returns.</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">M2</div>
+      <div>
+        <div class="component-title">The behavioral quantification is original marketing IP.</div>
+        <div class="component-desc">The panic-seller stress test ($473k nerve-independent vs $206k&ndash;$1.02M
+        nerve-dependent, backtested) converts the abstract behavior-gap literature into a product-specific,
+        reproducible number. Competitors can copy the idea, but each must run it against their own strategy
+        &mdash; and a 57% drawdown strategy cannot survive the test. The test is a moat precisely for
+        strategies that control drawdown.</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">M3</div>
+      <div>
+        <div class="component-title">The publisher-exemption cost structure compounds.</div>
+        <div class="component-desc">No custody, no discretion, no per-client suitability, no sub-advisory
+        agreements: gross margins are software margins and the adviser tier needs no broker-dealer
+        infrastructure. Competitors who drift into model-marketplace or sub-advisory economics carry
+        compliance costs RigaCap doesn't &mdash; structural room to underprice per unit of value, forever.</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">M4</div>
+      <div>
+        <div class="component-title">Explicit sells + regime engine remain near-unique on the retail shelf.</div>
+        <div class="component-desc">The February competitive survey stands: of 30 surveyed services, none
+        markets &ldquo;when NOT to be in the market,&rdquo; and most never issue a sell. This is a feature
+        moat, not a structural one &mdash; but it has held for years because sell signals create
+        accountability the pick-newsletter business model is built to avoid.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Not defensible.</h3>
+  <div class="components">
+    <div class="component">
+      <div class="component-num">R1</div>
+      <div>
+        <div class="component-title">The signals are copyable. One subscriber can rebroadcast everything.</div>
+        <div class="component-desc">~20 positions rebalancing on a slow cadence is trivially shareable.
+        Mitigation is partial at best: personal-use terms, watermarked content, and the practical truth
+        that the freeloader forfeits the alerting, the regime context, and the discipline scaffolding
+        &mdash; which for THIS product is most of the value. Accept leakage; price the experience, not
+        the picks. (This also argues against any high-priced retail tier whose only content is the picks.)</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">R2</div>
+      <div>
+        <div class="component-title">The live record is days old. Every number above says &ldquo;backtested.&rdquo;</div>
+        <div class="component-desc">The model book opened June 11, 2026. For 12&ndash;18 months the honest answer
+        to &ldquo;how has it done live?&rdquo; is &ldquo;ask me next year.&rdquo; This caps conversion more than price;
+        the founding mechanics (retail and adviser) exist precisely to pay early believers for this gap.
+        The single worst thing for pricing power would be a live year that diverges badly from the backtested
+        risk profile &mdash; the drawdown claim, not the return claim, is the one that must hold.</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">R3</div>
+      <div>
+        <div class="component-title">The return story loses on its own table.</div>
+        <div class="component-desc">8.3% backtested vs 9.8% index: the buyer who frames this as a return product
+        rationally indexes instead. The entire commercial thesis lives or dies on the buyer accepting the
+        drawdown/behavior frame. That is an education-heavy, slower sale &mdash; reflected in this analysis as
+        modest subscriber counts at premium prices rather than the inverse. If marketing reverts to return
+        language under conversion pressure, the honest positioning collapses and the $129 price loses its logic.</div>
+      </div>
+    </div>
+    <div class="component">
+      <div class="component-num">R4</div>
+      <div>
+        <div class="component-title">Concentration and key-man risk are unpriced.</div>
+        <div class="component-desc">One strategy, one operator, one (momentum) factor with documented crowding
+        cycles. A multi-year momentum winter would test both audiences simultaneously. Diversification of the
+        product line is a roadmap question, not a pricing one &mdash; but adviser buyers will ask, and the
+        enterprise tier should not be promised continuity the operation cannot yet guarantee.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pullquote">
+    Price the experience and the discipline. The picks leak; the discipline doesn't.
+  </div>
+</div>
+
+<!-- ============================================================
+     APPENDIX - SOURCES & DISCLOSURES
+     ============================================================ -->
+<div class="content page-break">
+  <span class="kicker">Appendix</span>
+  <h2>Sources &amp; <em>disclosures.</em></h2>
+
+  <h3>Competitor &amp; market pricing (gathered June 10, 2026).</h3>
+  <ul style="font-size:0.9rem;">
+    <li>Motley Fool Stock Advisor / Epic / Epic Plus pricing &mdash; fool.com service pages and 2026 third-party reviews (stockanalysis.com, traderhq.com, wallstreetzen.com).</li>
+    <li>Seeking Alpha Premium / Alpha Picks / Pro &mdash; matchmybroker.com plan comparisons and moneysmylife.com promo trackers (June 2026 summer-sale pricing noted).</li>
+    <li>Zacks Premium / Ultimate &mdash; zacks.com/products and 2026 reviews (stockanalysis.com, traderhq.com).</li>
+    <li>IBD Leaderboard &mdash; traderhq.com 2026 review; investors.com.</li>
+    <li>Trade Ideas &mdash; trade-ideas.com/pricing; stockbrokers.com 2026 review.</li>
+    <li>Mindful Trader, Danelfin, AltIndex, LevelFields, Composer &mdash; RigaCap competitive-landscape survey (Feb 2026), spot-checked June 2026.</li>
+    <li>Allocate Smartly &mdash; allocatesmartly.com (membership &ldquo;about $1 a day&rdquo;; drawdown/Ulcer-Index screener features).</li>
+    <li>YCharts &mdash; G2/Capterra 2026 pricing pages ($300&ndash;500/mo per seat); koyfin.com RIA-alternatives analysis.</li>
+    <li>Kwanti &mdash; kwanti.com/pricing (per-adviser licensing, volume discounts; rates not published).</li>
+    <li>Nitrogen (Riskalyze) &mdash; nitrogenwealth.com/pricing and getpulsesignal.com ($99&ndash;450/mo plans; $395/mo Elite).</li>
+    <li>TAMP fee ranges &mdash; kitces.com, orion.com, and 2026 TAMP guides (20&ndash;100bp; next-gen 30&ndash;50bp).</li>
+    <li>Newsletter-market reference points &mdash; Motley Fool 500k+ subscribers (fool.com); solo-newsletter scale examples from 2025&ndash;26 trade press.</li>
+  </ul>
+
+  <h3>Behavioral-gap literature.</h3>
+  <ul style="font-size:0.9rem;">
+    <li>Morningstar, &ldquo;Mind the Gap&rdquo; &mdash; ~1.22pp/yr investor behavior gap, 10 years to Dec 2024 (&asymp;15% of potential returns forfeited).</li>
+    <li>DALBAR QAIB 2025 &mdash; 2024 gap of 848bp (avg. equity investor 16.54% vs S&amp;P 25.05%); Guess Right Ratio 25%; average equity-fund holding period 4.79 years.</li>
+    <li>DALBAR QAIB 2026 &mdash; 2025 gap of 72bp (17.16% vs 17.88%), narrowest since 2012; the gap is episodic and stress-year concentrated.</li>
+    <li>Vanguard Advisor's Alpha &mdash; behavioral coaching ~150bp/yr, the largest component of quantified advisory value; episodically far larger in panic years.</li>
+  </ul>
+
+  <div class="disclosures">
+    <p><strong>Performance disclosures.</strong> All RigaCap performance figures in this document &mdash;
+    including the 8.3% annualized return, 0.73 Sharpe ratio, 19% worst drawdown (2007&ndash;2026 continuous
+    walk-forward, price returns), the +32% annualized / 2.20 Sharpe / 8.5% drawdown last-24-months held-out
+    window, the 0.43 monthly correlation to the S&amp;P 500, and the behavioral stress-test outcomes
+    ($473k vs comparator ranges) &mdash; are <strong>backtested walk-forward results, not live trading
+    results</strong>. The live model book opened June 11, 2026 with a fresh $100,000; no performance prior
+    to that date reflects live capital. Data from 2016 onward is survivorship-bias-free; pre-2016 data
+    carries a disclosed survivorship caveat. Backtested performance has inherent limitations and does not
+    guarantee future results. Comparator figures (raw 12-month momentum 13.2% net / 57% drawdown; S&amp;P 500
+    9.8% / 55% drawdown) are from the same backtest framework over the same window.</p>
+    <p><strong>Legal.</strong> RigaCap publishes impersonal investment research under the publisher's
+    exclusion of Investment Advisers Act &sect;202(a)(11)(D). RigaCap is not a registered investment
+    adviser, exercises no discretion, takes no custody, and provides no personalized advice. Adviser
+    licenses are internal-use research subscriptions only.</p>
+    <p><strong>Document status.</strong> Internal strategy document. Competitor prices are list/promo
+    prices observed via public web research on June 10, 2026 and change frequently. Supersedes
+    <em>rigacap-pricing-analysis.html</em> (April 2026) in full.</p>
+    <p>RigaCap &middot; Market &amp; Pricing Analysis &middot; June 2026 &middot; Confidential</p>
+  </div>
+</div>
+
+</body>
+</html>

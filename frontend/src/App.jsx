@@ -18,7 +18,6 @@ import {
 // only fetched when the user navigates to it. Drops the homepage initial
 // payload from ~1.3MB to roughly the router shell + LandingPageV2 +
 // shared deps. Wrapped in <Suspense> below.
-const LandingPage = lazy(() => import('./LandingPage'));
 const LandingPageV2 = lazy(() => import('./LandingPageV2'));
 const MethodologyPageV2 = lazy(() => import('./MethodologyPageV2'));
 const TrackRecordPageV2 = lazy(() => import('./TrackRecordPageV2'));
@@ -4767,7 +4766,6 @@ export default function App() {
       <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path="/" element={<LandingPageV2 />} />
-        <Route path="/v1" element={<LandingPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/contact" element={<ContactPage />} />
