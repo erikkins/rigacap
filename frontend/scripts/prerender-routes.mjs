@@ -37,7 +37,7 @@ const ROUTES = [
   {
     path: '/track-record',
     title: 'Track Record — RigaCap',
-    description: 'Walk-forward verified results across multiple market regimes. See every signal, every exit, in plain English.',
+    description: '21-year walk-forward backtest: 8.3% annualized, worst drawdown 19% vs the index\'s 55%. The last 24 months: +32% annualized, held-out. Every number labeled.',
     source: 'src/TrackRecordPageV2.jsx',
     priority: 0.9, changefreq: 'weekly',
   },
@@ -58,7 +58,7 @@ const ROUTES = [
   {
     path: '/methodology',
     title: 'Methodology — RigaCap',
-    description: 'How the system finds setups, sizes positions, and exits. Quantitative discipline, no discretionary overrides.',
+    description: 'How the system finds setups, sizes positions, and exits — and the honest premium: it trails the index in most rolling windows so its worst drawdown stays near 19%.',
     source: 'src/MethodologyPageV2.jsx',
     priority: 0.9, changefreq: 'weekly',
   },
