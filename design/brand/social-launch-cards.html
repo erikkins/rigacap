@@ -6,15 +6,15 @@
 <title>RigaCap Social Launch Cards</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #111; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #fff; padding: 40px; }
-  h1 { text-align: center; margin-bottom: 12px; font-size: 28px; }
-  p.subtitle { text-align: center; color: #888; margin-bottom: 40px; font-size: 14px; }
+  body { background: #ECE7DB; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #141210; padding: 40px; }
+  h1 { text-align: center; margin-bottom: 12px; font-size: 28px; font-family: Georgia, 'Times New Roman', serif; }
+  p.subtitle { text-align: center; color: #8A8279; margin-bottom: 40px; font-size: 14px; }
   .grid { display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; }
   .card-wrapper { text-align: center; }
-  .card-wrapper h3 { margin-bottom: 8px; font-size: 14px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
-  .card-wrapper p.hint { margin-top: 8px; font-size: 12px; color: #666; }
-  canvas { border-radius: 12px; cursor: pointer; }
-  canvas:hover { box-shadow: 0 0 0 2px #f59e0b; }
+  .card-wrapper h3 { margin-bottom: 8px; font-size: 13px; color: #5A544E; text-transform: uppercase; letter-spacing: 2px; }
+  .card-wrapper p.hint { margin-top: 8px; font-size: 12px; color: #8A8279; }
+  canvas { cursor: pointer; box-shadow: 0 2px 12px rgba(20,18,16,0.12); }
+  canvas:hover { box-shadow: 0 0 0 2px #7A2430; }
 </style>
 </head>
 <body>
@@ -49,39 +49,106 @@
 </div>
 
 <script>
-const NAVY = '#172554';
-const NAVY_MID = '#1e3a5f';
-const GOLD = '#f59e0b';
-const GOLD_LIGHT = '#fbbf24';
-const WHITE = '#ffffff';
-const GRAY_LIGHT = '#94a3b8';
-const GRAY_DARK = '#334155';
-const GREEN = '#22c55e';
-const RED = '#ef4444';
+// ── RigaCap PAPER editorial design system ──
+// Palette matches the live site (LandingPageV2) and beta email:
+// paper #F5F1E8, card #FAF7F0, ink #141210, claret #7A2430,
+// oxblood #8F2D3D (negative), forest #2D5F3F (positive), hairline #DDD5C7.
+const PAPER = '#F5F1E8';
+const CARD_BG = '#FAF7F0';
+const INK = '#141210';
+const INK_SOFT = '#2c2722';
+const MUTED = '#5A544E';
+const FAINT = '#8A8279';
+const CLARET = '#7A2430';
+const OXBLOOD = '#8F2D3D';
+const FOREST = '#2D5F3F';
+const HAIRLINE = '#DDD5C7';
 
-const haloImg = new Image();
+const SERIF = "Georgia, 'Times New Roman', serif";
+const SANS = "-apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif";
+const MONO = "Menlo, 'Courier New', monospace";
 
-function drawLogo(ctx, cx, cy, size) {
-  if (haloImg.complete && haloImg.naturalWidth > 0) {
-    ctx.drawImage(haloImg, cx - size/2, cy - size/2, size, size);
-  }
-}
-
-function fillNavyGradient(ctx, w, h) {
-  const grad = ctx.createLinearGradient(0, 0, w, h);
-  grad.addColorStop(0, NAVY);
-  grad.addColorStop(1, '#0f1b3d');
-  ctx.fillStyle = grad;
+// Paper background + thin hairline frame (editorial print border).
+function fillPaper(ctx, w, h) {
+  ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = HAIRLINE;
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(28, 28, w - 56, h - 56);
 }
 
-function drawGoldLine(ctx, y, w) {
-  ctx.strokeStyle = GOLD;
+// 1px hairline rule.
+function hairline(ctx, x1, x2, y) {
+  ctx.strokeStyle = HAIRLINE;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x1, y + 0.5);
+  ctx.lineTo(x2, y + 0.5);
+  ctx.stroke();
+}
+
+// Short claret kicker rule (replaces the old gold full-width line).
+function claretRule(ctx, x, y, len) {
+  ctx.strokeStyle = CLARET;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(100, y);
-  ctx.lineTo(w - 100, y);
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + len, y);
   ctx.stroke();
+}
+
+// Uppercase, letter-spaced text (SectionLabel-style eyebrow).
+function drawTracked(ctx, text, x, y, spacingPx) {
+  try { ctx.letterSpacing = spacingPx + 'px'; } catch (e) {}
+  ctx.fillText(text.toUpperCase(), x, y);
+  try { ctx.letterSpacing = '0px'; } catch (e) {}
+}
+
+// Eyebrow: small claret dash + tracked uppercase gray label.
+function drawEyebrow(ctx, x, y, label) {
+  claretRule(ctx, x, y - 7, 26);
+  ctx.fillStyle = FAINT;
+  ctx.font = '500 20px ' + SANS;
+  ctx.textAlign = 'left';
+  drawTracked(ctx, label, x + 40, y, 3);
+}
+
+// Mixed-style text segments drawn as one line (for the italic claret emphasis word).
+function drawSegments(ctx, segs, x, y, align) {
+  const prevAlign = ctx.textAlign;
+  ctx.textAlign = 'left';
+  let total = 0;
+  segs.forEach(s => { ctx.font = s.font; total += ctx.measureText(s.text).width; });
+  let sx = (align === 'center') ? x - total / 2 : x;
+  segs.forEach(s => {
+    ctx.font = s.font;
+    ctx.fillStyle = s.color;
+    ctx.fillText(s.text, sx, y);
+    sx += ctx.measureText(s.text).width;
+  });
+  ctx.textAlign = prevAlign;
+}
+
+// Wordmark: "RigaCap." serif bold ink with claret period (replaces halo logo).
+function drawWordmark(ctx, x, y, size, align) {
+  drawSegments(ctx, [
+    { text: 'RigaCap', font: 'bold ' + size + 'px ' + SERIF, color: INK },
+    { text: '.', font: 'bold ' + size + 'px ' + SERIF, color: CLARET },
+  ], x, y, align || 'left');
+}
+
+// Footer: hairline + optional disclaimer + mono URL.
+function drawFooter(ctx, w, h, note) {
+  hairline(ctx, 100, w - 100, h - 150);
+  ctx.textAlign = 'center';
+  if (note) {
+    ctx.fillStyle = FAINT;
+    ctx.font = '20px ' + SANS;
+    fitText(ctx, note, w / 2, h - 102, 880, '20px ' + SANS);
+  }
+  ctx.fillStyle = MUTED;
+  ctx.font = '22px ' + MONO;
+  ctx.fillText('rigacap.com', w / 2, h - 58);
 }
 
 // Draw text, shrinking the font size until it fits maxWidth.
@@ -101,53 +168,37 @@ function drawAllCards() {
   const c = document.getElementById('card1');
   const ctx = c.getContext('2d');
   const w = 1080, h = 1350;
-  fillNavyGradient(ctx, w, h);
+  fillPaper(ctx, w, h);
 
-  // Subtle radial glow
-  const glow = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, 500);
-  glow.addColorStop(0, 'rgba(245, 158, 11, 0.08)');
-  glow.addColorStop(1, 'transparent');
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, w, h);
+  // Wordmark, centered, with a short claret kicker beneath
+  drawWordmark(ctx, w / 2, 195, 48, 'center');
+  claretRule(ctx, w / 2 - 24, 238, 48);
 
-  drawLogo(ctx, w/2, 400, 220);
+  // Headline — serif display, claret italic on the emphasis word
+  drawSegments(ctx, [
+    { text: "We're ", font: 'bold 130px ' + SERIF, color: INK },
+    { text: 'Live.', font: 'bold italic 130px ' + SERIF, color: CLARET },
+  ], w / 2, 565, 'center');
 
-  ctx.fillStyle = WHITE;
-  ctx.font = 'bold 72px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.fillStyle = MUTED;
   ctx.textAlign = 'center';
-  ctx.fillText("We're Live.", w/2, 620);
+  fitText(ctx, 'RigaCap — fifteen years of building, live since June 2026', w / 2, 660, 900,
+    '30px ' + SANS);
 
-  ctx.fillStyle = GOLD;
-  fitText(ctx, 'RigaCap — fifteen years of building, live since June 2026', w/2, 688, 920,
-    '600 32px -apple-system, BlinkMacSystemFont, sans-serif');
+  hairline(ctx, 160, w - 160, 738);
 
-  drawGoldLine(ctx, 735, w);
+  // Stat line — mono, ink
+  ctx.fillStyle = INK;
+  fitText(ctx, '21-year walk-forward backtest · 8.3% annualized · worst drawdown 19%', w / 2, 822, 920,
+    'bold 27px ' + MONO);
 
-  ctx.fillStyle = WHITE;
-  fitText(ctx, '21-year walk-forward backtest · 8.3% annualized · worst drawdown 19%', w/2, 805, 940,
-    'bold 30px -apple-system, BlinkMacSystemFont, sans-serif');
+  ctx.fillStyle = MUTED;
+  fitText(ctx, 'Through 2008, COVID, and 2022 — the index lost half its value twice.', w / 2, 905, 900,
+    '27px ' + SANS);
+  fitText(ctx, 'Every number labeled. Losers posted too.', w / 2, 953, 900,
+    '27px ' + SANS);
 
-  ctx.fillStyle = GRAY_LIGHT;
-  fitText(ctx, 'Through 2008, COVID, and 2022 — the index lost half its value twice.', w/2, 862, 920,
-    '28px -apple-system, BlinkMacSystemFont, sans-serif');
-  fitText(ctx, 'Every number labeled. Losers posted too.', w/2, 907, 920,
-    '28px -apple-system, BlinkMacSystemFont, sans-serif');
-
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('rigacap.com', w/2, 980);
-
-  // Decorative corners
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 3;
-  // Top-left
-  ctx.beginPath(); ctx.moveTo(40, 80); ctx.lineTo(40, 40); ctx.lineTo(80, 40); ctx.stroke();
-  // Top-right
-  ctx.beginPath(); ctx.moveTo(w-80, 40); ctx.lineTo(w-40, 40); ctx.lineTo(w-40, 80); ctx.stroke();
-  // Bottom-left
-  ctx.beginPath(); ctx.moveTo(40, h-80); ctx.lineTo(40, h-40); ctx.lineTo(80, h-40); ctx.stroke();
-  // Bottom-right
-  ctx.beginPath(); ctx.moveTo(w-80, h-40); ctx.lineTo(w-40, h-40); ctx.lineTo(w-40, h-80); ctx.stroke();
+  drawFooter(ctx, w, h, null);
 })();
 
 // ── Card 2: Twenty-one Years, Walk-Forward ──
@@ -155,125 +206,98 @@ function drawAllCards() {
   const c = document.getElementById('card2');
   const ctx = c.getContext('2d');
   const w = 1080, h = 1350;
-  fillNavyGradient(ctx, w, h);
+  fillPaper(ctx, w, h);
 
   // Header
-  drawLogo(ctx, 80, 100, 80);
-  ctx.fillStyle = WHITE;
-  ctx.font = 'bold 42px -apple-system, BlinkMacSystemFont, sans-serif';
+  drawWordmark(ctx, 100, 122, 36);
+  drawEyebrow(ctx, 100, 190, '2007–2026 · backtested · price returns · no hindsight');
+  drawSegments(ctx, [
+    { text: 'Twenty-one years, ', font: '54px ' + SERIF, color: INK },
+    { text: 'walk-forward.', font: 'italic 54px ' + SERIF, color: CLARET },
+  ], 100, 272, 'left');
+  hairline(ctx, 100, w - 100, 318);
+
+  // Table header — tracked uppercase, mono numbers right-aligned
+  const nameX = 110, annX = 620, shX = 780, ddX = 980;
+  let y = 405;
+  ctx.fillStyle = FAINT;
+  ctx.font = '500 19px ' + SANS;
   ctx.textAlign = 'left';
-  ctx.fillText('Twenty-one years, walk-forward.', 140, 112);
-
-  ctx.fillStyle = GRAY_LIGHT;
-  fitText(ctx, '2007–2026 · backtested · price returns · no hindsight', 140, 152, 840,
-    '24px -apple-system, BlinkMacSystemFont, sans-serif');
-
-  drawGoldLine(ctx, 192, w);
-
-  // Table
-  const colX = [110, 545, 735, 920];
-  let y = 290;
-
-  // Table header
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 26px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('Strategy', colX[0], y);
-  ctx.textAlign = 'center';
-  ctx.fillText('Annualized', colX[1], y);
-  ctx.fillText('Sharpe', colX[2], y);
-  ctx.fillText('Worst drawdown', colX[3], y);
-
-  ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(80, y + 18); ctx.lineTo(w - 80, y + 18); ctx.stroke();
+  drawTracked(ctx, 'Strategy', nameX, y, 3);
+  ctx.textAlign = 'right';
+  drawTracked(ctx, 'Annualized', annX, y, 3);
+  drawTracked(ctx, 'Sharpe', shX, y, 3);
+  drawTracked(ctx, 'Worst drawdown', ddX, y, 3);
+  hairline(ctx, 100, w - 100, y + 22);
 
   const rows = [
-    { name: 'RigaCap', ann: '8.3%', sharpe: '0.73', dd: '−19%', highlight: true },
-    { name: 'Raw momentum, net', ann: '13.2%', sharpe: '0.69', dd: '−57%', highlight: false },
-    { name: 'S&P 500', ann: '9.8%', sharpe: '—', dd: '−55%', highlight: false },
+    { name: 'RigaCap', ann: '8.3%', sharpe: '0.73', dd: '−19%', ddColor: FOREST, highlight: true },
+    { name: 'Raw momentum, net', ann: '13.2%', sharpe: '0.69', dd: '−57%', ddColor: OXBLOOD, highlight: false },
+    { name: 'S&P 500', ann: '9.8%', sharpe: '—', dd: '−55%', ddColor: OXBLOOD, highlight: false },
   ];
 
-  y += 105;
+  y += 100;
   rows.forEach(row => {
     if (row.highlight) {
-      ctx.fillStyle = 'rgba(245, 158, 11, 0.10)';
-      ctx.beginPath();
-      ctx.roundRect(80, y - 52, w - 160, 82, 12);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.roundRect(80, y - 52, w - 160, 82, 12);
-      ctx.stroke();
+      // Claret inset bar — same device as the live performance table
+      ctx.fillStyle = CLARET;
+      ctx.fillRect(100, y - 38, 3, 54);
     }
 
     ctx.textAlign = 'left';
-    ctx.fillStyle = row.highlight ? GOLD_LIGHT : WHITE;
-    ctx.font = (row.highlight ? 'bold ' : '') + '32px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(row.name, colX[0], y);
+    ctx.fillStyle = INK;
+    ctx.font = (row.highlight ? '600 ' : '') + '31px ' + SANS;
+    ctx.fillText(row.name, row.highlight ? nameX + 14 : nameX, y);
 
-    ctx.textAlign = 'center';
-    ctx.fillStyle = row.highlight ? WHITE : GRAY_LIGHT;
-    ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(row.ann, colX[1], y);
-    ctx.fillText(row.sharpe, colX[2], y);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = row.highlight ? INK : MUTED;
+    ctx.font = (row.highlight ? 'bold ' : '') + '30px ' + MONO;
+    ctx.fillText(row.ann, annX, y);
+    ctx.fillText(row.sharpe, shX, y);
 
-    ctx.fillStyle = row.highlight ? GREEN : RED;
-    ctx.fillText(row.dd, colX[3], y);
+    ctx.fillStyle = row.ddColor;
+    ctx.font = (row.highlight ? 'bold ' : '') + '30px ' + MONO;
+    ctx.fillText(row.dd, ddX, y);
 
-    y += 110;
+    hairline(ctx, 100, w - 100, y + 32);
+    y += 96;
   });
 
   // Drawdown bar comparison — the point of the card
-  let by = y + 50;
-  ctx.textAlign = 'left';
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 26px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('Worst drawdown, visualized (backtest)', 110, by);
+  let by = y + 60;
+  drawEyebrow(ctx, 100, by, 'Worst drawdown, visualized (backtest)');
 
   const bars = [
-    { name: 'RigaCap', dd: 19, color: GREEN, label: '−19%' },
-    { name: 'Raw momentum', dd: 57, color: RED, label: '−57%' },
-    { name: 'S&P 500', dd: 55, color: RED, label: '−55%' },
+    { name: 'RigaCap', dd: 19, color: FOREST, label: '−19%' },
+    { name: 'Raw momentum', dd: 57, color: OXBLOOD, label: '−57%' },
+    { name: 'S&P 500', dd: 55, color: OXBLOOD, label: '−55%' },
   ];
-  const barX = 360, barMaxW = 520, barH = 40, ddMax = 57;
-  by += 55;
+  const barX = 350, barMaxW = 500, barH = 26, ddMax = 57;
+  by += 45;
   bars.forEach(b => {
-    ctx.fillStyle = GRAY_LIGHT;
-    ctx.font = '26px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillStyle = MUTED;
+    ctx.font = '24px ' + SANS;
     ctx.textAlign = 'left';
-    ctx.fillText(b.name, 110, by + barH/2 + 9);
+    ctx.fillText(b.name, 110, by + barH / 2 + 8);
 
-    const bw = Math.max(30, barMaxW * b.dd / ddMax);
+    const bw = Math.max(24, barMaxW * b.dd / ddMax);
     ctx.fillStyle = b.color;
-    ctx.globalAlpha = 0.85;
-    ctx.beginPath();
-    ctx.roundRect(barX, by, bw, barH, 6);
-    ctx.fill();
-    ctx.globalAlpha = 1;
+    ctx.fillRect(barX, by, bw, barH);
 
-    ctx.fillStyle = WHITE;
-    ctx.font = 'bold 26px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(b.label, barX + bw + 18, by + barH/2 + 9);
+    ctx.fillStyle = INK;
+    ctx.font = 'bold 24px ' + MONO;
+    ctx.fillText(b.label, barX + bw + 16, by + barH / 2 + 8);
 
-    by += barH + 30;
+    by += barH + 38;
   });
 
-  // Pull line
-  ctx.fillStyle = WHITE;
+  // Pull line — serif italic claret, the editorial voice
+  ctx.fillStyle = CLARET;
   ctx.textAlign = 'center';
-  fitText(ctx, 'The return you can hold through is the one you collect.', w/2, by + 110, 920,
-    'italic 600 32px -apple-system, BlinkMacSystemFont, sans-serif');
+  fitText(ctx, 'The return you can hold through is the one you collect.', w / 2, by + 90, 900,
+    'italic 34px ' + SERIF);
 
-  // Footer
-  ctx.fillStyle = GRAY_LIGHT;
-  ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('Walk-forward backtest: no future data used in any period.', w/2, h - 70);
-
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('rigacap.com', w/2, h - 40);
+  drawFooter(ctx, w, h, 'Walk-forward backtest: no future data used in any period.');
 })();
 
 // ── Card 3: How the System Works (3-Factor) ──
@@ -281,22 +305,18 @@ function drawAllCards() {
   const c = document.getElementById('card3');
   const ctx = c.getContext('2d');
   const w = 1080, h = 1350;
-  fillNavyGradient(ctx, w, h);
+  fillPaper(ctx, w, h);
 
   // Header
-  drawLogo(ctx, 80, 100, 80);
-  ctx.fillStyle = WHITE;
-  ctx.font = 'bold 42px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('How the System Works', 140, 112);
+  drawWordmark(ctx, 100, 122, 36);
+  drawEyebrow(ctx, 100, 190, 'Three factors decide every entry');
+  drawSegments(ctx, [
+    { text: 'How the System ', font: '54px ' + SERIF, color: INK },
+    { text: 'Works', font: 'italic 54px ' + SERIF, color: CLARET },
+  ], 100, 272, 'left');
+  hairline(ctx, 100, w - 100, 318);
 
-  ctx.fillStyle = GRAY_LIGHT;
-  ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('Three factors decide every entry', 140, 152);
-
-  drawGoldLine(ctx, 192, w);
-
-  // Three factor cards
+  // Three factor blocks — card surfaces with hairline border + claret left edge
   const factors = [
     {
       num: '1',
@@ -318,93 +338,56 @@ function drawAllCards() {
     },
   ];
 
-  const fy = 250;
-  const cardH = 235;
-  const cardGap = 26;
+  const fy = 372;
+  const blockH = 182;
+  const blockGap = 28;
   factors.forEach((f, i) => {
-    const cardY = fy + i * (cardH + cardGap);
+    const blockY = fy + i * (blockH + blockGap);
 
-    // Card background
-    ctx.fillStyle = 'rgba(255,255,255,0.04)';
-    ctx.beginPath();
-    ctx.roundRect(80, cardY, w - 160, cardH, 16);
-    ctx.fill();
-
-    ctx.strokeStyle = 'rgba(245, 158, 11, 0.15)';
+    ctx.fillStyle = CARD_BG;
+    ctx.fillRect(80, blockY, w - 160, blockH);
+    ctx.strokeStyle = HAIRLINE;
     ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.roundRect(80, cardY, w - 160, cardH, 16);
-    ctx.stroke();
+    ctx.strokeRect(80.5, blockY + 0.5, w - 161, blockH - 1);
+    ctx.fillStyle = CLARET;
+    ctx.fillRect(80, blockY, 4, blockH);
 
-    // Number circle
-    ctx.fillStyle = GOLD;
-    ctx.beginPath();
-    ctx.arc(160, cardY + cardH/2, 40, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = NAVY;
-    ctx.font = 'bold 38px -apple-system, BlinkMacSystemFont, sans-serif';
+    // Large serif claret numeral
+    ctx.fillStyle = CLARET;
+    ctx.font = '64px ' + SERIF;
     ctx.textAlign = 'center';
-    ctx.fillText(f.num, 160, cardY + cardH/2 + 14);
+    ctx.fillText(f.num, 152, blockY + blockH / 2 + 24);
 
-    // Text
+    // Title + body
     ctx.textAlign = 'left';
-    ctx.fillStyle = GOLD;
-    ctx.font = 'bold 34px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(f.title, 230, cardY + 72);
+    ctx.fillStyle = INK;
+    ctx.font = 'bold 33px ' + SERIF;
+    ctx.fillText(f.title, 226, blockY + 62);
 
-    ctx.fillStyle = WHITE;
-    fitText(ctx, f.line1, 230, cardY + 132, 750, '27px -apple-system, BlinkMacSystemFont, sans-serif');
-    fitText(ctx, f.line2, 230, cardY + 176, 750, '27px -apple-system, BlinkMacSystemFont, sans-serif');
+    ctx.fillStyle = MUTED;
+    fitText(ctx, f.line1, 226, blockY + 112, 730, '25px ' + SANS);
+    fitText(ctx, f.line2, 226, blockY + 152, 730, '25px ' + SANS);
   });
 
-  // Dashed line connecting the three number circles and down to result box
-  const lineX = 160;
-  const circleR = 40;
-  const cy1 = fy + cardH/2;
-  const cy2 = fy + (cardH + cardGap) + cardH/2;
-  const cy3 = fy + 2*(cardH + cardGap) + cardH/2;
-  const arrowY = fy + 3 * cardH + 2 * cardGap + 20; // below all 3 cards
-  const resultMidY = arrowY + 45;
-
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 2;
-  ctx.setLineDash([8, 4]);
-  ctx.beginPath(); ctx.moveTo(lineX, cy1 + circleR); ctx.lineTo(lineX, cy2 - circleR); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(lineX, cy2 + circleR); ctx.lineTo(lineX, cy3 - circleR); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(lineX, cy3 + circleR); ctx.lineTo(lineX, resultMidY); ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Result box
-  ctx.fillStyle = 'rgba(245, 158, 11, 0.1)';
-  ctx.beginPath();
-  ctx.roundRect(200, arrowY, w - 400, 90, 12);
-  ctx.fill();
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(200, arrowY, w - 400, 90, 12);
-  ctx.stroke();
-
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
+  // Result line — claret serif between two short claret rules
+  const resY = fy + 3 * blockH + 2 * blockGap + 86;
+  ctx.fillStyle = CLARET;
+  ctx.font = 'bold 31px ' + SERIF;
   ctx.textAlign = 'center';
-  ctx.fillText('All 3 must align = entry signal', w/2, arrowY + 55);
+  const resText = 'All 3 must align = entry signal';
+  ctx.fillText(resText, w / 2, resY);
+  const resW = ctx.measureText(resText).width;
+  claretRule(ctx, w / 2 - resW / 2 - 70, resY - 10, 44);
+  claretRule(ctx, w / 2 + resW / 2 + 26, resY - 10, 44);
 
   // Exit rules
-  ctx.fillStyle = WHITE;
-  fitText(ctx, 'Exits: 30% trailing stops across ~20 volatility-sized positions.', w/2, arrowY + 160, 920,
-    '26px -apple-system, BlinkMacSystemFont, sans-serif');
-  fitText(ctx, 'In hostile regimes, the system holds cash.', w/2, arrowY + 200, 920,
-    '26px -apple-system, BlinkMacSystemFont, sans-serif');
+  ctx.fillStyle = MUTED;
+  fitText(ctx, 'Exits: 30% trailing stops across ~20 volatility-sized positions.', w / 2, resY + 70, 900,
+    '26px ' + SANS);
+  fitText(ctx, 'In hostile regimes, the system holds cash.', w / 2, resY + 112, 900,
+    '26px ' + SANS);
 
-  // Footer
-  ctx.fillStyle = GRAY_LIGHT;
-  ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('Walk-forward tested: no future data used in any period.', w/2, h - 70);
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('rigacap.com', w/2, h - 40);
-
+  drawFooter(ctx, w, h, 'Walk-forward tested: no future data used in any period.');
 })();
 
 // ── Card 4: The Months That Matter ──
@@ -412,35 +395,34 @@ function drawAllCards() {
   const c = document.getElementById('card4');
   const ctx = c.getContext('2d');
   const w = 1080, h = 1350;
-  fillNavyGradient(ctx, w, h);
+  fillPaper(ctx, w, h);
 
   // Header
-  drawLogo(ctx, 80, 100, 80);
-  ctx.fillStyle = WHITE;
-  ctx.font = 'bold 42px -apple-system, BlinkMacSystemFont, sans-serif';
+  drawWordmark(ctx, 100, 122, 36);
+  claretRule(ctx, 100, 176, 44);
+  drawSegments(ctx, [
+    { text: 'The months that ', font: '54px ' + SERIF, color: INK },
+    { text: 'matter.', font: 'italic 54px ' + SERIF, color: CLARET },
+  ], 100, 256, 'left');
+
+  ctx.fillStyle = MUTED;
   ctx.textAlign = 'left';
-  ctx.fillText('The months that matter.', 140, 112);
+  fitText(ctx, "The index's six worst months in 21 years — and where the system was (backtest)", 100, 308, 880,
+    '23px ' + SANS);
 
-  ctx.fillStyle = GRAY_LIGHT;
-  fitText(ctx, "The index's six worst months in 21 years — and where the system was (backtest)", 140, 152, 860,
-    '22px -apple-system, BlinkMacSystemFont, sans-serif');
+  hairline(ctx, 100, w - 100, 348);
 
-  drawGoldLine(ctx, 192, w);
-
-  // Table header
-  const colX = [110, 520, 760];
-  let y = 275;
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
+  // Table header — tracked uppercase, numbers right-aligned mono
+  const monthX = 110, spyX = 620, rigaX = 860;
+  let y = 428;
+  ctx.fillStyle = FAINT;
+  ctx.font = '500 19px ' + SANS;
   ctx.textAlign = 'left';
-  ctx.fillText('Month', colX[0], y);
-  ctx.textAlign = 'center';
-  ctx.fillText('S&P 500', colX[1], y);
-  ctx.fillText('RigaCap', colX[2], y);
-
-  ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(80, y + 18); ctx.lineTo(w - 80, y + 18); ctx.stroke();
+  drawTracked(ctx, 'Month', monthX, y, 3);
+  ctx.textAlign = 'right';
+  drawTracked(ctx, 'S&P 500', spyX, y, 3);
+  drawTracked(ctx, 'RigaCap', rigaX, y, 3);
+  hairline(ctx, 100, w - 100, y + 22);
 
   const rows = [
     { month: 'Oct 2008', spy: '−16.5%', riga: '0.0%', cash: true },
@@ -451,50 +433,41 @@ function drawAllCards() {
     { month: 'Dec 2018', spy: '−9.3%', riga: '−1.3%', cash: false },
   ];
 
-  const rowStep = 112;
-  y += 95;
-  rows.forEach((r, i) => {
-    // Alternating row background
-    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent';
-    ctx.fillRect(80, y - 52, w - 160, 82);
-
+  const rowStep = 92;
+  y += 92;
+  rows.forEach(r => {
     ctx.textAlign = 'left';
-    ctx.fillStyle = WHITE;
-    ctx.font = '32px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(r.month, colX[0], y);
+    ctx.fillStyle = INK;
+    ctx.font = '30px ' + SANS;
+    ctx.fillText(r.month, monthX, y);
 
-    ctx.textAlign = 'center';
-    ctx.fillStyle = RED;
-    ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(r.spy, colX[1], y);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = OXBLOOD;
+    ctx.font = '30px ' + MONO;
+    ctx.fillText(r.spy, spyX, y);
 
-    ctx.fillStyle = r.cash ? GREEN : GOLD_LIGHT;
-    ctx.fillText(r.riga, colX[2], y);
+    ctx.fillStyle = r.cash ? FOREST : INK;
+    ctx.font = (r.cash ? 'bold ' : '') + '30px ' + MONO;
+    ctx.fillText(r.riga, rigaX, y);
 
     if (r.cash) {
       ctx.textAlign = 'left';
-      ctx.fillStyle = GOLD;
-      ctx.font = 'italic 24px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText('— in cash', 845, y);
+      ctx.fillStyle = CLARET;
+      ctx.font = 'italic 24px ' + SERIF;
+      ctx.fillText('— in cash', 895, y);
     }
 
+    hairline(ctx, 100, w - 100, y + 30);
     y += rowStep;
   });
 
-  // Punch line
-  ctx.fillStyle = GOLD;
+  // Punch line — serif italic claret
+  ctx.fillStyle = CLARET;
   ctx.textAlign = 'center';
-  fitText(ctx, 'Four of the six, it had already gone to cash.', w/2, y + 80, 920,
-    'bold 34px -apple-system, BlinkMacSystemFont, sans-serif');
+  fitText(ctx, 'Four of the six, it had already gone to cash.', w / 2, y + 70, 900,
+    'italic 37px ' + SERIF);
 
-  // Footer
-  ctx.fillStyle = GRAY_LIGHT;
-  ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('Backtested monthly returns, 2007–2026. Not investment advice.', w/2, h - 70);
-
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('rigacap.com', w/2, h - 40);
+  drawFooter(ctx, w, h, 'Backtested monthly returns, 2007–2026. Not investment advice.');
 })();
 
 // ── Card 5: Signal Teaser ──
@@ -502,151 +475,151 @@ function drawAllCards() {
   const c = document.getElementById('card5');
   const ctx = c.getContext('2d');
   const w = 1080, h = 1350;
-  fillNavyGradient(ctx, w, h);
+  fillPaper(ctx, w, h);
 
-  // Simulated dashboard mockup (blurred/redacted)
-  // Header bar
-  ctx.fillStyle = 'rgba(255,255,255,0.08)';
-  ctx.fillRect(60, 60, w - 120, 70);
+  // Dashboard mock — paper card surface with hairline border
+  const panelX = 70, panelY = 70, panelW = w - 140, panelH = 570;
+  ctx.fillStyle = CARD_BG;
+  ctx.fillRect(panelX, panelY, panelW, panelH);
+  ctx.strokeStyle = HAIRLINE;
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(panelX, panelY, panelW, panelH);
 
-  drawLogo(ctx, 110, 95, 44);
-  ctx.fillStyle = WHITE;
-  ctx.font = 'bold 24px -apple-system, BlinkMacSystemFont, sans-serif';
+  // Panel header: wordmark + Dashboard
+  drawSegments(ctx, [
+    { text: 'RigaCap', font: 'bold 26px ' + SERIF, color: INK },
+    { text: '.', font: 'bold 26px ' + SERIF, color: CLARET },
+    { text: '  Dashboard', font: '22px ' + SANS, color: MUTED },
+  ], 100, 126, 'left');
+
+  // Fake nav tabs — quiet ink-tint pills
+  ctx.fillStyle = 'rgba(20,18,16,0.05)';
+  ctx.fillRect(640, 100, 80, 30);
+  ctx.fillRect(740, 100, 100, 30);
+  ctx.fillRect(860, 100, 80, 30);
+  hairline(ctx, 90, w - 90, 152);
+
+  // Column headers — tracked uppercase
+  const colX = { sym: 100, score: 290, signal: 440, entry: 590, regime: 740, action: 900 };
+  ctx.fillStyle = FAINT;
+  ctx.font = '500 17px ' + SANS;
   ctx.textAlign = 'left';
-  ctx.fillText('RigaCap Dashboard', 148, 102);
+  drawTracked(ctx, 'Symbol', colX.sym, 196, 2);
+  drawTracked(ctx, 'Score', colX.score, 196, 2);
+  drawTracked(ctx, 'Signal', colX.signal, 196, 2);
+  drawTracked(ctx, 'Entry', colX.entry, 196, 2);
+  drawTracked(ctx, 'Regime', colX.regime, 196, 2);
+  drawTracked(ctx, 'Action', colX.action, 196, 2);
+  hairline(ctx, 90, w - 90, 212);
 
-  // Fake nav tabs
-  ctx.fillStyle = 'rgba(255,255,255,0.12)';
-  ctx.beginPath(); ctx.roundRect(600, 78, 80, 32, 6); ctx.fill();
-  ctx.beginPath(); ctx.roundRect(700, 78, 100, 32, 6); ctx.fill();
-  ctx.beginPath(); ctx.roundRect(820, 78, 80, 32, 6); ctx.fill();
-
-  // Signal rows (blurred/redacted)
-  const signalY = 170;
-  ctx.fillStyle = 'rgba(255,255,255,0.06)';
-  ctx.beginPath(); ctx.roundRect(60, signalY, w - 120, 50, 8); ctx.fill();
-
-  // Header row text
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('Symbol', 90, signalY + 32);
-  ctx.fillText('Score', 280, signalY + 32);
-  ctx.fillText('Signal', 430, signalY + 32);
-  ctx.fillText('Entry', 580, signalY + 32);
-  ctx.fillText('Regime', 730, signalY + 32);
-  ctx.fillText('Action', 900, signalY + 32);
-
-  // Fake data rows with blur effect
+  // Fake data rows — open rows first, then redacted
   const fakeRows = [
-    { sym: 'NVDA', score: '94.2', signal: 'BUY', entry: '$412.86', color: '#22c55e' },
-    { sym: 'AVGO', score: '91.8', signal: 'BUY', entry: '$287.40', color: '#22c55e' },
-    { sym: 'CRWD', score: '88.5', signal: 'BUY', entry: '', color: '#22c55e' },
-    { sym: 'META', score: '86.1', signal: 'BUY', entry: '', color: '#22c55e' },
-    { sym: '????', score: '???.?', signal: '???', entry: '', color: '#94a3b8' },
-    { sym: '????', score: '???.?', signal: '???', entry: '', color: '#94a3b8' },
-    { sym: '????', score: '???.?', signal: '???', entry: '', color: '#94a3b8' },
+    { sym: 'NVDA', score: '94.2', signal: 'BUY', entry: '$412.86' },
+    { sym: 'AVGO', score: '91.8', signal: 'BUY', entry: '$287.40' },
+    { sym: 'CRWD', score: '88.5', signal: 'BUY', entry: '' },
+    { sym: 'META', score: '86.1', signal: 'BUY', entry: '' },
+    { sym: '????', score: '???.?', signal: '???', entry: '' },
+    { sym: '????', score: '???.?', signal: '???', entry: '' },
+    { sym: '????', score: '???.?', signal: '???', entry: '' },
   ];
 
   fakeRows.forEach((row, i) => {
-    const ry = signalY + 60 + i * 60;
+    const ry = 232 + i * 56;
     const isBlurred = i >= 2;
 
-    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent';
-    ctx.fillRect(60, ry, w - 120, 56);
-
     if (isBlurred) {
-      // Redacted bars
-      ctx.fillStyle = 'rgba(255,255,255,0.08)';
-      ctx.beginPath(); ctx.roundRect(90, ry + 18, 60, 20, 4); ctx.fill();
-      ctx.beginPath(); ctx.roundRect(280, ry + 18, 50, 20, 4); ctx.fill();
-      ctx.beginPath(); ctx.roundRect(430, ry + 18, 40, 20, 4); ctx.fill();
-      ctx.beginPath(); ctx.roundRect(580, ry + 18, 70, 20, 4); ctx.fill();
-      ctx.beginPath(); ctx.roundRect(730, ry + 18, 80, 20, 4); ctx.fill();
-      ctx.beginPath(); ctx.roundRect(900, ry + 18, 60, 20, 4); ctx.fill();
+      // Redacted bars — ink-tint blocks on paper
+      ctx.fillStyle = 'rgba(20,18,16,0.08)';
+      ctx.fillRect(colX.sym, ry + 14, 60, 18);
+      ctx.fillRect(colX.score, ry + 14, 50, 18);
+      ctx.fillRect(colX.signal, ry + 14, 40, 18);
+      ctx.fillRect(colX.entry, ry + 14, 70, 18);
+      ctx.fillRect(colX.regime, ry + 14, 80, 18);
+      ctx.fillRect(colX.action, ry + 14, 60, 18);
     } else {
-      ctx.fillStyle = WHITE;
-      ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText(row.sym, 90, ry + 36);
-      ctx.fillText(row.score, 280, ry + 36);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = INK;
+      ctx.font = 'bold 20px ' + MONO;
+      ctx.fillText(row.sym, colX.sym, ry + 32);
+      ctx.font = '20px ' + MONO;
+      ctx.fillText(row.score, colX.score, ry + 32);
 
-      ctx.fillStyle = row.color;
-      ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText(row.signal, 430, ry + 36);
+      ctx.fillStyle = FOREST;
+      ctx.font = 'bold 20px ' + MONO;
+      ctx.fillText(row.signal, colX.signal, ry + 32);
 
-      ctx.fillStyle = GRAY_LIGHT;
-      ctx.font = '20px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText(row.entry, 580, ry + 36);
+      ctx.fillStyle = MUTED;
+      ctx.font = '20px ' + MONO;
+      ctx.fillText(row.entry, colX.entry, ry + 32);
 
       // Regime — redacted pill (no hardcoded regime claim)
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ctx.beginPath(); ctx.roundRect(730, ry + 18, 90, 20, 4); ctx.fill();
+      ctx.fillStyle = 'rgba(20,18,16,0.07)';
+      ctx.fillRect(colX.regime, ry + 14, 90, 18);
 
-      ctx.fillStyle = '#22c55e';
-      ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText('ENTER', 900, ry + 36);
+      ctx.fillStyle = FOREST;
+      ctx.font = 'bold 18px ' + MONO;
+      ctx.fillText('ENTER', colX.action, ry + 32);
     }
+
+    if (i < fakeRows.length - 1) hairline(ctx, 90, w - 90, ry + 48);
   });
 
-  // Blur overlay gradient
-  const blurGrad = ctx.createLinearGradient(0, signalY + 180, 0, signalY + 480);
-  blurGrad.addColorStop(0, 'rgba(23, 37, 84, 0)');
-  blurGrad.addColorStop(0.3, 'rgba(23, 37, 84, 0.6)');
-  blurGrad.addColorStop(1, 'rgba(23, 37, 84, 0.95)');
-  ctx.fillStyle = blurGrad;
-  ctx.fillRect(60, signalY + 180, w - 120, 350);
+  // Fade-to-paper overlay over the lower rows
+  const fadeGrad = ctx.createLinearGradient(0, 330, 0, panelY + panelH - 2);
+  fadeGrad.addColorStop(0, 'rgba(250, 247, 240, 0)');
+  fadeGrad.addColorStop(0.45, 'rgba(250, 247, 240, 0.7)');
+  fadeGrad.addColorStop(1, 'rgba(250, 247, 240, 1)');
+  ctx.fillStyle = fadeGrad;
+  ctx.fillRect(panelX + 2, 330, panelW - 4, panelY + panelH - 2 - 330);
 
-  // CTA area
-  const ctaY = 740;
-
-  // Lock icon
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 4;
+  // Lock mark — thin claret stroke
+  const ctaY = 760;
+  ctx.strokeStyle = CLARET;
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(w/2, ctaY, 44, 0, Math.PI * 2);
+  ctx.arc(w / 2, ctaY, 38, 0, Math.PI * 2);
   ctx.stroke();
-  ctx.fillStyle = GOLD;
+  ctx.fillStyle = CLARET;
   ctx.beginPath();
-  ctx.arc(w/2, ctaY - 5, 9, 0, Math.PI * 2);
+  ctx.arc(w / 2, ctaY - 5, 8, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.moveTo(w/2 - 6, ctaY + 2);
-  ctx.lineTo(w/2 + 6, ctaY + 2);
-  ctx.lineTo(w/2 + 3, ctaY + 20);
-  ctx.lineTo(w/2 - 3, ctaY + 20);
+  ctx.moveTo(w / 2 - 5, ctaY + 1);
+  ctx.lineTo(w / 2 + 5, ctaY + 1);
+  ctx.lineTo(w / 2 + 3, ctaY + 17);
+  ctx.lineTo(w / 2 - 3, ctaY + 17);
   ctx.closePath();
   ctx.fill();
 
-  ctx.fillStyle = WHITE;
-  ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, sans-serif';
+  // CTA headline — serif, claret italic emphasis
+  drawSegments(ctx, [
+    { text: 'Want the ', font: 'bold 58px ' + SERIF, color: INK },
+    { text: 'full', font: 'bold italic 58px ' + SERIF, color: CLARET },
+    { text: ' signal list?', font: 'bold 58px ' + SERIF, color: INK },
+  ], w / 2, ctaY + 122, 'center');
+
+  ctx.fillStyle = MUTED;
   ctx.textAlign = 'center';
-  ctx.fillText('Want the full signal list?', w/2, ctaY + 110);
+  fitText(ctx, 'Fresh signals after every close — entries, stops, and sizing included.', w / 2, ctaY + 188, 920,
+    '27px ' + SANS);
+  fitText(ctx, 'Momentum scores, regime alerts, trailing stops.', w / 2, ctaY + 232, 920,
+    '27px ' + SANS);
 
-  ctx.fillStyle = GRAY_LIGHT;
-  fitText(ctx, 'Fresh signals after every close — entries, stops, and sizing included.', w/2, ctaY + 170, 940,
-    '28px -apple-system, BlinkMacSystemFont, sans-serif');
-  fitText(ctx, 'Momentum scores, regime alerts, trailing stops.', w/2, ctaY + 215, 940,
-    '28px -apple-system, BlinkMacSystemFont, sans-serif');
+  // CTA button — claret fill, paper text (the site's primary button)
+  const btnW = 420, btnH = 70, btnY = ctaY + 292;
+  ctx.fillStyle = CLARET;
+  ctx.fillRect(w / 2 - btnW / 2, btnY, btnW, btnH);
+  ctx.fillStyle = PAPER;
+  ctx.font = 'bold 28px ' + SANS;
+  ctx.fillText('Start the 7-day trial', w / 2, btnY + 45);
 
-  // CTA button
-  ctx.fillStyle = GOLD;
-  const btnW = 400, btnH = 68;
-  ctx.beginPath();
-  ctx.roundRect(w/2 - btnW/2, ctaY + 270, btnW, btnH, 12);
-  ctx.fill();
-
-  ctx.fillStyle = NAVY;
-  ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('Start the 7-day trial', w/2, ctaY + 312);
-
-  ctx.fillStyle = GRAY_LIGHT;
-  ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('rigacap.com', w/2, h - 50);
+  ctx.fillStyle = MUTED;
+  ctx.font = '22px ' + MONO;
+  ctx.fillText('rigacap.com', w / 2, h - 58);
 })();
 }
 
-haloImg.onload = drawAllCards;
-haloImg.onerror = function() { console.error('halo image failed to load'); drawAllCards(); };
-haloImg.src = 'rigacap-icon-halo.png';
+drawAllCards();
 </script>
 </body>
 </html>
