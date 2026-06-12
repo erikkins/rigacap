@@ -22,7 +22,7 @@ Sitting in cash or rattled; knows they should be invested; can't stomach another
 ## Channels & Workstreams
 
 ### WS1 — Paid test (Erik: "willing to put money in, even a little, to see pickup")
-Status: 🟡 PLAN DRAFTED — needs Erik account/billing setup
+Status: 🟡 KIT READY (keywords + ad copy drafted Jun 12) — blocked on Erik: create Google Ads + Meta Ads accounts w/ billing
 - **Test A — Google Search** (intent capture, recommended first dollar): protection/stability keywords ("protect portfolio from crash", "reduce stock market risk", "alternatives to buy and hold", "stock market too volatile"). High intent, low volume, perfect filtration. ~$25/day.
 - **Test B — Meta (IG/FB)**: months-that-matter card + 30s animation screen-cap as creative; interest targeting (investing + age 40+ + HHI proxies). ~$25/day.
 - **Skip**: X ads (weak targeting, brand-safety risk, credits better spent on API).
@@ -39,7 +39,7 @@ Status: 🟢 RUNNING — launch sequence through Tue, Buffett post Wed, engageme
 Status: 🔴 TODO — fresh-eyes audit of the new-subscriber path: from first login → "what do I actually do with a signal" (entries, sizing, stops in broker terms). Tour copy, empty states, signal cards.
 
 ### WS4 — Drip emails (5-step onboarding)
-Status: 🟡 AUDIT STARTED — no stale numbers found (grep clean); needs positioning rework: lead with behavioral insurance story + expectation-setting per the analyst (pre-set multi-year relative-underperformance expectations = churn prevention; "who this is NOT for" honesty in the drip)
+Status: 🟢 DONE (Jun 12) — full canon rework shipped: D1 actionable broker walkthrough, D3 = "What to expect (the honest version)" churn vaccine w/ analyst F/A filter, D5/D6 canon tables + founding rate, D8 honest win-back. Also purged stale lifecycle sends (goodbye, trial-ending, quiet-week: 21.5%/positive-2022/7-regime/3-4-signals all gone).
 
 ### WS5 — RIA outreach kit (post-Paul)
 Status: ⏳ GATED — email-first outreach drafts, firm-licensing one-pager, founding-firms offer. No calls.
