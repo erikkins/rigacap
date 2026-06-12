@@ -1857,8 +1857,31 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
                     Your free trial ends today. After tonight the dashboard and signal emails stop — that's the whole consequence. No tricks, nothing retroactive.
                 </p>
 
+                <p style="font-size: 17px; color: #141210; margin: 0 0 16px 0; line-height: 1.65;">
+                    The facts, one more time:
+                </p>
+
+                <table cellpadding="0" cellspacing="0" style="width:100%; border-collapse: collapse; margin: 0 0 24px 0;">
+                    <tr>
+                        <td style="padding: 12px 16px 12px 0; border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">21-year backtest</td>
+                        <td style="padding: 12px 0; border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; text-align: right; font-family: 'Courier New', monospace; font-size: 15px; color: #141210; font-weight: bold;">8.3% a year</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 16px 12px 0; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Worst drawdown</td>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #DDD5C7; text-align: right; font-family: 'Courier New', monospace; font-size: 15px; color: #2D5F3F; font-weight: bold;">&minus;19% <span style="color: #8A8279; font-weight: normal; font-size: 13px;">(index: lost half, twice)</span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 16px 12px 0; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">2008</td>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #DDD5C7; text-align: right; font-family: 'Courier New', monospace; font-size: 15px; color: #141210; font-weight: bold;">&minus;0.5% <span style="color: #8A8279; font-weight: normal; font-size: 13px;">(index: &minus;37.7%)</span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 16px 12px 0; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Live record</td>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #DDD5C7; text-align: right; font-family: 'Courier New', monospace; font-size: 15px; color: #7A2430; font-weight: bold;">began June 11, 2026</td>
+                    </tr>
+                </table>
+
                 <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
-                    The facts, one more time. The case for the strategy is a 21-year walk-forward backtest: 8.3% a year, worst drawdown 19%, and a 2008 that finished at −0.5% while the index fell 37.7%. The live record began June 11, 2026 — it's days old, and it posts publicly from here, good or bad. You can check it whether you subscribe or not. That's the deal.
+                    The live record is days old, and it posts publicly from here — good or bad. You can check it whether you subscribe or not. That's the deal.
                 </p>
 
                 <div style="border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; padding: 20px 0; margin: 24px 0;">
