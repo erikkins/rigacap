@@ -1915,8 +1915,14 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
                 </p>
 
                 <div style="border-left: 2px solid #7A2430; padding: 16px 20px; background: #FAF7F0; margin: 24px 0;">
+                    <p style="margin: 0 0 14px 0; font-family: Georgia, serif; font-style: italic; font-size: 16px; color: #141210; line-height: 1.6;">
+                        The biggest threat to your returns isn't picking the wrong stock. It's selling the right portfolio at the worst moment.
+                    </p>
+                    <p style="margin: 0 0 14px 0; font-family: Georgia, serif; font-style: italic; font-size: 16px; color: #141210; line-height: 1.6;">
+                        Decide your exit rules before you're scared, write them down, and honor them.
+                    </p>
                     <p style="margin: 0; font-family: Georgia, serif; font-style: italic; font-size: 16px; color: #141210; line-height: 1.6;">
-                        The biggest threat to your returns isn't picking the wrong stock. It's selling the right portfolio at the worst moment. Decide your exit rules before you're scared, write them down, and honor them. Most of the damage investors do to themselves happens in a single bad week.
+                        Most of the damage investors do to themselves happens in a single bad week.
                     </p>
                 </div>
 
