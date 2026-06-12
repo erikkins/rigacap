@@ -169,6 +169,10 @@ def _patched_configure(self, params):
     if _COOLDOWN_DAYS:
         params.regime_cooldown_days = _COOLDOWN_DAYS
         self.regime_cooldown_days = _COOLDOWN_DAYS
+    # Initial stop (Jun 12 research): entry-anchored floor under the wide trail.
+    # New attr; nothing in walk_forward_service stomps it post-configure.
+    self.initial_stop_pct = _INITIAL_STOP
+_INITIAL_STOP = 0.0
 CustomBacktester.configure = _patched_configure
 
 _CA = v.load_corp_actions()
@@ -225,8 +229,9 @@ async def wf(start, end, max_pos=6, size=15.0, trail=12.0, max_hold=60, plock=0.
              dwap_th=5.0, near_hi=3.0, mom_days=None, force_quality=False, raw=False, carry=True,
              refresh_top_m=None, refresh_bull_only=False, refresh_factor_gate=None,
              entry_factor_gate=None, stop_ban_periods=None, reentry_mode=False, bear_keep=0.0,
-             cooldown_days=0):
-    global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN, _DGATE, _CONV, _SAMESEC, _VOLW, _MOMDAYS, _FORCE_QUALITY, _REFRESH_TOP_M, _REFRESH_BULL_ONLY, _REFRESH_FACTOR_GATE, _ENTRY_FACTOR_GATE, _STOP_BAN_PERIODS, _STOP_BAN, _REENTRY_MODE, _BEAR_KEEP, _COOLDOWN_DAYS
+             cooldown_days=0, istop=0.0):
+    global _MAX_HOLD, _PLOCK, _PLOCK_STOP, _DISP, _DISP_MARGIN, _DGATE, _CONV, _SAMESEC, _VOLW, _MOMDAYS, _FORCE_QUALITY, _REFRESH_TOP_M, _REFRESH_BULL_ONLY, _REFRESH_FACTOR_GATE, _ENTRY_FACTOR_GATE, _STOP_BAN_PERIODS, _STOP_BAN, _REENTRY_MODE, _BEAR_KEEP, _COOLDOWN_DAYS, _INITIAL_STOP
+    _INITIAL_STOP = istop
     _MAX_HOLD, _PLOCK, _PLOCK_STOP = max_hold, plock, plock_stop
     _DISP, _DISP_MARGIN, _DGATE = disp, disp_margin, dgate
     _CONV = conv
@@ -530,6 +535,83 @@ async def main():
         print(f"  BASE: ann={ba.mean():5.1f}% sharpe={bs.mean():.2f} mdd={bm.mean():.1f}%/worst {bm.max():.1f}% min_ann={ba.min():+.1f}%")
         print(f"  gate wins ann on {int((ga.values > ba.values).sum())}/{len(ga)} windows", flush=True)
         return
+    if len(sys.argv) > 1 and sys.argv[1] == "istop_t2":
+        # TIER-2 for istop15 (Pareto on both continuous lenses, Jun 12):
+        # same 10 held-out starts as egate_t2; base reused from its cache.
+        # Also runs istop15+egate combo (both levers adoption-pending).
+        import json as _json
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location("ic", os.path.join(R, "scripts", "inversion_campaign.py"))
+        _ic = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_ic)
+        _b = _ic.run(topk=20, full_curve=True)["series"]
+        fgate = (_b > _b.rolling(200, min_periods=100).mean()).fillna(True)
+        held = [(2022, 3), (2022, 6), (2022, 9), (2022, 12),
+                (2023, 3), (2023, 6), (2023, 9), (2023, 12), (2024, 3), (2024, 6)]
+        se = [(datetime(y, m, 3), datetime(2026, 5, 29) if y + 2 > 2026 else datetime(y + 2, m, 28))
+              for y, m in held]
+        epath = os.path.join(R, "scripts", "egate_t2_results.json")
+        ecache = _json.load(open(epath)) if os.path.exists(epath) else {}
+        path = os.path.join(R, "scripts", "istop_t2_results.json")
+        results = _json.load(open(path)) if os.path.exists(path) else {}
+        print(f"=== ISTOP15 TIER-2: {len(se)} held-out starts (base from egate_t2 cache) ===", flush=True)
+        for s_, e_ in se:
+            key = str(s_.date())
+            if key in results:
+                print(f"  {key} (cached)", flush=True)
+                continue
+            ri = await wf(s_, e_, 20, 4.5, 30, 60, conv=0.0, volw=1.0, istop=15.0)
+            rc = await wf(s_, e_, 20, 4.5, 30, 60, conv=0.0, volw=1.0, istop=15.0, entry_factor_gate=fgate)
+            rb = ecache.get(key, {}).get("base")
+            if rb is None:
+                rb = await wf(s_, e_, 20, 4.5, 30, 60, conv=0.0, volw=1.0)
+                rb.pop("equity_curve", None)
+            ri.pop("equity_curve", None); rc.pop("equity_curve", None)
+            results[key] = {"istop15": ri, "combo": rc, "base": rb}
+            with open(path, "w") as f:
+                _json.dump(results, f)
+            print(f"  {key}  i15 ann={ri['ann']:+6.1f}% mdd={ri['mdd']:4.1f}% | combo ann={rc['ann']:+6.1f}% mdd={rc['mdd']:4.1f}% | base ann={rb['ann']:+6.1f}% mdd={rb['mdd']:4.1f}%", flush=True)
+        import pandas as _pd
+        for nm in ("istop15", "combo", "base"):
+            a = _pd.Series([v[nm]["ann"] for v in results.values()])
+            m = _pd.Series([v[nm]["mdd"] for v in results.values()])
+            sh = _pd.Series([v[nm]["sharpe"] for v in results.values()])
+            print(f"  {nm:8} ann={a.mean():5.1f}% sharpe={sh.mean():.2f} mdd={m.mean():.1f}%/worst {m.max():.1f}% min_ann={a.min():+.1f}%", flush=True)
+        ia = _pd.Series([v["istop15"]["ann"] for v in results.values()])
+        ba = _pd.Series([v["base"]["ann"] for v in results.values()])
+        print(f"  istop15 wins ann on {int((ia.values > ba.values).sum())}/{len(ia)} windows", flush=True)
+        return
+
+    if len(sys.argv) > 1 and sys.argv[1] == "istop":
+        import json as _json
+        s, e = datetime(2017, 1, 3), datetime(2026, 5, 29)
+        suffix = ""
+        if os.environ.get("PITFWU_EXT"):
+            s = datetime(2007, 1, 3)
+            suffix = "_ext"
+        CONFIGS = [
+            ("t30v_base_FIXED", 0.0),
+            ("t30v_istop8", 8.0),
+            ("t30v_istop12", 12.0),
+            ("t30v_istop15", 15.0),
+            ("t30v_istop20", 20.0),
+        ]
+        path = os.path.join(R, "scripts", f"istop_results{suffix}.json")
+        results = _json.load(open(path)) if os.path.exists(path) else {}
+        print(f"=== INITIAL-STOP SWEEP (continuous {s.date()} -> {e.date()}{' EXT' if suffix else ''}) ===", flush=True)
+        for name, isv in CONFIGS:
+            if name in results:
+                r = results[name]
+                print(f"  {name:18} ann={r['ann']:5.1f}% sharpe={r['sharpe']:5.2f} mdd={r['mdd']:5.1f}%  (cached)", flush=True)
+                continue
+            r = await wf(s, e, 20, 4.5, 30, 60, conv=0.0, volw=1.0, istop=isv)
+            r.pop("equity_curve", None)
+            results[name] = r
+            with open(path, "w") as f:
+                _json.dump(results, f)
+            print(f"  {name:18} ann={r['ann']:5.1f}% sharpe={r['sharpe']:5.2f} mdd={r['mdd']:5.1f}% trades={r['trades']}", flush=True)
+        print(f"WROTE {path}", flush=True)
+        return
+
     if len(sys.argv) > 1 and sys.argv[1] == "ablate":
         # t30v control ablation on the CONTINUOUS 2017-2026 lens — which gate is
         # the drawdown technology, and what does each cost in CAGR? Inversion

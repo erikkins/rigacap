@@ -246,6 +246,11 @@ class BacktesterService:
         # maintained by run_backtest at daily cadence (line ~1208 area).
         # Defaults dd_tighten_threshold_pct=0 keep this branch a no-op for
         # all existing callers.
+        # Initial stop (Jun 12 2026 research): entry-anchored floor under the
+        # wide trail — stop = max(hwm*(1-trail), entry*(1-initial_stop_pct)).
+        # Cuts picks that never take off before they bleed the full trail.
+        # 0 = disabled (prod default).
+        self.initial_stop_pct = 0
         self.dd_tighten_threshold_pct = 0
         self.dd_tighten_stop_pct = 8.0
         self._portfolio_peak_equity = 0.0
@@ -1334,6 +1339,13 @@ class BacktesterService:
                 if floor_price > stop_trigger_price:
                     stop_trigger_price = floor_price
 
+            # Initial stop: entry-anchored floor, binding until the trail
+            # from the high-water mark overtakes it.
+            if self.initial_stop_pct > 0:
+                init_floor = entry_price * (1 - self.initial_stop_pct / 100)
+                if init_floor > stop_trigger_price:
+                    stop_trigger_price = init_floor
+
             if use_intraday:
                 # Intraday-aware: did the day's LOW cross the trigger?
                 if day_low <= stop_trigger_price:
@@ -1347,6 +1359,9 @@ class BacktesterService:
                 # EOD-only (legacy): trigger from current_price, exit at current_price.
                 drop_from_high = (high_water - current_price) / high_water * 100
                 if drop_from_high >= effective_stop_pct:
+                    return 'trailing_stop'
+                if (self.initial_stop_pct > 0
+                        and current_price <= entry_price * (1 - self.initial_stop_pct / 100)):
                     return 'trailing_stop'
 
         elif strategy_type == ExitStrategyType.FIXED_TARGET:
