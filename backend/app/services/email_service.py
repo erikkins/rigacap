@@ -1709,24 +1709,25 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
                     <p style="margin: 0 0 4px; font-family: 'Courier New', monospace; font-size: 10px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: #5A544E;">The Daily Rhythm</p>
                     <ol style="margin: 12px 0 0; padding: 0 0 0 20px; color: #141210; line-height: 2; font-size: 15px;">
                         <li><strong>4:30 PM ET, every market day</strong> — the system scans after the close</li>
-                        <li><strong>If a stock qualifies</strong> — you get an email, and a signal card appears on your dashboard</li>
-                        <li><strong>If nothing qualifies</strong> — you hear nothing, and the model holds cash. Silence is an output.</li>
+                        <li><strong>Every evening</strong> — you get the daily digest: the market read, the model's positions, and any new signals</li>
+                        <li><strong>If a stock qualifies</strong> — it's in that email with full details, and a signal card appears on your dashboard</li>
+                        <li><strong>If nothing qualifies</strong> — the digest says so, and the model holds cash. "Nothing today" is an output, stated out loud.</li>
                     </ol>
                 </div>
 
                 <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
-                    An entry signal gives you three things: the ticker, the entry price, and a published stop — the exact price at which the system will tell you to sell. It also shows what slice of the model portfolio the position represents, so you can size it to your own account.
+                    An entry signal gives you three things: the ticker, the entry price, and the current stop level — a trailing stop that rises as the stock makes new highs and never moves down. It also shows what slice of the model portfolio the position represents, so you can size it to your own account.
                 </p>
 
                 <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
-                    Concretely: say tomorrow's scan flags ABC at $42. The email lands that evening with the entry, the stop, and the weight. At your broker — next morning is fine, this isn't a race — you place the buy order, set a stop order at the published level (or write it down and honor it), and close the laptop. Nothing to watch intraday. From there the stop only ratchets upward as the stock rises; the dashboard always shows the current level. If price ever breaches it, you get a sell alert that says so plainly: sell ABC, here's why, here's the model's exit. You sell. That's the whole judgment call — there isn't one.
+                    Concretely: say tomorrow's scan flags ABC at $42. The email lands that evening with the entry, the stop level, and the weight. At your broker — next morning is fine, this isn't a race — you place the buy order and close the laptop. That's it. You don't set any stop orders, and there's nothing to watch intraday: <em>the system</em> tracks the trailing stop for you, ratcheting it up as the stock rises, and the dashboard always shows each position's current level. If price ever breaches it, you get a sell alert that says so plainly: sell ABC, here's why, here's the model's exit. You sell. That's the whole judgment call — there isn't one.
                 </p>
 
                 <table cellpadding="0" cellspacing="0" style="width:100%; border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; margin: 28px 0;">
                     <tr>
                         <td style="padding: 14px 16px 14px 0; border-right: 1px solid #DDD5C7;">
                             <div style="font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Entry Signal</div>
-                            <div style="font-family: Georgia, serif; font-size: 13px; color: #141210; margin-top: 4px;">Ticker, entry price, published stop, position weight</div>
+                            <div style="font-family: Georgia, serif; font-size: 13px; color: #141210; margin-top: 4px;">Ticker, entry price, current stop level, position weight</div>
                         </td>
                         <td style="padding: 14px 16px;">
                             <div style="font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Sell Alert</div>
