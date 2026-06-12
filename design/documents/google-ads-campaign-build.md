@@ -37,7 +37,7 @@ Keywords (phrase + exact, paste as shown):
 **RSA (Responsive Search Ad):**
 - Final URL: `https://rigacap.com/`
 - Headlines (pin nothing, let Google rotate): `Built So You Never Panic-Sell` · `Momentum Signals, Risk-First` · `Designed Around the Drawdown` · `A 21-Year Honest Backtest` · `When Markets Break, Hold Cash` · `Capital Preservation First` · `RigaCap — Signals With Stops` · `7-Day Free Trial` · `From $59/Month (First 100)` · `No Hype. Published Losers.`
-- Descriptions: `A momentum strategy built around its worst drawdown, not its best year. Every number labeled, losers posted too.` · `The system goes to cash when markets turn hostile. See the full 21-year walk-forward backtest.` · `Signals only — you keep your broker, your custody, your control. 7-day free trial.` · `Honest numbers, published methodology, live record accruing in public.`
+- Descriptions (all ≤90 chars, verified): `A momentum strategy built around the drawdown, not the brag. Every number labeled.` · `The system goes to cash when markets turn hostile. See the honest 21-year backtest.` · `Signals only — keep your broker, your custody, your control. 7-day free trial.` · `Honest numbers, published methodology, live record accruing in public.`
 
 ## Step 3 — Ad group 2: `panic-discipline` → lands on rigacap.com/track-record
 Keywords:
@@ -56,7 +56,7 @@ Keywords:
 **RSA:**
 - Final URL: `https://rigacap.com/track-record`
 - Headlines: `The Cost of Panic-Selling` · `Watch 21 Years in 60 Seconds` · `What Investors Actually Collect` · `Three Crashes, One Strategy` · `In Cash for 2008's Worst Months` · `Discipline, Outsourced` · `See the Honest Track Record` · `Backtest That Includes 2008` · `7-Day Free Trial` · `Built for the Long Holder`
-- Descriptions: `Our animation races $100k through 2008, COVID, and 2022 — then shows what panic-selling costs. Watch it.` · `The index's six worst months: the system sat four of them out in cash. Backtested, every number labeled.` · `A strategy is only as good as your ability to hold it. We built for that. 7-day trial.` · `No predictions. No hype. A published, backtested record and a live one accruing.`
+- Descriptions (all ≤90 chars, verified): `Watch $100k race through 2008, COVID, and 2022 — then see what panic-selling costs.` · `The index's six worst months: the system sat four out in cash. Backtested, labeled.` · `A strategy is only as good as your ability to hold it. We built for that. Free trial.` · `No predictions, no hype. A published backtest and a live record accruing.`
 
 ## Step 4 — Negative keywords (campaign level, paste all)
 ```
