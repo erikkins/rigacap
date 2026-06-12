@@ -95,3 +95,11 @@ REMAINING QUEUE: egate fast-follow → beta email rewrite (new numbers/voice) �
 - If frame can't be opened up → t30v ~10%/15-18% is the honest product; remaining lever = pre-2016 parquet extension (2008 GFC + 2009 momentum crash — where naive momentum historically died; would also flip the animation's ending).
 - Rebuild portfolio-race.json with DAILY naive resolution before building the animation (current −30% naive DD is a sampling artifact; truth −52%).
 - Erik engaged with all interim findings live (Jun 9 night session); copy stays window-mean-14% meanwhile.
+
+
+## ISTOP (initial stop) — Erik's lever, tested + REJECTED (Jun 12 2026)
+Entry-anchored floor under the wide trail: stop = max(hwm*0.70, entry*(1-istop)). Backtester `initial_stop_pct` (default 0 = prod no-op) + harness `istop=` param + `istop`/`istop_t2` modes; results in scripts/istop_results{,_ext,_t2... }.json.
+- Sweep (8/12/15/20): istop12 = SIREN SONG — best 2017-26 (11.6/0.84/17.5) but 21y MDD blows out to 22.9% (crash-era V-bottom whipsaw); istop8 same failure (20.6%). **istop15 = Pareto on BOTH continuous lenses** (21y 8.8/0.76/18.3 vs base 8.3/0.73/19.3).
+- **Tier-2 (10 held-out windows): FAIL.** istop15 mean ann 14.2 vs base 15.6 (−1.4pp), Sharpe 0.93 vs 1.00, wins 3/10, floor min_ann +7.6 vs +10.0. MDD gain tiny (13.1/16.7 vs 13.4/17.2). Combo istop15+egate even softer (14.0/0.90).
+- **Mirror image of egate**: egate = +continuous/wash-per-window (book-state mechanism); istop = +continuous/NEGATIVE-per-window (benefit concentrates in crash eras; fresh-start subscribers pay the whipsaw tax in normal markets). The two lenses disagree systematically in OPPOSITE directions.
+- VERDICT: not adopted; t30v stays base, egate remains the only adoption-pending lever. Future hypothesis (logged, not chased): CONDITIONAL initial stop active only during factor stress (egate signal as trigger) — aims protection at the eras where it paid.
