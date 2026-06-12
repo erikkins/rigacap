@@ -1612,11 +1612,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
                     </p>
                 </div>
 
-                <div style="border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; padding: 20px 0; margin: 24px 0; text-align: center;">
-                    <p style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E; margin: 0 0 8px;">Come Back</p>
-                    <p style="font-family: Georgia, serif; font-size: 24px; color: #141210; margin: 0 0 4px;">20% off your first month</p>
-                    <p style="font-family: 'Courier New', monospace; font-size: 11px; color: #8A8279; margin: 0;">Code: {promo_code}</p>
-                </div>
+
 
                 <div style="text-align: center; margin: 32px 0;">
                     <a href="https://rigacap.com/#pricing"
@@ -1629,7 +1625,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
 
         html = self._email_wrapper("We'll be here", content, user_id)
 
-        text = f"""{first_name}, your RigaCap subscription has ended. Come back with 20% off — code {promo_code}. Reply if something wasn't right. — Erik"""
+        text = f"""{first_name}, your RigaCap subscription has ended. The door stays open — same price as everyone. Reply if something wasn't right. — Erik"""
 
         return await self.send_email(
             to_email=to_email,
@@ -1927,17 +1923,11 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
                 </div>
 
                 <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
-                    That advice is free and works without us. If part of why you passed was wanting those rules enforced for you rather than by willpower, here's the offer, once and plainly:
+                    That advice is free and works without us. If part of why you passed was wanting those rules enforced for you rather than by willpower, the door stays open — same price as everyone, no games.
                 </p>
 
-                <div style="border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; padding: 20px 0; margin: 24px 0; text-align: center;">
-                    <p style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E; margin: 0 0 8px;">If You Change Your Mind</p>
-                    <p style="font-family: Georgia, serif; font-size: 28px; color: #141210; margin: 0 0 4px;">20% off your first month</p>
-                    <p style="font-family: 'Courier New', monospace; font-size: 11px; color: #8A8279; margin: 0;">Use code COMEBACK20 at checkout</p>
-                </div>
-
                 <div style="text-align: center; margin: 32px 0;">
-                    <a href="https://rigacap.com/app?promo=COMEBACK20"
+                    <a href="https://rigacap.com/#pricing"
                        style="display: inline-block; background: #141210; color: #F5F1E8; font-size: 13px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 36px; text-decoration: none;">
                         Reactivate
                     </a>
@@ -2057,11 +2047,11 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
                 </p>
 
                 <div style="text-align: center; margin: 32px 0;">
-                    <a href="https://rigacap.com/app?promo=COMEBACK20"
+                    <a href="https://rigacap.com/#pricing"
                        style="display: inline-block; background: #141210; color: #F5F1E8; font-size: 13px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 36px; text-decoration: none;">
-                        Reactivate — 20% off
+                        Reactivate
                     </a>
-                    <p style="font-family: 'Courier New', monospace; font-size: 11px; color: #8A8279; margin-top: 8px;">Use code COMEBACK20</p>
+
                 </div>
 
                 <p style="font-size: 14px; color: #8A8279; margin: 24px 0 0 0; line-height: 1.5;">
@@ -2763,7 +2753,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
         """
         Send win-back email to a paid subscriber who just cancelled.
 
-        Sent 24 hours after cancellation with 20% off comeback offer.
+        Sent 24 hours after cancellation — door-stays-open note, no discount (Erik, Jun 12 2026: no shared discount codes; serialized one-time coupons only if data ever justifies).
         Different from the D8 trial drip — this targets paying customers who churned.
         """
         first_name = user_name.split()[0] if user_name else "there"
@@ -2784,8 +2774,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
 
                 <div style="border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; padding: 20px 0; margin: 24px 0; text-align: center;">
                     <p style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E; margin: 0 0 8px;">Come Back</p>
-                    <p style="font-family: Georgia, serif; font-size: 24px; color: #141210; margin: 0 0 4px;">20% off your next month</p>
-                    <p style="font-family: 'Courier New', monospace; font-size: 11px; color: #8A8279; margin: 0;">Code: {promo_code} · Valid 30 days</p>
+                    <p style="font-family: Georgia, serif; font-size: 20px; color: #141210; margin: 0;">The door stays open &mdash; same price as everyone.</p>
                 </div>
 
                 <div style="text-align: center; margin: 28px 0;">
