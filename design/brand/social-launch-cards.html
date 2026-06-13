@@ -109,11 +109,11 @@ function drawTracked(ctx, text, x, y, spacingPx) {
 
 // Eyebrow: small claret dash + tracked uppercase gray label.
 function drawEyebrow(ctx, x, y, label) {
-  claretRule(ctx, x, y - 7, 26);
+  claretRule(ctx, x, y - 7, 32);
   ctx.fillStyle = FAINT;
-  ctx.font = '500 20px ' + SANS;
+  ctx.font = '600 26px ' + SANS;
   ctx.textAlign = 'left';
-  drawTracked(ctx, label, x + 40, y, 3);
+  drawTracked(ctx, label, x + 46, y, 2.5);
 }
 
 // Mixed-style text segments drawn as one line (for the italic claret emphasis word).
@@ -146,12 +146,12 @@ function drawFooter(ctx, w, h, note) {
   ctx.textAlign = 'center';
   if (note) {
     ctx.fillStyle = FAINT;
-    ctx.font = '20px ' + SANS;
-    fitText(ctx, note, w / 2, h - 102, 880, '20px ' + SANS);
+    ctx.font = '26px ' + SANS;
+    fitText(ctx, note, w / 2, h - 100, 900, '26px ' + SANS);
   }
   ctx.fillStyle = MUTED;
-  ctx.font = '22px ' + MONO;
-  ctx.fillText('rigacap.com', w / 2, h - 58);
+  ctx.font = '28px ' + MONO;
+  ctx.fillText('rigacap.com', w / 2, h - 56);
 }
 
 // Draw text, shrinking the font size until it fits maxWidth.
@@ -248,7 +248,7 @@ function drawAllCards() {
   const nameX = 110, annX = 560, shX = 720, ddX = 980;
   let y = 405;
   ctx.fillStyle = FAINT;
-  ctx.font = '500 19px ' + SANS;
+  ctx.font = '600 24px ' + SANS;
   ctx.textAlign = 'left';
   drawTracked(ctx, 'Strategy', nameX, y, 3);
   ctx.textAlign = 'right';
@@ -447,7 +447,7 @@ function drawAllCards() {
   const monthX = 110, spyX = 620, rigaX = 860;
   let y = 428;
   ctx.fillStyle = FAINT;
-  ctx.font = '500 19px ' + SANS;
+  ctx.font = '600 24px ' + SANS;
   ctx.textAlign = 'left';
   drawTracked(ctx, 'Month', monthX, y, 3);
   ctx.textAlign = 'right';
@@ -645,8 +645,8 @@ function drawAllCards() {
   ctx.fillText('Start the 7-day trial', w / 2, btnY + 45);
 
   ctx.fillStyle = MUTED;
-  ctx.font = '22px ' + MONO;
-  ctx.fillText('rigacap.com', w / 2, h - 58);
+  ctx.font = '28px ' + MONO;
+  ctx.fillText('rigacap.com', w / 2, h - 56);
 })();
 }
 
