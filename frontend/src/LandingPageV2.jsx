@@ -540,6 +540,9 @@ export default function LandingPageV2() {
   }, []);
 
   const handleGetStarted = (plan = 'monthly') => {
+    // Checkout-intent signal for ads/GA4 (landing CTA click = begin_checkout;
+    // the in-app billing buttons fire the same event with value)
+    if (window.gtag) window.gtag('event', 'begin_checkout', { currency: 'USD', item_variant: plan });
     if (isAuthenticated) {
       navigate('/app', { replace: true });
     } else {
