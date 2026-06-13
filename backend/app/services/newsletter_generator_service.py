@@ -742,15 +742,27 @@ IMPORTANT: Output ONLY the personal note text. Do NOT include any section header
             ContentType="application/json",
         )
 
-        # Also publish to issues/ for the public web archive
+        # Lock = frozen/ready-to-send, NOT public (Jun 13 2026). Locking used
+        # to also write to issues/ — the public archive — so a Saturday lock
+        # went live before Sunday's send + before final review. Public publish
+        # now happens at send time via publish_issue() (Sunday email cron).
+        logger.warning(f"Newsletter draft locked for {date_str} (not yet public)")
+        return draft
+
+    def publish_issue(self, date_str: str) -> dict:
+        """Publish a (locked) draft to the public web archive. Called by the
+        Sunday email-send cron AFTER the email goes out, so the public page and
+        the email appear together, never before review/send."""
+        draft = self.get_draft(date_str)
+        if not draft:
+            raise ValueError(f"No draft to publish for {date_str}")
         self.s3.put_object(
             Bucket=S3_BUCKET,
             Key=f"{ISSUE_KEY_PREFIX}{date_str}.json",
-            Body=draft_json,
+            Body=json.dumps(draft).encode(),
             ContentType="application/json",
         )
-
-        logger.warning(f"Newsletter draft locked for {date_str}")
+        logger.warning(f"Newsletter issue published to public archive: {date_str}")
         return draft
 
 

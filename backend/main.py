@@ -7506,7 +7506,18 @@ End of draft. Edit + lock at https://rigacap.com/admin
                         except Exception as e:
                             print(f"Newsletter send failed for {email_addr}: {e}")
                             failed += 1
-                    return {"status": "ok", "sent": sent, "failed": failed, "source": "locked_draft"}
+                    # Publish to the public web archive AFTER the email send, so
+                    # the public page appears together with the email (lock no
+                    # longer auto-publishes — Jun 13 2026).
+                    published = False
+                    try:
+                        _pub_date = draft.get("date")
+                        if _pub_date:
+                            newsletter_generator.publish_issue(_pub_date)
+                            published = True
+                    except Exception as _pe:
+                        print(f"Newsletter publish_issue failed: {_pe}")
+                    return {"status": "ok", "sent": sent, "failed": failed, "published": published, "source": "locked_draft"}
 
                 return _run_async(_send_from_draft())
         except Exception as e:
