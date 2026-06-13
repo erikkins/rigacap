@@ -37,6 +37,8 @@ Status: 🟢 RUNNING — launch sequence through Tue, Buffett post Wed, engageme
 
 ### WS3 — Dashboard actionability ("make sure people understand HOW it's actionable")
 Status: 🔴 TODO — fresh-eyes audit of the new-subscriber path: from first login → "what do I actually do with a signal" (entries, sizing, stops in broker terms). Tour copy, empty states, signal cards.
+- **Erik's design principle (Jun 12): "BUY" = an INSTRUCTION (act now/at open), never a description.** Email+dashboard lead with the instruction layer (what the model book does); aged-qualifying signals are internal machinery.
+- **WS3b — Personalized digest (Erik, Jun 12): "I bought this" tracking → per-user email block** — your positions, your current stop levels, SELL line the day your stop triggers. Needs: user_positions table + signal-card action + per-user render pass in the email job. The retention multiplier; pairs with the trial→paid story (a tracked position = a retained subscriber).
 
 ### WS4 — Drip emails (5-step onboarding)
 Status: 🟢 DONE (Jun 12) — full canon rework shipped: D1 actionable broker walkthrough, D3 = "What to expect (the honest version)" churn vaccine w/ analyst F/A filter, D5/D6 canon tables + founding rate, D8 honest win-back. Also purged stale lifecycle sends (goodbye, trial-ending, quiet-week: 21.5%/positive-2022/7-regime/3-4-signals all gone).
