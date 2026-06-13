@@ -324,7 +324,7 @@ class ModelPortfolioService:
             s for s in buy_signals
             if s["symbol"] not in held_symbols
         ]
-        eligible_signals.sort(key=lambda x: -x.get("ensemble_score", 0))
+        eligible_signals.sort(key=lambda x: -x.get("momentum_score", 0))  # bench parity: momentum composite, not ensemble_score
 
         candidates = eligible_signals[:slots]
 

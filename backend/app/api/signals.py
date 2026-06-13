@@ -860,17 +860,33 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
     buy_signals = []
     watchlist = []
     try:
-        dwap_signals = await scanner_service.scan(refresh_data=False, apply_market_filter=True)
-        dwap_by_symbol = {s.symbol: s for s in dwap_signals}
+        # ONE SOURCE / ONE SCAN (Jun 13 2026): buy_signals are built from the
+        # momentum ranking + the DWAP indicator read DIRECTLY from the cache —
+        # exactly as the t30v backtester does (row.get('dwap')). The old code
+        # intersected this with a SEPARATE scanner_service.scan() call whose
+        # DWAP path disagreed at the 5% boundary (KVUE 5.29% — backtester in,
+        # scan out) AND ran a redundant second scan that produced the Jun 11-12
+        # zero-signal bug. Reading DWAP from one source gives exact backtest
+        # parity and eliminates the second scan. rank_stocks_momentum applies
+        # the SAME SPY<200MA market filter, so the regime exit is preserved.
+        from app.core.config import settings as _dwsettings
 
         # Single momentum ranking call — reused for both buy signals and watchlist
         momentum_rankings = scanner_service.rank_stocks_momentum(
             apply_market_filter=True,
             regime_params=regime_effective_params,
         )
+        # BENCH PARITY (Jun 13 2026): the t30v backtester's ensemble entry is
+        # {5% DWAP} INTERSECT {passes_quality} (trend + within-3%-of-50d-high),
+        # ranked by momentum COMPOSITE, top max_positions. The old code gated on
+        # "top-30 momentum membership" (no near-high filter) and ranked by
+        # ensemble_score — a display heuristic — surfacing pulled-back names the
+        # bench rejects (Jun 12: live=20 vs bench=3). We now build the buy pool
+        # over the FULL ranked universe and gate on the real passes_quality
+        # filter, so prod == bench. rank field retained for display only.
         momentum_by_symbol = {
             r.symbol: {'rank': i + 1, 'data': r}
-            for i, r in enumerate(momentum_rankings[:momentum_top_n])
+            for i, r in enumerate(momentum_rankings)
         }
 
         # Threshold for ensemble entry date
@@ -880,65 +896,95 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
         # Compute SPY trend once for all signals
         spy_trend = compute_spy_trend()
 
-        # Build buy signals (ensemble)
-        for symbol in dwap_by_symbol:
-            if symbol in momentum_by_symbol:
-                dwap = dwap_by_symbol[symbol]
-                mom = momentum_by_symbol[symbol]
-                mom_data = mom['data']
-                mom_rank = mom['rank']
+        # Build buy signals (ensemble). For each momentum-ranked universe name:
+        # gate on passes_quality (trend + within-3%-of-50d-high, Factor-3) AND a
+        # DWAP check read from the cache indicator directly (the ONE source the
+        # backtester uses). No intersection with a separate scan().
+        for symbol, mom in momentum_by_symbol.items():
+            mom_data = mom['data']
+            mom_rank = mom['rank']
+            if not mom_data.passes_quality_filter:
+                continue
+            # ONE SOURCE: DWAP + price/volume from the cache row (== backtester)
+            _df = scanner_service.data_cache.get(symbol)
+            if _df is None or len(_df) < 200:
+                continue
+            _row = _df.iloc[-1]
+            _price = float(_row['close'])
+            _cache_dwap = _row.get('dwap')
+            _volume = float(_row.get('volume', 0) or 0)
+            if _cache_dwap is None or pd.isna(_cache_dwap) or _cache_dwap <= 0:
+                continue
+            _pct_above_dwap = (_price / _cache_dwap - 1) * 100
+            # DWAP entry gate — identical to the backtester's ensemble entry
+            if not (_pct_above_dwap >= _dwsettings.DWAP_THRESHOLD_PCT
+                    and _volume >= _dwsettings.MIN_VOLUME
+                    and _price >= _dwsettings.MIN_PRICE):
+                continue
+            # display-only fields, computed from the same cache row
+            _vol_avg = _row.get('vol_avg', 0)
+            _vol_ratio = (_volume / _vol_avg) if _vol_avg and _vol_avg > 0 else 0.0
+            _ma_50 = _row.get('ma_50', 0)
+            _ma_200 = _row.get('ma_200', 0)
+            _is_strong = bool(_vol_ratio >= _dwsettings.VOLUME_SPIKE_MULT
+                              and not pd.isna(_ma_50) and not pd.isna(_ma_200)
+                              and _ma_50 and _ma_200 and _price > _ma_50 > _ma_200)
+            from types import SimpleNamespace as _NS
+            dwap = _NS(price=_price, dwap=float(_cache_dwap),
+                       pct_above_dwap=_pct_above_dwap, volume=int(_volume),
+                       volume_ratio=_vol_ratio, is_strong=_is_strong)
 
-                crossover_date, days_since = find_dwap_crossover_date(symbol)
+            crossover_date, days_since = find_dwap_crossover_date(symbol)
 
-                entry_date = None
-                days_since_entry = None
-                if crossover_date:
-                    entry_date = find_ensemble_entry_date(symbol, crossover_date, mom_threshold)
-                    if entry_date:
-                        from app.core.timezone import trading_today
-                        today_et = pd.Timestamp(trading_today())
-                        entry_ts = pd.Timestamp(entry_date).normalize()
-                        days_since_entry = (today_et - entry_ts).days
+            entry_date = None
+            days_since_entry = None
+            if crossover_date:
+                entry_date = find_ensemble_entry_date(symbol, crossover_date, mom_threshold)
+                if entry_date:
+                    from app.core.timezone import trading_today
+                    today_et = pd.Timestamp(trading_today())
+                    entry_ts = pd.Timestamp(entry_date).normalize()
+                    days_since_entry = (today_et - entry_ts).days
 
-                fresh_by_crossover = days_since is not None and days_since <= fresh_days
-                fresh_by_entry = days_since_entry is not None and days_since_entry <= fresh_days
-                is_fresh = fresh_by_crossover or fresh_by_entry
+            fresh_by_crossover = days_since is not None and days_since <= fresh_days
+            fresh_by_entry = days_since_entry is not None and days_since_entry <= fresh_days
+            is_fresh = fresh_by_crossover or fresh_by_entry
 
-                # Signal strength score (data-backed, replaces old ensemble_score)
-                dwap_age = days_since if days_since is not None else 0
-                ensemble_score = compute_signal_strength(
-                    volatility=mom_data.volatility,
-                    spy_trend=spy_trend,
-                    dwap_age=dwap_age,
-                    dist_from_high=mom_data.dist_from_50d_high,
-                    vol_ratio=dwap.volume_ratio,
-                    momentum_score=mom_data.composite_score,
-                )
+            # Signal strength score (data-backed, replaces old ensemble_score)
+            dwap_age = days_since if days_since is not None else 0
+            ensemble_score = compute_signal_strength(
+                volatility=mom_data.volatility,
+                spy_trend=spy_trend,
+                dwap_age=dwap_age,
+                dist_from_high=mom_data.dist_from_50d_high,
+                vol_ratio=dwap.volume_ratio,
+                momentum_score=mom_data.composite_score,
+            )
 
-                info = stock_universe_service.symbol_info.get(symbol, {})
-                sector = info.get('sector', '')
+            info = stock_universe_service.symbol_info.get(symbol, {})
+            sector = info.get('sector', '')
 
-                buy_signals.append({
-                    'symbol': symbol,
-                    'price': float(dwap.price),
-                    'dwap': float(dwap.dwap),
-                    'pct_above_dwap': float(dwap.pct_above_dwap),
-                    'volume': int(dwap.volume),
-                    'volume_ratio': float(dwap.volume_ratio),
-                    'is_strong': bool(dwap.is_strong),
-                    'momentum_rank': int(mom_rank),
-                    'momentum_score': round(float(mom_data.composite_score), 2),
-                    'short_momentum': round(float(mom_data.short_momentum), 2),
-                    'long_momentum': round(float(mom_data.long_momentum), 2),
-                    'ensemble_score': round(float(ensemble_score), 1),
-                    'signal_strength_label': get_signal_strength_label(ensemble_score),
-                    'dwap_crossover_date': crossover_date,
-                    'ensemble_entry_date': entry_date,
-                    'days_since_crossover': int(days_since) if days_since is not None else None,
-                    'days_since_entry': int(days_since_entry) if days_since_entry is not None else None,
-                    'is_fresh': bool(is_fresh),
-                    'sector': sector,
-                })
+            buy_signals.append({
+                'symbol': symbol,
+                'price': float(dwap.price),
+                'dwap': float(dwap.dwap),
+                'pct_above_dwap': float(dwap.pct_above_dwap),
+                'volume': int(dwap.volume),
+                'volume_ratio': float(dwap.volume_ratio),
+                'is_strong': bool(dwap.is_strong),
+                'momentum_rank': int(mom_rank),
+                'momentum_score': round(float(mom_data.composite_score), 2),
+                'short_momentum': round(float(mom_data.short_momentum), 2),
+                'long_momentum': round(float(mom_data.long_momentum), 2),
+                'ensemble_score': round(float(ensemble_score), 1),
+                'signal_strength_label': get_signal_strength_label(ensemble_score),
+                'dwap_crossover_date': crossover_date,
+                'ensemble_entry_date': entry_date,
+                'days_since_crossover': int(days_since) if days_since is not None else None,
+                'days_since_entry': int(days_since_entry) if days_since_entry is not None else None,
+                'is_fresh': bool(is_fresh),
+                'sector': sector,
+            })
 
         # Sort by composite ensemble_score descending — matches what
         # model_portfolio_service.process_entries() uses to pick its next
@@ -948,7 +994,7 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
         # signals historically outperform fresh ones (56.8% win vs 49.6%),
         # so the recency-first sort was misleading users away from the
         # empirically better entries. is_fresh stays as a badge, not a key.
-        buy_signals.sort(key=lambda x: -x.get('ensemble_score', 0))
+        buy_signals.sort(key=lambda x: -x.get('momentum_score', 0))  # bench-parity: rank by momentum composite, not ensemble_score (display only)
 
         # Enrich signals with missing sector data from yfinance
         missing_sector_symbols = [s['symbol'] for s in buy_signals if not s.get('sector')]

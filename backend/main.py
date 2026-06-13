@@ -1548,6 +1548,35 @@ def handler(event, context):
             # 5. Export dashboard JSON + daily snapshot
             async with async_session() as db:
                 data = await compute_shared_dashboard_data(db)
+
+                # BUG-1 GUARD (Jun 13 2026): the dashboard build has returned 0
+                # buy_signals even when the raw scan found many in a friendly
+                # regime (Jun 11-12: book wrongly held cash 2 days). Likely the
+                # dashboard scan's live index re-fetch tripping the market filter
+                # on a bad after-hours tick. Symptom = empty buy_signals while the
+                # raw scan had >=10 and regime isn't bearish. Re-run once; alert
+                # if it persists. Backstop — parity fixes make small sets normal.
+                _raw_n = len(signals)
+                _regime_now = (data.get('regime_forecast') or {}).get('current_regime', '')
+                if not data.get('buy_signals') and _raw_n >= 10 and _regime_now not in ('weak_bear', 'panic_crash'):
+                    print(f"\u26a0\ufe0f BUG-1 GUARD: 0 buy_signals but raw scan had {_raw_n}, regime={_regime_now} \u2014 re-running dashboard build")
+                    _retry = await compute_shared_dashboard_data(db)
+                    if _retry.get('buy_signals'):
+                        print(f"\u2705 BUG-1 GUARD: retry recovered {len(_retry['buy_signals'])} buy_signals")
+                        data = _retry
+                    else:
+                        print("\U0001f6a8 BUG-1 GUARD: retry STILL 0 \u2014 alerting admin (entries held regardless)")
+                        try:
+                            from app.services.email_service import admin_email_service
+                            await admin_email_service.send_admin_alert(
+                                to_email="erik@rigacap.com",
+                                subject="\U0001f6a8 RigaCap: 0 buy_signals despite healthy raw scan",
+                                message=(f"Dashboard returned 0 buy_signals twice; raw scan found {_raw_n}, "
+                                         f"regime={_regime_now} (not bearish). Jun 11-12 zero-signal pattern "
+                                         f"OR a legit no-name-near-high day. Verify before relying on today's set."),
+                            )
+                        except Exception as _ge:
+                            print(f"\u26a0\ufe0f guard alert failed: {_ge}")
                 dash_result = data_export_service.export_dashboard_json(data)
                 # Use data_date (SPY's last bar date) or ET date — never UTC date.today()
                 today_et = datetime.now(ZoneInfo('America/New_York')).date()

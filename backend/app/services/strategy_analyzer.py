@@ -94,15 +94,38 @@ class StrategyParams:
 
 
 def get_top_liquid_symbols(max_symbols: int = 100) -> list:
-    """Get the most liquid symbols by average volume for faster analysis"""
+    """Get the most liquid STOCKS by 60-day average volume.
+
+    BENCH PARITY (Jun 13 2026): mirrors walk_forward_service._get_top_symbols_as_of
+    exactly — exclude _EXCLUDED_SET (ETFs/leveraged/index) and apply the MIN_PRICE
+    ($15) floor AT SELECTION. Without the floor, penny stocks with huge share
+    volume (because they're cheap) consume top-N universe slots they'll be
+    rejected from at signal-gen anyway, displacing legitimate $15+ candidates
+    (META, CRM, UBER…) out of the universe entirely and starving the strategy.
+    The t30v canon was validated on the floored universe; the live universe must
+    match it. (Same rationale as the May-19 2026 _get_top_symbols_as_of fix.)
+    """
     if not scanner_service.data_cache:
         return []
 
+    from app.services.scanner import _EXCLUDED_SET
+    from app.core.config import settings
+    min_price = settings.MIN_PRICE
+
     symbol_volumes = []
     for symbol, df in scanner_service.data_cache.items():
-        if len(df) >= 200:  # Need enough data
-            avg_vol = df['volume'].tail(60).mean() if 'volume' in df.columns else 0
-            symbol_volumes.append((symbol, avg_vol))
+        if symbol in _EXCLUDED_SET or symbol.startswith('^'):
+            continue
+        if df is None or len(df) < 200:  # Need enough data
+            continue
+        if 'volume' not in df.columns or 'close' not in df.columns:
+            continue
+        # MIN_PRICE floor at selection (penny-stock displacement guard)
+        last_close = df['close'].iloc[-1]
+        if last_close is None or last_close < min_price:
+            continue
+        avg_vol = df['volume'].tail(60).mean()
+        symbol_volumes.append((symbol, avg_vol))
 
     # Sort by volume descending and take top N
     symbol_volumes.sort(key=lambda x: x[1], reverse=True)
