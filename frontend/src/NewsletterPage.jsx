@@ -142,7 +142,16 @@ export function NewsletterIssuePage() {
                   {sec.body && (
                     <div
                       className="text-[1.05rem] leading-[1.75] text-ink [&>p]:mb-5 [&>p:last-child]:mb-0 [&_strong]:font-medium [&_em]:font-display [&_em]:italic"
-                      dangerouslySetInnerHTML={{ __html: sec.body.replace(/<p /g, '<p ').replace(/<\/p>/g, '</p>') }}
+                      dangerouslySetInnerHTML={{ __html:
+                        /<p[\s>]/.test(sec.body)
+                          ? sec.body  // already HTML-paragraphed
+                          : '<p>' + sec.body
+                              .split(/\n\n+/)
+                              .map(p => p.trim())
+                              .filter(Boolean)
+                              .join('</p><p>')
+                              .replace(/\n/g, '<br/>') + '</p>'  // plain-text \n\n -> paragraphs
+                      }}
                     />
                   )}
                   {sec.items && (
