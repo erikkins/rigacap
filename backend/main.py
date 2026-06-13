@@ -1585,17 +1585,21 @@ def handler(event, context):
             persisted = 0
             try:
                 from app.services.ensemble_signal_service import ensemble_signal_service
-                if data.get('buy_signals'):
-                    async with async_session() as sig_db:
+                # Always run BOTH steps — on zero-signal days the invalidation
+                # is the important half (Jun 12 2026: the old `if buy_signals:`
+                # gate skipped invalidation on empty days, leaving stale
+                # 'active' rows that the email job then resurrected).
+                async with async_session() as sig_db:
+                    todays_syms = {s['symbol'] for s in data.get('buy_signals', [])}
+                    if data.get('buy_signals'):
                         sig_result = await ensemble_signal_service.persist_signals(
                             sig_db, data['buy_signals'], today_et
                         )
-                        await ensemble_signal_service.invalidate_stale_signals(
-                            sig_db, today_et,
-                            {s['symbol'] for s in data['buy_signals']}
-                        )
                         persisted = sig_result['inserted']
-                        print(f"📝 Persisted {persisted} ensemble signal(s)")
+                    await ensemble_signal_service.invalidate_stale_signals(
+                        sig_db, today_et, todays_syms
+                    )
+                    print(f"📝 Persisted {persisted} ensemble signal(s); stale invalidation ran (today={len(todays_syms)})")
             except Exception as pe:
                 print(f"⚠️ Signal persistence failed (non-fatal): {pe}")
             _log_step("Signal Persistence", "ok" if persisted > 0 or not data.get('buy_signals') else "warning",
@@ -1999,17 +2003,18 @@ def handler(event, context):
                 try:
                     from app.services.ensemble_signal_service import ensemble_signal_service
                     today_et = datetime.now(ZoneInfo('America/New_York')).date()
-                    if data.get('buy_signals'):
-                        async with async_session() as sig_db:
+                    # Always invalidate, even on zero-signal days (Jun 12 2026 fix)
+                    async with async_session() as sig_db:
+                        todays_syms = {s['symbol'] for s in data.get('buy_signals', [])}
+                        if data.get('buy_signals'):
                             sig_result = await ensemble_signal_service.persist_signals(
                                 sig_db, data['buy_signals'], today_et
                             )
-                            await ensemble_signal_service.invalidate_stale_signals(
-                                sig_db, today_et,
-                                {s['symbol'] for s in data['buy_signals']}
-                            )
                             result["ensemble_signals_persisted"] = sig_result['inserted']
                             print(f"📝 Persisted {sig_result['inserted']} ensemble signal(s)")
+                        await ensemble_signal_service.invalidate_stale_signals(
+                            sig_db, today_et, todays_syms
+                        )
                 except Exception as pe:
                     print(f"⚠️ Signal persistence failed (non-fatal): {pe}")
                     result["ensemble_signals_error"] = str(pe)

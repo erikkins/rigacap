@@ -314,13 +314,19 @@ class ModelPortfolioService:
                 return {"entries": 0, "reason": f"Stale data ({data_date} < {expected})"}
 
         buy_signals = dashboard.get("buy_signals", [])
-        fresh_signals = [
+        # WF<->prod parity (Jun 12 2026, Erik-approved): the backtester fills
+        # vacancies from the CURRENTLY-QUALIFYING ranked list each period —
+        # is_fresh was never an entry key in the bench (and stale signals
+        # empirically outperform fresh ones, 56.8% vs 49.6% win). The old
+        # is_fresh filter made fresh-start books sit in cash while valid
+        # signals existed, diverging from every validated backtest window.
+        eligible_signals = [
             s for s in buy_signals
-            if s.get("is_fresh") and s["symbol"] not in held_symbols
+            if s["symbol"] not in held_symbols
         ]
-        fresh_signals.sort(key=lambda x: -x.get("ensemble_score", 0))
+        eligible_signals.sort(key=lambda x: -x.get("ensemble_score", 0))
 
-        candidates = fresh_signals[:slots]
+        candidates = eligible_signals[:slots]
 
         # Inverse-vol (risk-parity) sizing — the t30v drawdown lever. Dormant
         # while vol_weight == 0 (sizing stays flat, prod unchanged); activates

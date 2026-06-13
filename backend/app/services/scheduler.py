@@ -1620,90 +1620,21 @@ class SchedulerService:
                     for s in db_signals
                 ]
 
-            # Fallback: if no persisted signals (first deploy, DB issue), regenerate
+            # SINGLE SOURCE OF TRUTH (Jun 12 2026): the email renders ONLY what
+            # the 4 PM scan persisted/exported. The old fallback regenerated
+            # signals live with regime-adjusted params — a DIFFERENT evaluator
+            # than the dashboard, which produced emails contradicting the site
+            # (e.g. 'Buy Signals (2)' under a 'zero signals' briefing). If the
+            # DB has no rows for today, we trust the dashboard cache; if both
+            # are empty, zero signals is the truth and we say so.
             if not buy_signals:
-                logger.warning("📧 No persisted signals found, falling back to live scan")
-                from app.api.signals import find_dwap_crossover_date, find_ensemble_entry_date, compute_signal_strength, get_signal_strength_label, compute_spy_trend
-
-                # Compute regime-adjusted params for consistency
-                regime_effective_params = None
                 try:
-                    from app.services.market_regime import market_regime_service, get_regime_adjusted_params
-                    current_regime = market_regime_service.get_current_regime()
-                    if current_regime:
-                        regime_effective_params = get_regime_adjusted_params(current_regime)['effective']
-                except Exception:
-                    pass
-
-                dwap_signals = await scanner_service.scan(refresh_data=False, apply_market_filter=True)
-                dwap_by_symbol = {s.symbol: s for s in dwap_signals}
-                momentum_rankings = scanner_service.rank_stocks_momentum(
-                    apply_market_filter=True,
-                    regime_params=regime_effective_params,
-                )
-                momentum_top_n = 30
-                fresh_days = 5
-                momentum_by_symbol = {
-                    r.symbol: {'rank': i + 1, 'data': r}
-                    for i, r in enumerate(momentum_rankings[:momentum_top_n])
-                }
-                threshold_rank = momentum_top_n // 2
-                mom_threshold = momentum_rankings[threshold_rank - 1].composite_score if len(momentum_rankings) >= threshold_rank else 0
-                spy_trend = compute_spy_trend()
-
-                for symbol in dwap_by_symbol:
-                    if symbol in momentum_by_symbol:
-                        dwap = dwap_by_symbol[symbol]
-                        mom = momentum_by_symbol[symbol]
-                        mom_data = mom['data']
-                        mom_rank = mom['rank']
-                        crossover_date, days_since = find_dwap_crossover_date(symbol)
-                        entry_date = None
-                        days_since_entry = None
-                        if crossover_date:
-                            entry_date = find_ensemble_entry_date(symbol, crossover_date, mom_threshold)
-                            if entry_date:
-                                import pandas as pd
-                                today_et = pd.Timestamp(trading_today())
-                                entry_ts = pd.Timestamp(entry_date).normalize()
-                                days_since_entry = (today_et - entry_ts).days
-                        fresh_by_crossover = days_since is not None and days_since <= fresh_days
-                        fresh_by_entry = days_since_entry is not None and days_since_entry <= fresh_days
-                        is_fresh = fresh_by_crossover or fresh_by_entry
-                        dwap_age = days_since if days_since is not None else 0
-                        ensemble_score = compute_signal_strength(
-                            volatility=mom_data.volatility,
-                            spy_trend=spy_trend,
-                            dwap_age=dwap_age,
-                            dist_from_high=mom_data.dist_from_50d_high,
-                            vol_ratio=dwap.volume_ratio,
-                            momentum_score=mom_data.composite_score,
-                        )
-                        buy_signals.append({
-                            'symbol': symbol,
-                            'price': float(dwap.price),
-                            'pct_above_dwap': float(dwap.pct_above_dwap),
-                            'is_strong': bool(dwap.is_strong),
-                            'momentum_rank': int(mom_rank),
-                            'ensemble_score': round(float(ensemble_score), 1),
-                            'signal_strength_label': get_signal_strength_label(ensemble_score),
-                            'dwap_crossover_date': crossover_date,
-                            'ensemble_entry_date': entry_date,
-                            'days_since_crossover': int(days_since) if days_since is not None else None,
-                            'days_since_entry': days_since_entry,
-                            'is_fresh': bool(is_fresh),
-                        })
-                # Sort by composite ensemble_score descending — same logic
-                # as the user-facing dashboard (signals.py) and the model
-                # portfolio's process_entries. Old recency-first sort buried
-                # high-score "stale" picks; users reading the email then saw
-                # an order that didn't match what's on the dashboard.
-                buy_signals.sort(key=lambda x: -x.get('ensemble_score', 0))
-            else:
-                logger.info(f"📧 Using {len(buy_signals)} persisted signal(s) from 4 PM scan")
-                # Persisted signals come out in storage order — apply the
-                # same sort so the email matches dashboard order.
-                buy_signals.sort(key=lambda x: -x.get('ensemble_score', 0))
+                    _dash = data_export_service.read_dashboard_json() or {}
+                    buy_signals = list(_dash.get('buy_signals', []))
+                    logger.info(f"📧 No persisted signals; dashboard cache has {len(buy_signals)}")
+                except Exception as _de:
+                    logger.warning(f"📧 Dashboard cache read failed: {_de}")
+            buy_signals.sort(key=lambda x: -x.get('ensemble_score', 0))
 
             # Read watchlist + regime + market_context from dashboard cache (same 4 PM data)
             watchlist = []
