@@ -282,7 +282,30 @@ class EmailService:
             date = _now_et()
 
         date_str = date.strftime("%A, %B %d, %Y")
-        fresh_signals = [s for s in signals if s.get('is_fresh')]
+        # Bucket taxonomy — MUST match the dashboard (App.jsx) exactly:
+        #   New today    = is_fresh signals ("Buy Signals" bucket on the site)
+        #   Open         = non-fresh signals still in the buy zone ("Monitoring")
+        #   Approaching  = watchlist, within striking distance of trigger
+        # The subject line in send_daily_summary derives its counts from the
+        # same is_fresh split — keep these definitions in lockstep.
+        # Defensive: derive freshness from AGE, never trust a stored flag —
+        # DB rows persist is_fresh at write time and it never ages (Jun 12:
+        # 'NEW · 69D AGO'). Also dedupe by symbol (broken invalidation left
+        # duplicate active rows), keeping the highest-score instance.
+        def _effective_fresh(sig):
+            ages = [a for a in (sig.get('days_since_crossover'), sig.get('days_since_entry')) if a is not None]
+            if ages:
+                return min(ages) <= 5
+            return bool(sig.get('is_fresh'))
+        _seen, _deduped = set(), []
+        for s_ in sorted(signals, key=lambda x: -(x.get('ensemble_score') or 0)):
+            if s_.get('symbol') in _seen:
+                continue
+            _seen.add(s_.get('symbol'))
+            _deduped.append(s_)
+        signals = _deduped
+        fresh_signals = [s for s in signals if _effective_fresh(s)]
+        open_signals = [s for s in signals if not _effective_fresh(s)]
         watchlist = watchlist or []
 
         # Calculate totals
@@ -352,29 +375,29 @@ class EmailService:
             </td>
         </tr>''' if market_context else ''}
 
-        <!-- Buy Signals Section (fresh only) -->
+        <!-- New Today Section (is_fresh — dashboard "Buy Signals" bucket) -->
         <tr>
             <td style="padding: 0 24px 24px;">
                 <div style="padding-bottom: 8px; border-bottom: 1px solid #DDD5C7; margin-bottom: 12px;">
                     <table cellpadding="0" cellspacing="0" style="width: 100%;">
                         <tr>
-                            <td style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">Buy Signals <span style="font-style: italic; color: #8A8279; font-weight: 400;">({len(fresh_signals)})</span></td>
+                            <td style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">New Today <span style="font-style: italic; color: #8A8279; font-weight: 400;">({len(fresh_signals)})</span></td>
                             <td align="right" style="font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #7A2430;">Consider adding</td>
                         </tr>
                     </table>
                 </div>
                 {"".join(self._signal_row(s) for s in fresh_signals[:8]) if fresh_signals else f'''
                 <div style="padding: 24px; text-align: center; font-family: Georgia, serif; font-style: italic; color: #5A544E;">
-                    No fresh signals today.{f" {len(watchlist)} approaching trigger." if watchlist else ""}
+                    No new signals today. The system is watching.{f"<br>{len(open_signals)} earlier signal{'s' if len(open_signals) != 1 else ''} still in the buy zone below." if open_signals else ""}{f" {len(watchlist)} approaching trigger." if watchlist else ""}
                 </div>
                 '''}
             </td>
         </tr>
 
-        <!-- Monitoring Section (non-fresh signals) -->
-        {self._monitoring_section([s for s in signals if not s.get('is_fresh')]) if [s for s in signals if not s.get('is_fresh')] else ''}
+        <!-- Open Section (non-fresh signals still in buy zone — dashboard "Monitoring" bucket) -->
+        {self._open_signals_section(open_signals) if open_signals else ''}
 
-        <!-- Watchlist Section -->
+        <!-- Approaching Section (watchlist) -->
         {self._watchlist_section(watchlist) if watchlist else ''}
 
         <!-- Open Positions -->
@@ -391,71 +414,110 @@ class EmailService:
 """
         return html
 
+    @staticmethod
+    def _signal_strength(signal: Dict) -> tuple:
+        """Ensemble score (0-100) + strength label — the SAME indicator pair
+        the dashboard renders for every signal card. Label thresholds are
+        identical to signals.py get_signal_strength_label and the App.jsx
+        fallback (>=88 Very Strong, >=75 Strong, >=61 Moderate, else Weak).
+        DB-sourced email signals don't carry signal_strength_label, so the
+        fallback is the common path here."""
+        score = int(round(signal.get('ensemble_score') or 0))
+        label = signal.get('signal_strength_label')
+        if not label:
+            if score >= 88:
+                label = 'Very Strong'
+            elif score >= 75:
+                label = 'Strong'
+            elif score >= 61:
+                label = 'Moderate'
+            else:
+                label = 'Weak'
+        return score, label
+
     def _signal_row(self, signal: Dict) -> str:
-        """Generate HTML for a single signal row"""
+        """Generate HTML for a single signal row — mirrors the dashboard card:
+        symbol, price, ensemble score + strength label, and the trend distance
+        explicitly labeled ("+x.x% above trend" — never a bare percentage).
+        The whole row is a block anchor to the dashboard (inline styles only,
+        color inherit, no underline on the block; symbol carries the underline)."""
         symbol = signal.get('symbol', 'N/A')
         price = signal.get('price', 0)
-        pct_above = signal.get('pct_above_dwap', 0)
-        mom_rank = signal.get('momentum_rank', 0)
-        is_strong = signal.get('is_strong', False)
+        pct_above = signal.get('pct_above_dwap') or 0
         is_fresh = signal.get('is_fresh', False)
         days_since = signal.get('days_since_crossover')
 
-        strength_label = 'STRONG' if is_strong else ''
-        age_label = ''
-        if is_fresh and days_since is not None and days_since == 0:
-            age_label = 'TODAY'
-        elif is_fresh and days_since is not None:
-            age_label = f'{days_since}D AGO'
+        score, label = self._signal_strength(signal)
+
+        if is_fresh:
+            if days_since == 0:
+                age_label = 'NEW TODAY'
+            elif days_since is not None:
+                age_label = f'NEW · {days_since}D AGO'
+            else:
+                age_label = 'NEW'
+        else:
+            # Non-fresh = older signal still qualifying. NEVER present these
+            # without age context (Erik, Jun 11 — "Consider adding" on a 57d
+            # signal misleads).
+            if days_since is not None:
+                age_label = f'SIGNALED {days_since}D AGO · STILL QUALIFIES'
+            else:
+                age_label = 'STILL QUALIFIES'
 
         return f"""
+        <a href="https://rigacap.com/app?chart={symbol}" style="display: block; color: inherit; text-decoration: none;">
         <div style="padding: 14px 0; border-bottom: 1px solid #DDD5C7; {('border-left: 3px solid #7A2430; padding-left: 14px;' if is_fresh else '')}">
             <table cellpadding="0" cellspacing="0" style="width: 100%;">
                 <tr>
-                    <td style="width: 40%;">
+                    <td style="width: 42%; vertical-align: top;">
                         <div style="font-family: Georgia, serif; font-size: 18px; font-weight: 500; color: #141210;">
-                            <a href="https://rigacap.com/app?chart={symbol}" style="color: #141210; text-decoration: none;">{symbol}</a>
+                            <span style="text-decoration: underline;">{symbol}</span>
                         </div>
                         <div style="font-family: 'Courier New', monospace; font-size: 10px; color: #8A8279; letter-spacing: 0.5px; margin-top: 2px;">
                             {age_label}
                         </div>
                     </td>
-                    <td style="width: 25%; text-align: right; font-family: 'Courier New', monospace; font-size: 13px; color: #141210;">
-                        ${price:.2f}
+                    <td style="width: 26%; text-align: right; vertical-align: top;">
+                        <div style="font-family: 'Courier New', monospace; font-size: 13px; color: #141210;">
+                            ${price:.2f}
+                        </div>
+                        <div style="font-family: 'Courier New', monospace; font-size: 10px; color: #2D5F3F; margin-top: 2px; white-space: nowrap;">
+                            +{pct_above:.1f}% above trend
+                        </div>
                     </td>
-                    <td style="width: 20%; text-align: right; font-family: 'Courier New', monospace; font-size: 13px; color: #2D5F3F;">
-                        +{pct_above:.1f}%
-                    </td>
-                    <td style="width: 15%; text-align: right; font-family: 'Courier New', monospace; font-size: 11px; color: #7A2430; letter-spacing: 1px; text-transform: uppercase;">
-                        {strength_label}
+                    <td style="width: 32%; text-align: right; vertical-align: top; white-space: nowrap;">
+                        <span style="font-family: 'Courier New', monospace; font-size: 14px; color: #141210;">{score}</span>
+                        <span style="font-family: 'Courier New', monospace; font-size: 11px; color: #7A2430; letter-spacing: 1px; text-transform: uppercase;">&nbsp;·&nbsp;{label}</span>
                     </td>
                 </tr>
             </table>
         </div>
+        </a>
         """
 
-    def _monitoring_section(self, monitoring_signals: List[Dict], max_rows: int = 6) -> str:
-        """Generate HTML for monitoring section (non-fresh signals above breakout trigger + top momentum)"""
-        if not monitoring_signals:
+    def _open_signals_section(self, open_signals: List[Dict], max_rows: int = 6) -> str:
+        """Generate HTML for the Open section — non-fresh signals still in the
+        buy zone (the dashboard's "Monitoring" bucket). Every row carries its
+        age context via _signal_row's "signaled Nd ago · still qualifies"."""
+        if not open_signals:
             return ''
 
-        total = len(monitoring_signals)
-        shown = monitoring_signals[:max_rows]
+        total = len(open_signals)
+        shown = open_signals[:max_rows]
         rows = "".join(self._signal_row(s) for s in shown)
         remaining = total - len(shown)
         more_note = f"""
-                <tr>
-                    <td colspan="4" style="padding: 8px 0; text-align: center; font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #8A8279;">
-                        and {remaining} more on your <a href="https://rigacap.com/app" style="color: #7A2430; text-decoration: none;">dashboard</a>
-                    </td>
-                </tr>""" if remaining > 0 else ""
+                <div style="padding: 8px 0; text-align: center; font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #8A8279;">
+                    and {remaining} more on your <a href="https://rigacap.com/app" style="color: #7A2430; text-decoration: none;">dashboard</a>
+                </div>""" if remaining > 0 else ""
         return f"""
         <tr>
             <td style="padding: 0 24px 24px;">
                 <table cellpadding="0" cellspacing="0" style="width: 100%; padding-bottom: 8px; border-bottom: 1px solid #DDD5C7; margin-bottom: 8px;">
                     <tr>
-                        <td style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">Monitoring <span style="font-style: italic; color: #8A8279; font-weight: 400;">({total})</span></td>
-                        <td align="right" style="font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #5A544E;">Watching for entry</td>
+                        <td style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">Open <span style="font-style: italic; color: #8A8279; font-weight: 400;">({total})</span></td>
+                        <td align="right" style="font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #5A544E;">Still in buy zone</td>
                     </tr>
                 </table>
                 {rows}{more_note}
@@ -463,41 +525,55 @@ class EmailService:
         </tr>
         """
 
-    def _watchlist_section(self, watchlist: List[Dict]) -> str:
-        """Generate HTML for watchlist (approaching trigger) section"""
+    def _watchlist_section(self, watchlist: List[Dict], max_rows: int = 5) -> str:
+        """Generate HTML for the Approaching section (watchlist nearing trigger).
+        Each row is a block anchor to the dashboard; the distance is labeled
+        "+x.x% to trigger" — never a bare percentage."""
         if not watchlist:
             return ''
 
+        total = len(watchlist)
+        shown = watchlist[:max_rows]
         rows = ""
-        for w in watchlist[:3]:
+        for w in shown:
             symbol = w.get('symbol', 'N/A')
             price = w.get('price', 0)
             distance = w.get('distance_to_trigger', 0)
 
             rows += f"""
-            <tr>
-                <td style="width: 40%; padding: 10px 0; border-bottom: 1px solid #DDD5C7;">
-                    <a href="https://rigacap.com/app?chart={symbol}" style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210; text-decoration: none;">{symbol}</a>
-                </td>
-                <td style="width: 25%; padding: 10px 0; text-align: right; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 13px; color: #141210;">
-                    ${price:.2f}
-                </td>
-                <td style="width: 35%; padding: 10px 0; text-align: right; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 11px; color: #5A544E;">
-                    +{distance:.1f}% to trigger
-                </td>
-            </tr>
+            <a href="https://rigacap.com/app?chart={symbol}" style="display: block; color: inherit; text-decoration: none;">
+            <div style="padding: 10px 0; border-bottom: 1px solid #DDD5C7;">
+                <table cellpadding="0" cellspacing="0" style="width: 100%;">
+                    <tr>
+                        <td style="width: 40%; font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">
+                            <span style="text-decoration: underline;">{symbol}</span>
+                        </td>
+                        <td style="width: 25%; text-align: right; font-family: 'Courier New', monospace; font-size: 13px; color: #141210;">
+                            ${price:.2f}
+                        </td>
+                        <td style="width: 35%; text-align: right; font-family: 'Courier New', monospace; font-size: 11px; color: #5A544E; white-space: nowrap;">
+                            +{distance:.1f}% to trigger
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            </a>
             """
+
+        remaining = total - len(shown)
+        more_note = f"""
+                <div style="padding: 8px 0; text-align: center; font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #8A8279;">
+                    and {remaining} more on your <a href="https://rigacap.com/app" style="color: #7A2430; text-decoration: none;">dashboard</a>
+                </div>""" if remaining > 0 else ""
 
         return f"""
         <tr>
             <td style="padding: 0 24px 24px;">
                 <div style="padding-bottom: 8px; border-bottom: 2px solid #141210; margin-bottom: 12px;">
-                    <span style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">Watchlist</span>
-                    <span style="font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #5A544E;"> — Approaching trigger</span>
+                    <span style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">Approaching <span style="font-style: italic; color: #8A8279; font-weight: 400;">({total})</span></span>
+                    <span style="font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #5A544E;"> — Nearing trigger</span>
                 </div>
-                <table cellpadding="0" cellspacing="0" style="width: 100%;">
-                    {rows}
-                </table>
+                {rows}{more_note}
             </td>
         </tr>
         """
@@ -600,7 +676,41 @@ class EmailService:
         watchlist = watchlist or []
 
         date_str = date.strftime("%A, %B %d, %Y")
-        fresh_signals = [s for s in signals if s.get('is_fresh')]
+        # Same bucket taxonomy as the HTML builder + the dashboard:
+        # New today (is_fresh) / Open (non-fresh, still in buy zone) / Approaching.
+        # Defensive: derive freshness from AGE, never trust a stored flag —
+        # DB rows persist is_fresh at write time and it never ages (Jun 12:
+        # 'NEW · 69D AGO'). Also dedupe by symbol (broken invalidation left
+        # duplicate active rows), keeping the highest-score instance.
+        def _effective_fresh(sig):
+            ages = [a for a in (sig.get('days_since_crossover'), sig.get('days_since_entry')) if a is not None]
+            if ages:
+                return min(ages) <= 5
+            return bool(sig.get('is_fresh'))
+        _seen, _deduped = set(), []
+        for s_ in sorted(signals, key=lambda x: -(x.get('ensemble_score') or 0)):
+            if s_.get('symbol') in _seen:
+                continue
+            _seen.add(s_.get('symbol'))
+            _deduped.append(s_)
+        signals = _deduped
+        fresh_signals = [s for s in signals if _effective_fresh(s)]
+        open_signals = [s for s in signals if not _effective_fresh(s)]
+
+        def _signal_line(s: Dict, fresh: bool) -> str:
+            symbol = s.get('symbol', 'N/A')
+            price = s.get('price', 0)
+            pct = s.get('pct_above_dwap') or 0
+            days_since = s.get('days_since_crossover')
+            score, label = self._signal_strength(s)
+            if fresh:
+                tag = "[NEW TODAY]" if days_since == 0 else (
+                    f"[NEW - {days_since}d ago]" if days_since is not None else "[NEW]")
+            else:
+                tag = (f"[signaled {days_since}d ago, still qualifies]"
+                       if days_since is not None else "[still qualifies]")
+            return (f"  {symbol}: ${price:.2f} - Strength {score}/100 ({label}) "
+                    f"- +{pct:.1f}% above trend {tag}")
 
         lines = [
             f"RIGACAP DAILY - {date_str}",
@@ -610,39 +720,29 @@ class EmailService:
             f"S&P 500: ${market_regime.get('spy_price', 'N/A') if market_regime else 'N/A'}",
             f"Market Fear: {_vix_label(market_regime.get('vix_level')) if market_regime else 'N/A'}",
             "",
-            f"BUY SIGNALS ({len(fresh_signals)})",
+            f"NEW TODAY ({len(fresh_signals)})",
             "-" * 40,
         ]
 
-        non_fresh = [s for s in signals if not s.get('is_fresh')]
-
         if fresh_signals:
             for s in fresh_signals[:8]:
-                symbol = s.get('symbol', 'N/A')
-                price = s.get('price', 0)
-                pct = s.get('pct_above_dwap', 0)
-                mom_rank = s.get('momentum_rank', 0)
-                fresh_tag = " [NEW TODAY]" if s.get('days_since_crossover') == 0 else " [FRESH]"
-                lines.append(f"  {symbol}: ${price:.2f} (Rank #{mom_rank}) - Breakout +{pct:.1f}%{fresh_tag}")
+                lines.append(_signal_line(s, fresh=True))
         else:
-            lines.append(f"  No fresh buy signals today")
+            lines.append("  No new signals today.")
 
-        if non_fresh:
-            lines.extend(["", f"MONITORING ({len(non_fresh)})", "-" * 40])
-            for s in non_fresh[:6]:
-                symbol = s.get('symbol', 'N/A')
-                price = s.get('price', 0)
-                pct = s.get('pct_above_dwap', 0)
-                mom_rank = s.get('momentum_rank', 0)
-                lines.append(f"  {symbol}: ${price:.2f} (Rank #{mom_rank}) - Breakout +{pct:.1f}%")
-
-        if not signals and watchlist:
-            lines.append(f"  No fresh signals — {len(watchlist)} stock(s) on watchlist")
+        if open_signals:
+            lines.extend(["", f"OPEN - STILL IN BUY ZONE ({len(open_signals)})", "-" * 40])
+            for s in open_signals[:6]:
+                lines.append(_signal_line(s, fresh=False))
+            if len(open_signals) > 6:
+                lines.append(f"  ...and {len(open_signals) - 6} more on your dashboard")
 
         if watchlist:
-            lines.extend(["", "WATCHLIST — APPROACHING TRIGGER:", "-" * 40])
-            for w in watchlist[:3]:
-                lines.append(f"  {w.get('symbol', 'N/A')}: ${w.get('price', 0):.2f} — +{w.get('distance_to_trigger', 0):.1f}% to go")
+            lines.extend(["", f"APPROACHING ({len(watchlist)})", "-" * 40])
+            for w in watchlist[:5]:
+                lines.append(f"  {w.get('symbol', 'N/A')}: ${w.get('price', 0):.2f} - +{w.get('distance_to_trigger', 0):.1f}% to trigger")
+            if len(watchlist) > 5:
+                lines.append(f"  ...and {len(watchlist) - 5} more on your dashboard")
 
         lines.extend([
             "",
@@ -688,16 +788,18 @@ class EmailService:
         missed_opportunities = missed_opportunities or []
         watchlist = watchlist or []
 
+        # Subject counts derive from the SAME is_fresh split the HTML/plain-text
+        # builders use — subject, section headers, and rows can never disagree.
         fresh_count = len([s for s in signals if s.get('is_fresh')])
+        open_count = len(signals) - fresh_count
+        approaching_count = len(watchlist)
         # Include date in subject for historical (time-travel) emails
         is_historical = date and date.date() != _now_et().date()
         date_label = f" [{date.strftime('%b %d, %Y')}]" if is_historical else ""
-        if fresh_count > 0:
-            subject = f"📊 RigaCap Daily{date_label}: {fresh_count} Ensemble Signal{'s' if fresh_count != 1 else ''}"
-        elif watchlist:
-            subject = f"📊 Market Update{date_label} — {len(watchlist)} on Watchlist"
-        else:
-            subject = f"📊 RigaCap Daily{date_label}: Market Update"
+        subject = (
+            f"📊 RigaCap Daily{date_label}: {fresh_count} new · "
+            f"{open_count} open · {approaching_count} approaching"
+        )
 
         html = self.generate_daily_summary_html(
             signals=signals,
