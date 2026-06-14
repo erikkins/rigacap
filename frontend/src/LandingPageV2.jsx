@@ -49,12 +49,11 @@ const HeroSection = ({ onGetStarted }) => (
         className="font-display italic text-ink-mute text-xl sm:text-[1.2rem] leading-relaxed max-w-[640px] mb-3"
         style={{ fontVariationSettings: '"opsz" 24' }}
       >
-        Survivorship-free, drawdown-controlled momentum &mdash; built the way an institution would, for the price of a subscription, not 1% a year.
+        The biggest threat to your returns isn't the next crash &mdash; it's selling into it. Built so you can hold through the storm instead of bailing at the bottom.
       </p>
 
       <p className="text-[0.95rem] text-ink-mute leading-relaxed max-w-[640px] mb-10">
-        Twenty-one years of walk-forward validation — through 2008, COVID, and 2022.<br />
-        Built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong> with 15 years of quantitative research as a parallel practice. <strong className="text-ink font-medium">$129/month.</strong>
+        A survivorship-free, drawdown-controlled momentum strategy &mdash; worst loss <strong className="text-ink font-medium">19% across 21 years</strong>, while the index lost half its value twice. Validated through 2008, COVID, and 2022, built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>. <strong className="text-ink font-medium">$129/month</strong>, not 1% a year.
       </p>
 
       <div className="flex flex-wrap gap-4 items-center mb-0">
