@@ -5,6 +5,18 @@ type: project
 originSessionId: 39ce1e26-1ab7-4fbd-8e9a-6c892d933b00
 ---
 
+## ✅ FALLBACK / PROVENANCE POLICY (Jun 14 2026, Erik-approved): self-heal price store + immutable provenance log
+The daily-veneer-vs-pickle diff (Jun 14) found the per-day spikes are ONE day: **2026-03-27, entire universe, source-difference-shaped (mixed signs ±0.1-1.4%) = an Alpaca-outage/yfinance-fallback day** baked into the pickle. Not dividends, not a convention gap. Veneer matches pickle on 89/90 days. **Stock cutover gate is essentially MET** — the only divergence is the one fallback day, where the clean Alpaca veneer is MORE canonical than the pickle's yfinance stopgap.
+
+THREE-LAYER data architecture (Erik's framing):
+1. **PITFWU price store** = canonical Alpaca RAW, **SELF-HEALS** fallback days. yfinance is a reliability STOPGAP, not a data choice. When Alpaca recovers, re-fetch & overwrite the provisional bar. Backtests run on clean, consistent, reproducible single-source data. (Option A short-term fallback.)
+2. **Decision ledger** (model_positions / signals tables) = immutable record of what was actually traded (entry prices, P&L). Already exists. The live book's recorded entry price is real regardless of source.
+3. **Provenance log (NEW, immutable)** = EVERY fallback event logged, trade or no trade: {date, symbol, source=yfinance, reason, value_at_time, decision (entry/exit/none + ref), healed, healed_value, healed_at}. Row written the instant a fallback happens; the heal step UPDATES it (healed=true + Alpaca value) but NEVER deletes. So even after the price store heals to Alpaca, there's a permanent record that yfinance was used on date X and what we did on it. Erik: "I still want a record that we used yfinance at some point, whether there was an entry or not."
+
+Rationale: price store wants consistent true prices (substrate); the fact that we deviated is an AUDIT concern (provenance); what we traded is a LEDGER concern. Three jobs, three stores. The ±0.1-1.4% one-day diff is NOT decision-material (no signal flips), so self-healing costs nothing in fidelity.
+
+IMPLEMENTATION (freshness pipeline): each run writes Alpaca RAW; on Alpaca-down, write provisional (yfinance) + provenance row; next successful run re-fetches last ~5 days from Alpaca, overwrites provisionals, updates provenance healed=true. Rare (1/90 days), cheap, self-correcting.
+
 ## ✅ CONVENTION DECIDED (Jun 13 2026, Erik-approved): OPTION A — RAW bars + adjust-at-read is canonical
 Erik confirmed Option A after the pickle-vs-PITFWU diff. **Canonical store = raw as-traded bars + corp-actions calendar, adjustments applied AT READ (PITFWU/veneer style), split-only price-return.** Prod aligns to this; the adjusted-baked pickle/`all_data.parquet` convention is RETIRED.
 - **Diff result that drove the call:** on a common date (2026-06-04) pickle == PITFWU split-adjusted to the PENNY (0.00% on SNDK/WULF/BAC/KEY/KO/KVUE/VZ/SPY). The apparent gaps in the naive diff were PURE STALENESS (PITFWU ends ~Jun 4, no freshness pipeline yet) + the latest-price quirk (dividend adj only back-adjusts HISTORICAL prices). **No data-quality divergence — the migration is plumbing, not a data rescue.**
