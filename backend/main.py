@@ -2025,6 +2025,7 @@ def handler(event, context):
         async def _rebuild_snap():
             import pandas as _pd
             from app.api.signals import compute_shared_dashboard_data
+            from app.services.data_export import data_export_service
             cutoff = _pd.Timestamp(_target).normalize()
             trunc = 0
             for _s, _df in list(scanner_service.data_cache.items()):
