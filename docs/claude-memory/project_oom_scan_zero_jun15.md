@@ -9,10 +9,30 @@ metadata:
 
 # 0-signal scan + hygiene OOM — both are the 3008 MB memory ceiling (Jun 15 2026)
 
-## ✅ STATUS: both fixes SHIPPED Jun 15 night (commit 1ed2491, pushed to main → CI/CD)
+## ✅ STATUS: both fixes SHIPPED + CONFIRMED LIVE Jun 15 night (commit 1ed2491)
+- CI/CD green (4m22s); both Lambdas updated **01:20 UTC Jun 16**, State=Active (worker still 3008 MB cap — unchanged, that's fine).
 - Fix 1 = daily-scan dashboard build moved BEFORE the pickle/parquet exports (headroom) + BUG-1 guard retry removed (alert-only).
 - Fix 2 = nightly_data_hygiene drops the inline export_parquet after split-refetch (keeps export_pickle + gc).
 - **MUST VERIFY on the Tue Jun 16 4:30 PM ET scan:** (1) scan REPORT Max Memory comfortably < 3008 MB; (2) dashboard.json buys ≈ bench set (not 0) on a healthy regime; (3) book entries match; (4) no worker-errors alarm from hygiene that night. If the scan STILL writes 0 with mem under cap → it was NOT (only) memory; escalate to the decouple-into-fresh-invocation plan (Fix 1 alt below).
+
+## 🧳 Jun 16 travel plan (Erik OFFLINE during scans — laptop in a bag)
+- **DECIDED: NO auto-recover cron.** The Fix-1 alert-only guard is server-side and emails `erik@rigacap.com` on the failure signature. That email IS the tripwire: Erik spins up the laptop → returns to THIS chat → we run the recovery together (below). Plus the 8 CloudWatch alarms cover Lambda-error / hygiene-OOM paths.
+- **Watch-for email subject:** `🚨 RigaCap: 0 buy_signals despite healthy raw scan`. No email = scan worked (expected).
+
+## 🚑 RECOVERY RUNBOOK (if the scan writes 0 again — exactly what worked Jun 15)
+The cold/fresh worker invocation rebuilds the dashboard with memory headroom → correct set. Two equivalent paths:
+
+**One-shot (preferred):** fresh invocation does dashboard + snapshot + ensemble persist + ENTRIES + regime:
+```
+aws lambda invoke --function-name rigacap-prod-worker --profile rigacap --region us-east-1 \
+  --payload '{"export_dashboard_cache": true, "include_snapshot": true, "include_ensemble": true}' \
+  --cli-binary-format raw-in-base64-out --cli-read-timeout 300 /tmp/rec.json
+```
+**Two-step (what I literally ran Jun 15, if you want to eyeball the dashboard before entering):**
+1. `{"export_dashboard_cache": {"_": 1}}` → rewrites dashboard.json (check buys != 0; Jun 15 gave 17).
+2. `{"model_portfolio": {"action": "process_entries", "portfolio_type": "live"}}` → enters the set (Jun 15: 17 positions, $36k cash left).
+**Then verify:** `aws s3 cp s3://rigacap-prod-price-data-149218244179/signals/dashboard.json - | python3 -c "import json,sys;d=json.load(sys.stdin);print(len(d['buy_signals']))"`
+Always sanity-check the names against the t30v bench (SNDK/MRVL/INTC/AMD/UMC/MU… on Jun 15) before trusting. process_entries is idempotent-ish on a fresh day but DON'T double-run it (it would add to an already-entered book) — check current positions first: `{"model_portfolio":{"action":"status","portfolio_type":"live"}}`.
 
 ## What happened (Mon Jun 15, first live-entry day)
 - 4:30 scan ran, found **43 raw DWAP signals**, regime `rotating_bull` — but the dashboard build wrote **buy_signals:0 AND watchlist:0**. BUG-1 guard fired, retried IN THE SAME PROCESS, still 0, alerted admin. Live book entered 0.
