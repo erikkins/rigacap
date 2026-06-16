@@ -2012,6 +2012,45 @@ def handler(event, context):
                 pass
             return {"status": "failed", "error": str(e)}
 
+    # [BACKFILL] Rebuild a past day's snapshot from the CURRENT cache truncated
+    # to that date (so iloc[-1] == that day's bar, via the real production build).
+    # Fixes Jun-15's snapshot (buy_signals=0, a scan bug) so the market-context
+    # day-over-day read sees the real 17, not a phantom zero. Writes ONLY the one
+    # snapshot, then clears the (truncated) cache so the next invocation reloads
+    # fresh. Temporary — Jun 16 2026.
+    if event.get("rebuild_snapshot"):
+        _cfg = event.get("rebuild_snapshot") or {}
+        _target = _cfg.get("date")
+        print(f"🧩 Rebuild snapshot for {_target} (truncate cache -> build -> write snapshot)")
+        async def _rebuild_snap():
+            import pandas as _pd
+            from app.api.signals import compute_shared_dashboard_data
+            cutoff = _pd.Timestamp(_target).normalize()
+            trunc = 0
+            for _s, _df in list(scanner_service.data_cache.items()):
+                if _df is None or len(_df) == 0:
+                    continue
+                _c = cutoff.tz_localize(_df.index.tz) if (hasattr(_df.index, 'tz') and _df.index.tz is not None) else cutoff
+                if _df.index.max() > _c:
+                    scanner_service.data_cache[_s] = _df[_df.index <= _c]
+                    trunc += 1
+            print(f"   truncated {trunc} symbols to <= {_target}")
+            async with async_session() as db:
+                data = await compute_shared_dashboard_data(db)
+            n = len(data.get('buy_signals', []))
+            snap = data_export_service.export_snapshot(_target, data)
+            scanner_service.data_cache = {}  # force fresh reload next invocation
+            return {"date": _target, "buy_signals": n,
+                    "symbols": [s['symbol'] for s in data.get('buy_signals', [])], "snapshot": snap}
+        try:
+            result = _run_async(_rebuild_snap())
+            print(f"🧩 Rebuild snapshot result: {result}")
+            return result
+        except Exception as e:
+            import traceback
+            print(f"❌ rebuild_snapshot failed: {e}\n{traceback.format_exc()}")
+            return {"error": str(e)}
+
     # [DIAG] Safe reproduction of the in-pipeline 0-signal bug: run scan() (sets
     # market_state, processes the cache — the condition the cold path skips) then
     # the dashboard build, emitting the [DASH-DIAG] gate counts. Writes NOTHING
