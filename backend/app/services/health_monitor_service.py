@@ -655,11 +655,19 @@ class HealthMonitorService:
             message=msg, resolution=res,
         )
 
+    # Live model portfolio max positions. t30v caps at 20 (×4.5%), set by the
+    # strategy_adaptive_params t30v_cutover row — NOT the stale settings default
+    # of 6 (old 6×15% ensemble). Bumped Jun 16 2026: the 6 here false-flagged the
+    # legitimate 17-position t30v book. See project_oom_scan_zero_jun15 /
+    # project_signal_parity_jun13.
+    _LIVE_MAX_POSITIONS = 20
+
     async def _check_open_positions(self) -> HealthCheck:
-        """Check open position count in the live model portfolio (Ensemble caps at 6)."""
+        """Check open position count in the live model portfolio (t30v caps at 20)."""
         from app.core.database import async_session, ModelPosition
         from sqlalchemy import select, func
 
+        cap = self._LIVE_MAX_POSITIONS
         try:
             async with async_session() as db:
                 result = await db.execute(
@@ -673,15 +681,15 @@ class HealthMonitorService:
             return HealthCheck(
                 category="Signals", name="Open Positions",
                 status=HealthStatus.YELLOW, value="DB ERROR",
-                threshold="<=6",
+                threshold=f"<={cap}",
                 message=f"Could not query DB: {str(e)[:80]}",
                 resolution="Check database connectivity",
             )
 
-        if count > 6:
+        if count > cap:
             status = HealthStatus.YELLOW
-            msg = f"{count} open positions (Ensemble cap = 6)"
-            res = "Check position entry logic. Ensemble caps at 6."
+            msg = f"{count} open positions (t30v cap = {cap})"
+            res = f"Check position entry logic. t30v caps at {cap}."
         else:
             status = HealthStatus.GREEN
             msg = f"{count} open live position(s)"
@@ -690,7 +698,7 @@ class HealthMonitorService:
         return HealthCheck(
             category="Signals", name="Open Positions (Live)",
             status=status, value=str(count),
-            threshold="<=6",
+            threshold=f"<={cap}",
             message=msg, resolution=res,
         )
 

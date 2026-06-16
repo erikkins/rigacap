@@ -1742,14 +1742,14 @@ def handler(event, context):
                         cb_paused = _cb_is_paused("live")
                     except Exception:
                         pass
-                    if open_count < 6 and actionable_count > 0 and not cb_paused:
+                    if open_count < 20 and actionable_count > 0 and not cb_paused:
                         pipeline_failures.append((
                             "Silent Cash",
                             f"{actionable_count} actionable fresh signals (of {fresh_count} total), "
-                            f"0 entries opened, {open_count}/6 positions held — entry pipeline may be silently broken. "
+                            f"0 entries opened, {open_count}/20 positions held — entry pipeline may be silently broken. "
                             f"Skipped: {[s.get('symbol') for s in actionable_fresh]}"
                         ))
-                    elif open_count < 6 and actionable_count > 0 and cb_paused:
+                    elif open_count < 20 and actionable_count > 0 and cb_paused:
                         print(f"🛡 Circuit breaker active — {actionable_count} fresh signal(s) correctly held back; cash position is expected, not a pipeline failure.")
             except Exception as _cde:
                 print(f"⚠️ Silent-cash detector failed (non-fatal): {_cde}")
