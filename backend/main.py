@@ -1484,7 +1484,50 @@ def handler(event, context):
                     "settlement_check": settlement,
                 }
 
-            # 4. Persist refreshed cache to S3 pickle (slow — only if time permits)
+            # 4. Export dashboard JSON + daily snapshot — BEFORE the heavy pickle/
+            # parquet exports. MEMORY FIX (Jun 16 2026): the dashboard build
+            # recomputes the momentum ranking across the whole universe; running
+            # it AFTER export_pickle (695 MB decompressed) + export_parquet pushed
+            # the worker to its 3008 MB cap, and under that pressure pandas
+            # silently returned empty results → 0 buy_signals + 0 watchlist on the
+            # Jun 15 first-live-entry scan (no exception, no OOM exit). Building
+            # first — at ~2.3 GB with headroom — yields the correct set; the heavy
+            # exports then run AFTER the decisions are already persisted. The cold
+            # export_dashboard_cache path proved this (it produced the right 17).
+            # See project_oom_scan_zero_jun15.
+            import gc
+            gc.collect()
+            async with async_session() as db:
+                data = await compute_shared_dashboard_data(db)
+
+                # Safety alert — NOT a retry (Erik: no in-process reruns). With the
+                # build now running pre-export with headroom, a 0-buy result on a
+                # healthy non-bearish scan should no longer recur; if it does,
+                # something new is wrong — surface it, don't paper over it.
+                _raw_n = len(signals)
+                _regime_now = (data.get('regime_forecast') or {}).get('current_regime', '')
+                if not data.get('buy_signals') and _raw_n >= 10 and _regime_now not in ('weak_bear', 'panic_crash'):
+                    print(f"⚠️ 0 buy_signals but raw scan had {_raw_n}, regime={_regime_now} — alerting admin (no retry)")
+                    try:
+                        from app.services.email_service import admin_email_service
+                        await admin_email_service.send_admin_alert(
+                            to_email="erik@rigacap.com",
+                            subject="\U0001f6a8 RigaCap: 0 buy_signals despite healthy raw scan",
+                            message=(f"Dashboard build returned 0 buy_signals; raw scan found {_raw_n}, "
+                                     f"regime={_regime_now} (not bearish). The build now runs pre-export with "
+                                     f"memory headroom, so this is NOT the OOM degradation — investigate the "
+                                     f"signal pipeline (universe, near-high filter, DWAP)."),
+                        )
+                    except Exception as _ge:
+                        print(f"⚠️ guard alert failed: {_ge}")
+                dash_result = data_export_service.export_dashboard_json(data)
+                # Use data_date (SPY's last bar date) or ET date — never UTC date.today()
+                today_et = datetime.now(ZoneInfo('America/New_York')).date()
+                today_str = data.get('data_date') or today_et.strftime("%Y-%m-%d")
+                snap_result = data_export_service.export_snapshot(today_str, data)
+            _log_step("Dashboard Export", "ok")
+
+            # 5. Persist refreshed cache to S3 pickle (slow — only if time permits)
             export_result = data_export_service.export_pickle(scanner_service.data_cache)
             pkl_ok = export_result.get('success', True)
             pkl_status = "ok" if pkl_ok else "warning"
@@ -1545,44 +1588,9 @@ def handler(event, context):
             import gc
             gc.collect()
 
-            # 5. Export dashboard JSON + daily snapshot
-            async with async_session() as db:
-                data = await compute_shared_dashboard_data(db)
-
-                # BUG-1 GUARD (Jun 13 2026): the dashboard build has returned 0
-                # buy_signals even when the raw scan found many in a friendly
-                # regime (Jun 11-12: book wrongly held cash 2 days). Likely the
-                # dashboard scan's live index re-fetch tripping the market filter
-                # on a bad after-hours tick. Symptom = empty buy_signals while the
-                # raw scan had >=10 and regime isn't bearish. Re-run once; alert
-                # if it persists. Backstop — parity fixes make small sets normal.
-                _raw_n = len(signals)
-                _regime_now = (data.get('regime_forecast') or {}).get('current_regime', '')
-                if not data.get('buy_signals') and _raw_n >= 10 and _regime_now not in ('weak_bear', 'panic_crash'):
-                    print(f"\u26a0\ufe0f BUG-1 GUARD: 0 buy_signals but raw scan had {_raw_n}, regime={_regime_now} \u2014 re-running dashboard build")
-                    _retry = await compute_shared_dashboard_data(db)
-                    if _retry.get('buy_signals'):
-                        print(f"\u2705 BUG-1 GUARD: retry recovered {len(_retry['buy_signals'])} buy_signals")
-                        data = _retry
-                    else:
-                        print("\U0001f6a8 BUG-1 GUARD: retry STILL 0 \u2014 alerting admin (entries held regardless)")
-                        try:
-                            from app.services.email_service import admin_email_service
-                            await admin_email_service.send_admin_alert(
-                                to_email="erik@rigacap.com",
-                                subject="\U0001f6a8 RigaCap: 0 buy_signals despite healthy raw scan",
-                                message=(f"Dashboard returned 0 buy_signals twice; raw scan found {_raw_n}, "
-                                         f"regime={_regime_now} (not bearish). Jun 11-12 zero-signal pattern "
-                                         f"OR a legit no-name-near-high day. Verify before relying on today's set."),
-                            )
-                        except Exception as _ge:
-                            print(f"\u26a0\ufe0f guard alert failed: {_ge}")
-                dash_result = data_export_service.export_dashboard_json(data)
-                # Use data_date (SPY's last bar date) or ET date — never UTC date.today()
-                today_et = datetime.now(ZoneInfo('America/New_York')).date()
-                today_str = data.get('data_date') or today_et.strftime("%Y-%m-%d")
-                snap_result = data_export_service.export_snapshot(today_str, data)
-            _log_step("Dashboard Export", "ok")
+            # (Dashboard build + snapshot moved ABOVE, before the pickle/parquet
+            # exports — memory fix Jun 16 2026. See the block headed "# 4. Export
+            # dashboard JSON". `data`, `today_str`, `today_et` are already defined.)
 
             # 5b. Persist market context to history table
             try:
@@ -5859,13 +5867,18 @@ def handler(event, context):
                         df = scanner_service._ensure_indicators(df)
                         scanner_service.data_cache[sym] = df
                         refetched += 1
-                    # Re-export pickle + parquet
+                    # Re-export pickle ONLY (persists the split fix). MEMORY FIX
+                    # (Jun 16 2026): the inline export_parquet here built a full-
+                    # universe Arrow table on top of the 695 MB cache + the asset-
+                    # verification working set, pushing the worker past its 3008 MB
+                    # cap -> Runtime.OutOfMemory + retry storm (the Jun 15 alarm
+                    # emails). Parquet is shadow/observation only and is regenerated
+                    # by the next daily scan, so we drop it here; gc first to reclaim
+                    # the verify/refetch buffers. See project_oom_scan_zero_jun15.
                     if refetched > 0:
+                        import gc as _gc
+                        _gc.collect()
                         data_export_service.export_pickle(scanner_service.data_cache)
-                        try:
-                            data_export_service.export_parquet(scanner_service.data_cache)
-                        except Exception as _pe:
-                            print(f"⚠️ Shadow parquet after refetch failed: {_pe}")
                     refetch_result = {"split_symbols": len(split_symbols), "refetched": refetched}
                 except Exception as e:
                     import traceback
