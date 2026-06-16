@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 
 // Shared site nav. Editorial-publication convention: logo top-left serves as
 // the home link; nav items are content destinations only. Layout stays
@@ -32,6 +33,7 @@ const LogoMark = () => (
 
 export default function TopNav({ onGetStarted }) {
   const { pathname } = useLocation();
+  const [open, setOpen] = useState(false);
 
   return (
     <nav className="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm border-b border-rule">
@@ -42,7 +44,7 @@ export default function TopNav({ onGetStarted }) {
             RigaCap<span className="text-claret">.</span>
           </span>
         </Link>
-        <div className="flex items-center gap-7">
+        <div className="flex items-center gap-4 sm:gap-7">
           {NAV_ITEMS.map((item) => {
             // Active matching: anchor links (e.g. /#pricing) compare on
             // pathname only — so /#pricing is active when on /, not on
@@ -92,8 +94,41 @@ export default function TopNav({ onGetStarted }) {
               Start Trial
             </Link>
           )}
+          {/* Mobile hamburger — reveals NAV_ITEMS, which are `hidden sm:inline`.
+              Without this the nav links vanished entirely on phones (the header
+              kept only the logo + Start Trial). Added Jun 16 2026. */}
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className="sm:hidden -mr-1 p-1 text-ink"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            aria-expanded={open}
+          >
+            {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
       </div>
+      {/* Mobile menu panel */}
+      {open && (
+        <div className="sm:hidden border-t border-rule bg-paper px-4 pb-3 pt-1">
+          {NAV_ITEMS.map((item) => {
+            const isActive = item.to ? pathname === item.to : false;
+            const cls = `block py-2.5 text-[1rem] no-underline ${isActive ? 'text-ink font-medium' : 'text-ink-mute'}`;
+            if (item.href) {
+              return (
+                <a key={item.label} href={item.href} className={cls} onClick={() => setOpen(false)}>
+                  {item.label}
+                </a>
+              );
+            }
+            return (
+              <Link key={item.label} to={item.to} className={cls} onClick={() => setOpen(false)}>
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </nav>
   );
 }

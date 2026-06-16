@@ -14,6 +14,78 @@ const SectionLabel = ({ children }) => (
 
 const Navbar = () => <TopNav />;
 
+// Performance data — single source for BOTH the desktop table and the mobile
+// card stack. On mobile the table reflows to per-strategy cards so every metric
+// (incl. Max Drawdown — the whole pitch) is visible without a hidden horizontal
+// scroll. Added Jun 16 2026: an ad group lands directly on /track-record and
+// 100% of paid clicks are mobile, so the drawdown columns must not be off-screen.
+const GREEN = '#2D5F3F', RED = '#8F2D3D';
+const RECENT_ROWS = [
+  { name: 'RigaCap — risk-managed', hi: true, cells: [
+    { v: '+32.0%', tone: 'ink', w: 'font-medium' }, { v: '2.20', tone: 'ink', w: 'font-medium' },
+    { v: '3.76', hex: GREEN, w: 'font-semibold' }, { v: '8.5%', hex: GREEN, w: 'font-semibold' }] },
+  { name: 'S&P 500 (price)', cells: [
+    { v: '+19.9%', tone: 'mute' }, { v: '1.18', tone: 'mute' }, { v: '1.05', tone: 'mute' }, { v: '19.0%', tone: 'mute' }] },
+  { name: 'Raw momentum (gross)', cells: [
+    { v: '+71.9%', tone: 'mute' }, { v: '1.35', tone: 'mute' }, { v: '1.91', tone: 'mute' }, { v: '37.7%', hex: RED, w: 'font-medium' }] },
+];
+const FOUNDATION_ROWS = [
+  { name: 'Raw 12-month momentum, net of costs', cells: [
+    { v: '13.2%', tone: 'mute' }, { v: '0.69', tone: 'mute' }, { v: '57%', hex: RED, w: 'font-medium' }] },
+  { name: 'RigaCap — risk-managed', hi: true, cells: [
+    { v: '8.3%', tone: 'ink', w: 'font-medium' }, { v: '0.73', tone: 'ink', w: 'font-medium' }, { v: '19%', hex: GREEN, w: 'font-semibold' }] },
+  { name: 'S&P 500 (SPY, price only)', italic: true, cells: [
+    { v: '9.8%', tone: 'mute' }, { v: '—', tone: 'mute' }, { v: '55%', tone: 'mute' }] },
+];
+
+const cellCls = (c) => `font-mono text-[0.95rem] ${c.w || ''} ${c.hex ? '' : (c.tone === 'ink' ? 'text-ink' : 'text-ink-mute')}`;
+const cellStyle = (c) => (c.hex ? { color: c.hex } : undefined);
+
+const PerfTable = ({ label, columns, rows }) => (
+  <>
+    <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-4">{label}</div>
+    {/* Desktop: table (unchanged look) */}
+    <div className="hidden sm:block overflow-x-auto mb-4">
+      <table className="w-full border-collapse" style={{ fontFeatureSettings: '"tnum"' }}>
+        <thead>
+          <tr>
+            <th className="py-3 text-left pl-5 pr-4 font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark">Strategy</th>
+            {columns.map((h) => (
+              <th key={h} className="py-3 text-right px-5 font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.name} className={`border-b border-rule ${r.hi ? 'bg-paper-card' : ''}`}>
+              <td className={`py-4 pl-5 pr-4 text-[0.95rem] ${r.hi ? 'font-semibold text-ink' : (r.italic ? 'italic text-ink-mute' : 'text-ink-mute')}`} style={r.hi ? { boxShadow: 'inset 3px 0 0 #7A2430' } : undefined}>{r.name}</td>
+              {r.cells.map((c, i) => (
+                <td key={i} className={`py-4 px-5 text-right ${cellCls(c)}`} style={cellStyle(c)}>{c.v}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    {/* Mobile: per-strategy cards — no horizontal scroll, every metric visible */}
+    <div className="sm:hidden space-y-px bg-rule mb-4">
+      {rows.map((r) => (
+        <div key={r.name} className="bg-paper-card p-4" style={r.hi ? { boxShadow: 'inset 3px 0 0 #7A2430' } : undefined}>
+          <div className={`text-[0.95rem] mb-3 ${r.hi ? 'font-semibold text-ink' : (r.italic ? 'italic text-ink-mute' : 'text-ink')}`}>{r.name}</div>
+          <div className="grid grid-cols-2 gap-x-5 gap-y-2.5">
+            {columns.map((col, i) => (
+              <div key={col} className="flex items-baseline justify-between border-b border-rule pb-1.5">
+                <span className="font-body text-[0.62rem] font-medium tracking-[0.1em] uppercase text-ink-mute">{col}</span>
+                <span className={cellCls(r.cells[i])} style={cellStyle(r.cells[i])}>{r.cells[i].v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </>
+);
+
 export default function TrackRecordPageV2() {
   useEffect(() => { document.title = 'Track Record | RigaCap'; }, []);
 
@@ -73,45 +145,7 @@ export default function TrackRecordPageV2() {
           </h2>
 
           {/* Recent 24 months — held-out walk-forward window (Jun 2024 – May 2026) */}
-          <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-4">
-            The Last 24 Months
-          </div>
-          <div className="overflow-x-auto mb-4">
-            <table className="w-full border-collapse" style={{ fontFeatureSettings: '"tnum"' }}>
-              <thead>
-                <tr>
-                  {['Strategy', 'Annualized', 'Sharpe', 'Calmar', 'Max Drawdown'].map((h, i) => (
-                    <th key={h} className={`py-3 ${i === 0 ? 'text-left pl-5 pr-4' : 'text-right px-5'} font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark`}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-rule bg-paper-card">
-                  <td className="py-4 pl-5 pr-4 text-[0.95rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>RigaCap &mdash; risk-managed</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">+32.0%</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">2.20</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-semibold" style={{ color: '#2D5F3F' }}>3.76</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-semibold" style={{ color: '#2D5F3F' }}>8.5%</td>
-                </tr>
-                <tr className="border-b border-rule">
-                  <td className="py-4 pl-5 pr-4 text-[0.95rem] text-ink-mute">S&amp;P 500 (price)</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">+19.9%</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">1.18</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">1.05</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">19.0%</td>
-                </tr>
-                <tr className="border-b border-rule">
-                  <td className="py-4 pl-5 pr-4 text-[0.95rem] text-ink-mute">Raw momentum (gross)</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">+71.9%</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">1.35</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">1.91</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium" style={{ color: '#8F2D3D' }}>37.7%</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <PerfTable label="The Last 24 Months" columns={['Annualized', 'Sharpe', 'Calmar', 'Max Drawdown']} rows={RECENT_ROWS} />
           <p className="mb-12 text-[0.9rem] text-ink leading-[1.65]">
             June 2024 through May 2026, a held-out walk-forward window (backtested, not yet live money):
             <strong className="font-medium"> RigaCap beat the index by 12 points a year at well under half its drawdown</strong> &mdash;
@@ -119,43 +153,8 @@ export default function TrackRecordPageV2() {
             and took a 38% drawdown <em>during a bull market</em> to collect it. Defense isn't the same as sitting out the bull.
           </p>
 
-          <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-4">
-            The Two-Decade Foundation &middot; 2007&ndash;2026
-          </div>
           {/* SURFACE-MARKER:perf-comparison-table-START */}
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse" style={{ fontFeatureSettings: '"tnum"' }}>
-              <thead>
-                <tr>
-                  {['Strategy', 'Annualized', 'Sharpe', 'Max Drawdown'].map((h, i) => (
-                    <th key={h} className={`py-3 ${i === 0 ? 'text-left pl-5 pr-4' : 'text-right px-5'} font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark`}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-rule">
-                  <td className="py-4 pl-5 pr-4 text-[0.95rem] text-ink-mute">Raw 12-month momentum, net of costs</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">13.2%</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">0.69</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium" style={{ color: '#8F2D3D' }}>57%</td>
-                </tr>
-                <tr className="border-b border-rule bg-paper-card">
-                  <td className="py-4 pl-5 pr-4 text-[0.95rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>RigaCap &mdash; risk-managed</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">8.3%</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">0.73</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-semibold" style={{ color: '#2D5F3F' }}>19%</td>
-                </tr>
-                <tr>
-                  <td className="py-4 pl-5 pr-4 text-[0.95rem] italic text-ink-mute">S&P 500 (SPY, price only)</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">9.8%</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">&mdash;</td>
-                  <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">55%</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <PerfTable label="The Two-Decade Foundation · 2007–2026" columns={['Annualized', 'Sharpe', 'Max Drawdown']} rows={FOUNDATION_ROWS} />
           {/* SURFACE-MARKER:perf-comparison-table-END */}
 
           <p className="mt-4 text-[0.85rem] text-ink-light leading-relaxed">
@@ -187,9 +186,9 @@ export default function TrackRecordPageV2() {
                 ['2022 inflation bear', 'S&P −19.9%', '−7.5%', 'shallow & recoverable'],
                 ['2018 whipsaw (our worst)', 'S&P −7.0%', '−12.3%', 'the honest wart'],
               ].map(([regime, window, ret, dd]) => (
-                <div key={regime} className="flex items-center justify-between py-3 border-b border-rule text-[0.95rem]">
+                <div key={regime} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between py-3 border-b border-rule text-[0.95rem]">
                   <div><span className="font-medium text-ink">{regime}</span> <span className="text-ink-light text-[0.8rem]">· {window}</span></div>
-                  <div className="flex font-mono text-[0.9rem]"><span className="w-20 text-right" style={{ color: ret.startsWith('−') || ret.startsWith('-') ? '#8F2D3D' : '#2D5F3F' }}>{ret}</span><span className="w-44 sm:w-48 text-right text-ink-mute italic font-body">{dd}</span></div>
+                  <div className="flex items-baseline gap-3 font-mono text-[0.9rem]"><span className="w-16 sm:w-20 sm:text-right" style={{ color: ret.startsWith('−') || ret.startsWith('-') ? '#8F2D3D' : '#2D5F3F' }}>{ret}</span><span className="text-ink-mute italic font-body sm:w-48 sm:text-right">{dd}</span></div>
                 </div>
               ))}
             </div>
