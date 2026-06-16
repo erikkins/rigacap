@@ -2012,6 +2012,30 @@ def handler(event, context):
                 pass
             return {"status": "failed", "error": str(e)}
 
+    # [DIAG] Safe reproduction of the in-pipeline 0-signal bug: run scan() (sets
+    # market_state, processes the cache — the condition the cold path skips) then
+    # the dashboard build, emitting the [DASH-DIAG] gate counts. Writes NOTHING
+    # (no pickle, no dashboard.json, no entries). Temporary — Jun 16 2026.
+    if event.get("diag_scan_build"):
+        print("🔬 DIAG: scan() then dashboard build, no writes — tracing the 0-signal gate")
+        async def _diag_scan_build():
+            sigs = await scanner_service.scan(refresh_data=False)
+            print(f"[DASH-DIAG] scan() raw signals={len(sigs)}")
+            from app.api.signals import compute_shared_dashboard_data
+            async with async_session() as db:
+                data = await compute_shared_dashboard_data(db)
+            return {"raw_signals": len(sigs),
+                    "buy_signals": len(data.get('buy_signals', [])),
+                    "watchlist": len(data.get('watchlist', []))}
+        try:
+            result = _run_async(_diag_scan_build())
+            print(f"🔬 DIAG result: {result}")
+            return result
+        except Exception as e:
+            import traceback
+            print(f"❌ DIAG failed: {e}\n{traceback.format_exc()}")
+            return {"error": str(e)}
+
     # Handle dashboard cache export
     if event.get("export_dashboard_cache"):
         print("📦 Dashboard cache export requested")

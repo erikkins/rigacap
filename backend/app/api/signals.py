@@ -889,6 +889,33 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
             for i, r in enumerate(momentum_rankings)
         }
 
+        # [DASH-DIAG] (temporary, Jun 16 2026) — print-level (CloudWatch-visible)
+        # gate counts to find WHY the in-pipeline build returns 0 while the cold
+        # path returns the correct set. Remove once root-caused.
+        try:
+            from app.services.market_analysis import market_analysis_service as _mas
+            _msr = _mas.get_market_regime() or {}
+            _nq = sum(1 for _r in momentum_rankings if _r.passes_quality_filter)
+            _ndw = 0
+            for _r in momentum_rankings:
+                if not _r.passes_quality_filter:
+                    continue
+                _d = scanner_service.data_cache.get(_r.symbol)
+                if _d is None or len(_d) < 200:
+                    continue
+                _row = _d.iloc[-1]
+                _dw = _row.get('dwap'); _px = float(_row['close']); _vol = float(_row.get('volume', 0) or 0)
+                if _dw is None or pd.isna(_dw) or _dw <= 0:
+                    continue
+                if (_px / _dw - 1) * 100 >= _dwsettings.DWAP_THRESHOLD_PCT and _vol >= _dwsettings.MIN_VOLUME and _px >= _dwsettings.MIN_PRICE:
+                    _ndw += 1
+            print(f"[DASH-DIAG] ranked={len(momentum_rankings)} pass_quality={_nq} dwap_pass={_ndw} "
+                  f"spy_above_200ma={_msr.get('spy_above_200ma', 'NOKEY')} regime={_msr.get('regime', 'NOSTATE')} "
+                  f"cache_n={len(scanner_service.data_cache)} uni_size={_dwsettings.SIGNAL_UNIVERSE_SIZE}")
+        except Exception as _de:
+            import traceback as _tb
+            print(f"[DASH-DIAG] err: {_de}\n{_tb.format_exc()[:600]}")
+
         # Threshold for ensemble entry date
         threshold_rank = momentum_top_n // 2
         mom_threshold = momentum_rankings[threshold_rank - 1].composite_score if len(momentum_rankings) >= threshold_rank else 0
@@ -1046,8 +1073,10 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
 
         watchlist.sort(key=lambda x: x['distance_to_trigger'])
         watchlist = watchlist[:5]
+        print(f"[DASH-DIAG] FINAL buy_signals={len(buy_signals)} watchlist={len(watchlist)}")
     except Exception as e:
-        print(f"Buy signals/watchlist error: {e}")
+        import traceback as _tbe
+        print(f"Buy signals/watchlist error: {e}\n{_tbe.format_exc()[:800]}")
 
     # --- Market stats ---
     market_stats = {}
