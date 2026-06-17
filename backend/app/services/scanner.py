@@ -732,23 +732,35 @@ class ScannerService:
         # Sort by composite score (highest first), prioritizing quality filter pass
         candidates.sort(key=lambda x: (not x.passes_quality_filter, -x.composite_score))
 
-        # Apply sector cap — max N stocks per sector to prevent concentration
-        # Only cap sectors we actually have data for; skip cap for unknown sectors
+        # Apply sector cap — max N stocks per sector to prevent concentration.
+        # CAP <= 0 means DISABLED (keep all). The previous logic `count < CAP`
+        # with CAP=0 silently DROPPED every symbol that HAD a sector (count < 0
+        # is always False), collapsing the ranking to only unknown-sector names.
+        # That was the root cause of the Jun 15-17 2026 0-signal bug: it only bit
+        # when stock-universe sectors were loaded (the daily scan), not the cold
+        # recovery/diag paths (sectors empty → nothing dropped). (Fixed Jun 17 2026.)
         from app.services.stock_universe import stock_universe_service
-        sector_counts: Dict[str, int] = {}
-        capped = []
-        for c in candidates:
-            info = stock_universe_service.get_symbol_info(c.symbol)
-            sector = (info.get('sector', '') if info else '') or ''
-            c.sector = sector
-            if not sector:
-                capped.append(c)
-            else:
-                count = sector_counts.get(sector, 0)
-                if count < settings.MOMENTUM_SECTOR_CAP:
+        _sector_cap = settings.MOMENTUM_SECTOR_CAP
+        if _sector_cap and _sector_cap > 0:
+            sector_counts: Dict[str, int] = {}
+            capped = []
+            for c in candidates:
+                info = stock_universe_service.get_symbol_info(c.symbol)
+                sector = (info.get('sector', '') if info else '') or ''
+                c.sector = sector
+                if not sector:
                     capped.append(c)
-                    sector_counts[sector] = count + 1
-        candidates = capped
+                else:
+                    count = sector_counts.get(sector, 0)
+                    if count < _sector_cap:
+                        capped.append(c)
+                        sector_counts[sector] = count + 1
+            candidates = capped
+        else:
+            # Cap disabled (<=0) — keep all candidates; still annotate sector for display.
+            for c in candidates:
+                info = stock_universe_service.get_symbol_info(c.symbol)
+                c.sector = (info.get('sector', '') if info else '') or ''
 
         # Assign ranks
         for i, c in enumerate(candidates):
