@@ -206,24 +206,48 @@ class AIContentService:
             import re
             text = re.sub(r'^(Twitter|Instagram|Twitter/X|Threads|IG):\s*', '', text, flags=re.IGNORECASE).strip()
 
-            # Enforce character limit for both platforms
-            if len(text) > char_limit:
-                text = text[:char_limit - 3].rsplit(" ", 1)[0] + "..."
-
-            # Select hashtags
+            # Hashtags are appended at POST time (text_content + "\n\n" + hashtags),
+            # so the BODY must leave room for them under the platform char_limit —
+            # otherwise body(≤limit) + hashtags exceeds it. (Jun 17 2026: an AI
+            # "We Called It" body fit 500 but body+hashtags 400'd Threads' 500 cap.)
             hashtag_map = {
                 "trade_result": f"#StockTrading #AlgoTrading #WalkForward #RigaCap ${symbol}",
                 "missed_opportunity": f"#StockTrading #MissedTrade #AlgoTrading #RigaCap ${symbol}",
                 "we_called_it": f"#WeCalledIt #AlgoTrading #TradingSignals #RigaCap ${symbol}",
                 "loss_review": f"#TrailingStop #RiskManagement #SystematicTrading #RigaCap ${symbol}",
             }
+            hashtags = hashtag_map.get(post_type, f"#RigaCap ${symbol}")
+            effective_limit = max(80, char_limit - len(hashtags) - 2)  # 2 = "\n\n"
+
+            # Too long → REGENERATE a coherent shorter post (don't just hard-truncate,
+            # which clips the CTA). Re-prompt Claude up to 2x; truncate only as a last
+            # resort so a stubborn overrun can never 400 the platform.
+            attempts = 0
+            while text and len(text) > effective_limit and attempts < 2:
+                attempts += 1
+                shorter_prompt = (
+                    user_prompt
+                    + f"\n\nYour previous draft was {len(text)} characters, but the body must "
+                    f"fit in {effective_limit} characters (hashtags are appended separately). "
+                    f"Rewrite it tighter — same message, keep the rigacap.com CTA, "
+                    f"hard max {effective_limit} characters."
+                )
+                retry = await self._call_claude(shorter_prompt)
+                if not retry:
+                    break
+                retry = self._strip_markdown(retry)
+                retry = re.sub(r'^(Twitter|Instagram|Twitter/X|Threads|IG):\s*', '', retry, flags=re.IGNORECASE).strip()
+                text = retry
+            if len(text) > effective_limit:
+                text = text[:effective_limit - 1].rsplit(" ", 1)[0] + "…"
+                logger.warning("AI %s/%s post still >%d after %d regen attempt(s) — truncated", platform, post_type, effective_limit, attempts)
 
             post = SocialPost(
                 post_type=post_type,
                 platform=platform,
                 status="draft",
                 text_content=text,
-                hashtags=hashtag_map.get(post_type, f"#RigaCap ${symbol}"),
+                hashtags=hashtags,
                 source_trade_json=json.dumps(trade),
                 ai_generated=True,
                 ai_model=CLAUDE_MODEL,
