@@ -2066,10 +2066,29 @@ def handler(event, context):
     # the dashboard build, emitting the [DASH-DIAG] gate counts. Writes NOTHING
     # (no pickle, no dashboard.json, no entries). Temporary — Jun 16 2026.
     if event.get("diag_scan_build"):
-        print("🔬 DIAG: scan() then dashboard build, no writes — tracing the 0-signal gate")
+        _dcfg = event.get("diag_scan_build")
+        _do_fetch = isinstance(_dcfg, dict) and _dcfg.get("fetch")
+        print(f"🔬 DIAG: scan+build, no writes — tracing the 0-signal gate (fetch={_do_fetch})")
         async def _diag_scan_build():
+            import numpy as _np
+            from app.services.strategy_analyzer import get_top_liquid_symbols as _gtl
+            def _lenstats(tag):
+                items = [(s, d) for s, d in scanner_service.data_cache.items() if d is not None]
+                lens = [len(d) for _, d in items]
+                ge200 = sum(1 for l in lens if l >= 200)
+                uni = len(_gtl(max_symbols=100))
+                ex = [(s, len(d), round(float(d['close'].iloc[-1]), 2)) for s, d in items[:4]]
+                print(f"[LEN-DIAG] {tag}: n={len(lens)} ge200={ge200} lt200={len(lens)-ge200} "
+                      f"min={min(lens) if lens else 0} median={int(_np.median(lens)) if lens else 0} "
+                      f"top_liquid_universe={uni} ex={ex}")
+            _lenstats("after scoped load")
+            if _do_fetch:
+                r = await scanner_service.fetch_incremental(replace_days=0)
+                print(f"[LEN-DIAG] fetch result: {r}")
+                _lenstats("after fetch")
             sigs = await scanner_service.scan(refresh_data=False)
             print(f"[DASH-DIAG] scan() raw signals={len(sigs)}")
+            _lenstats("after scan()")
             from app.api.signals import compute_shared_dashboard_data
             async with async_session() as db:
                 data = await compute_shared_dashboard_data(db)
