@@ -308,3 +308,6 @@ Erik's analyst friend graded the product through 3 rounds → **A- "Elite Behavi
 - [Never blast emails without target_emails check](feedback_never_blast_without_target.md) — verify handler supports filtering BEFORE invoking
 - [Newsletter cron MUST use locked draft](feedback_newsletter_cron_draft.md) — Apr 26 outage: cron sent wrong version to all subscribers
 - **[Meta token lifecycle (IG + Threads) — full punch list](project_meta_token_lifecycle.md)** — short-lived recovery works (May 6); long-lived exchange blocked on app secret; auto-refresh cron not built; IG API base bug fixed (`graph.facebook.com` not `graph.instagram.com`)
+
+## 📏 SOCIAL PLATFORM CHAR LIMITS (Jun 17 2026) — enforce per-platform
+Threads = **500 chars** (hard; a >500 post 400s "Param text must be at most 500 characters"). X/Twitter = 280. IG caption = long (~2200). Jun 17: AI "We Called It" post exceeded 500 on Threads → now enforced at the PUBLISH layer (`social_posting_service.post_to_threads` truncates on a word boundary + logs). When generating/editing social content, fit Threads copy to ≤500 at the SOURCE too (don't rely only on the truncation safety net — it can clip a trailing URL/CTA).
