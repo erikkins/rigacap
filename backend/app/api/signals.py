@@ -909,9 +909,23 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                     continue
                 if (_px / _dw - 1) * 100 >= _dwsettings.DWAP_THRESHOLD_PCT and _vol >= _dwsettings.MIN_VOLUME and _px >= _dwsettings.MIN_PRICE:
                     _ndw += 1
+            _ge200 = 0; _px15 = 0; _exs = []
+            for _s, _d in scanner_service.data_cache.items():
+                if _d is None or len(_d) == 0:
+                    continue
+                if len(_d) >= 200:
+                    _ge200 += 1
+                try:
+                    _lc = float(_d['close'].iloc[-1])
+                    if _lc >= 15:
+                        _px15 += 1
+                except Exception:
+                    _lc = None
+                if _s in ('AAPL', 'NVDA', 'AMD', 'INTC', 'MU'):
+                    _exs.append((_s, len(_d), round(_lc, 2) if _lc is not None else None, str(_d.index.max())[:10] if len(_d) else '-'))
             print(f"[DASH-DIAG] ranked={len(momentum_rankings)} pass_quality={_nq} dwap_pass={_ndw} "
                   f"spy_above_200ma={_msr.get('spy_above_200ma', 'NOKEY')} regime={_msr.get('regime', 'NOSTATE')} "
-                  f"cache_n={len(scanner_service.data_cache)} uni_size={_dwsettings.SIGNAL_UNIVERSE_SIZE}")
+                  f"cache_n={len(scanner_service.data_cache)} ge200={_ge200} px>=15={_px15} uni_size={_dwsettings.SIGNAL_UNIVERSE_SIZE} ex={_exs}")
         except Exception as _de:
             import traceback as _tb
             print(f"[DASH-DIAG] err: {_de}\n{_tb.format_exc()[:600]}")
