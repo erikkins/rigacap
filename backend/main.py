@@ -1527,61 +1527,70 @@ def handler(event, context):
                 snap_result = data_export_service.export_snapshot(today_str, data)
             _log_step("Dashboard Export", "ok")
 
-            # 5. Persist refreshed cache to S3 pickle (slow — only if time permits)
-            export_result = data_export_service.export_pickle(scanner_service.data_cache)
-            pkl_ok = export_result.get('success', True)
-            pkl_status = "ok" if pkl_ok else "warning"
-            pkl_detail = f"{export_result.get('count', 0)} symbols, {export_result.get('size_mb', '?')} MB"
-
-            # 4b. SHADOW WRITE: parquet export (Parquet migration, Apr 2026).
-            # Runs alongside pickle — pickle remains primary read path until
-            # consumers are migrated. Any failure is logged but non-blocking.
-            pq_result = {"success": False, "message": "not attempted"}
-            try:
-                pq_result = data_export_service.export_parquet(scanner_service.data_cache)
-                if pq_result.get('success'):
-                    print(f"📦 Shadow parquet: {pq_result['count']} symbols, {pq_result['size_mb']} MB")
-                else:
-                    print(f"⚠️ Shadow parquet failed: {pq_result.get('message')}")
-            except Exception as _e:
-                print(f"⚠️ Shadow parquet error (non-blocking): {_e}")
-                pq_result = {"success": False, "message": str(_e)[:200]}
-
-            # 4c. PARALLEL-READ DIFF (Parquet migration Stage 3a, Apr 2026).
-            # When PARQUET_PARALLEL_READ=true, compare pickle vs parquet and log
-            # divergences to parquet_divergence_events. Gated behind env var so
-            # it can be disabled instantly without redeploy. Wrapped in try/except
-            # so it can NEVER break the daily scan — divergence logging is
-            # observation only, not load-bearing. See project_parquet_stage3_plan.md.
-            #
-            # IMPORTANT: skip the diff if today's parquet export failed. The
-            # diff would otherwise compare today's fresh pickle against
-            # yesterday's stale parquet still in S3, false-positiving every
-            # symbol with a 1-2 row delta (= the trading days yesterday's
-            # pickle has that yesterday's parquet missed). Discovered May 8
-            # 2026: a single EFAULT on the parquet upload generated 4597
-            # row_count_diff events that triggered a Stage 3b 'pause' alarm.
-            if not pq_result.get('success'):
-                print("⚠️ Skipping parquet diff harness — today's parquet export failed; "
-                      "comparing against stale parquet would generate false-positive divergences.")
-            elif os.environ.get("PARQUET_PARALLEL_READ", "").lower() in ("1", "true", "yes"):
-                try:
-                    diff_summary = await data_export_service.compare_pickle_to_parquet(
-                        pickle_data=scanner_service.data_cache,
-                    )
-                    print(
-                        f"🔬 Parquet diff: compared={diff_summary['compared']} "
-                        f"diverged_symbols={diff_summary['diverged_symbols']} "
-                        f"events={diff_summary['diverged']} "
-                        f"by_type={diff_summary['by_type']}"
-                    )
-                except Exception as _diff_err:
-                    print(f"⚠️ Parquet diff error (non-blocking): {_diff_err}")
-            if not pkl_ok:
-                pkl_detail = export_result.get('message', 'export failed')
-                print(f"⚠️ Pickle export failed: {pkl_detail}")
+            # 5. Persist refreshed cache to S3 — SKIP in parquet (scoped) mode:
+            # a partial cache would shrink/corrupt the full pickle+parquet stores.
+            # Store freshness is handled separately during the migration. (Jun 17 2026)
+            _parquet_mode = os.environ.get("PRICE_SOURCE", "pickle").lower() == "parquet"
+            if _parquet_mode:
+                print(f"📦 PRICE_SOURCE=parquet: skipping pickle/parquet export (scoped cache, {len(scanner_service.data_cache)} symbols)")
+                export_result = {"success": True, "count": len(scanner_service.data_cache), "skipped": "parquet_mode"}
+                pkl_ok = True; pkl_status = "ok"
+                pkl_detail = f"skipped (parquet mode, {len(scanner_service.data_cache)} symbols)"
             else:
-                print(f"💾 Data cache persisted to S3: {export_result.get('count', 0)} symbols")
+                export_result = data_export_service.export_pickle(scanner_service.data_cache)
+                pkl_ok = export_result.get('success', True)
+                pkl_status = "ok" if pkl_ok else "warning"
+                pkl_detail = f"{export_result.get('count', 0)} symbols, {export_result.get('size_mb', '?')} MB"
+
+                # 4b. SHADOW WRITE: parquet export (Parquet migration, Apr 2026).
+                # Runs alongside pickle — pickle remains primary read path until
+                # consumers are migrated. Any failure is logged but non-blocking.
+                pq_result = {"success": False, "message": "not attempted"}
+                try:
+                    pq_result = data_export_service.export_parquet(scanner_service.data_cache)
+                    if pq_result.get('success'):
+                        print(f"📦 Shadow parquet: {pq_result['count']} symbols, {pq_result['size_mb']} MB")
+                    else:
+                        print(f"⚠️ Shadow parquet failed: {pq_result.get('message')}")
+                except Exception as _e:
+                    print(f"⚠️ Shadow parquet error (non-blocking): {_e}")
+                    pq_result = {"success": False, "message": str(_e)[:200]}
+
+                # 4c. PARALLEL-READ DIFF (Parquet migration Stage 3a, Apr 2026).
+                # When PARQUET_PARALLEL_READ=true, compare pickle vs parquet and log
+                # divergences to parquet_divergence_events. Gated behind env var so
+                # it can be disabled instantly without redeploy. Wrapped in try/except
+                # so it can NEVER break the daily scan — divergence logging is
+                # observation only, not load-bearing. See project_parquet_stage3_plan.md.
+                #
+                # IMPORTANT: skip the diff if today's parquet export failed. The
+                # diff would otherwise compare today's fresh pickle against
+                # yesterday's stale parquet still in S3, false-positiving every
+                # symbol with a 1-2 row delta (= the trading days yesterday's
+                # pickle has that yesterday's parquet missed). Discovered May 8
+                # 2026: a single EFAULT on the parquet upload generated 4597
+                # row_count_diff events that triggered a Stage 3b 'pause' alarm.
+                if not pq_result.get('success'):
+                    print("⚠️ Skipping parquet diff harness — today's parquet export failed; "
+                          "comparing against stale parquet would generate false-positive divergences.")
+                elif os.environ.get("PARQUET_PARALLEL_READ", "").lower() in ("1", "true", "yes"):
+                    try:
+                        diff_summary = await data_export_service.compare_pickle_to_parquet(
+                            pickle_data=scanner_service.data_cache,
+                        )
+                        print(
+                            f"🔬 Parquet diff: compared={diff_summary['compared']} "
+                            f"diverged_symbols={diff_summary['diverged_symbols']} "
+                            f"events={diff_summary['diverged']} "
+                            f"by_type={diff_summary['by_type']}"
+                        )
+                    except Exception as _diff_err:
+                        print(f"⚠️ Parquet diff error (non-blocking): {_diff_err}")
+                if not pkl_ok:
+                    pkl_detail = export_result.get('message', 'export failed')
+                    print(f"⚠️ Pickle export failed: {pkl_detail}")
+                else:
+                    print(f"💾 Data cache persisted to S3: {export_result.get('count', 0)} symbols")
             _log_step("Pickle Export", pkl_status, pkl_detail)
 
             # GC after pickle export to reclaim serialization buffers

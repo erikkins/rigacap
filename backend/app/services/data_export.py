@@ -142,19 +142,61 @@ class DataExportService:
 
     def import_all(self) -> Dict[str, pd.DataFrame]:
         """
-        Import all Parquet files into memory (from S3 or local)
+        Import price data into memory (from S3 or local).
+
+        PARQUET FLIP (Jun 17 2026): when env PRICE_SOURCE=parquet, do a SCOPED
+        partial read — only the symbols the scan needs (top-liquid universe from
+        the latest universe-history snapshot + SPY/^VIX/^GSPC) — from
+        all_data.parquet. That's ~600 symbols vs the 5020-symbol pickle, which
+        keeps resident memory a few hundred MB instead of ~2.3 GB and ends the
+        3008 MB-cap OOM. all_data.parquet is exported from the pickle, so the
+        bars are byte-identical — no signal change, just fewer symbols. Flag
+        defaults to pickle, so the flip is an instant env rollback. On any scoped
+        failure we fall back to the full pickle (functional > broken).
 
         Returns:
             Dict mapping symbol to DataFrame
         """
-        data_cache = {}
+        if os.environ.get("PRICE_SOURCE", "pickle").lower() == "parquet":
+            try:
+                scoped = self._scoped_parquet_load()
+                if scoped:
+                    return scoped
+                print("⚠️ PRICE_SOURCE=parquet but scoped load was empty — falling back to pickle")
+            except Exception as e:
+                print(f"⚠️ Scoped parquet load failed ({e}) — falling back to pickle")
 
+        data_cache = {}
         if self._use_s3():
             data_cache = self._import_from_s3()
         else:
             data_cache = self._import_from_local()
 
         return data_cache
+
+    def _scoped_parquet_load(self) -> Dict[str, pd.DataFrame]:
+        """Load ONLY the symbols the scan needs from all_data.parquet: the
+        top-liquid universe (from the latest universe-history snapshot, which is
+        already the ranked liquidity list) plus the index symbols the regime
+        filter needs. Identical bars to the pickle, a fraction of the memory."""
+        topn = int(os.environ.get("PARQUET_SCOPE_TOPN", "600"))
+        syms = set()
+        if self._use_s3():
+            s3 = self._get_s3_client()
+            objs = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix="signals/universe-history/")
+            keys = sorted(o["Key"] for o in objs.get("Contents", []) if o["Key"].endswith(".json"))
+            if keys:
+                uni = json.loads(s3.get_object(Bucket=S3_BUCKET, Key=keys[-1])["Body"].read())
+                for r in uni.get("rankings", []):
+                    if len(syms) >= topn:
+                        break
+                    if not r.get("is_excluded") and r.get("symbol"):
+                        syms.add(r["symbol"])
+        # Indices for the regime filter (Alpaca doesn't serve them, but they ARE
+        # in all_data.parquet via the pickle's yfinance path) + SPY.
+        syms.update(["SPY", "^VIX", "^GSPC"])
+        print(f"📦 Scoped parquet load: {len(syms)} symbols (top-{topn} liquid universe + indices)")
+        return self.import_parquet(symbols=sorted(syms))
 
     def import_symbols(self, symbols: List[str]) -> Dict[str, pd.DataFrame]:
         """
