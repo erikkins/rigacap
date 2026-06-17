@@ -283,6 +283,17 @@ class SocialPostingService:
         if not settings.THREADS_ACCESS_TOKEN or not settings.THREADS_USER_ID:
             return {"error": "Threads API credentials not configured"}
 
+        # Threads hard limit: 500 chars. Enforce at the publish layer so NO
+        # generator can exceed it — incl. the AI "We Called It" path, which 400'd
+        # on Jun 17 2026 with "Param text must be at most 500 characters long".
+        # Truncate on a clean word/line boundary when we have to, and log it so
+        # the offending generator can be tightened.
+        if text and len(text) > 500:
+            cut = text[:500]
+            brk = max(cut.rfind(' '), cut.rfind('\n'))
+            text = (cut[:brk] if brk >= 460 else cut).rstrip()
+            logger.warning("Threads text truncated to %d chars (source exceeded 500)", len(text))
+
         user_id = settings.THREADS_USER_ID
         access_token = settings.THREADS_ACCESS_TOKEN
 
