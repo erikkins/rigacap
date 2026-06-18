@@ -1,11 +1,29 @@
 ---
 name: project-oom-scan-zero-jun15
-description: Jun 15 2026 — ROOT CAUSE of the recurring 0-signal scan + the hygiene alarm emails = the 3008 MB Lambda memory cap. BOTH FIXES SHIPPED same night (commit 1ed2491). VERIFY on the Jun 16 4:30 scan. THE resume doc.
+description: Jun 15-17 2026 — the recurring 0-signal scan was TWO unrelated bugs. REAL root cause (found Jun 17) = MOMENTUM_SECTOR_CAP=0 dropping every sector'd stock. SEPARATE issue = the 3008 MB OOM (fixed by the parquet flip). Both shipped. THE resume doc.
 metadata:
   node_type: memory
   type: project
   originSessionId: 701a2e93-33c0-4e85-a7bc-2cb9d9956d94
 ---
+
+# ⭐ CORRECTION (Jun 17): the 0-signal bug was NEVER memory — it was the SECTOR CAP
+**REAL root cause:** `MOMENTUM_SECTOR_CAP = 0` in config + rank_stocks_momentum's sector-cap logic `if count < CAP`. With CAP=0, `count < 0` is ALWAYS False → EVERY candidate that had a known sector was DROPPED, leaving only unknown-sector names → ranking collapsed to ~1 → 0 buy_signals. **It only bit when stock-universe SECTORS were LOADED** (the daily scan) — NOT the cold recovery/diag/export_dashboard_cache paths (sectors empty → nothing dropped → always produced the correct set). THAT is the "daily scan=0, every recovery=correct" pattern we chased for 3 days, and why it never reproduced locally (local universe load returns empty sectors). Fix (commit after 1ed2491): `cap <= 0` now means DISABLED (keep all); verified rank 1→100. Config comment even flagged it: `= 0  # NOT REVERTED`.
+**Lesson:** I chased 4 WRONG theories first (memory, the fetch/merge, settlement/timing, "Lambda runtime drift") — each time a "X works, Y doesn't, diff is Z" where Z was wrong. The instrumentation that finally nailed it: print-level [DASH-DIAG] gate counts (ranked/pass_quality/ge200/px>=15/examples) IN THE LAMBDA. Stop theorizing; instrument the real runtime.
+
+## The OOM was a SEPARATE, real problem (fixed by the parquet flip Jun 17)
+The 3008 MB cap WAS real (hygiene OOM'd; the daily scan ran at the ceiling) but it was NOT the 0-signal cause. **Parquet flip SHIPPED Jun 17:** `PRICE_SOURCE=parquet` → import_all does a SCOPED partial read (top-600 liquid universe from the latest universe-history snapshot + SPY/^VIX/^GSPC, from all_data.parquet = byte-identical to the pickle) → ~603 symbols, **memory 2353→1486 MB, OOM gone.** fetch_incremental defaults to the loaded cache so the scan stays scoped. Daily scan SKIPS export_pickle/parquet in parquet mode (a scoped cache would shrink the stores). Flag-gated (default pickle = instant env rollback; backups /tmp/envbak_*). PRICE_SOURCE=parquet is LIVE on the worker.
+
+## ⚠️ PARQUET TEETHING (the "few days of growing pains" — active)
+- **RECOVERY CHANGED:** in parquet mode, no-fetch rebuilds (`export_dashboard_cache`) give STALE signals (parquet base is ~1 day old, Jun-15). **Recovery = re-run `{"daily_scan": true}`** (it fetches today's bars), NOT export_dashboard_cache. The old runbook's one-shot is wrong now.
+- Store freshness (parquet base advancing) not yet automated — the scan fetches on top each day; proper incremental-append is a follow-up. Universe-history snapshot now ranks ~603 (was 5020) — self-consistent but wire a periodic full-universe refresh.
+- **CLEANUP PENDING (strip tomorrow):** temp instrumentation `[DASH-DIAG]`/`[LEN-DIAG]` in signals.py, `diag_scan_build` + `rebuild_snapshot` events in main.py (rebuild_snapshot has a `data_cache={}` cache-clear footgun — remove). 
+- **AGE FIELDS BUG (open):** dashboard `days_since_entry=44` for NBIS (entered Jun 15 = ~2d) — find_ensemble_entry_date computes the BACKTESTER entry, not the live-book entry; "day N" labels not trustworthy. Dashboard-data fix, separate from the digest.
+
+## Digest rework (Jun 17, shipped) — lead with active, never open with "0"
+On a no-new-crossover day the email LED with "New Today (0) / No new signals" (read like the empty-bug despite 7 active). Fixed: (1) email_service body leads with the active set (slim "No new entries today — N active below" line; centered notice only on a truly-empty day; Open cap 6→10). (2) SUBJECT leads with active count ("N signals active · M approaching"), never "0 new". (3) scheduler.send_daily_emails reads buy_signals from the DASHBOARD cache (was ensemble_signals DB → 6 vs context's 7) so email == site == briefing. Sent to all 3 subscribers Jun 17 eve.
+
+# (HISTORICAL / SUPERSEDED below — the Jun-15 "it's the memory cap" diagnosis was WRONG for the 0-signal; kept for the OOM facts which ARE real)
 
 # 0-signal scan + hygiene OOM — both are the 3008 MB memory ceiling (Jun 15 2026)
 
