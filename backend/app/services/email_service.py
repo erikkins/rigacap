@@ -308,6 +308,43 @@ class EmailService:
         open_signals = [s for s in signals if not _effective_fresh(s)]
         watchlist = watchlist or []
 
+        # New-Today section (Jun 17 2026 rework): LEAD with the active set.
+        # When nothing is fresh but signals are still active, don't headline a
+        # flat "New Today (0) / No new signals" empty block — that reads like a
+        # dead day. Show a slim one-liner here and let the Open (active) section
+        # carry the email. Only the truly-empty day gets the centered notice.
+        if fresh_signals:
+            _nt_rows = "".join(self._signal_row(s) for s in fresh_signals[:8])
+            new_today_section = f'''
+        <tr>
+            <td style="padding: 0 24px 24px;">
+                <div style="padding-bottom: 8px; border-bottom: 1px solid #DDD5C7; margin-bottom: 12px;">
+                    <table cellpadding="0" cellspacing="0" style="width: 100%;">
+                        <tr>
+                            <td style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">New Today <span style="font-style: italic; color: #8A8279; font-weight: 400;">({len(fresh_signals)})</span></td>
+                            <td align="right" style="font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #7A2430;">Consider adding</td>
+                        </tr>
+                    </table>
+                </div>
+                {_nt_rows}
+            </td>
+        </tr>'''
+        elif open_signals:
+            _n = len(open_signals)
+            new_today_section = f'''
+        <tr>
+            <td style="padding: 0 24px 12px;">
+                <div style="font-family: Georgia, serif; font-style: italic; font-size: 14px; color: #5A544E; line-height: 1.5;">No new entries today &mdash; {_n} signal{"s" if _n != 1 else ""} still active in the buy zone, below.</div>
+            </td>
+        </tr>'''
+        else:
+            new_today_section = '''
+        <tr>
+            <td style="padding: 0 24px 24px;">
+                <div style="padding: 24px; text-align: center; font-family: Georgia, serif; font-style: italic; color: #5A544E;">No new signals today. The system is watching.</div>
+            </td>
+        </tr>'''
+
         # Calculate totals
         total_positions_pnl = sum(
             (p.get('current_price', 0) - p.get('entry_price', 0)) * p.get('shares', 0)
@@ -375,24 +412,9 @@ class EmailService:
             </td>
         </tr>''' if market_context else ''}
 
-        <!-- New Today Section (is_fresh — dashboard "Buy Signals" bucket) -->
-        <tr>
-            <td style="padding: 0 24px 24px;">
-                <div style="padding-bottom: 8px; border-bottom: 1px solid #DDD5C7; margin-bottom: 12px;">
-                    <table cellpadding="0" cellspacing="0" style="width: 100%;">
-                        <tr>
-                            <td style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">New Today <span style="font-style: italic; color: #8A8279; font-weight: 400;">({len(fresh_signals)})</span></td>
-                            <td align="right" style="font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #7A2430;">Consider adding</td>
-                        </tr>
-                    </table>
-                </div>
-                {"".join(self._signal_row(s) for s in fresh_signals[:8]) if fresh_signals else f'''
-                <div style="padding: 24px; text-align: center; font-family: Georgia, serif; font-style: italic; color: #5A544E;">
-                    No new signals today. The system is watching.{f"<br>{len(open_signals)} earlier signal{'s' if len(open_signals) != 1 else ''} still in the buy zone below." if open_signals else ""}{f" {len(watchlist)} approaching trigger." if watchlist else ""}
-                </div>
-                '''}
-            </td>
-        </tr>
+        <!-- New Today / lead section (pre-computed above: full section when fresh,
+             slim one-liner when only Open exists, centered notice when truly empty) -->
+        {new_today_section}
 
         <!-- Open Section (non-fresh signals still in buy zone — dashboard "Monitoring" bucket) -->
         {self._open_signals_section(open_signals) if open_signals else ''}
@@ -496,7 +518,7 @@ class EmailService:
         </a>
         """
 
-    def _open_signals_section(self, open_signals: List[Dict], max_rows: int = 6) -> str:
+    def _open_signals_section(self, open_signals: List[Dict], max_rows: int = 10) -> str:
         """Generate HTML for the Open section — non-fresh signals still in the
         buy zone (the dashboard's "Monitoring" bucket). Every row carries its
         age context via _signal_row's "signaled Nd ago · still qualifies"."""

@@ -1594,46 +1594,46 @@ class SchedulerService:
             if not target_emails and not await self._validate_data_freshness("daily_emails"):
                 return
 
-            # Read persisted signals from 4 PM scan (guaranteed same as dashboard)
+            # SOURCE OF TRUTH (Jun 17 2026): read buy_signals from the SAME
+            # dashboard cache that generated the market_context, so the email's
+            # signal set + counts match the site and the briefing EXACTLY. (The
+            # email previously read ensemble_signals from the DB and rendered 6
+            # while the dashboard/context said 7.) Fall back to persisted
+            # ensemble_signals only if the cache is unavailable. Both are
+            # persisted 4 PM data — never a live regeneration (the Jun 12 rule).
             from app.services.ensemble_signal_service import ensemble_signal_service
             from app.core.database import async_session as email_session
 
             buy_signals = []
-            async with email_session() as sig_db:
-                db_signals = await ensemble_signal_service.get_signals_for_date(
-                    sig_db, trading_today()
-                )
-                buy_signals = [
-                    {
-                        'symbol': s.symbol,
-                        'price': s.price,
-                        'pct_above_dwap': s.pct_above_dwap,
-                        'is_strong': s.is_strong,
-                        'momentum_rank': s.momentum_rank,
-                        'ensemble_score': s.ensemble_score,
-                        'dwap_crossover_date': s.dwap_crossover_date.isoformat() if s.dwap_crossover_date else None,
-                        'ensemble_entry_date': s.ensemble_entry_date.isoformat() if s.ensemble_entry_date else None,
-                        'days_since_crossover': s.days_since_crossover,
-                        'days_since_entry': s.days_since_entry,
-                        'is_fresh': s.is_fresh,
-                    }
-                    for s in db_signals
-                ]
-
-            # SINGLE SOURCE OF TRUTH (Jun 12 2026): the email renders ONLY what
-            # the 4 PM scan persisted/exported. The old fallback regenerated
-            # signals live with regime-adjusted params — a DIFFERENT evaluator
-            # than the dashboard, which produced emails contradicting the site
-            # (e.g. 'Buy Signals (2)' under a 'zero signals' briefing). If the
-            # DB has no rows for today, we trust the dashboard cache; if both
-            # are empty, zero signals is the truth and we say so.
+            try:
+                _dash = data_export_service.read_dashboard_json() or {}
+                buy_signals = list(_dash.get('buy_signals', []))
+                if buy_signals:
+                    logger.info(f"📧 Using dashboard cache (matches site/context): {len(buy_signals)} signals")
+            except Exception as _de:
+                logger.warning(f"📧 Dashboard cache read failed: {_de}")
             if not buy_signals:
-                try:
-                    _dash = data_export_service.read_dashboard_json() or {}
-                    buy_signals = list(_dash.get('buy_signals', []))
-                    logger.info(f"📧 No persisted signals; dashboard cache has {len(buy_signals)}")
-                except Exception as _de:
-                    logger.warning(f"📧 Dashboard cache read failed: {_de}")
+                async with email_session() as sig_db:
+                    db_signals = await ensemble_signal_service.get_signals_for_date(
+                        sig_db, trading_today()
+                    )
+                    buy_signals = [
+                        {
+                            'symbol': s.symbol,
+                            'price': s.price,
+                            'pct_above_dwap': s.pct_above_dwap,
+                            'is_strong': s.is_strong,
+                            'momentum_rank': s.momentum_rank,
+                            'ensemble_score': s.ensemble_score,
+                            'dwap_crossover_date': s.dwap_crossover_date.isoformat() if s.dwap_crossover_date else None,
+                            'ensemble_entry_date': s.ensemble_entry_date.isoformat() if s.ensemble_entry_date else None,
+                            'days_since_crossover': s.days_since_crossover,
+                            'days_since_entry': s.days_since_entry,
+                            'is_fresh': s.is_fresh,
+                        }
+                        for s in db_signals
+                    ]
+                logger.info(f"📧 Dashboard cache empty; fell back to {len(buy_signals)} persisted ensemble_signals")
             buy_signals.sort(key=lambda x: -x.get('ensemble_score', 0))
 
             # Read watchlist + regime + market_context from dashboard cache (same 4 PM data)
