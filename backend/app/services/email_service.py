@@ -810,18 +810,27 @@ class EmailService:
         missed_opportunities = missed_opportunities or []
         watchlist = watchlist or []
 
-        # Subject counts derive from the SAME is_fresh split the HTML/plain-text
-        # builders use — subject, section headers, and rows can never disagree.
-        fresh_count = len([s for s in signals if s.get('is_fresh')])
-        open_count = len(signals) - fresh_count
+        # Subject counts use the SAME age-based freshness the HTML uses
+        # (_effective_fresh), so subject/headers/rows never disagree.
+        def _eff_fresh(sig):
+            ages = [a for a in (sig.get('days_since_crossover'), sig.get('days_since_entry')) if a is not None]
+            return (min(ages) <= 5) if ages else bool(sig.get('is_fresh'))
+        fresh_count = len([s for s in signals if _eff_fresh(s)])
+        active_count = len(signals)
         approaching_count = len(watchlist)
         # Include date in subject for historical (time-travel) emails
         is_historical = date and date.date() != _now_et().date()
         date_label = f" [{date.strftime('%b %d, %Y')}]" if is_historical else ""
-        subject = (
-            f"📊 RigaCap Daily{date_label}: {fresh_count} new · "
-            f"{open_count} open · {approaching_count} approaching"
-        )
+        # LEAD with the active count — NEVER open the subject with "0 new" when
+        # signals are live (Jun 17 2026: "0 new …" read exactly like the empty-bug).
+        if fresh_count > 0:
+            subject = (f"📊 RigaCap Daily{date_label}: {fresh_count} new · "
+                       f"{active_count} active · {approaching_count} approaching")
+        elif active_count > 0:
+            subject = (f"📊 RigaCap Daily{date_label}: {active_count} signal"
+                       f"{'s' if active_count != 1 else ''} active · {approaching_count} approaching")
+        else:
+            subject = f"📊 RigaCap Daily{date_label}: watching the market · {approaching_count} approaching"
 
         html = self.generate_daily_summary_html(
             signals=signals,
