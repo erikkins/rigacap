@@ -1213,6 +1213,20 @@ def handler(event, context):
                 except Exception as pl_err:
                     print(f"⚠️ Pipeline log write failed (non-fatal): {pl_err}")
 
+            # 1-pre. Non-trading-day guard (Jun 20 2026). The EventBridge cron
+            # fires Mon-Fri but doesn't know holidays. On a market holiday there
+            # are no new bars, so the SPY freshness gate expected today's bar,
+            # found yesterday's, and ABORTED with errors — after a 271s Alpaca
+            # settlement stall + a wall of yfinance delisting noise (Juneteenth,
+            # Jun 19 2026, which was also missing from the holiday calendar).
+            # Skip cleanly instead: no scan, no abort, no held-email cascade.
+            from app.services.health_monitor_service import is_us_trading_day
+            _now_et = datetime.now(ZoneInfo('America/New_York'))
+            if not is_us_trading_day(_now_et.date()):
+                print(f"📅 {_now_et.date()} is not a US trading day (weekend/holiday) — skipping daily scan cleanly.")
+                _write_pipeline_log("skipped_non_trading_day")
+                return {"status": "skipped", "reason": "non_trading_day", "date": _now_et.date().isoformat()}
+
             # 1a. Ensure universe is loaded (may have new symbols since last pickle)
             await scanner_service.ensure_universe_loaded()
 
@@ -1300,22 +1314,19 @@ def handler(event, context):
                     if spy_last_date < expected_date:
                         print(f"❌ STALE DATA ABORT: SPY still at {spy_last_date} after retry, expected {expected_date}")
                         from app.services.email_service import admin_email_service, ADMIN_EMAILS
-                        from app.core.database import User
                         try:
-                            async with async_session() as alert_db:
-                                for email in ADMIN_EMAILS:
-                                    admin_result = await alert_db.execute(
-                                        select(User).where(User.email == email)
-                                    )
-                                    admin_user = admin_result.scalar_one_or_none()
-                                    if admin_user:
-                                        await admin_email_service.send_admin_alert(
-                                            admin_user,
-                                            "Daily scan ABORTED: SPY data stale",
-                                            f"SPY last date: {spy_last_date}, expected: {expected_date}. "
-                                            f"Both Alpaca and yfinance failed to return today's data. "
-                                            f"Scan was aborted to prevent stale signals."
-                                        )
+                            # send_admin_alert takes an email STRING, not a User
+                            # object — passing the User 400'd with "'User' object
+                            # has no attribute 'lower'" on Jun 19 2026, so the
+                            # abort silently failed to notify. Pass the email.
+                            for email in ADMIN_EMAILS:
+                                await admin_email_service.send_admin_alert(
+                                    to_email=email,
+                                    subject="Daily scan ABORTED: SPY data stale",
+                                    message=(f"SPY last date: {spy_last_date}, expected: {expected_date}. "
+                                             f"Both Alpaca and yfinance failed to return today's data. "
+                                             f"Scan was aborted to prevent stale signals."),
+                                )
                         except Exception as alert_err:
                             print(f"⚠️ Failed to send stale data admin alert: {alert_err}")
                         _log_step("SPY Freshness", "error", f"ABORT: SPY at {spy_last_date}, expected {expected_date}")

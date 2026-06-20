@@ -41,6 +41,7 @@ US_MARKET_HOLIDAYS_2026 = {
     date(2026, 2, 16),  # Presidents' Day
     date(2026, 4, 3),   # Good Friday
     date(2026, 5, 25),  # Memorial Day
+    date(2026, 6, 19),  # Juneteenth (NYSE closed; was MISSING — caused the Jun 19 2026 holiday abort)
     date(2026, 7, 3),   # Independence Day (observed; Jul 4 = Sat)
     date(2026, 9, 7),   # Labor Day
     date(2026, 11, 26), # Thanksgiving
@@ -53,6 +54,7 @@ US_MARKET_HOLIDAYS_2027 = {
     date(2027, 2, 15),  # Presidents' Day
     date(2027, 3, 26),  # Good Friday
     date(2027, 5, 31),  # Memorial Day
+    date(2027, 6, 18),  # Juneteenth (observed; Jun 19 2027 = Sat)
     date(2027, 7, 5),   # Independence Day (observed; Jul 4 = Sun)
     date(2027, 9, 6),   # Labor Day
     date(2027, 11, 25), # Thanksgiving
