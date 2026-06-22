@@ -2234,6 +2234,10 @@ def handler(event, context):
     #   Phase 1: incremental fetch + stream pickle to /tmp → S3 (avoids OOM from in-memory serialize)
     #   Phase 2: export individual CSVs (chained as separate invocation)
     if event.get("pickle_rebuild_from_scan"):
+        # Obsolete in parquet mode (see pickle_rebuild guard above) — skip.
+        if os.environ.get("PRICE_SOURCE", "pickle").lower() == "parquet":
+            print("⏭️ pickle_rebuild_from_scan skipped — PRICE_SOURCE=parquet")
+            return {"status": "skipped", "reason": "parquet_mode"}
         print(f"🔨 Deferred pickle rebuild - {len(scanner_service.data_cache)} symbols in cache")
         async def _deferred_pickle():
             import pickle, gzip, time as _time
@@ -2541,6 +2545,18 @@ def handler(event, context):
 
     # Handle pickle rebuild (self-chaining catch-up queue for missing symbols)
     if event.get("pickle_rebuild"):
+        # PARQUET MODE (Jun 21 2026): the full-pickle rebuild is OBSOLETE — and
+        # actively harmful. In parquet mode each cold start loads only the scoped
+        # ~603 symbols, so the chunked "fetch the missing 4421, self-chain" never
+        # accumulates: every chained invocation reloads 603, sees ~4421 missing
+        # again, fetches 200, OOMs at the 3008 MB cap, re-chains. The Jun 21
+        # Sunday-00:00 cron spun this into a 27-hour infinite OOM loop (426 OOMs).
+        # Skip cleanly and DO NOT self-chain — this also kills any in-flight loop
+        # on its next iteration (new code, no chain). Pickle freshness is handled
+        # by the parquet store now.
+        if os.environ.get("PRICE_SOURCE", "pickle").lower() == "parquet":
+            print("⏭️ pickle_rebuild skipped — PRICE_SOURCE=parquet (full-pickle rebuild obsolete; no self-chain)")
+            return {"status": "skipped", "reason": "parquet_mode"}
         print(f"🔨 Pickle rebuild triggered - {len(scanner_service.data_cache)} symbols in cache")
         async def _run_pickle_rebuild():
             from app.services.data_export import data_export_service
