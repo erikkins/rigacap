@@ -1221,7 +1221,8 @@ def handler(event, context):
             # Jun 19 2026, which was also missing from the holiday calendar).
             # Skip cleanly instead: no scan, no abort, no held-email cascade.
             from app.services.health_monitor_service import is_us_trading_day
-            _now_et = datetime.now(ZoneInfo('America/New_York'))
+            from zoneinfo import ZoneInfo as _ZoneInfo  # local alias — ZoneInfo is re-imported later in this fn, which makes the bare name a function-local (UnboundLocalError here otherwise)
+            _now_et = datetime.now(_ZoneInfo('America/New_York'))
             if not is_us_trading_day(_now_et.date()):
                 print(f"📅 {_now_et.date()} is not a US trading day (weekend/holiday) — skipping daily scan cleanly.")
                 _write_pipeline_log("skipped_non_trading_day")
