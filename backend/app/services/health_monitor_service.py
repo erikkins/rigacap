@@ -64,15 +64,48 @@ US_MARKET_HOLIDAYS_2027 = {
 US_MARKET_HOLIDAYS = US_MARKET_HOLIDAYS_2026 | US_MARKET_HOLIDAYS_2027
 
 
+# NYSE trading-day calendar via pandas_market_calendars (Jun 21 2026). Replaces
+# the hand-maintained holiday list as the PRIMARY source — self-maintaining,
+# handles observed-date logic (e.g. Juneteenth Jun 19 2026, observed Jun 18 2027)
+# and early closes. The hand list (US_MARKET_HOLIDAYS, above) is kept as a
+# FALLBACK so a library import/lookup failure can never break the trading-day
+# gate. The valid-days set is cached per container (~3yr window).
+_NYSE_TRADING_DAYS = None  # set[date] | None (None = not yet built / unavailable)
+
+
+def _nyse_trading_days():
+    global _NYSE_TRADING_DAYS
+    if _NYSE_TRADING_DAYS is not None:
+        return _NYSE_TRADING_DAYS
+    try:
+        import pandas_market_calendars as mcal
+        from datetime import timedelta
+        today = date.today()
+        sched = mcal.get_calendar('NYSE').schedule(
+            start_date=(today - timedelta(days=550)).isoformat(),
+            end_date=(today + timedelta(days=550)).isoformat(),
+        )
+        _NYSE_TRADING_DAYS = {ts.date() for ts in sched.index}
+    except Exception as e:  # import error, version issue, network — fall back
+        print(f"⚠️ pandas_market_calendars unavailable ({e}); using hand holiday list")
+        _NYSE_TRADING_DAYS = set()  # empty => signal fallback in is_us_trading_day
+    return _NYSE_TRADING_DAYS
+
+
 def is_us_trading_day(d) -> bool:
     """Check if a date is a US market trading day (not weekend or NYSE holiday).
     Accepts a date or datetime. Single source of truth used by scheduler and
-    health monitor."""
+    health monitor. Uses the NYSE calendar (pandas_market_calendars); falls back
+    to the hand-maintained holiday list if the library is unavailable."""
     from datetime import datetime as _dt
     if isinstance(d, _dt):
         d = d.date()
     if d.weekday() >= 5:
         return False
+    days = _nyse_trading_days()
+    if days:  # non-empty set from the calendar — authoritative within its window
+        return d in days
+    # Fallback: hand-maintained list (library unavailable, or date outside window)
     return d not in US_MARKET_HOLIDAYS
 
 
