@@ -6,6 +6,12 @@ import LoginModal from './components/LoginModal';
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 import TopNav from './components/TopNav';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Show the live seat counter only once it's genuinely scarce — below this many
+// remaining. Above it we keep the honest "First 100" framing with NO raw number,
+// so we never show "100 seats available" for weeks (Erik Jun 23). Tunable.
+const FOUNDING_SCARCITY_THRESHOLD = 40;
+
 const SectionLabel = ({ children }) => (
   <div className="flex items-center gap-3 mb-5">
     <span className="inline-block w-6 h-px bg-claret" />
@@ -306,7 +312,10 @@ const HowItWorksSection = () => (
   </section>
 );
 
-const PricingSection = ({ onGetStarted }) => (
+const PricingSection = ({ onGetStarted, founding }) => {
+  const open = !founding || founding.open;   // default open until we know otherwise
+  const scarce = founding && founding.open && founding.remaining <= FOUNDING_SCARCITY_THRESHOLD;
+  return (
   <section id="pricing" className="py-20 border-t border-rule">
     <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
       <SectionLabel>Pricing</SectionLabel>
@@ -342,12 +351,21 @@ const PricingSection = ({ onGetStarted }) => (
             ))}
           </ul>
           <button
-            onClick={() => onGetStarted('founding')}
-            className="w-full py-4 bg-ink text-paper text-[0.95rem] font-medium rounded-[2px] text-center hover:bg-claret transition-colors"
+            onClick={() => open && onGetStarted('founding')}
+            disabled={!open}
+            className={`w-full py-4 text-[0.95rem] font-medium rounded-[2px] text-center transition-colors ${open ? 'bg-ink text-paper hover:bg-claret' : 'bg-rule text-ink-light cursor-not-allowed'}`}
           >
-            Claim a Founding Seat
+            {open ? 'Claim a Founding Seat' : 'Founding Seats Filled'}
           </button>
-          <p className="text-center font-mono text-[0.72rem] text-claret tracking-[0.1em] uppercase mt-3">~87 of 100 seats remaining</p>
+          {/* Gated counter: silent until scarce (no embarrassing "100 left"),
+              real urgency once it's running low, "filled" when closed. */}
+          {!open ? (
+            <p className="text-center font-mono text-[0.72rem] text-ink-light tracking-[0.1em] uppercase mt-3">All 100 founding seats claimed</p>
+          ) : scarce ? (
+            <p className="text-center font-mono text-[0.72rem] text-claret tracking-[0.1em] uppercase mt-3">Only {founding.remaining} of 100 seats left</p>
+          ) : (
+            <p className="text-center font-mono text-[0.72rem] text-claret tracking-[0.1em] uppercase mt-3">Limited to the first 100 subscribers</p>
+          )}
         </div>
 
         {/* Standard */}
@@ -403,7 +421,8 @@ const PricingSection = ({ onGetStarted }) => (
       </div>
     </div>
   </section>
-);
+  );
+};
 
 const faqItems = [
   { q: 'Who is this for?', a: <>Two kinds of people. Self-directed investors with meaningful portfolios who've decided indexing alone is too passive and individual active trading has been too emotional — if you've tried to run your own momentum strategy and found yourself overriding your own rules, this is a system that will do the boring parts consistently whether you feel like it or not. And registered investment advisers, who license it at the firm level as a disciplined momentum sleeve their clients can actually hold through a full cycle — see the <a href="/for-advisers" className="text-claret underline underline-offset-2 decoration-1">For Advisers page</a>.</> },
@@ -516,6 +535,15 @@ export default function LandingPageV2() {
 
   const isReturningVisitor = localStorage.getItem('rigacap_returning') === 'true';
   useEffect(() => { localStorage.setItem('rigacap_returning', 'true'); }, []);
+
+  // Founding-seat status (drives the gated counter + gray-out when full).
+  const [founding, setFounding] = useState(null);
+  useEffect(() => {
+    fetch(`${API_BASE}/api/billing/founding-status`)
+      .then(r => r.ok ? r.json() : null)
+      .then(setFounding)
+      .catch(() => {});  // non-fatal: card just shows the static "First 100" framing
+  }, []);
   useEffect(() => {
     if (!loading && isAuthenticated) navigate('/app', { replace: true });
   }, [isAuthenticated, loading, navigate]);
@@ -559,7 +587,7 @@ export default function LandingPageV2() {
       <PerformanceSection />
       <FounderSection />
       <HowItWorksSection />
-      <PricingSection onGetStarted={handleGetStarted} />
+      <PricingSection onGetStarted={handleGetStarted} founding={founding} />
       <FAQSection />
 
       <section id="newsletter" className="bg-paper-card py-16 border-t border-rule">

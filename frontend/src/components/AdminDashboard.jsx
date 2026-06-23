@@ -10,6 +10,7 @@ import StrategyEditor from './StrategyEditor';
 import FlexibleBacktest from './FlexibleBacktest';
 import SocialTab from './SocialTab';
 import HygieneTab from './HygieneTab';
+import LeadsTab from './LeadsTab';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -21,6 +22,7 @@ const TABS = [
   { id: 'autopilot', label: 'Auto-Pilot', icon: Bot },
   { id: 'social', label: 'Social', icon: Share2 },
   { id: 'newsletter', label: 'Newsletter', icon: Mail },
+  { id: 'leads', label: 'Leads', icon: Sparkles },
   { id: 'hygiene', label: 'Hygiene', icon: Stethoscope },
   { id: 'users', label: 'Users', icon: Users },
 ];
@@ -33,7 +35,7 @@ export default function AdminDashboard() {
     try {
       const params = new URLSearchParams(window.location.search);
       const fromUrl = params.get('tab');
-      if (fromUrl && ['overview','portfolio','strategies','lab','autopilot','social','newsletter','hygiene','users'].includes(fromUrl)) {
+      if (fromUrl && ['overview','portfolio','strategies','lab','autopilot','social','newsletter','leads','hygiene','users'].includes(fromUrl)) {
         return fromUrl;
       }
     } catch (e) {}
@@ -455,6 +457,10 @@ export default function AdminDashboard() {
 
       {activeTab === 'newsletter' && (
         <NewsletterTab fetchWithAuth={fetchWithAuth} />
+      )}
+
+      {activeTab === 'leads' && (
+        <LeadsTab fetchWithAuth={fetchWithAuth} />
       )}
 
       {activeTab === 'hygiene' && (
@@ -1168,6 +1174,11 @@ function UsersTab({ users, usersPagination, searchQuery, setSearchQuery, handleS
                   {user.role === 'admin' && (
                     <span className="ml-2 px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800">
                       Admin
+                    </span>
+                  )}
+                  {user.is_founding && (
+                    <span className="ml-2 px-2 py-1 rounded text-xs font-medium bg-amber-100 text-amber-800" title="Subscribed on the founding $59 price — founder cohort">
+                      ★ Founder
                     </span>
                   )}
                 </td>

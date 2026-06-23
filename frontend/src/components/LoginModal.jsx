@@ -29,6 +29,26 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
   const [localError, setLocalError] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
   const turnstileRef = useRef(null);
+  // Soft-conversion: capture cold visitors who aren't ready for a trial into the
+  // free newsletter instead of letting them leave (Erik Jun 23 — "never let them
+  // leak if they've come to visit").
+  const [newsletterBusy, setNewsletterBusy] = useState(false);
+  const [newsletterDone, setNewsletterDone] = useState(false);
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const subscribeToNewsletter = async () => {
+    const e = email.trim();
+    if (!e || !e.includes('@')) { setLocalError('Enter your email above to follow the newsletter.'); return; }
+    setNewsletterBusy(true); setLocalError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/public/subscribe-newsletter`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: e, turnstile_token: turnstileToken || 'dev-bypass', report_type: 'market_measured', source: 'signup_modal_soft' }),
+      });
+      if (res.ok) setNewsletterDone(true);
+      else setLocalError('Could not subscribe — please try again.');
+    } catch { setLocalError('Could not subscribe — please try again.'); }
+    finally { setNewsletterBusy(false); }
+  };
 
   // Reset form when modal opens/closes
   useEffect(() => {
@@ -500,6 +520,29 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
               <p className="text-sm text-positive font-medium">
                 7-day free trial &middot; Credit card required
               </p>
+            </div>
+          )}
+
+          {/* Soft conversion — don't let cold visitors leak. Offer the free
+              newsletter as a no-commitment alternative to the trial. */}
+          {mode === 'register' && (
+            <div className="mt-4 text-center">
+              {newsletterDone ? (
+                <p className="text-sm text-positive font-medium">You're on the list — watch your inbox for the weekly read.</p>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Not ready to commit?{' '}
+                  <button
+                    type="button"
+                    onClick={subscribeToNewsletter}
+                    disabled={newsletterBusy}
+                    className="text-claret font-medium underline underline-offset-2 hover:text-ink disabled:opacity-50"
+                  >
+                    {newsletterBusy ? 'Subscribing…' : 'Follow the free newsletter'}
+                  </button>{' '}
+                  and let us earn it.
+                </p>
+              )}
             </div>
           )}
         </div>
