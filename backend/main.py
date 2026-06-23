@@ -5973,6 +5973,46 @@ def handler(event, context):
             return {"status": "error", "error": str(e), "trace": traceback.format_exc()[:600]}
 
     # {"nightly_data_hygiene": {"_": 1}} or {"symbols": [...]} for subset test
+    # Admin one-off: reactivate a newsletter subscriber whose row got
+    # unsubscribed (e.g. corporate email auto-processing the one-click
+    # List-Unsubscribe). Same effect as the public subscribe endpoint minus the
+    # Turnstile bot check (which blocks server-side calls). (Jun 23 2026)
+    #   {"reactivate_newsletter": {"email": "...", "report_type": "market_measured"}}
+    if event.get("reactivate_newsletter"):
+        _cfg = event.get("reactivate_newsletter") or {}
+        _email = (_cfg.get("email") or "").strip().lower()
+        _rtype = _cfg.get("report_type") or "market_measured"
+        async def _reactivate():
+            from app.core.database import async_session, NewsletterPreference
+            from sqlalchemy import select as _sel
+            from datetime import datetime as _dt
+            if not _email:
+                return {"status": "error", "reason": "no email"}
+            async with async_session() as db:
+                row = (await db.execute(_sel(NewsletterPreference).where(
+                    NewsletterPreference.email == _email,
+                    NewsletterPreference.report_type == _rtype,
+                ))).scalar_one_or_none()
+                if row is None:
+                    db.add(NewsletterPreference(email=_email, report_type=_rtype,
+                                                subscribed_at=_dt.utcnow(), source="admin_reactivate"))
+                    await db.commit()
+                    return {"status": "created", "email": _email, "report_type": _rtype}
+                _was = row.unsubscribed_at
+                row.unsubscribed_at = None
+                row.subscribed_at = _dt.utcnow()
+                await db.commit()
+                return {"status": "reactivated", "email": _email, "report_type": _rtype,
+                        "was_unsubscribed_at": str(_was)}
+        try:
+            result = _run_async(_reactivate())
+            print(f"📧 reactivate_newsletter: {result}")
+            return result
+        except Exception as e:
+            import traceback
+            print(f"❌ reactivate_newsletter failed: {e}\n{traceback.format_exc()}")
+            return {"status": "error", "error": str(e)}
+
     if event.get("nightly_data_hygiene"):
         cfg = event.get("nightly_data_hygiene")
         cfg = cfg if isinstance(cfg, dict) else {}
