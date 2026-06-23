@@ -354,7 +354,31 @@ class SchedulerService:
 
                 logger.info(f"[DAILY-WF] Starting 1-year walk-forward (job {job_id})")
 
-                # Run walk-forward with ensemble strategy (production strategy)
+                # PARITY (Jun 23 2026): the dashboard "where you'd be" journey MUST
+                # simulate the LIVE strategy, not the old Ensemble. Read the strategy
+                # id + params from the SAME source live does — the active
+                # StrategyDefinition row (model_portfolio_service._strategy_params) —
+                # so it can never drift again. Was hardcoded fixed_strategy_id=5
+                # (Ensemble: 6×15/trail12, flat sizing, top-500); live is t30v
+                # (20×4.5/trail30/vol-weighted, top-100).
+                from app.core.database import StrategyDefinition
+                import json as _json
+                _active = (await db.execute(
+                    select(StrategyDefinition).where(StrategyDefinition.is_active == True).limit(1)
+                )).scalars().first()
+                _live_id = _active.id if _active else 5
+                _ap = _json.loads(_active.parameters) if (_active and _active.parameters) else {}
+                _pos = float(_ap.get("position_size_pct", 4.5))
+                _pos = _pos if _pos > 1 else _pos * 100.0           # WF override wants a percent (4.5)
+                _wf_kwargs = dict(
+                    max_positions=int(_ap.get("max_positions", 20)),
+                    position_size_pct=_pos,
+                    trailing_stop_pct=float(_ap.get("trailing_stop_pct", 30.0)),
+                    vol_weight=float(_ap.get("vol_weight", 1.0)),
+                    near_50d_high_pct=float(_ap.get("near_50d_high_pct", 3.0)),
+                )
+                logger.info(f"[DAILY-WF] LIVE strategy id={_live_id} params={_wf_kwargs}")
+
                 result = await walk_forward_service.run_walk_forward_simulation(
                     db=db,
                     start_date=start_date,
@@ -362,10 +386,11 @@ class SchedulerService:
                     reoptimization_frequency="biweekly",
                     min_score_diff=10.0,
                     enable_ai_optimization=False,  # No AI for speed
-                    max_symbols=500,  # Match production universe
+                    max_symbols=100,  # Match live SIGNAL_UNIVERSE_SIZE (was 500)
                     existing_job_id=job_id,
-                    fixed_strategy_id=5,  # Ensemble (DWAP+Momentum)
-                    carry_positions=True,  # Match production: trailing stop only
+                    fixed_strategy_id=_live_id,    # LIVE strategy (t30v), was hardcoded 5
+                    carry_positions=True,          # Match production: trailing stop only
+                    **_wf_kwargs,
                 )
 
                 logger.info(f"[DAILY-WF] Complete: {result.total_return_pct:.1f}% return, "
