@@ -38,5 +38,10 @@ Paul = Erik's cousin's husband, CFP at **Raymond James**. Reviewed /for-advisers
 ## Marketing gold
 **The F1 analogy** (his): "the best cars are built to brake, corner, and stay under control when conditions get difficult — not just go fast. Most investors don't fail because they miss a little upside; they fail because they make poor decisions / hold too long / have no process or stop loss." Steal this — better than half the current copy.
 
+## Follow-up (Paul's reply, same day)
+- **Unsubscribe was firm/firewall, NOT intentional** — Paul: "no idea why I was unsubscribed… perhaps my firewall or firm constraints." Re-added via direct DB row mod (newsletter_preferences, source=archive_page = he subscribed from the /newsletter archive after reading = high intent). ⚠️ **STRATEGIC: this is a deliverability risk for the WHOLE RIA channel** — advisers run on locked-down corporate email; wirehouse security can auto-process the one-click List-Unsubscribe → silent list attrition on the exact segment we're nurturing. TODO: check if one-click unsub fires for corporate domains; consider a confirm-step for that segment.
+- **He restated the core thesis unprompted:** "investors are seeking an investing framework that fits their personality — if you could help them get closer to that, there is value." = the F/A matrix / filtration-not-conversion canon, in better words. An RJ adviser arriving at the thesis independently = strong channel resonance. STEAL the line: **"a framework that fits your personality."**
+- Warm + engaged ("love your passion", "see you soon"). Keep as the RIA-channel ally.
+
 ## Compliance note
 Backtested perf invites scrutiny — keep being deliberate distinguishing BACKTESTED from LIVE; never imply future drawdowns will resemble historical ones. (Already on-brand.)
