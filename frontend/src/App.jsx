@@ -330,7 +330,7 @@ const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanc
               <span className="font-mono text-[0.95rem] font-medium text-ink">${totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute">{viewMode === 'simple' ? '12% Safety Net' : 'Trailing Stop (12%)'}</span>
+              <span className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute">{viewMode === 'simple' ? `${Math.round(EFFECTIVE_TRAIL_FRAC*100)}% Safety Net` : `Trailing Stop (${Math.round(EFFECTIVE_TRAIL_FRAC*100)}%)`}</span>
               <span className="font-mono text-[0.95rem] text-ink">${trailingStop.toFixed(2)}</span>
             </div>
             {viewMode !== 'simple' && (
@@ -1144,19 +1144,23 @@ const StockChartModal = ({ symbol, type, data, onClose, onAction, liveQuote, vie
                 <>
                   <div className="text-center">
                     <p className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-1">Breakout</p>
-                    <p className="font-mono text-lg text-ink">+{data?.pct_above_dwap}%</p>
+                    <p className="font-mono text-lg text-ink">+{Number(data?.pct_above_dwap ?? 0).toFixed(1)}%</p>
                   </div>
                   <div className="text-center">
                     <p className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-1">Mom Rank</p>
                     <p className="font-mono text-lg text-ink">#{data?.momentum_rank || '-'}</p>
                   </div>
+                  {/* Live trailing stop (t30v=30%), not the old hardcoded 12%. */}
                   <div className="text-center">
                     <p className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-1">Trailing Stop</p>
-                    <p className="font-mono text-lg text-ink">12%</p>
+                    <p className="font-mono text-lg text-ink">{Math.round(data?.trailing_stop_pct ?? 30)}%</p>
                   </div>
+                  {/* t30v has NO fixed profit target — show the stop price level
+                      instead of a misleading "+20% target" (which would tell
+                      subscribers to sell winners the strategy lets run). */}
                   <div className="text-center">
-                    <p className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-1">Target (+20%)</p>
-                    <p className="font-mono text-lg text-ink">${data?.price ? (data.price * 1.20).toFixed(2) : '-'}</p>
+                    <p className="font-body text-[0.72rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-1">Stop Price</p>
+                    <p className="font-mono text-lg text-ink">${data?.price ? (data.price * (1 - (data.trailing_stop_pct ?? 30) / 100)).toFixed(2) : '-'}</p>
                   </div>
                 </>
               )
@@ -4501,9 +4505,9 @@ function Dashboard() {
             pnl_pct: 0,
             days_held: 0,
             high_water_mark: positionData.entry_price,
-            trailing_stop_level: positionData.stop_loss ?? positionData.entry_price * 0.88,
-            trailing_stop_pct: 12,
-            distance_to_stop_pct: 12,
+            trailing_stop_level: positionData.stop_loss ?? positionData.entry_price * (1 - EFFECTIVE_TRAIL_FRAC),
+            trailing_stop_pct: Math.round(EFFECTIVE_TRAIL_FRAC * 100),
+            distance_to_stop_pct: Math.round(EFFECTIVE_TRAIL_FRAC * 100),
             sell_signal: 'hold',
             action: 'hold',
           };

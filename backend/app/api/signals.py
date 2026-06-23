@@ -1025,6 +1025,11 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                 'days_since_entry': int(days_since_entry) if days_since_entry is not None else None,
                 'is_fresh': bool(is_fresh),
                 'sector': sector,
+                # Live exit param so the UI shows the REAL trailing stop (t30v=30%)
+                # instead of a hardcoded 12% (old Ensemble). Same source live exits
+                # read (regime_effective_params / t30v_cutover row). t30v has NO
+                # fixed profit target — it lets winners run on the trail. (Jun 23 2026)
+                'trailing_stop_pct': float(regime_effective_params.get('trailing_stop_pct', 30.0)) if regime_effective_params else 30.0,
             })
 
         # Sort by composite ensemble_score descending — matches what
