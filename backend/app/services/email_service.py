@@ -504,25 +504,23 @@ class EmailService:
         <div style="padding: 14px 0; border-bottom: 1px solid #DDD5C7; {('border-left: 3px solid #7A2430; padding-left: 14px;' if is_fresh else '')}">
             <table cellpadding="0" cellspacing="0" style="width: 100%;">
                 <tr>
-                    <td style="width: 42%; vertical-align: top;">
+                    <!-- Left: symbol + age. No fixed width — takes the space the
+                         right (nowrap) column leaves. -->
+                    <td style="vertical-align: top; padding-right: 12px;">
                         <div style="font-family: Georgia, serif; font-size: 18px; font-weight: 500; color: #141210;">
                             <span style="text-decoration: underline;">{symbol}</span>
                         </div>
-                        <div style="font-family: 'Courier New', monospace; font-size: 10px; color: #8A8279; letter-spacing: 0.5px; margin-top: 2px;">
+                        <div style="font-family: 'Courier New', monospace; font-size: 10px; color: #8A8279; letter-spacing: 0.5px; margin-top: 3px;">
                             {age_label}
                         </div>
                     </td>
-                    <td style="width: 26%; text-align: right; vertical-align: top;">
-                        <div style="font-family: 'Courier New', monospace; font-size: 13px; color: #141210;">
-                            ${price:.2f}
-                        </div>
-                        <div style="font-family: 'Courier New', monospace; font-size: 10px; color: #2D5F3F; margin-top: 2px; white-space: nowrap;">
-                            +{pct_above:.1f}% above trend
-                        </div>
-                    </td>
-                    <td style="width: 32%; text-align: right; vertical-align: top; white-space: nowrap;">
-                        <span style="font-family: 'Courier New', monospace; font-size: 14px; color: #141210;">{score}</span>
-                        <span style="font-family: 'Courier New', monospace; font-size: 11px; color: #7A2430; letter-spacing: 1px; text-transform: uppercase;">&nbsp;·&nbsp;{label}</span>
+                    <!-- Right: price / strength / trend STACKED in one right-aligned
+                         column (was 3 side-by-side cells that overlapped on mobile,
+                         Erik Jun 23). nowrap is safe now — nothing sits beside it. -->
+                    <td style="text-align: right; vertical-align: top; white-space: nowrap;">
+                        <div style="font-family: 'Courier New', monospace; font-size: 14px; color: #141210;">${price:.2f}</div>
+                        <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #7A2430; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 3px;">{score}&nbsp;·&nbsp;{label}</div>
+                        <div style="font-family: 'Courier New', monospace; font-size: 10px; color: #2D5F3F; margin-top: 3px;">+{pct_above:.0f}% above trend</div>
                     </td>
                 </tr>
             </table>
@@ -579,14 +577,13 @@ class EmailService:
             <div style="padding: 10px 0; border-bottom: 1px solid #DDD5C7;">
                 <table cellpadding="0" cellspacing="0" style="width: 100%;">
                     <tr>
-                        <td style="width: 40%; font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">
+                        <td style="vertical-align: top; padding-right: 12px; font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #141210;">
                             <span style="text-decoration: underline;">{symbol}</span>
                         </td>
-                        <td style="width: 25%; text-align: right; font-family: 'Courier New', monospace; font-size: 13px; color: #141210;">
-                            ${price:.2f}
-                        </td>
-                        <td style="width: 35%; text-align: right; font-family: 'Courier New', monospace; font-size: 11px; color: #5A544E; white-space: nowrap;">
-                            +{distance:.1f}% to trigger
+                        <!-- price + distance STACKED right (was side-by-side, overlapped on mobile) -->
+                        <td style="text-align: right; vertical-align: top; white-space: nowrap;">
+                            <div style="font-family: 'Courier New', monospace; font-size: 13px; color: #141210;">${price:.2f}</div>
+                            <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #5A544E; margin-top: 3px;">+{distance:.1f}% to trigger</div>
                         </td>
                     </tr>
                 </table>
