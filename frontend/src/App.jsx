@@ -1905,6 +1905,33 @@ function Dashboard() {
     return () => clearTimeout(timeout);
   }, []);
 
+  // Auto-launch Stripe checkout after signup from a landing/pricing CTA.
+  // LoginModal stores the chosen plan in localStorage('rigacap_selected_plan')
+  // when a visitor clicks "Start Trial"; previously nothing consumed it, so a
+  // signed-up user landed in /app and had to find the subscribe button. Now we
+  // carry the intent straight through to the Stripe screen (Jun 23 2026). Only
+  // fires for an authenticated user who isn't already subscribed; one-shot
+  // (flag cleared immediately) so it can't loop.
+  useEffect(() => {
+    if (!isAuthenticated || authLoading) return;
+    const plan = localStorage.getItem('rigacap_selected_plan');
+    if (!plan) return;
+    localStorage.removeItem('rigacap_selected_plan');  // consume immediately
+    const sub = user?.subscription;
+    const alreadySubscribed = sub?.has_stripe_subscription || ['active', 'trialing', 'past_due'].includes(sub?.status);
+    if (alreadySubscribed) return;
+    (async () => {
+      try {
+        const data = await api.post('/api/billing/create-checkout', { plan: plan === 'annual' ? 'annual' : 'monthly' });
+        if (window.gtag) window.gtag('event', 'begin_checkout', { currency: 'USD', item_variant: plan });
+        if (data?.checkout_url) window.location.href = data.checkout_url;
+      } catch (e) {
+        // Non-fatal: leave them in /app with the subscribe button if checkout fails
+        console.error('Auto-checkout after signup failed:', e);
+      }
+    })();
+  }, [isAuthenticated, authLoading, user]);
+
   // Handle post-checkout redirect from Stripe
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

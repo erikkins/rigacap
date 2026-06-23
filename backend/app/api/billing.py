@@ -6,13 +6,52 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.core.database import get_db, User, Subscription
 from app.core.config import settings
 from app.core.security import get_current_user
 
 router = APIRouter()
+
+# Subscription statuses that count as an occupied founding seat (a started
+# trial claims a seat; canceled/expired free it). Shared by the seat counter,
+# the public status endpoint, and the admin founder pill.
+_LIVE_SUB_STATUSES = ("trial", "trialing", "active", "past_due")
+
+
+async def count_founding_seats(db: AsyncSession) -> int:
+    """How many founding seats are taken — subscriptions on the FOUNDING ($59)
+    price in a live status. Founder status is DERIVED from the price id (no
+    schema change): once founding closes new signups go to the standard price,
+    so this count stabilizes at the seat limit."""
+    if not settings.STRIPE_PRICE_ID:
+        return 0
+    n = await db.execute(
+        select(func.count()).select_from(Subscription).where(
+            Subscription.stripe_price_id == settings.STRIPE_PRICE_ID,
+            Subscription.status.in_(_LIVE_SUB_STATUSES),
+        )
+    )
+    return int(n.scalar() or 0)
+
+
+async def founding_status(db: AsyncSession) -> dict:
+    limit = settings.FOUNDING_SEAT_LIMIT
+    taken = await count_founding_seats(db)
+    return {
+        "taken": taken,
+        "limit": limit,
+        "remaining": max(0, limit - taken),
+        "open": taken < limit,
+    }
+
+
+@router.get("/founding-status")
+async def get_founding_status(db: AsyncSession = Depends(get_db)):
+    """PUBLIC — drives the landing 'X of 100 seats left' teaser + grays the
+    founding card once full. Also tells checkout which monthly price to use."""
+    return await founding_status(db)
 
 
 class CheckoutResponse(BaseModel):
@@ -54,7 +93,7 @@ async def create_checkout_session(
             detail="Stripe is not configured"
         )
 
-    # Determine which price ID to use
+    # Determine which price ID to use.
     plan = request.plan if request else "monthly"
     if plan == "annual":
         price_id = settings.STRIPE_PRICE_ID_ANNUAL
@@ -64,7 +103,15 @@ async def create_checkout_session(
                 detail="Annual plan not configured"
             )
     else:
-        price_id = settings.STRIPE_PRICE_ID
+        # Monthly: founding ($59) while seats remain, else standard ($129).
+        # Server-side decision so the price can't be spoofed from the client,
+        # and so 'founding'/'monthly' CTAs both resolve to the correct live
+        # price. (Jun 23 2026 — replaces the single $39 STRIPE_PRICE_ID.)
+        fstat = await founding_status(db)
+        if fstat["open"] or not settings.STRIPE_PRICE_ID_STANDARD:
+            price_id = settings.STRIPE_PRICE_ID            # founding $59
+        else:
+            price_id = settings.STRIPE_PRICE_ID_STANDARD   # standard $129
         if not price_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

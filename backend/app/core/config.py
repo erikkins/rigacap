@@ -41,8 +41,10 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY", "")
     STRIPE_PUBLISHABLE_KEY: str = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
     STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
-    STRIPE_PRICE_ID: str = os.getenv("STRIPE_PRICE_ID", "")  # Monthly subscription price
-    STRIPE_PRICE_ID_ANNUAL: str = os.getenv("STRIPE_PRICE_ID_ANNUAL", "")  # Annual subscription price
+    STRIPE_PRICE_ID: str = os.getenv("STRIPE_PRICE_ID", "")  # FOUNDING monthly ($59) while seats remain
+    STRIPE_PRICE_ID_STANDARD: str = os.getenv("STRIPE_PRICE_ID_STANDARD", "")  # Standard monthly ($129) after founding closes
+    STRIPE_PRICE_ID_ANNUAL: str = os.getenv("STRIPE_PRICE_ID_ANNUAL", "")  # Annual subscription price ($1099)
+    FOUNDING_SEAT_LIMIT: int = int(os.getenv("FOUNDING_SEAT_LIMIT", "100"))  # founding seats before price -> standard
     STRIPE_REFERRAL_COUPON_ID: str = os.getenv("STRIPE_REFERRAL_COUPON_ID", "REFERRAL_1MONTH_FREE")
 
     # Cloudflare Turnstile

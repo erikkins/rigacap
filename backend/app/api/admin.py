@@ -447,6 +447,7 @@ class UserSummary(BaseModel):
     last_login: Optional[str]
     subscription_status: Optional[str]
     trial_days_remaining: Optional[int]
+    is_founding: bool = False  # subscribed on the founding ($59) price — the founder cohort
 
 
 class UserListResponse(BaseModel):
@@ -570,6 +571,14 @@ async def list_users(
         )
         subscription = sub_result.scalar_one_or_none()
 
+        # Founder = subscribed on the founding ($59) price, in a live status.
+        is_founding = bool(
+            subscription
+            and settings.STRIPE_PRICE_ID
+            and subscription.stripe_price_id == settings.STRIPE_PRICE_ID
+            and subscription.status in ("trial", "trialing", "active", "past_due")
+        )
+
         user_summaries.append(UserSummary(
             id=str(user.id),
             email=user.email,
@@ -579,7 +588,8 @@ async def list_users(
             created_at=user.created_at.isoformat() if user.created_at else None,
             last_login=user.last_login.isoformat() if user.last_login else None,
             subscription_status=subscription.status if subscription else None,
-            trial_days_remaining=subscription.days_remaining() if subscription else None
+            trial_days_remaining=subscription.days_remaining() if subscription else None,
+            is_founding=is_founding,
         ))
 
     return UserListResponse(
@@ -4480,3 +4490,62 @@ async def admin_hygiene_corp_actions(
                 "details": details,
             })
     return {"events": out, "count": len(out)}
+
+
+# ============================================================================
+# Newsletter Signups (Jun 23 2026) — visibility into "Market, Measured." +
+# other newsletter opt-ins for the upsell motion (cold ad traffic that takes
+# the soft CTA instead of the trial). Admin-only.
+# ============================================================================
+
+@router.get("/newsletter-signups")
+async def get_newsletter_signups(
+    report_type: Optional[str] = Query(None, description="Filter by report_type (e.g. market_measured)"),
+    include_unsubscribed: bool = Query(False),
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List newsletter subscribers (newsletter_preferences), newest first, with
+    a per-report summary. Flags which emails are already app users vs pure
+    newsletter leads (the upsell pool)."""
+    from app.core.database import NewsletterPreference
+
+    q = select(NewsletterPreference)
+    if report_type:
+        q = q.where(NewsletterPreference.report_type == report_type)
+    if not include_unsubscribed:
+        q = q.where(NewsletterPreference.unsubscribed_at.is_(None))
+    q = q.order_by(desc(NewsletterPreference.subscribed_at))
+    rows = (await db.execute(q)).scalars().all()
+
+    # Which of these emails are already registered app users? (lead vs customer)
+    emails = list({r.email.lower() for r in rows})
+    user_emails = set()
+    if emails:
+        ur = await db.execute(select(func.lower(User.email)).where(func.lower(User.email).in_(emails)))
+        user_emails = {e for (e,) in ur.all()}
+
+    by_report: Dict[str, int] = {}
+    by_source: Dict[str, int] = {}
+    items = []
+    for r in rows:
+        by_report[r.report_type] = by_report.get(r.report_type, 0) + 1
+        src = r.source or "unknown"
+        by_source[src] = by_source.get(src, 0) + 1
+        items.append({
+            "email": r.email,
+            "report_type": r.report_type,
+            "source": r.source,
+            "subscribed_at": r.subscribed_at.isoformat() if r.subscribed_at else None,
+            "unsubscribed_at": r.unsubscribed_at.isoformat() if r.unsubscribed_at else None,
+            "is_app_user": r.email.lower() in user_emails,
+        })
+
+    leads = sum(1 for i in items if not i["is_app_user"] and not i["unsubscribed_at"])
+    return {
+        "items": items,
+        "count": len(items),
+        "lead_count": leads,  # newsletter-only (not yet app users) = the upsell pool
+        "by_report": by_report,
+        "by_source": by_source,
+    }
