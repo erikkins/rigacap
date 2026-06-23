@@ -241,15 +241,10 @@ async def register(
     access_token = create_access_token(str(user.id))
     refresh_token = create_refresh_token(str(user.id))
 
-    # Send welcome email (don't wait for it, fire and forget)
-    import asyncio
-    asyncio.create_task(
-        email_service.send_welcome_email(
-            user.email, user.name or user.email,
-            referral_code=user.referral_code,
-            user_id=str(user.id),
-        )
-    )
+    # NOTE: welcome email no longer fires at registration — it now fires on
+    # subscription creation (billing.handle_subscription_created / sync) so it
+    # knows founder vs standard and only goes to people who actually start a
+    # trial (Jun 23 2026).
 
     return TokenResponse(
         access_token=access_token,
@@ -491,16 +486,8 @@ async def google_auth(
     await db.commit()
     await db.refresh(user)
 
-    # Send welcome email to new users
-    if is_new_user:
-        import asyncio
-        asyncio.create_task(
-            email_service.send_welcome_email(
-                user.email, user.name or user.email,
-                referral_code=user.referral_code,
-                user_id=str(user.id),
-            )
-        )
+    # Welcome email now fires on subscription creation (founder/standard split),
+    # not at registration — see billing.handle_subscription_created (Jun 23 2026).
 
     # Check 2FA (skip for brand-new users)
     if not is_new_user:
@@ -619,16 +606,8 @@ async def apple_auth(
     await db.commit()
     await db.refresh(user)
 
-    # Send welcome email to new users
-    if is_new_user:
-        import asyncio
-        asyncio.create_task(
-            email_service.send_welcome_email(
-                user.email, user.name or user.email,
-                referral_code=user.referral_code,
-                user_id=str(user.id),
-            )
-        )
+    # Welcome email now fires on subscription creation (founder/standard split),
+    # not at registration — see billing.handle_subscription_created (Jun 23 2026).
 
     # Check 2FA (skip for brand-new users)
     if not is_new_user:

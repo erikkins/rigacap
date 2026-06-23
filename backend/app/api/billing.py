@@ -273,11 +273,13 @@ async def sync_subscription(
             select(Subscription).where(Subscription.user_id == user.id)
         )
         subscription = result.scalar_one_or_none()
+        _is_new_subscription = False
         if not subscription:
             # User may have just completed Stripe checkout before webhook fired
             if subs.data:
                 subscription = Subscription(user_id=user.id)
                 db.add(subscription)
+                _is_new_subscription = True  # welcome fires below (deduped vs webhook by the new-row check)
             else:
                 raise HTTPException(status_code=404, detail="No subscription record")
 
@@ -305,6 +307,20 @@ async def sync_subscription(
             if hasattr(stripe_sub, 'trial_end') and stripe_sub.trial_end:
                 subscription.trial_end = datetime.fromtimestamp(stripe_sub.trial_end)
             await db.commit()
+
+            # Welcome on first subscription (founder/standard by price). Deduped
+            # vs the webhook: only the path that creates the row sends it.
+            if _is_new_subscription:
+                try:
+                    is_founding = bool(settings.STRIPE_PRICE_ID and subscription.stripe_price_id == settings.STRIPE_PRICE_ID)
+                    from app.services.email_service import email_service
+                    await email_service.send_welcome_email(
+                        to_email=user.email, name=user.name or "", referral_code=getattr(user, "referral_code", None),
+                        user_id=str(user.id), is_founding=is_founding,
+                    )
+                    print(f"📧 Welcome ({'founder' if is_founding else 'standard'}) sent via sync to {user.email}")
+                except Exception as we:
+                    print(f"⚠️ Welcome email on sync failed (non-fatal): {we}")
 
             return {
                 "synced": True,
@@ -417,6 +433,10 @@ async def handle_subscription_created(sub: dict, db: AsyncSession):
     )
     subscription = result.scalar_one_or_none()
 
+    # Brand-new subscription row = first time this user subscribed → welcome.
+    # Natural dedup (no new column): a re-delivered webhook finds the existing
+    # row and won't re-send.
+    _is_new_subscription = subscription is None
     if not subscription:
         subscription = Subscription(user_id=user.id)
         db.add(subscription)
@@ -447,6 +467,20 @@ async def handle_subscription_created(sub: dict, db: AsyncSession):
 
     await db.commit()
     print(f"✅ Webhook: subscription created for user {user.id}, status={subscription.status}")
+
+    # Welcome email fires HERE (not at registration) so it knows founder vs
+    # standard — non-founders never get founding-rate language (Erik Jun 23).
+    if _is_new_subscription:
+        try:
+            is_founding = bool(settings.STRIPE_PRICE_ID and subscription.stripe_price_id == settings.STRIPE_PRICE_ID)
+            from app.services.email_service import email_service
+            await email_service.send_welcome_email(
+                to_email=user.email, name=user.name or "", referral_code=getattr(user, "referral_code", None),
+                user_id=str(user.id), is_founding=is_founding,
+            )
+            print(f"📧 Welcome ({'founder' if is_founding else 'standard'}) sent to {user.email}")
+        except Exception as we:
+            print(f"⚠️ Welcome email on subscription-created failed (non-fatal): {we}")
 
 
 async def handle_subscription_updated(sub: dict, db: AsyncSession):

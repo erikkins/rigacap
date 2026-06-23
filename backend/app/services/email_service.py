@@ -1186,7 +1186,7 @@ class EmailService:
         <!-- Product pitch -->
         <tr><td style="padding: 28px 40px 0 40px; border-top: 1px solid #DDD5C7; margin-top: 24px;">
             <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #5A544E; font-style: italic;">
-                RigaCap is a disciplined momentum signal service built by a former Chief Innovation Officer with 15 years of quantitative research. Walk-forward validated. $129/month with a 7-day free trial.
+                RigaCap is a disciplined momentum signal service built by a former Chief Innovation Officer with 15 years of quantitative research. Walk-forward validated. $59/month founding rate (first 100 subscribers) with a 7-day free trial.
                 <a href="https://rigacap.com" style="color: #7A2430;">Start your trial &rarr;</a>
             </p>
         </td></tr>
@@ -1394,7 +1394,7 @@ Market, Measured. is a weekly reading from RigaCap.
 
         <tr><td style="padding: 28px 40px 0 40px; border-top: 1px solid #DDD5C7; margin-top: 24px;">
             <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #5A544E; font-style: italic;">
-                RigaCap is a disciplined momentum signal service. Walk-forward validated. $129/month with a 7-day free trial.
+                RigaCap is a disciplined momentum signal service. Walk-forward validated. $59/month founding rate (first 100 subscribers) with a 7-day free trial.
                 <a href="https://rigacap.com" style="color: #7A2430;">Start your trial &rarr;</a>
             </p>
         </td></tr>
@@ -1464,11 +1464,27 @@ Market, Measured. is a weekly reading from RigaCap.
         return {"sent": sent, "failed": failed, "total": len(subscribers)}
 
 
-    async def send_welcome_email(self, to_email: str, name: str, referral_code: str = None, user_id: str = None) -> bool:
+    async def send_welcome_email(self, to_email: str, name: str, referral_code: str = None, user_id: str = None, is_founding: bool = False) -> bool:
         """
-        Send a beautiful welcome email when a user signs up.
+        Welcome email — fired on subscription creation (we know founder vs
+        standard by then). is_founding gates the founding-member acknowledgment;
+        the rest (capital-preservation thesis) is shared. NON-founders must never
+        see founding-rate language (Erik Jun 23 — there's a full-price route that
+        is NOT founding).
         """
         first_name = name.split()[0] if name else "there"
+
+        # Founder-only acknowledgment block (top of the email).
+        founder_html = ""
+        founder_text = ""
+        if is_founding:
+            founder_html = """
+                <div style="border-left: 2px solid #7A2430; padding: 14px 18px; background: #FAF7F0; margin: 0 0 24px;">
+                    <p style="margin: 0; font-size: 16px; color: #141210; line-height: 1.6;">
+                        You're in &mdash; and you're a <strong>founding member</strong>. Your rate is locked at <strong>$59/month for a full year</strong>, while everyone after the first 100 pays $129. Thank you for betting early.
+                    </p>
+                </div>"""
+            founder_text = "You're a FOUNDING MEMBER — your rate is locked at $59/month for a year (everyone after the first 100 pays $129). Thank you for betting early.\n\n"
 
         referral_html = ""
         referral_text = ""
@@ -1519,22 +1535,28 @@ Your friend gets their first month free, and you get a free month when they subs
                 <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
                     {first_name},
                 </p>
+
+                {founder_html}
+
                 <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
-                    Welcome to RigaCap. I built this because I got tired of overriding my own rules — the system doesn't have that problem.
+                    Here's what you actually bought, and it isn't a hot-stock newsletter: RigaCap is built to do one thing exceptionally well &mdash; <strong>keep you invested through the part of the cycle where most people sell at the bottom.</strong> I built it because I got tired of overriding my own rules in a drawdown. The system doesn't have that problem.
                 </p>
                 <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
-                    You now have access to the Ensemble strategy — a disciplined momentum system combining breakout timing, momentum quality ranking, and adaptive risk management. Walk-forward validated across multiple start dates with no hindsight bias.
+                    In 2008, the S&amp;P 500 fell 38%. <strong>RigaCap's strategy fell only 0.5%.</strong> That's not one lucky year &mdash; across 21 years our worst drawdown was <strong>19%</strong>, while the S&amp;P lost more than half its value <em>twice</em>. It still compounded at <strong>8.3% a year</strong>.
+                </p>
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
+                    That 8.3% isn't the biggest number you'll see advertised &mdash; and that's the point. You're buying a path gentle enough that <strong>you never get that reason.</strong> That's the whole product.
+                    <a href="https://rigacap.com/track-record" style="color: #7A2430; text-decoration: underline;">See the full track record.</a>
                 </p>
 
                 <!-- What You Get -->
                 <div style="border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; padding: 20px 0; margin: 28px 0;">
                     <table cellpadding="0" cellspacing="0" style="width: 100%;">
-                        <tr><td style="padding: 6px 0; font-size: 15px; color: #141210;">— Ensemble buy signals (3-4 per month)</td></tr>
-                        <tr><td style="padding: 6px 0; font-size: 15px; color: #141210;">— Daily email digest at 6 PM ET</td></tr>
-                        <tr><td style="padding: 6px 0; font-size: 15px; color: #141210;">— 7-regime market detection</td></tr>
-                        <tr><td style="padding: 6px 0; font-size: 15px; color: #141210;">— Trailing stop alerts (intraday)</td></tr>
-                        <tr><td style="padding: 6px 0; font-size: 15px; color: #141210;">— Portfolio tracking</td></tr>
-                        <tr><td style="padding: 6px 0; font-size: 15px; color: #141210;">— Works with any broker</td></tr>
+                        <tr><td style="padding: 6px 0; font-size: 15px; color: #141210;">— Signals after every close: ticker, entry, and a trailing stop that only rises</td></tr>
+                        <tr><td style="padding: 6px 0; font-size: 15px; color: #141210;">— Daily 6 PM ET digest: the market read and the model's positions</td></tr>
+                        <tr><td style="padding: 6px 0; font-size: 15px; color: #141210;">— A regime filter that steps to cash when the market turns hostile</td></tr>
+                        <tr><td style="padding: 6px 0; font-size: 15px; color: #141210;">— Portfolio tracking · quiet when nothing qualifies</td></tr>
+                        <tr><td style="padding: 6px 0; font-size: 15px; color: #141210;">— Works with any broker — you execute, we signal</td></tr>
                     </table>
                 </div>
 
@@ -1548,14 +1570,6 @@ Your friend gets their first month free, and you get a free month when they subs
                        style="display: inline-block; background: #141210; color: #F5F1E8; font-size: 13px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 36px; text-decoration: none;">
                         View Today's Signals
                     </a>
-                </div>
-
-                <!-- Track Record -->
-                <div style="border-left: 2px solid #7A2430; padding: 14px 18px; background: #FAF7F0; margin: 24px 0;">
-                    <p style="margin: 0; font-family: Georgia, serif; font-style: italic; font-size: 15px; color: #141210; line-height: 1.6;">
-                        A 21-year walk-forward backtest: 8.3% a year, worst drawdown 19% — through 2008, COVID, and 2022.
-                        <a href="https://rigacap.com/track-record" style="color: #7A2430; text-decoration: underline;">See the full track record.</a>
-                    </p>
                 </div>
 
                 {referral_html}
@@ -1574,28 +1588,24 @@ Your friend gets their first month free, and you get a free month when they subs
 """
 
         text = f"""
-Welcome to RigaCap, {first_name}!
+{first_name},
 
-Your journey to smarter trading starts now.
+{founder_text}Here's what you actually bought, and it isn't a hot-stock newsletter: RigaCap is built to do one thing exceptionally well — keep you invested through the part of the cycle where most people sell at the bottom. I built it because I got tired of overriding my own rules in a drawdown. The system doesn't have that problem.
 
-Here's what you get:
-- Ensemble signals — entries, published stops, and sizing after every close; quiet when nothing qualifies
-- Simple & Advanced views — clear actions or full technical details
-- Smart watchlist — alerts when stocks approach buy triggers
-- Trailing stop protection — adaptive risk management
-- Market regime analysis — 7-regime detection
-- Daily email digest
-- Portfolio tracking
-- Works with any broker — Schwab, Fidelity, IBKR — you execute, we signal
+In 2008, the S&P 500 fell 38%. RigaCap's strategy fell only 0.5%. That's not one lucky year — across 21 years our worst drawdown was 19%, while the S&P lost more than half its value twice. It still compounded at 8.3% a year.
 
-Your 7-day free trial starts now. Visit https://rigacap.com/app to see today's signals!
+That 8.3% isn't the biggest number you'll see advertised — and that's the point. You're buying a path gentle enough that you never get that reason. That's the whole product. See it: https://rigacap.com/track-record
 
-Our Track Record: A 21-year walk-forward backtest: 8.3% a year, worst drawdown 19% — through 2008, COVID, and 2022. See the details: https://rigacap.com/track-record
+What you get:
+- Signals after every close: ticker, entry, and a trailing stop that only rises
+- Daily 6 PM ET digest: the market read and the model's positions
+- A regime filter that steps to cash when the market turns hostile
+- Portfolio tracking; quiet when nothing qualifies
+- Works with any broker — you execute, we signal
 
-Pro Tip: Look for signals with the green BUY badge — these are fresh breakouts with the highest conviction.
+Your 7-day free trial starts now. Visit https://rigacap.com/app to see today's signals.
 {referral_text}
-Happy trading!
-The RigaCap Team
+Reply to this anytime — it comes straight to me. — Erik
 
 ---
 For information purposes only. RigaCap, LLC is not a registered investment advisor. Past performance does not guarantee future results.
@@ -1603,7 +1613,7 @@ For information purposes only. RigaCap, LLC is not a registered investment advis
 
         return await self.send_email(
             to_email=to_email,
-            subject="🚀 Welcome to RigaCap — Your Trading Edge Starts Now!",
+            subject="Welcome to RigaCap",
             html_content=html,
             text_content=text,
             user_id=user_id,
@@ -1703,9 +1713,9 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
                 <div style="text-align: center; margin: 32px 0;">
                     <a href="https://rigacap.com/#pricing"
                        style="display: inline-block; background: #141210; color: #F5F1E8; font-size: 13px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 36px; text-decoration: none;">
-                        Subscribe — $129/month
+                        Subscribe — $59/month founding
                     </a>
-                    <p style="font-family: 'Courier New', monospace; font-size: 11px; color: #8A8279; margin-top: 8px;">Or $1,099/year (three months free)</p>
+                    <p style="font-family: 'Courier New', monospace; font-size: 11px; color: #8A8279; margin-top: 8px;">Founding rate while seats remain · $129/month standard · or $1,099/year</p>
                 </div>
 
                 <p style="font-size: 14px; color: #8A8279; margin: 24px 0 0; line-height: 1.5;">

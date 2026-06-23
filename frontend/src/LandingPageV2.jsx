@@ -58,8 +58,10 @@ const HeroSection = ({ onGetStarted }) => (
         The biggest threat to your returns isn't the next crash &mdash; it's selling into it. Built so you can hold through the storm instead of bailing at the bottom.
       </p>
 
+      {/* $59 is the founding rate while seats remain — UPDATE TO $129 ONCE
+          FOUNDING HITS 100 (or wire to /api/billing/founding-status). */}
       <p className="text-[0.95rem] text-ink-mute leading-relaxed max-w-[640px] mb-10">
-        A survivorship-free, drawdown-controlled momentum strategy &mdash; worst loss <strong className="text-ink font-medium">19% across 21 years</strong>, while the index lost half its value twice. Validated through 2008, COVID, and 2022, built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>. <strong className="text-ink font-medium">$129/month</strong>, not 1% a year.
+        In 2008 the S&amp;P 500 fell 38%. <strong className="text-ink font-medium">RigaCap's strategy fell 0.5%.</strong> A survivorship-free momentum strategy with a <strong className="text-ink font-medium">19% worst loss across 21 years</strong> &mdash; built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>. <strong className="text-ink font-medium">$59/month founding</strong>, not 1% a year.
       </p>
 
       <div className="flex flex-wrap gap-4 items-center mb-0">
