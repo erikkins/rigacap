@@ -319,6 +319,27 @@ class SchedulerService:
         except Exception as e:
             logger.warning(f"[DAILY-WF] Pickle reload failed (continuing with in-memory): {e}")
 
+        # Clamp end_date to the actual last bar in the data so the period
+        # iterator never runs PAST data-end (the "27 errors past data-end"
+        # pattern). In parquet mode the store can lag (frozen base until the
+        # base-freshness/close-the-loop job lands), so end_date=today would
+        # otherwise generate empty periods and error. Robust regardless of how
+        # stale the store is. (Jun 23 2026)
+        try:
+            import pandas as pd  # not in this scope otherwise (module pd import is method-local elsewhere)
+            _spy = scanner_service.data_cache.get('SPY')
+            if _spy is not None and len(_spy) > 0:
+                _last = _spy.index.max()
+                if hasattr(_last, 'tz') and _last.tz is not None:
+                    _last = _last.tz_localize(None)
+                _last = pd.Timestamp(_last).to_pydatetime().replace(tzinfo=None)
+                if _last < end_date:
+                    logger.info(f"[DAILY-WF] Clamping end_date {end_date.date()} -> data-end {_last.date()} (store lag)")
+                    end_date = _last
+                    start_date = end_date - timedelta(days=365)
+        except Exception as _ce:
+            logger.warning(f"[DAILY-WF] end_date clamp skipped: {_ce}")
+
         # Initialize so the except handler can safely reference it even if the
         # failure happens before a new job row is created.
         job_id = None
