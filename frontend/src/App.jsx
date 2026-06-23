@@ -2722,7 +2722,10 @@ function Dashboard() {
               </div>
             )}
             <div className="text-right text-sm hidden md:block">
-              <div className="text-xs text-ink-light">{dataStatus.loaded} symbols loaded</div>
+              {/* Was "{N} symbols loaded" — an internal cache count that read 603
+                  under the parquet scoped load and undercut the "4,000+ scanned"
+                  pitch. Replaced with the accurate coverage line. (Jun 23 2026) */}
+              <div className="text-xs text-ink-light">Scanning 4,000+ US stocks daily</div>
             </div>
             {user ? (
               <div className="relative">
