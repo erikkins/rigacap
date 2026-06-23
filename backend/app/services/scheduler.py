@@ -569,10 +569,12 @@ class SchedulerService:
             live_price,
         )
 
+        # "% away" = cushion before the stop, as a fraction of CURRENT price
+        # (was / trailing_stop_level → inflated + late alerts). (Jun 23 2026)
         trailing_stop_level = high_water_mark * (1 - trailing_stop_pct / 100)
         distance_to_stop_pct = (
-            (live_price - trailing_stop_level) / trailing_stop_level * 100
-            if trailing_stop_level > 0 else 100
+            (live_price - trailing_stop_level) / live_price * 100
+            if live_price > 0 else 100
         )
 
         action = None

@@ -2299,7 +2299,7 @@ function Dashboard() {
       // Recalculate trailing stop distance and action with live price
       const hwm = Math.max(p.high_water_mark || p.entry_price, livePrice);
       const stopPrice = hwm * (1 - EFFECTIVE_TRAIL_FRAC); // effective trail, always derived from live HWM
-      const distToStop = stopPrice > 0 ? ((livePrice - stopPrice) / stopPrice) * 100 : 100;
+      const distToStop = livePrice > 0 ? ((livePrice - stopPrice) / livePrice) * 100 : 100; // cushion as % of CURRENT price (not the stop)
       let action = p.action || 'hold';
       let actionReason = p.action_reason || '';
       if (livePrice <= stopPrice) {

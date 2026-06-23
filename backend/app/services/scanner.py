@@ -1071,11 +1071,14 @@ class ScannerService:
             # Calculate high water mark
             high_water_mark = max(entry_price, stored_highest or entry_price, current_price or entry_price)
 
-            # Calculate trailing stop
+            # Calculate trailing stop. "% away" = how far price can FALL before
+            # hitting the stop, as a fraction of the CURRENT price (the cushion).
+            # Was divided by trailing_stop_level → inflated (e.g. 41.9% vs the
+            # true 29.5%) AND made the <3%-of-stop alert fire late. (Jun 23 2026)
             trailing_stop_level = high_water_mark * (1 - trailing_stop_pct / 100)
             distance_to_stop_pct = (
-                (current_price - trailing_stop_level) / trailing_stop_level * 100
-                if trailing_stop_level > 0 else 100
+                (current_price - trailing_stop_level) / current_price * 100
+                if current_price > 0 else 100
             )
 
             # P&L from entry
