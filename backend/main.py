@@ -1876,14 +1876,23 @@ def handler(event, context):
             # Chain universe-history snapshot — captures today's full ranked
             # universe so future audits don't have to reconstruct it from the
             # pickle. Append-only, idempotent on re-invocation.
+            # PARQUET MODE (Jun 23 2026): SKIP — data_cache holds only the scoped
+            # ~603 symbols, so this would write a 603-symbol ranking that the
+            # scoped LOAD then reads back to pick the top-600, ossifying the
+            # universe (new liquid names never get discovered). The WEEKLY
+            # `universe_refresh` job ranks the FULL universe from the parquet
+            # instead. See project_oom_scan_zero_jun15 / parquet teething.
             try:
                 import boto3, json as _json
-                boto3.client('lambda', region_name='us-east-1').invoke(
-                    FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker'),
-                    InvocationType='Event',
-                    Payload=_json.dumps({"universe_snapshot": {"_": 1}})
-                )
-                print("📚 Chained universe-history snapshot")
+                if os.environ.get("PRICE_SOURCE", "pickle").lower() == "parquet":
+                    print("📚 Universe-history snapshot SKIPPED (parquet mode — weekly universe_refresh owns it)")
+                else:
+                    boto3.client('lambda', region_name='us-east-1').invoke(
+                        FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker'),
+                        InvocationType='Event',
+                        Payload=_json.dumps({"universe_snapshot": {"_": 1}})
+                    )
+                    print("📚 Chained universe-history snapshot")
             except Exception as ce:
                 print(f"⚠️ Failed to chain universe snapshot: {ce}")
             _log_step("Universe Snapshot Chain", "ok", "async fire-and-forget")
@@ -2956,6 +2965,74 @@ def handler(event, context):
     # universe to s3://.../signals/universe-history/{date}.json. Append-only:
     # idempotent on re-invocation (returns "exists" without overwriting).
     # {"universe_snapshot": {"date": "2026-05-17"}}  (date optional, defaults to today)
+    # WEEKLY universe refresh (Jun 23 2026) — re-rank the FULL ~5000-symbol
+    # universe WITHOUT OOM, so the scoped parquet load's top-600 stays fresh
+    # (the daily scan only sees 603 symbols and would ossify it). Memory-safe by
+    # construction: reads ONLY [symbol, date, close, volume] for the last ~120
+    # days from all_data.parquet (a thin slice — not the full OHLCV history that
+    # caused the OOM), computes last_close + 60d avg volume per symbol, ranks,
+    # and writes the authoritative universe-history snapshot the scoped load reads.
+    if event.get("universe_refresh"):
+        print("🌐 Universe refresh — full-universe ranking from a thin parquet slice")
+        def _universe_refresh():
+            import pandas as _pd, json as _json, boto3, tempfile, os as _os
+            from datetime import date as _date, datetime as _dt
+            from app.services.scanner import _EXCLUDED_SET
+            from app.services.data_export import S3_BUCKET
+            s3 = boto3.client('s3', region_name='us-east-1')
+            tmp = _os.path.join(tempfile.gettempdir(), 'universe_refresh.parquet')
+            with open(tmp, 'wb') as f:
+                obj = s3.get_object(Bucket=S3_BUCKET, Key='prices/all_data.parquet')
+                for chunk in obj['Body'].iter_chunks(chunk_size=8 * 1024 * 1024):
+                    f.write(chunk)
+            cutoff = (_pd.Timestamp.now().normalize() - _pd.Timedelta(days=120)).to_pydatetime()
+            # Column projection + date predicate pushdown => tiny memory footprint
+            df = _pd.read_parquet(tmp, columns=['symbol', 'date', 'close', 'volume'],
+                                  filters=[('date', '>=', cutoff)])
+            try:
+                _os.remove(tmp)
+            except Exception:
+                pass
+            df['date'] = _pd.to_datetime(df['date'])
+            rankings = []
+            for sym, g in df.groupby('symbol', sort=False):
+                if len(g) < 60:
+                    continue
+                g = g.sort_values('date')
+                rankings.append({
+                    'symbol': sym,
+                    'avg_volume_60d': float(g['volume'].tail(60).mean()),
+                    'last_close': float(g['close'].iloc[-1]),
+                    'last_date': g['date'].iloc[-1].strftime('%Y-%m-%d'),
+                    'is_excluded': (sym in _EXCLUDED_SET) or sym.startswith('^'),
+                })
+            rankings.sort(key=lambda r: r['avg_volume_60d'], reverse=True)
+            for i, r in enumerate(rankings, 1):
+                r['rank'] = i
+            snap_date = _date.today().isoformat()
+            snapshot = {
+                'snapshot_date': snap_date,
+                'snapshot_time_utc': _dt.utcnow().isoformat() + 'Z',
+                'total_eligible_symbols': len(rankings),
+                'excluded_count': sum(1 for r in rankings if r['is_excluded']),
+                'signal_universe_size_setting': int(_os.environ.get('SIGNAL_UNIVERSE_SIZE', '0')) or None,
+                'excluded_symbols_in_universe': sorted(r['symbol'] for r in rankings if r['is_excluded']),
+                'rankings': rankings,
+                'source': 'universe_refresh_full_parquet',
+            }
+            s3.put_object(Bucket=S3_BUCKET, Key=f'signals/universe-history/{snap_date}.json',
+                          Body=_json.dumps(snapshot).encode('utf-8'), ContentType='application/json')
+            return {'status': 'success', 'ranked': len(rankings), 'date': snap_date,
+                    'top8': [r['symbol'] for r in rankings[:8] if not r['is_excluded']][:8]}
+        try:
+            result = _universe_refresh()
+            print(f"🌐 Universe refresh result: {result}")
+            return result
+        except Exception as e:
+            import traceback
+            print(f"❌ universe_refresh failed: {e}\n{traceback.format_exc()}")
+            return {'error': str(e)}
+
     if event.get("universe_snapshot"):
         cfg = event["universe_snapshot"] or {}
         snap_date = cfg.get("date") if isinstance(cfg, dict) else None
