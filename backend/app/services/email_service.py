@@ -288,15 +288,10 @@ class EmailService:
         #   Approaching  = watchlist, within striking distance of trigger
         # The subject line in send_daily_summary derives its counts from the
         # same is_fresh split — keep these definitions in lockstep.
-        # Defensive: derive freshness from AGE, never trust a stored flag —
-        # DB rows persist is_fresh at write time and it never ages (Jun 12:
-        # 'NEW · 69D AGO'). Also dedupe by symbol (broken invalidation left
-        # duplicate active rows), keeping the highest-score instance.
-        def _effective_fresh(sig):
-            ages = [a for a in (sig.get('days_since_crossover'), sig.get('days_since_entry')) if a is not None]
-            if ages:
-                return min(ages) <= 5
-            return bool(sig.get('is_fresh'))
+        # Freshness is AGE-based (see _effective_fresh) — never the stored flag,
+        # which persists at write time and never ages. Also dedupe by symbol
+        # (broken invalidation left duplicate active rows), keep highest score.
+        _effective_fresh = self._effective_fresh
         _seen, _deduped = set(), []
         for s_ in sorted(signals, key=lambda x: -(x.get('ensemble_score') or 0)):
             if s_.get('symbol') in _seen:
@@ -457,6 +452,19 @@ class EmailService:
                 label = 'Weak'
         return score, label
 
+    @staticmethod
+    def _effective_fresh(sig: Dict) -> bool:
+        """Age-based freshness — the ONE definition used for section split, the
+        New/Open routing, the 'NEW' vs 'STILL QUALIFIES' label, AND the claret
+        'new pick' border. Never the stored is_fresh flag (it persists at write
+        time and never ages → stale 'NEW · 88D AGO' rows + a border that lit up
+        on old signals, which read as arbitrary). Fresh = crossed/entered within
+        5 days; falls back to the stored flag only when no age is present."""
+        ages = [a for a in (sig.get('days_since_crossover'), sig.get('days_since_entry')) if a is not None]
+        if ages:
+            return min(ages) <= 5
+        return bool(sig.get('is_fresh'))
+
     def _signal_row(self, signal: Dict) -> str:
         """Generate HTML for a single signal row — mirrors the dashboard card:
         symbol, price, ensemble score + strength label, and the trend distance
@@ -466,7 +474,11 @@ class EmailService:
         symbol = signal.get('symbol', 'N/A')
         price = signal.get('price', 0)
         pct_above = signal.get('pct_above_dwap') or 0
-        is_fresh = signal.get('is_fresh', False)
+        # AGE-based freshness — drives BOTH the age label and the claret border,
+        # so the border means "genuinely new pick" and is consistent with the
+        # section split (was the raw stored flag → border lit up on 88-day-old
+        # signals; Erik Jun 22: "isn't clear why it's there and others don't").
+        is_fresh = self._effective_fresh(signal)
         days_since = signal.get('days_since_crossover')
 
         score, label = self._signal_strength(signal)
@@ -700,15 +712,10 @@ class EmailService:
         date_str = date.strftime("%A, %B %d, %Y")
         # Same bucket taxonomy as the HTML builder + the dashboard:
         # New today (is_fresh) / Open (non-fresh, still in buy zone) / Approaching.
-        # Defensive: derive freshness from AGE, never trust a stored flag —
-        # DB rows persist is_fresh at write time and it never ages (Jun 12:
-        # 'NEW · 69D AGO'). Also dedupe by symbol (broken invalidation left
-        # duplicate active rows), keeping the highest-score instance.
-        def _effective_fresh(sig):
-            ages = [a for a in (sig.get('days_since_crossover'), sig.get('days_since_entry')) if a is not None]
-            if ages:
-                return min(ages) <= 5
-            return bool(sig.get('is_fresh'))
+        # Freshness is AGE-based (see _effective_fresh) — never the stored flag,
+        # which persists at write time and never ages. Also dedupe by symbol
+        # (broken invalidation left duplicate active rows), keep highest score.
+        _effective_fresh = self._effective_fresh
         _seen, _deduped = set(), []
         for s_ in sorted(signals, key=lambda x: -(x.get('ensemble_score') or 0)):
             if s_.get('symbol') in _seen:
