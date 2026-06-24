@@ -133,13 +133,18 @@ export default function PortfolioRace() {
 
   if (!C) return null;
 
-  const W = 920, H = 380, PAD_L = 12, PAD_R = 24, PAD_T = 18, PAD_B = 34;
+  const W = 920, PAD_L = 12, PAD_R = 24, PAD_B = 34;
   // viewBox-units-per-CSS-px → scale label fonts so they render at a fixed,
   // legible px size regardless of how far the SVG is scaled down. Capped so a
   // transient tiny measurement can't explode the text.
   const u = Math.min(2.8, Math.max(1, W / Math.max(rw, 1)));
   const fs = px => +(px * u).toFixed(1);                  // fixed-position labels (axis/value/era/sold)
   const fsc = px => +(px * Math.min(u, 1.7)).toFixed(1);  // collision-placed line labels (capped to protect spacing)
+  // The year label sits at PAD_T-4; when scaled up it clipped above the viewBox.
+  // Grow PAD_T with the font and add that headroom to total height so the plot
+  // area (H - PAD_T - PAD_B) stays the same instead of getting squished.
+  const PAD_T = Math.round(Math.max(18, 11 * u + 6));
+  const H = 380 + (PAD_T - 18);
   const { n, series, lMin, lMax, eras } = C;
   const ci = Math.min(Math.floor(cursor), n - 1);
   const x = i => PAD_L + (i / (n - 1)) * (W - PAD_L - PAD_R);
@@ -341,7 +346,7 @@ export default function PortfolioRace() {
           );
         })}
         <line x1={x(ci)} x2={x(ci)} y1={PAD_T} y2={H - PAD_B} stroke="#8A8578" strokeWidth="0.75" strokeDasharray="3 4" opacity="0.6" />
-        <text x={Math.min(x(ci), W - 36)} y={PAD_T - 4} textAnchor="middle" fontSize={fs(13)} fontWeight="600" fill="#141210" fontFamily="IBM Plex Mono, monospace">
+        <text x={Math.max(fs(22), Math.min(x(ci), W - fs(22)))} y={PAD_T - 4} textAnchor="middle" fontSize={fs(13)} fontWeight="600" fill="#141210" fontFamily="IBM Plex Mono, monospace">
           {data.dates[ci].slice(0, 4)}
         </text>
         {eras.filter(e => ci >= e.i0).map(e => (
