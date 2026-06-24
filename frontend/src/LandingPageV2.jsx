@@ -76,13 +76,13 @@ const HeroSection = ({ onGetStarted }) => (
       <div className="flex flex-wrap gap-4 items-center mb-12">
         <button
           onClick={() => onGetStarted('founding')}
-          className="inline-block px-7 py-4 bg-ink text-paper text-[0.95rem] font-medium rounded-[2px] no-underline hover:bg-claret transition-all"
+          className="inline-block px-7 py-4 bg-ink text-paper text-[1.05rem] font-medium rounded-[2px] no-underline hover:bg-claret transition-all"
         >
           Claim a Founding Seat &middot; $59/mo
         </button>
         <a
           href="/methodology"
-          className="inline-block px-7 py-4 border border-rule-dark text-ink text-[0.95rem] font-medium rounded-[2px] no-underline hover:border-ink transition-all"
+          className="inline-block px-7 py-4 border border-rule-dark text-ink text-[1.05rem] font-medium rounded-[2px] no-underline hover:border-ink transition-all"
         >
           See the methodology
         </a>
@@ -97,8 +97,8 @@ const HeroSection = ({ onGetStarted }) => (
           ['8.3%', 'Annualized across 21 years · 2008, COVID, 2022 included'],
           ['19%', 'Worst drawdown in 21 years · raw momentum: 57%'],
         ].map(([value, label]) => (
-          <div key={label} className="text-[0.88rem] text-ink-mute leading-snug">
-            <strong className="block font-display text-ink text-[1.05rem] font-medium mb-0.5" style={{ fontVariationSettings: '"opsz" 48' }}>
+          <div key={label} className="text-[0.98rem] text-ink-mute leading-snug">
+            <strong className="block font-display text-ink text-[1.3rem] font-medium mb-1" style={{ fontVariationSettings: '"opsz" 48' }}>
               {value}
             </strong>
             {label}
@@ -110,7 +110,7 @@ const HeroSection = ({ onGetStarted }) => (
       {/* $59 is the founding rate while seats remain — UPDATE TO $129 ONCE
           FOUNDING HITS 100 (or wire to /api/billing/founding-status). Moved BELOW
           the proof+CTA so credibility is there for scrollers without blocking action. */}
-      <p className="text-[0.95rem] text-ink-mute leading-relaxed max-w-[640px] mt-12">
+      <p className="text-[1.05rem] text-ink-mute leading-relaxed max-w-[640px] mt-12">
         A survivorship-free momentum strategy with a <strong className="text-ink font-medium">19% worst loss across 21 years</strong> &mdash; built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>. <strong className="text-ink font-medium">$59/month founding</strong>, not 1% a year.
       </p>
     </div>
@@ -179,7 +179,7 @@ const EdgeSection = () => (
           },
         ].map(({ num, title, text }) => (
           <div key={num}>
-            <span className="block font-mono text-[0.75rem] font-medium tracking-[0.1em] text-claret mb-2">{num}</span>
+            <span className="block font-mono text-[0.8rem] font-medium tracking-[0.1em] text-claret mb-2">{num}</span>
             <h3 className="font-display text-[1.5rem] font-medium text-ink mb-4 tracking-[-0.015em]" style={{ fontVariationSettings: '"opsz" 72' }}>
               {title}
             </h3>
@@ -219,18 +219,18 @@ const PerformanceSection = () => (
             className={`border border-rule rounded-[2px] p-4 ${r.hi ? 'bg-paper-card' : 'bg-paper'}`}
             style={r.hi ? { boxShadow: 'inset 3px 0 0 #7A2430' } : {}}
           >
-            <div className={`text-[0.95rem] mb-3 ${r.hi ? 'font-semibold text-ink' : 'text-ink-mute'}`}>{r.strat}</div>
+            <div className={`text-[1.05rem] mb-3 ${r.hi ? 'font-semibold text-ink' : 'text-ink-mute'}`}>{r.strat}</div>
             <div className="grid grid-cols-3 gap-2 text-center" style={{ fontFeatureSettings: '"tnum"' }}>
               <div>
-                <div className="font-body text-[0.6rem] tracking-[0.1em] uppercase text-ink-mute mb-1">Annual</div>
+                <div className="font-body text-[0.74rem] tracking-[0.1em] uppercase text-ink-mute mb-1">Annual</div>
                 <div className={`font-mono text-[1rem] ${r.hi ? 'font-medium text-ink' : 'text-ink-mute'}`}>{r.ann}</div>
               </div>
               <div>
-                <div className="font-body text-[0.6rem] tracking-[0.1em] uppercase text-ink-mute mb-1">Sharpe</div>
+                <div className="font-body text-[0.74rem] tracking-[0.1em] uppercase text-ink-mute mb-1">Sharpe</div>
                 <div className={`font-mono text-[1rem] ${r.hi ? 'font-medium text-ink' : 'text-ink-mute'}`}>{r.sharpe}</div>
               </div>
               <div>
-                <div className="font-body text-[0.6rem] tracking-[0.1em] uppercase text-ink-mute mb-1">Max DD</div>
+                <div className="font-body text-[0.74rem] tracking-[0.1em] uppercase text-ink-mute mb-1">Max DD</div>
                 <div className="font-mono text-[1rem] font-semibold" style={{ color: r.ddColor }}>{r.dd}</div>
               </div>
             </div>
@@ -243,7 +243,7 @@ const PerformanceSection = () => (
           <thead>
             <tr>
               {['Strategy', 'Annualized', 'Sharpe', 'Max Drawdown'].map((h, i) => (
-                <th key={h} className={`py-3 ${i === 0 ? 'text-left pl-5 pr-4' : 'text-right px-5'} font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark`}>
+                <th key={h} className={`py-3 ${i === 0 ? 'text-left pl-5 pr-4' : 'text-right px-5'} font-body font-medium text-[0.8rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark`}>
                   {h}
                 </th>
               ))}
@@ -251,29 +251,29 @@ const PerformanceSection = () => (
           </thead>
           <tbody>
             <tr className="border-b border-rule">
-              <td className="py-4 pl-5 pr-4 text-[0.95rem] text-ink-mute">Raw 12-month momentum, net of costs</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">13.2%</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">0.69</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium" style={{ color: '#8F2D3D' }}>57%</td>
+              <td className="py-4 pl-5 pr-4 text-[1.05rem] text-ink-mute">Raw 12-month momentum, net of costs</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] text-ink-mute">13.2%</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] text-ink-mute">0.69</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium" style={{ color: '#8F2D3D' }}>57%</td>
             </tr>
             <tr className="border-b border-rule">
-              <td className="py-4 pl-5 pr-4 text-[0.95rem] text-ink-mute">S&amp;P 500 (price)</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">9.8%</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute">&mdash;</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium" style={{ color: '#8F2D3D' }}>55%</td>
+              <td className="py-4 pl-5 pr-4 text-[1.05rem] text-ink-mute">S&amp;P 500 (price)</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] text-ink-mute">9.8%</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] text-ink-mute">&mdash;</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium" style={{ color: '#8F2D3D' }}>55%</td>
             </tr>
             <tr className="border-b border-rule bg-paper-card">
-              <td className="py-4 pl-5 pr-4 text-[0.95rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>RigaCap &mdash; risk-managed</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">8.3%</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink">0.73</td>
-              <td className="py-4 px-5 text-right font-mono text-[0.95rem] font-semibold" style={{ color: '#2D5F3F' }}>19%</td>
+              <td className="py-4 pl-5 pr-4 text-[1.05rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>RigaCap &mdash; risk-managed</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">8.3%</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">0.73</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-semibold" style={{ color: '#2D5F3F' }}>19%</td>
             </tr>
           </tbody>
         </table>
       </div>
       {/* SURFACE-MARKER:perf-comparison-table-END */}
 
-      <p className="text-[0.85rem] text-ink-mute leading-relaxed">
+      <p className="text-[0.93rem] text-ink-mute leading-relaxed">
         Same momentum factor, same universe. <strong className="text-ink font-medium">We cut the maximum drawdown by two-thirds</strong> through diversification, risk-based sizing, disciplined exits, and a market-regime filter that has now been tested through the 2008 financial crisis, the COVID crash, and the 2022 bear. Walk-forward backtest, 2007&ndash;2026; 2016+ data is survivorship-free and point-in-time, pre-2016 carries a survivorship caveat (disclosed in full); price returns, net of modeled costs where shown.<br />
         <strong className="text-ink font-medium">Live track record now accruing.</strong> See <a href="/methodology" className="text-claret underline underline-offset-2 decoration-1">methodology</a> for all assumptions.
       </p>
@@ -324,7 +324,7 @@ const FounderSection = () => (
               The Ensemble strategy is what I'd been running privately. RigaCap is the version I'm willing to put my name on.
             </p>
           </div>
-          <a href="/about" className="inline-block mt-8 px-7 py-4 border border-rule-dark text-ink text-[0.95rem] font-medium rounded-[2px] no-underline hover:border-ink transition-all">
+          <a href="/about" className="inline-block mt-8 px-7 py-4 border border-rule-dark text-ink text-[1.05rem] font-medium rounded-[2px] no-underline hover:border-ink transition-all">
             More about me →
           </a>
         </div>
@@ -349,13 +349,13 @@ const HowItWorksSection = () => (
           { title: 'Exit', text: 'Trailing stops manage risk automatically. Regime changes trigger systematic de-risking.' },
         ].map(({ title, text }, i) => (
           <div key={title} className="border-t border-rule-dark pt-8 relative" style={{ counterIncrement: 'step' }}>
-            <span className="block font-mono text-[0.75rem] font-medium tracking-[0.1em] text-claret mb-4">
+            <span className="block font-mono text-[0.8rem] font-medium tracking-[0.1em] text-claret mb-4">
               {String(i + 1).padStart(2, '0')}
             </span>
             <h3 className="font-display text-[1.4rem] font-medium text-ink mb-2" style={{ fontVariationSettings: '"opsz" 72' }}>
               {title}
             </h3>
-            <p className="text-ink-mute text-[0.95rem] leading-relaxed">{text}</p>
+            <p className="text-ink-mute text-[1.05rem] leading-relaxed">{text}</p>
           </div>
         ))}
       </div>
@@ -384,90 +384,90 @@ const PricingSection = ({ onGetStarted, founding }) => {
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-12 max-w-[1120px]">
         {/* Founding — Featured */}
         <div className="bg-paper-card border-2 border-claret p-10 flex flex-col relative">
-          <span className="absolute -top-3 left-8 bg-claret text-paper text-[0.7rem] font-medium tracking-[0.15em] uppercase px-3 py-1">
+          <span className="absolute -top-3 left-8 bg-claret text-paper text-[0.78rem] font-medium tracking-[0.15em] uppercase px-3 py-1">
             Founding &middot; First 100
           </span>
           <h3 className="font-display text-[1.3rem] font-medium text-ink mb-1" style={{ fontVariationSettings: '"opsz" 72' }}>Founding Member</h3>
-          <p className="font-display italic text-ink-mute text-[0.92rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>For those who sign up first.</p>
+          <p className="font-display italic text-ink-mute text-[1rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>For those who sign up first.</p>
           <div className="mb-1">
             <span className="font-display text-[3.5rem] font-normal text-ink leading-none tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>$59</span>
-            <span className="text-ink-mute text-[0.95rem] ml-1">/month</span>
+            <span className="text-ink-mute text-[1.05rem] ml-1">/month</span>
           </div>
-          <p className="text-ink-mute text-[0.9rem] leading-relaxed mt-3">
+          <p className="text-ink-mute text-[1rem] leading-relaxed mt-3">
             Locked at this rate for <strong className="text-claret font-medium">12 months.</strong> Transitions to $129/month afterward. Only <strong className="text-claret font-medium">100 founding seats</strong> &mdash; then it closes.
           </p>
           <ul className="list-none my-7 pt-6 border-t border-rule flex-1 space-y-1.5">
             {['Everything in the standard plan', 'Direct reply line to Erik', 'Grandfathered access to future features', 'Recognition as a founding subscriber', 'Your feedback shapes the product'].map(item => (
-              <li key={item} className="text-ink-mute text-[0.92rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
+              <li key={item} className="text-ink-mute text-[1rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
             ))}
           </ul>
           <button
             onClick={() => open && onGetStarted('founding')}
             disabled={!open}
-            className={`w-full py-4 text-[0.95rem] font-medium rounded-[2px] text-center transition-colors ${open ? 'bg-ink text-paper hover:bg-claret' : 'bg-rule text-ink-light cursor-not-allowed'}`}
+            className={`w-full py-4 text-[1.05rem] font-medium rounded-[2px] text-center transition-colors ${open ? 'bg-ink text-paper hover:bg-claret' : 'bg-rule text-ink-light cursor-not-allowed'}`}
           >
             {open ? 'Claim a Founding Seat' : 'Founding Seats Filled'}
           </button>
           {/* Gated counter: silent until scarce (no embarrassing "100 left"),
               real urgency once it's running low, "filled" when closed. */}
           {!open ? (
-            <p className="text-center font-mono text-[0.72rem] text-ink-light tracking-[0.1em] uppercase mt-3">All 100 founding seats claimed</p>
+            <p className="text-center font-mono text-[0.78rem] text-ink-light tracking-[0.1em] uppercase mt-3">All 100 founding seats claimed</p>
           ) : scarce ? (
-            <p className="text-center font-mono text-[0.72rem] text-claret tracking-[0.1em] uppercase mt-3">Only {founding.remaining} of 100 seats left</p>
+            <p className="text-center font-mono text-[0.78rem] text-claret tracking-[0.1em] uppercase mt-3">Only {founding.remaining} of 100 seats left</p>
           ) : (
-            <p className="text-center font-mono text-[0.72rem] text-claret tracking-[0.1em] uppercase mt-3">Limited to the first 100 subscribers</p>
+            <p className="text-center font-mono text-[0.78rem] text-claret tracking-[0.1em] uppercase mt-3">Limited to the first 100 subscribers</p>
           )}
         </div>
 
         {/* Standard */}
         <div className="bg-paper-card border border-rule p-10 flex flex-col">
           <h3 className="font-display text-[1.3rem] font-medium text-ink mb-1" style={{ fontVariationSettings: '"opsz" 72' }}>Standard</h3>
-          <p className="font-display italic text-ink-mute text-[0.92rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>Available once founding seats close.</p>
+          <p className="font-display italic text-ink-mute text-[1rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>Available once founding seats close.</p>
           <div className="mb-1">
             <span className="font-display text-[3.5rem] font-normal text-ink leading-none tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>$129</span>
-            <span className="text-ink-mute text-[0.95rem] ml-1">/month</span>
+            <span className="text-ink-mute text-[1.05rem] ml-1">/month</span>
           </div>
-          <p className="text-ink-mute text-[0.9rem] leading-relaxed mt-3">
+          <p className="text-ink-mute text-[1rem] leading-relaxed mt-3">
             Or <strong className="text-claret font-medium">$1,099/year</strong> billed annually &mdash; three months free.
           </p>
           <ul className="list-none my-7 pt-6 border-t border-rule flex-1 space-y-1.5">
             {['Unlimited real-time signals', 'Daily email digest', 'Entry, stop, and target levels', 'Market-regime risk filter', 'Portfolio tracking dashboard', '4,000+ stocks scanned daily', 'Full methodology access'].map(item => (
-              <li key={item} className="text-ink-mute text-[0.92rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
+              <li key={item} className="text-ink-mute text-[1rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
             ))}
           </ul>
           <button
             onClick={() => onGetStarted('monthly')}
-            className="w-full py-4 border border-ink text-ink text-[0.95rem] font-medium rounded-[2px] text-center hover:bg-ink hover:text-paper transition-colors"
+            className="w-full py-4 border border-ink text-ink text-[1.05rem] font-medium rounded-[2px] text-center hover:bg-ink hover:text-paper transition-colors"
           >
             Start 7-Day Free Trial
           </button>
-          <p className="text-center text-[0.8rem] text-ink-light mt-3">Credit card required &middot; Cancel anytime</p>
+          <p className="text-center text-[0.88rem] text-ink-light mt-3">Credit card required &middot; Cancel anytime</p>
         </div>
 
         {/* Advisory firms */}
         <div className="bg-paper-card border border-rule p-10 flex flex-col">
           <h3 className="font-display text-[1.3rem] font-medium text-ink mb-1" style={{ fontVariationSettings: '"opsz" 72' }}>Advisory Firms</h3>
-          <p className="font-display italic text-ink-mute text-[0.92rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>For RIAs &amp; registered advisers.</p>
+          <p className="font-display italic text-ink-mute text-[1rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>For RIAs &amp; registered advisers.</p>
           <div className="mb-1">
             <span className="font-display text-[3.5rem] font-normal text-ink leading-none tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>Firm</span>
-            <span className="text-ink-mute text-[0.95rem] ml-1">license</span>
+            <span className="text-ink-mute text-[1.05rem] ml-1">license</span>
           </div>
-          <p className="text-ink-mute text-[0.9rem] leading-relaxed mt-3">
+          <p className="text-ink-mute text-[1rem] leading-relaxed mt-3">
             Internal-use license for applying the strategy across client accounts.<br />
             <strong className="text-claret font-medium">You remain the fiduciary.</strong>
           </p>
           <ul className="list-none my-7 pt-6 border-t border-rule flex-1 space-y-1.5">
             {['Everything in Standard', 'Multiple adviser seats', 'Internal use across client books', 'Client-presentable methodology & track record', 'A 19% worst drawdown clients can sit through', 'Direct line to the founder'].map(item => (
-              <li key={item} className="text-ink-mute text-[0.92rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
+              <li key={item} className="text-ink-mute text-[1rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
             ))}
           </ul>
           <a
             href="/for-advisers"
-            className="w-full py-4 border border-ink text-ink text-[0.95rem] font-medium rounded-[2px] text-center hover:bg-ink hover:text-paper transition-colors no-underline"
+            className="w-full py-4 border border-ink text-ink text-[1.05rem] font-medium rounded-[2px] text-center hover:bg-ink hover:text-paper transition-colors no-underline"
           >
             See the adviser page
           </a>
-          <p className="text-center text-[0.8rem] text-ink-light mt-3">Signals only &middot; no custody, no discretion</p>
+          <p className="text-center text-[0.88rem] text-ink-light mt-3">Signals only &middot; no custody, no discretion</p>
         </div>
       </div>
     </div>
@@ -523,7 +523,7 @@ const CTASection = ({ onGetStarted }) => (
       </p>
       <button
         onClick={() => onGetStarted('founding')}
-        className="inline-block px-8 py-4 bg-paper text-ink text-[0.95rem] font-medium rounded-[2px] hover:bg-paper-deep transition-colors"
+        className="inline-block px-8 py-4 bg-paper text-ink text-[1.05rem] font-medium rounded-[2px] hover:bg-paper-deep transition-colors"
       >
         Claim a Founding Seat &middot; $59/mo
       </button>
@@ -539,31 +539,31 @@ const Footer = () => (
           <Link to="/" className="font-display text-[1.4rem] font-semibold text-ink no-underline" style={{ fontVariationSettings: '"opsz" 144' }}>
             RigaCap<span className="text-claret">.</span>
           </Link>
-          <p className="mt-4 text-[0.9rem] text-ink-mute leading-relaxed max-w-[32ch]">
+          <p className="mt-4 text-[1rem] text-ink-mute leading-relaxed max-w-[32ch]">
             Ensemble trading signals. The market, measured. Built by one quant researcher, shipping honestly.
           </p>
         </div>
         <div>
-          <h4 className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink mb-4">Product</h4>
+          <h4 className="font-body text-[0.8rem] font-medium tracking-[0.15em] uppercase text-ink mb-4">Product</h4>
           <ul className="space-y-2">
             {[['Methodology', '/methodology'], ['Track Record', '/track-record'], ['For Advisers', '/for-advisers'], ['Pricing', '#pricing']].map(([label, href]) => (
-              <li key={label}><a href={href} className="text-ink-mute text-[0.92rem] no-underline hover:text-ink transition-colors">{label}</a></li>
+              <li key={label}><a href={href} className="text-ink-mute text-[1rem] no-underline hover:text-ink transition-colors">{label}</a></li>
             ))}
           </ul>
         </div>
         <div>
-          <h4 className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink mb-4">Company</h4>
+          <h4 className="font-body text-[0.8rem] font-medium tracking-[0.15em] uppercase text-ink mb-4">Company</h4>
           <ul className="space-y-2">
             {[['About', '/about'], ['Newsletter', '/newsletter'], ['Blog', '/blog'], ['Contact', '/contact']].map(([label, href]) => (
-              <li key={label}><a href={href} className="text-ink-mute text-[0.92rem] no-underline hover:text-ink transition-colors">{label}</a></li>
+              <li key={label}><a href={href} className="text-ink-mute text-[1rem] no-underline hover:text-ink transition-colors">{label}</a></li>
             ))}
           </ul>
         </div>
         <div>
-          <h4 className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink mb-4">Legal</h4>
+          <h4 className="font-body text-[0.8rem] font-medium tracking-[0.15em] uppercase text-ink mb-4">Legal</h4>
           <ul className="space-y-2">
             {[['Terms', '/terms'], ['Privacy', '/privacy'], ['Disclaimer', '/disclaimer']].map(([label, href]) => (
-              <li key={label}><Link to={href} className="text-ink-mute text-[0.92rem] no-underline hover:text-ink transition-colors">{label}</Link></li>
+              <li key={label}><Link to={href} className="text-ink-mute text-[1rem] no-underline hover:text-ink transition-colors">{label}</Link></li>
             ))}
           </ul>
         </div>
@@ -644,7 +644,7 @@ export default function LandingPageV2() {
       <section id="newsletter" className="bg-paper-card py-16 border-t border-rule">
         <div className="max-w-3xl mx-auto px-4 sm:px-8">
           <MarketMeasuredSignup source="landing_v2" />
-          <Link to="/newsletter" className="inline-block mt-4 text-[0.85rem] text-ink-mute hover:text-claret no-underline transition-colors">
+          <Link to="/newsletter" className="inline-block mt-4 text-[0.93rem] text-ink-mute hover:text-claret no-underline transition-colors">
             Read past issues &rarr;
           </Link>
         </div>
