@@ -367,6 +367,95 @@ class AIContentService:
         "The biggest risk in a portfolio usually isn't in the portfolio — it's the person holding it. Most investors don't fail by picking the wrong thing; they fail by abandoning the right thing at the worst moment.",
     ]
 
+    # Durable backtest LESSONS (not full posts — the raw truths the dynamic
+    # generator pairs with a live market reading). NO coefficients/recipe.
+    CANON_LESSONS = [
+        "Across 21 backtested years the worst drawdown was about 19%; raw momentum's was 57%. Worst-case matters more than best-case — worst-case is when people actually sell.",
+        "In 2008 the index fell ~38%; a drawdown-controlled approach can finish a year like that roughly flat (backtested) — not by predicting the crash, but by stepping aside when the market turns hostile.",
+        "Over 21 backtested years the strategy's Sharpe was 0.73; the S&P scored 0.54 on the same window, and Buffett's lifetime figure — the best ever over 30+ years — is 0.79. Sharpes above 1 almost always come from short, flattering windows.",
+        "The system goes to cash when the market falls below its long-term trend. Quiet, boring weeks are a feature — much of the edge is in what it does NOT do.",
+        "The behavioral gap: across a full cycle the average investor earns less than the very funds they own — not from picking wrong, but from not sitting still through the dips.",
+        "An investor who panic-sells at a 25% drawdown and one who holds can end a long run with wildly different outcomes from the SAME strategy. The path you can stay on beats the path with the highest peak.",
+        "We rebuilt our research on cleaner, survivorship-free data, our own numbers came in worse, and we published the worse ones. A backtest you can defend beats a flattering one you can't.",
+        "Built to be boring: wide trailing stops, ~20 positions, sized by volatility. The goal isn't the highest return — it's a path a real human can actually hold through.",
+    ]
+
+    async def generate_dynamic_insight(
+        self, market_state: dict, platform: str = "twitter",
+        lesson: str = "", lean: str = "state",
+    ) -> Optional[SocialPost]:
+        """Generate ONE rando grounded in TODAY's real market reading, paired with a
+        durable backtest lesson — so it reads as 'here's what we're seeing this week,'
+        not a reworded landing-page line. Uses ONLY facts passed in market_state (no
+        fabrication); NEVER names a held/signaled ticker (those are subscriber-only)."""
+        if not self.enabled:
+            return None
+        import re as _re
+        ms = market_state or {}
+        char_limit = 270 if platform == "twitter" else 600
+
+        facts = []
+        if ms.get("regime"):
+            facts.append(f"Market regime today: {ms['regime']}" + (f" (outlook: {ms['outlook']})" if ms.get("outlook") else "") + ".")
+        if ms.get("spy_change_pct") is not None:
+            facts.append(f"S&P 500 today: {ms['spy_change_pct']:+.1f}%.")
+        if ms.get("vix") is not None:
+            facts.append(f"VIX sits at {ms['vix']:.1f}.")
+        if ms.get("cross_asset"):
+            facts.append("Cross-asset moves today: " + ", ".join(ms["cross_asset"]) + ".")
+        if ms.get("signal_count") is not None:
+            fresh = ms.get("fresh_count")
+            facts.append(f"Our system surfaced {ms['signal_count']} buy signals today" + (f" ({fresh} brand-new since yesterday)" if fresh is not None else "") + ".")
+        if ms.get("top_sectors"):
+            facts.append(f"Those signals cluster in: {', '.join(ms['top_sectors'])}.")
+        if ms.get("positions") is not None:
+            posture = f"The live model book holds {ms['positions']} positions"
+            if ms.get("cash_pct") is not None:
+                posture += f", about {ms['cash_pct']}% in cash"
+            facts.append(posture + ".")
+        facts_block = "\n".join(f"- {f}" for f in facts) if facts else "- (limited data today)"
+
+        lean_instr = (
+            "State ONLY what is literally true in the data above, then the lesson it evokes. Make NO prediction."
+            if lean != "soft_read" else
+            "Lead with what's literally true today, then you MAY add ONE hedged note about what readings like this have HISTORICALLY tended to precede — never a forecast, never a number you weren't given."
+        )
+
+        prompt = (
+            f"Write ONE {platform} post for Erik, founder of RigaCap. Connect something REAL "
+            f"happening in the market RIGHT NOW to a durable lesson from our 21-year backtest — so "
+            f"a smart stranger thinks 'huh, I hadn't considered that' and wants to know who wrote it.\n\n"
+            f"TODAY'S REAL DATA (use ONLY the numbers and themes that appear here — invent NOTHING):\n{facts_block}\n\n"
+            f"THE BACKTEST LESSON to pair it with (rephrase in Erik's voice, don't quote verbatim; "
+            f"keep the word 'backtest'/'backtested' near any backtested number):\n{lesson}\n\n"
+            f"HOW TO FRAME IT: {lean_instr}\n\n"
+            f"HARD RULES:\n"
+            f"- NEVER name a specific stock ticker or company — our signals are subscriber-only. "
+            f"Sectors and themes ONLY (e.g. 'financials', 'defensives').\n"
+            f"- Never reveal strategy parameters, weights, thresholds, or coefficients.\n"
+            f"- Standalone: interesting even with zero context. Lead with the concrete current "
+            f"observation, then the lesson. Calm, honest, first-person, a touch wry. No pitch, no "
+            f"advice, no hype, no emojis.\n"
+            f"- Hard max {char_limit - 30} characters. End with rigacap.com/track-record ONLY if it fits naturally."
+        )
+        try:
+            text = await self._call_claude(prompt)
+            if not text:
+                return None
+            text = self._strip_markdown(text)
+            text = _re.sub(r'^(Twitter|Instagram|Twitter/X|Threads|IG):\s*', '', text, flags=_re.IGNORECASE).strip()
+            hashtags = "#Investing #RiskManagement #MarketsToday #RigaCap"
+            eff_limit = max(120, char_limit - len(hashtags) - 2)
+            if len(text) > eff_limit:
+                text = text[:eff_limit - 1].rsplit(" ", 1)[0] + "…"
+            return SocialPost(
+                post_type="research_insight", platform=platform, status="draft",
+                text_content=text, hashtags=hashtags, ai_generated=True, ai_model=CLAUDE_MODEL,
+            )
+        except Exception as e:
+            logger.error(f"Dynamic insight generation failed: {e}")
+            return None
+
     async def generate_research_insight(self, platform: str = "twitter", seed_idx: Optional[int] = None) -> Optional[SocialPost]:
         """Generate ONE standalone research-insight post — a curiosity hook from
         the canon, not a trade result. Additive, never refuting: the reader should

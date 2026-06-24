@@ -8306,16 +8306,102 @@ RigaCap Admin · Biweekly TPE
                     from app.services.ai_content_service import ai_content_service
                     from app.services.post_scheduler_service import post_scheduler_service
                     from app.core.config import settings as _settings
+
+                    # Build TODAY's real, SANITIZED market state for grounded randos.
+                    # Aggregate/generic facts only — NEVER the specific buy-signal
+                    # tickers (those are the paywalled product). Best-effort; if it
+                    # fails we fall back to the static canon seeds.
+                    async def _build_rando_market_state():
+                        try:
+                            from app.services.data_export import data_export_service as _dx
+                            dash = _dx.read_dashboard_json() or {}
+                            ms = dash.get("market_stats", {}) or {}
+                            rf = dash.get("regime_forecast", {}) or {}
+                            bs = dash.get("buy_signals", []) or []
+                            sect = {}
+                            for s in bs:
+                                sc = s.get("sector")
+                                if sc:
+                                    sect[sc] = sect.get(sc, 0) + 1
+                            top_sectors = [k for k, _ in sorted(sect.items(), key=lambda x: -x[1])[:3]]
+                            # live book posture (count + cash %), best-effort
+                            positions = cash_pct = None
+                            try:
+                                from app.core.database import ModelPosition, ModelPortfolioState
+                                from sqlalchemy import select as _sel, func as _func
+                                async with _async_session() as _db2:
+                                    pc = await _db2.execute(
+                                        _sel(_func.count()).select_from(ModelPosition).where(
+                                            ModelPosition.status == "open",
+                                            ModelPosition.portfolio_type == "live"))
+                                    positions = pc.scalar()
+                                    st = await _db2.execute(_sel(ModelPortfolioState).where(
+                                        ModelPortfolioState.portfolio_type == "live"))
+                                    stobj = st.scalar_one_or_none()
+                                    if stobj and stobj.starting_capital:
+                                        cash_pct = round(stobj.current_cash / stobj.starting_capital * 100)
+                            except Exception:
+                                pass
+                            # cross-asset moves — generic public market data (no signal leak)
+                            cross = []
+                            try:
+                                import yfinance as _yf
+                                _ct = {'TLT': '20Y Treasuries', 'GLD': 'Gold', 'QQQ': 'Nasdaq-100',
+                                       'IWM': 'Small caps', 'XLE': 'Energy', 'XLK': 'Tech'}
+                                _cd = _yf.download(list(_ct.keys()), period='5d', progress=False)
+                                _cl = _cd['Close'] if _cd is not None and 'Close' in _cd.columns.get_level_values(0) else None
+                                if _cl is not None and len(_cl) >= 2:
+                                    _t, _p = _cl.iloc[-1], _cl.iloc[-2]
+                                    for tk, nm in _ct.items():
+                                        if tk in _t and tk in _p:
+                                            ch = (_t[tk] / _p[tk] - 1) * 100
+                                            if not (ch != ch):  # not NaN
+                                                cross.append(f"{nm} {'+' if ch >= 0 else ''}{ch:.1f}%")
+                            except Exception:
+                                pass
+                            return {
+                                "regime": rf.get("current_regime_name") or ms.get("regime_name"),
+                                "outlook": rf.get("outlook"),
+                                "spy_change_pct": ms.get("spy_change_pct"),
+                                "vix": ms.get("vix_level"),
+                                "signal_count": ms.get("signal_count"),
+                                "fresh_count": ms.get("fresh_count"),
+                                "top_sectors": top_sectors,
+                                "positions": positions,
+                                "cash_pct": cash_pct,
+                                "cross_asset": cross,
+                                "data_date": dash.get("data_date"),
+                            }
+                        except Exception as _e:
+                            print(f"⚠️ rando market_state build failed: {_e}")
+                            return None
+
                     try:
                         prob = float(_cfg.get("insight_prob", 0.4))
                         if _cfg.get("force_insight") or _rnd.random() <= prob:
-                            seed_idx = _rnd.randrange(len(ai_content_service.INSIGHT_SEEDS))
+                            mstate = await _build_rando_market_state()
+                            use_dynamic = bool(mstate and mstate.get("regime"))
                             async with _async_session() as _db:
-                                for platform in ("twitter", "threads"):
-                                    p = await ai_content_service.generate_research_insight(
-                                        platform=platform, seed_idx=seed_idx)
-                                    if p:
-                                        _db.add(p)
+                                if use_dynamic:
+                                    # mix per post: usually honest-state, sometimes a soft read
+                                    lesson = _rnd.choice(ai_content_service.CANON_LESSONS)
+                                    lean = "soft_read" if _rnd.random() < 0.25 else "state"
+                                    print(f"[RANDO] dynamic (lean={lean}, date={mstate.get('data_date')}, "
+                                          f"regime={mstate.get('regime')}, signals={mstate.get('signal_count')})")
+                                    for platform in ("twitter", "threads"):
+                                        p = await ai_content_service.generate_dynamic_insight(
+                                            mstate, platform=platform, lesson=lesson, lean=lean)
+                                        if p:
+                                            _db.add(p)
+                                else:
+                                    # fallback: static canon seed
+                                    seed_idx = _rnd.randrange(len(ai_content_service.INSIGHT_SEEDS))
+                                    print("[RANDO] static seed fallback (no market_state)")
+                                    for platform in ("twitter", "threads"):
+                                        p = await ai_content_service.generate_research_insight(
+                                            platform=platform, seed_idx=seed_idx)
+                                        if p:
+                                            _db.add(p)
                                 await _db.commit()
                         # Render today's research-insight drafts (whatever exists)
                         async with _async_session() as _db:
