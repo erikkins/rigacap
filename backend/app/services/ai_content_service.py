@@ -353,6 +353,65 @@ class AIContentService:
         text = re.sub(r'\n{3,}', '\n\n', text)
         return text.strip()
 
+    # Standalone "wow, I hadn't considered that" research nuggets — pure
+    # curiosity hooks from the canon, NOT trade results. These are the weekly
+    # original-content payload: an idea so interesting it stands on its own and
+    # makes a visiting stranger want to follow. (Jun 24 2026)
+    INSIGHT_SEEDS = [
+        "The behavioral gap: across a full cycle, the average fund investor earns meaningfully LESS than the funds they own — not from picking wrong, but from not sitting still through the dips. The leak is behavior, not selection.",
+        "An investor who panic-sells at a 25% drawdown and one who holds can end a long run with wildly different outcomes from the SAME strategy. The path you can actually stay on matters more than the path with the highest peak.",
+        "Long-horizon Sharpe ratios live in a different universe from the ones people quote. Over 21 backtested years our strategy scored 0.73; the S&P scored 0.54 on the same window; Buffett's lifetime figure — the best ever measured over 30+ years — is 0.79. Sharpes above 1 almost always come from short, flattering windows.",
+        "In 2008 the index fell about 38%. A strategy built around drawdown control can end a year like that roughly flat — not by predicting the crash, but by having a rule that steps aside when the market turns hostile. The discipline is the edge, not the forecast.",
+        "Worst-case matters more than best-case, because worst-case is when people sell. A 19% worst drawdown across two decades vs. raw momentum's 57% isn't a smaller number for its own sake — it's the difference between a path you hold and one you abandon at the bottom.",
+        "We rebuilt our research on cleaner, survivorship-free data and our own numbers came in WORSE than before — so we published the worse numbers. A backtest you can defend beats a flattering one you can't. Most services do the opposite.",
+        "The biggest risk in a portfolio usually isn't in the portfolio — it's the person holding it. Most investors don't fail by picking the wrong thing; they fail by abandoning the right thing at the worst moment.",
+    ]
+
+    async def generate_research_insight(self, platform: str = "twitter", seed_idx: Optional[int] = None) -> Optional[SocialPost]:
+        """Generate ONE standalone research-insight post — a curiosity hook from
+        the canon, not a trade result. Additive, never refuting: the reader should
+        think 'wow, I hadn't considered that,' then click through."""
+        if not self.enabled:
+            return None
+        import re as _re
+        seeds = self.INSIGHT_SEEDS
+        idx = (seed_idx if seed_idx is not None else 0) % len(seeds)
+        seed = seeds[idx]
+        char_limit = 270 if platform == "twitter" else 600
+        prompt = (
+            f"Write ONE {platform} post for Erik, founder of RigaCap. It must be a STANDALONE "
+            f"insight a smart stranger finds genuinely surprising — they should think 'huh, I "
+            f"hadn't considered that' and want to know who wrote it. NOT a pitch, NOT a trade "
+            f"result, NOT advice. Calm, honest, first-person, a little wry. Lead with the idea. "
+            f"No one is being corrected or refuted — there's no other person here.\n\n"
+            f"The insight to convey (rephrase in Erik's voice, don't quote it verbatim):\n{seed}\n\n"
+            f"Any number you use is BACKTESTED — say 'backtest'/'backtested' near it. Hard max "
+            f"{char_limit - 30} characters (room for a link). End with rigacap.com/track-record "
+            f"only if it fits naturally."
+        )
+        try:
+            text = await self._call_claude(prompt)
+            if not text:
+                return None
+            text = self._strip_markdown(text)
+            text = _re.sub(r'^(Twitter|Instagram|Twitter/X|Threads|IG):\s*', '', text, flags=_re.IGNORECASE).strip()
+            hashtags = "#Investing #RiskManagement #Behavioralfinance #RigaCap"
+            eff_limit = max(120, char_limit - len(hashtags) - 2)
+            if len(text) > eff_limit:
+                text = text[:eff_limit - 1].rsplit(" ", 1)[0] + "…"
+            return SocialPost(
+                post_type="research_insight",
+                platform=platform,
+                status="draft",
+                text_content=text,
+                hashtags=hashtags,
+                ai_generated=True,
+                ai_model=CLAUDE_MODEL,
+            )
+        except Exception as e:
+            logger.error(f"Research-insight generation failed: {e}")
+            return None
+
     async def _call_claude(self, user_prompt: str) -> Optional[str]:
         """Make a single Claude API call and return the text response."""
         headers = {

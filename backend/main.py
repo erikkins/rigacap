@@ -5319,6 +5319,40 @@ def handler(event, context):
             return {"status": "error", "error": str(e)}
 
     # Generate AI posts from real WF trades and save to DB (direct Lambda invocation)
+    # Weekly-ish original research-insight posts (Jun 24 2026). Fires DAILY but a
+    # random gate means some days produce a draft and some don't → naturally
+    # varying 1-4/week (never a fixed day). Each lands as a DRAFT in the Social
+    # tab for Erik to approve -> schedule or post-now. {"prob": 0.4} overrides
+    # the daily probability; {"force": true} always generates (for testing).
+    if event.get("generate_research_insight"):
+        _cfg = event.get("generate_research_insight") if isinstance(event.get("generate_research_insight"), dict) else {}
+        async def _gen_insight():
+            import random as _random
+            from app.core.database import async_session, SocialPost
+            from app.services.ai_content_service import ai_content_service
+            prob = float(_cfg.get("prob", 0.4))
+            if not _cfg.get("force") and _random.random() > prob:
+                return {"status": "skipped_today", "prob": prob}
+            seed_idx = _random.randrange(len(ai_content_service.INSIGHT_SEEDS))
+            made = []
+            async with async_session() as db:
+                for platform in ("twitter", "threads"):
+                    post = await ai_content_service.generate_research_insight(platform=platform, seed_idx=seed_idx)
+                    if post:
+                        db.add(post)
+                        made.append({"platform": platform, "text": (post.text_content or "")[:120]})
+                if made:
+                    await db.commit()
+            return {"status": "generated" if made else "no_post", "seed_idx": seed_idx, "drafts": made}
+        try:
+            result = _run_async(_gen_insight())
+            print(f"💡 Research insight: {result}")
+            return result
+        except Exception as e:
+            import traceback
+            print(f"❌ generate_research_insight failed: {e}\n{traceback.format_exc()}")
+            return {"status": "error", "error": str(e)}
+
     if event.get("generate_social_posts"):
         print("🤖 Generate social posts from signal track record trades")
         config = event["generate_social_posts"]
