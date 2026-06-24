@@ -26,3 +26,13 @@ metadata:
 **No Google Ads API wired** — data via screenshots. For recurring data without API setup (dev-token approval + OAuth): scheduled Ads email report (CSV), Looker Studio connector, or Ads Scripts. Wire the API only if the campaign scales past the test.
 
 **Net:** ads reach the right people at fine CPC; "0 conversions" = un-imported GA4 conversions (fix the link FIRST, before judging negatives — else you can't tell what helped). Related: [[project-pricing-founding-jun23]] (the pre-account land→signup leak).
+
+## ✅ RESOLUTION (Jun 24 evening) — fixes SHIPPED, root cause was BOTH measurement + a real bounce
+Walked the diagnosis with Erik via screenshots. What it actually was:
+- **GA4↔Ads WAS linked, Purchase + Begin checkout WERE imported** — so my "import is broken" guess was wrong. The MISSING piece was **`sign_up`** (fires in AuthContext.jsx but wasn't imported as an Ads conversion).
+- **GA4 Traffic-acquisition disambiguator (the key check):** Paid Search = **5 sessions, 0% engagement, 0 key events** vs 47 ad clicks. So NOT attribution — paid traffic genuinely bounces, AND ~90% of clicks weren't even measured (consent-gated gtag ate them). Two real problems: blind measurement + a 0%-engagement landing bounce.
+- **SHIPPED tonight:**
+  1. **Consent Mode v2** (commit on main) — `index.html` loads gtag on EVERY page with consent default-DENIED (cookieless/modeled + `url_passthrough` + `ads_data_redaction`); `CookieConsent.jsx` only flips the consent SIGNAL now, doesn't gate the load. Unblinds the ~90% of paid traffic. GDPR-compliant. **Forward-only — no backfill.**
+  2. **Imported `sign_up` as a conversion** (Google-tag/event-based; the `gtag('event','sign_up')` already fires + gtag is now global, so NO snippet/code needed — just clicked Finish). Set **sign_up=Primary, purchase=Primary, begin_checkout=Secondary** so Smart Bidding optimizes signups not CTA-clicks.
+  3. **Mobile landing fixes** (LandingPageV2.jsx) — proof-first hero (−38% vs −0.5% visual block, stats pulled above fold) + reflowed the perf table (Max Drawdown column was scrolling off-screen) — to attack the 0% engagement.
+- **STILL OPEN:** (a) full mobile-landing audit at 360-390px (hero+table were just the 2 Erik eyeballed; paid is ~77% mobile); (b) the 0%-engagement landing root cause — now MEASURABLE post-Consent-Mode, watch GA4 Paid Search sessions climb toward the click count + per-session funnel drop-off over a few days; (c) stale begin_checkout value $39/$349 in AuthContext.jsx:167 (cosmetic for counting, wrong for value bidding); (d) negatives added (phrase "volatile stocks"/"most volatile"/"day trading"/"penny stocks"/"stocks to buy"/etc + broad junk) — watch search-terms that "safe stocks…" preserver queries don't get over-blocked.
