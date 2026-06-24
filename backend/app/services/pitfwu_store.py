@@ -66,7 +66,11 @@ def fetch_raw_bars(symbols: List[str], start, end, client=None) -> Dict[str, pd.
     from alpaca.data.enums import Adjustment, DataFeed
     client = client or _alpaca_client()
     start_dt = pd.Timestamp(start).to_pydatetime()
-    end_dt = pd.Timestamp(end).to_pydatetime()
+    # Alpaca daily bars are timestamped later in the day (UTC), so an end of
+    # "YYYY-MM-DD" (== 00:00) EXCLUDES that day's bar — which silently kept PITFWU
+    # ~1 trading day behind (today's close never landed). Bump end to the next
+    # midnight so all bars THROUGH `end` (including today) are captured.
+    end_dt = (pd.Timestamp(end).normalize() + pd.Timedelta(days=1)).to_pydatetime()
     out, bad = {}, []
     BATCH = 100
     syms = list(symbols)

@@ -8245,7 +8245,7 @@ RigaCap Admin · Biweekly TPE
     # Twitter scan), so we can iterate on the reply voice instantly and repeatably.
     # {"test_engagement_reply": {}} uses the flagged-example set; pass {"tweets": [
     # {"author":"x","text":"...","topics":["fear"]}]} to test your own.
-    if event.get("test_engagement_reply"):
+    if "test_engagement_reply" in event:
         _cfg = event.get("test_engagement_reply")
         _cfg = _cfg if isinstance(_cfg, dict) else {}
         from app.services.engagement_service import engagement_service
