@@ -38,27 +38,27 @@ const FOUNDATION_ROWS = [
     { v: '9.8%', tone: 'mute' }, { v: '—', tone: 'mute' }, { v: '55%', tone: 'mute' }] },
 ];
 
-const cellCls = (c) => `font-mono text-[0.95rem] ${c.w || ''} ${c.hex ? '' : (c.tone === 'ink' ? 'text-ink' : 'text-ink-mute')}`;
+const cellCls = (c) => `font-mono text-[1.05rem] ${c.w || ''} ${c.hex ? '' : (c.tone === 'ink' ? 'text-ink' : 'text-ink-mute')}`;
 const cellStyle = (c) => (c.hex ? { color: c.hex } : undefined);
 
 const PerfTable = ({ label, columns, rows }) => (
   <>
-    <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-4">{label}</div>
+    <div className="font-body text-[0.8rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-4">{label}</div>
     {/* Desktop: table (unchanged look) */}
     <div className="hidden sm:block overflow-x-auto mb-4">
       <table className="w-full border-collapse" style={{ fontFeatureSettings: '"tnum"' }}>
         <thead>
           <tr>
-            <th className="py-3 text-left pl-5 pr-4 font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark">Strategy</th>
+            <th className="py-3 text-left pl-5 pr-4 font-body font-medium text-[0.8rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark">Strategy</th>
             {columns.map((h) => (
-              <th key={h} className="py-3 text-right px-5 font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark">{h}</th>
+              <th key={h} className="py-3 text-right px-5 font-body font-medium text-[0.8rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.name} className={`border-b border-rule ${r.hi ? 'bg-paper-card' : ''}`}>
-              <td className={`py-4 pl-5 pr-4 text-[0.95rem] ${r.hi ? 'font-semibold text-ink' : (r.italic ? 'italic text-ink-mute' : 'text-ink-mute')}`} style={r.hi ? { boxShadow: 'inset 3px 0 0 #7A2430' } : undefined}>{r.name}</td>
+              <td className={`py-4 pl-5 pr-4 text-[1.05rem] ${r.hi ? 'font-semibold text-ink' : (r.italic ? 'italic text-ink-mute' : 'text-ink-mute')}`} style={r.hi ? { boxShadow: 'inset 3px 0 0 #7A2430' } : undefined}>{r.name}</td>
               {r.cells.map((c, i) => (
                 <td key={i} className={`py-4 px-5 text-right ${cellCls(c)}`} style={cellStyle(c)}>{c.v}</td>
               ))}
@@ -71,11 +71,11 @@ const PerfTable = ({ label, columns, rows }) => (
     <div className="sm:hidden space-y-px bg-rule mb-4">
       {rows.map((r) => (
         <div key={r.name} className="bg-paper-card p-4" style={r.hi ? { boxShadow: 'inset 3px 0 0 #7A2430' } : undefined}>
-          <div className={`text-[0.95rem] mb-3 ${r.hi ? 'font-semibold text-ink' : (r.italic ? 'italic text-ink-mute' : 'text-ink')}`}>{r.name}</div>
+          <div className={`text-[1.05rem] mb-3 ${r.hi ? 'font-semibold text-ink' : (r.italic ? 'italic text-ink-mute' : 'text-ink')}`}>{r.name}</div>
           <div className="grid grid-cols-2 gap-x-5 gap-y-2.5">
             {columns.map((col, i) => (
               <div key={col} className="flex items-baseline justify-between border-b border-rule pb-1.5">
-                <span className="font-body text-[0.62rem] font-medium tracking-[0.1em] uppercase text-ink-mute">{col}</span>
+                <span className="font-body text-[0.74rem] font-medium tracking-[0.1em] uppercase text-ink-mute">{col}</span>
                 <span className={cellCls(r.cells[i])} style={cellStyle(r.cells[i])}>{r.cells[i].v}</span>
               </div>
             ))}
@@ -119,8 +119,8 @@ export default function TrackRecordPageV2() {
             ].map(([value, label, subtitle]) => (
               <div key={label} className="bg-paper-card p-6 sm:p-8 text-center">
                 <div className="font-display text-3xl sm:text-4xl font-normal text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>{value}</div>
-                <div className="font-body text-[0.75rem] font-medium tracking-[0.12em] uppercase text-ink-mute mt-2">{label}</div>
-                <div className="text-[0.8rem] text-ink-light mt-1">{subtitle}</div>
+                <div className="font-body text-[0.8rem] font-medium tracking-[0.12em] uppercase text-ink-mute mt-2">{label}</div>
+                <div className="text-[0.88rem] text-ink-light mt-1">{subtitle}</div>
               </div>
             ))}
           </div>
@@ -146,7 +146,7 @@ export default function TrackRecordPageV2() {
 
           {/* Recent 24 months — held-out walk-forward window (Jun 2024 – May 2026) */}
           <PerfTable label="The Last 24 Months" columns={['Annualized', 'Sharpe', 'Calmar', 'Max Drawdown']} rows={RECENT_ROWS} />
-          <p className="mb-12 text-[0.9rem] text-ink leading-[1.65]">
+          <p className="mb-12 text-[1rem] text-ink leading-[1.65]">
             June 2024 through May 2026, a held-out walk-forward window (backtested, not yet live money):
             <strong className="font-medium"> RigaCap beat the index by 12 points a year at well under half its drawdown</strong> &mdash;
             twice the S&amp;P's Sharpe, three-and-a-half times its Calmar. Raw momentum earned more, gross of costs &mdash;
@@ -157,13 +157,13 @@ export default function TrackRecordPageV2() {
           <PerfTable label="The Two-Decade Foundation · 2007–2026" columns={['Annualized', 'Sharpe', 'Max Drawdown']} rows={FOUNDATION_ROWS} />
           {/* SURFACE-MARKER:perf-comparison-table-END */}
 
-          <p className="mt-4 text-[0.85rem] text-ink-light leading-relaxed">
+          <p className="mt-4 text-[0.93rem] text-ink-light leading-relaxed">
             Continuous walk-forward simulation, 2007&ndash;2026 &mdash; through the 2008 financial crisis, the 2009 momentum crash, COVID, and the 2022 bear. Data from 2016 onward is survivorship-free and strictly point-in-time; pre-2016 history carries a survivorship caveat, disclosed in full in the methodology. Price returns; raw momentum shown net of modeled costs as the unmanaged factor benchmark.
             See <Link to="/methodology" className="text-claret underline underline-offset-2 decoration-1">full methodology</Link> for all assumptions.
           </p>
 
           <div className="mt-6 border-l-[3px] border-claret pl-5 py-1">
-            <p className="text-[0.95rem] text-ink leading-relaxed mb-0">
+            <p className="text-[1.05rem] text-ink leading-relaxed mb-0">
               <span className="font-medium">For context on that 0.73:</span> Sharpe ratios above 1 live in short windows and
               overfit backtests &mdash; over decades, the scale compresses. The S&amp;P 500 scored <span className="font-mono">0.54</span> across
               this same 21-year window. The highest lifetime figure ever measured for any stock or fund with 30+ years of
@@ -176,7 +176,7 @@ export default function TrackRecordPageV2() {
 
           {/* Per-regime resilience */}
           <div className="mt-12 bg-paper-card border-l-[3px] border-claret p-8">
-            <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-5">
+            <div className="font-body text-[0.8rem] font-medium tracking-[0.15em] uppercase text-ink-mute mb-5">
               Tested Through Every Downturn
             </div>
             <div>
@@ -186,13 +186,13 @@ export default function TrackRecordPageV2() {
                 ['2022 inflation bear', 'S&P −19.9%', '−7.5%', 'shallow & recoverable'],
                 ['2018 whipsaw (our worst)', 'S&P −7.0%', '−12.3%', 'the honest wart'],
               ].map(([regime, window, ret, dd]) => (
-                <div key={regime} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between py-3 border-b border-rule text-[0.95rem]">
-                  <div><span className="font-medium text-ink">{regime}</span> <span className="text-ink-light text-[0.8rem]">· {window}</span></div>
-                  <div className="flex items-baseline gap-3 font-mono text-[0.9rem]"><span className="w-16 sm:w-20 sm:text-right" style={{ color: ret.startsWith('−') || ret.startsWith('-') ? '#8F2D3D' : '#2D5F3F' }}>{ret}</span><span className="text-ink-mute italic font-body sm:w-48 sm:text-right">{dd}</span></div>
+                <div key={regime} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between py-3 border-b border-rule text-[1.05rem]">
+                  <div><span className="font-medium text-ink">{regime}</span> <span className="text-ink-light text-[0.88rem]">· {window}</span></div>
+                  <div className="flex items-baseline gap-3 font-mono text-[1rem]"><span className="w-16 sm:w-20 sm:text-right" style={{ color: ret.startsWith('−') || ret.startsWith('-') ? '#8F2D3D' : '#2D5F3F' }}>{ret}</span><span className="text-ink-mute italic font-body sm:w-48 sm:text-right">{dd}</span></div>
                 </div>
               ))}
             </div>
-            <p className="mt-6 text-[0.95rem] text-ink leading-[1.6]">
+            <p className="mt-6 text-[1.05rem] text-ink leading-[1.6]">
               Calendar years, continuous run &mdash; including our worst one, because you should see it. A liquidity collapse the strategy sat out almost entirely, a crash year it turned into its best, a bear it cut to a third of the index's loss &mdash; and a whipsaw year it lost more than the index. <strong className="font-medium">The drawdown stayed bounded through all of it.</strong> That resilience &mdash; not a headline return &mdash; is the point.
             </p>
           </div>
@@ -212,8 +212,8 @@ export default function TrackRecordPageV2() {
             ].map(([title, subtitle, desc]) => (
               <div key={title} className="bg-paper-card p-8">
                 <div className="font-display text-2xl text-ink mb-1" style={{ fontVariationSettings: '"opsz" 96' }}>{title}</div>
-                <div className="font-mono text-[0.75rem] text-claret tracking-[0.1em] uppercase mb-3">{subtitle}</div>
-                <p className="text-ink-mute text-[0.92rem] leading-relaxed">{desc}</p>
+                <div className="font-mono text-[0.8rem] text-claret tracking-[0.1em] uppercase mb-3">{subtitle}</div>
+                <p className="text-ink-mute text-[1rem] leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -252,7 +252,7 @@ export default function TrackRecordPageV2() {
           </p>
           <Link
             to="/"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-paper text-ink text-[0.95rem] font-medium rounded-[2px] no-underline hover:bg-paper-deep transition-colors"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-paper text-ink text-[1.05rem] font-medium rounded-[2px] no-underline hover:bg-paper-deep transition-colors"
           >
             Start Free Trial
             <ArrowRight className="w-4 h-4" />

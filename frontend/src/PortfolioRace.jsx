@@ -63,6 +63,11 @@ export default function PortfolioRace() {
   const boxRef = useRef();
   const svgRef = useRef();
   const startedRef = useRef(false);
+  // Rendered CSS width of the SVG. The viewBox is 920 units wide but scales to
+  // fit the container, so on a phone (~360px) every viewBox unit renders at
+  // ~0.39px — making fontSize="11" labels ~4px (illegible). We track the real
+  // width and scale label fonts so they render at a fixed, legible px size.
+  const [rw, setRw] = useState(920);
 
   useEffect(() => {
     fetch('/portfolio-race.json').then(r => r.json()).then(setData).catch(() => {});
@@ -102,6 +107,16 @@ export default function PortfolioRace() {
   }, [C]);
 
   useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const measure = () => setRw(el.clientWidth || el.getBoundingClientRect().width || 920);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [C]);
+
+  useEffect(() => {
     if (!C || act !== 'run') return;
     const step = C.n / (RACE_MS / 16.7);
     const tick = () => {
@@ -119,6 +134,12 @@ export default function PortfolioRace() {
   if (!C) return null;
 
   const W = 920, H = 380, PAD_L = 12, PAD_R = 24, PAD_T = 18, PAD_B = 34;
+  // viewBox-units-per-CSS-px → scale label fonts so they render at a fixed,
+  // legible px size regardless of how far the SVG is scaled down. Capped so a
+  // transient tiny measurement can't explode the text.
+  const u = Math.min(2.8, Math.max(1, W / Math.max(rw, 1)));
+  const fs = px => +(px * u).toFixed(1);                  // fixed-position labels (axis/value/era/sold)
+  const fsc = px => +(px * Math.min(u, 1.7)).toFixed(1);  // collision-placed line labels (capped to protect spacing)
   const { n, series, lMin, lMax, eras } = C;
   const ci = Math.min(Math.floor(cursor), n - 1);
   const x = i => PAD_L + (i / (n - 1)) * (W - PAD_L - PAD_R);
@@ -210,7 +231,7 @@ export default function PortfolioRace() {
     <div ref={boxRef} className="bg-paper-card border border-rule p-6 sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
-          <div className="font-body text-[0.75rem] font-medium tracking-[0.15em] uppercase text-ink-mute">
+          <div className="font-body text-[0.8rem] font-medium tracking-[0.15em] uppercase text-ink-mute">
             $100,000 · {data.span || '2007–2026'} · walk-forward backtest · panic-sell at −25% modeled
           </div>
           <div className="font-display text-[1.3rem] text-ink mt-0.5" style={{ fontVariationSettings: '"opsz" 96' }}>
@@ -219,12 +240,12 @@ export default function PortfolioRace() {
         </div>
         <div className="flex items-center gap-2">
           {act === 'scrub' && (
-            <button onClick={() => setAct('run')} className="text-[0.8rem] px-3 py-1.5 border border-rule-dark text-ink-mute hover:text-ink transition-colors">
+            <button onClick={() => setAct('run')} className="text-[0.88rem] px-3 py-1.5 border border-rule-dark text-ink-mute hover:text-ink transition-colors">
               ▶ Resume
             </button>
           )}
           {(act === 'done' || act === 'idle' || act === 'scrub') && (
-            <button onClick={restart} className="text-[0.8rem] px-3 py-1.5 border border-rule-dark text-ink-mute hover:text-ink transition-colors">
+            <button onClick={restart} className="text-[0.88rem] px-3 py-1.5 border border-rule-dark text-ink-mute hover:text-ink transition-colors">
               {act === 'idle' ? '▶ Play' : '↻ Replay'}
             </button>
           )}
@@ -240,14 +261,14 @@ export default function PortfolioRace() {
           const ddNow = s.dd[ci];
           return (
             <div key={s.key} className="bg-paper p-3 sm:p-4 text-center">
-              <div className="font-body text-[0.7rem] font-medium tracking-[0.12em] uppercase mb-1" style={{ color: s.color }}>
+              <div className="font-body text-[0.78rem] font-medium tracking-[0.12em] uppercase mb-1" style={{ color: s.color }}>
                 {s.label}
               </div>
               <div className="font-mono text-[1.15rem] sm:text-[1.45rem] font-semibold tabular-nums"
                 style={{ color: act === 'done' && !robot && s.key === 'rigacap' ? '#2D5F3F' : '#141210' }}>
                 {act === 'done' && !robot && s.sellsRange[1] > 0 ? `${fmtMoney(s.lo)}–${fmtMoney(s.hi)}` : fmtMoney(cur)}
               </div>
-              <div className="h-5 text-[0.72rem] font-mono mt-0.5">
+              <div className="h-5 text-[0.78rem] font-mono mt-0.5">
                 {act === 'done' && !robot ? (
                   s.sellsRange[1] > 0
                     ? <span className="text-ink-light">sold {s.sellsRange[0] === s.sellsRange[1] ? `${s.sellsRange[1]}×` : `${s.sellsRange[0]}–${s.sellsRange[1]}×`} · depends on your nerve</span>
@@ -275,7 +296,7 @@ export default function PortfolioRace() {
         {yearTicks.map(([idx, yr]) => (
           <g key={yr} opacity={idx <= ci ? 1 : 0.25}>
             <line x1={x(idx)} x2={x(idx)} y1={H - PAD_B} y2={H - PAD_B + 5} stroke="#8A8578" strokeWidth="1" />
-            <text x={x(idx)} y={H - 12} textAnchor="middle" fontSize="11" fill="#8A8578" fontFamily="IBM Plex Mono, monospace">{yr}</text>
+            <text x={x(idx)} y={H - 12} textAnchor="middle" fontSize={fs(11.5)} fill="#8A8578" fontFamily="IBM Plex Mono, monospace">{yr}</text>
           </g>
         ))}
         {/* paint order: spy, naive, then rigacap LAST so our line sits on top */}
@@ -296,7 +317,7 @@ export default function PortfolioRace() {
                       strokeDasharray="2 5" opacity="0.55" />
                     {wide && (
                       <text x={(x(a) + x(bEff)) / 2} y={clearY(Math.floor((a + bEff) / 2), yc, s.key !== 'spy', 80)}
-                        textAnchor="middle" fontSize="10.5"
+                        textAnchor="middle" fontSize={fsc(11)}
                         fontStyle="italic" fill={s.color} opacity="0.85" fontFamily="Fraunces, serif">
                         in cash, waiting to feel safe
                       </text>
@@ -312,7 +333,7 @@ export default function PortfolioRace() {
                     <circle cx={x(i)} cy={y(arr[i])} r="4" fill="none" stroke="#8F2D3D" strokeWidth="1.5" />
                     <line x1={x(i)} x2={x(i)} y1={y(arr[i]) + (ly > y(arr[i]) ? 5 : -5)} y2={ly + (ly > y(arr[i]) ? -9 : 3)}
                       stroke="#8F2D3D" strokeWidth="0.6" opacity="0.5" />
-                    <text x={x(i)} y={ly} textAnchor="middle" fontSize="9.5" fill="#8F2D3D" fontFamily="IBM Plex Mono, monospace">sold</text>
+                    <text x={x(i)} y={ly} textAnchor="middle" fontSize={fs(10)} fill="#8F2D3D" fontFamily="IBM Plex Mono, monospace">sold</text>
                   </g>
                 );
               })}
@@ -320,11 +341,11 @@ export default function PortfolioRace() {
           );
         })}
         <line x1={x(ci)} x2={x(ci)} y1={PAD_T} y2={H - PAD_B} stroke="#8A8578" strokeWidth="0.75" strokeDasharray="3 4" opacity="0.6" />
-        <text x={Math.min(x(ci), W - 36)} y={PAD_T - 4} textAnchor="middle" fontSize="13" fontWeight="600" fill="#141210" fontFamily="IBM Plex Mono, monospace">
+        <text x={Math.min(x(ci), W - 36)} y={PAD_T - 4} textAnchor="middle" fontSize={fs(13)} fontWeight="600" fill="#141210" fontFamily="IBM Plex Mono, monospace">
           {data.dates[ci].slice(0, 4)}
         </text>
         {eras.filter(e => ci >= e.i0).map(e => (
-          <text key={e.label} x={x(e.i0) + 4} y={PAD_T + 16} fontSize="11.5" fontStyle="italic"
+          <text key={e.label} x={x(e.i0) + 4} y={PAD_T + 16} fontSize={fs(12)} fontStyle="italic"
             fill="#8F2D3D" opacity={activeEra?.label === e.label ? 1 : 0.65} fontFamily="Fraunces, serif">
             {e.label}
           </text>
@@ -332,7 +353,7 @@ export default function PortfolioRace() {
       </svg>
 
       {act === 'done' && !robot && (
-        <p className="mt-4 text-[0.95rem] text-ink leading-[1.65]">
+        <p className="mt-4 text-[1.05rem] text-ink leading-[1.65]">
           The animated path sells at &minus;25% and re-enters at the old peak; the ranges above span three
           re-entry temperaments, from &ldquo;jumped back in quickly&rdquo; to &ldquo;sat out a year.&rdquo;
           <strong className="font-medium"> Raw momentum's outcome is a lottery on your own nerve &mdash; a spread of
@@ -344,7 +365,7 @@ export default function PortfolioRace() {
       )}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[0.8rem] text-ink-light leading-relaxed max-w-[62ch]">
+        <p className="text-[0.88rem] text-ink-light leading-relaxed max-w-[62ch]">
           Walk-forward backtest, price returns; raw momentum gross of costs. 2016+ data survivorship-free; pre-2016 carries
           a survivorship caveat (see <a href="/methodology" className="underline underline-offset-2">methodology</a>).
           Backtested; not a prediction.
