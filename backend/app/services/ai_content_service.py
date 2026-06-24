@@ -380,6 +380,20 @@ class AIContentService:
         "Built to be boring: wide trailing stops, ~20 positions, sized by volatility. The goal isn't the highest return — it's a path a real human can actually hold through.",
     ]
 
+    def _trim_to_sentence(self, text: str, limit: int) -> str:
+        """Keep text within `limit` chars, preferring to end on a COMPLETE sentence
+        rather than cutting mid-thought (the 'not by predicting the…' bug). Falls
+        back to a word boundary + ellipsis only if there's no decent sentence break."""
+        text = (text or "").strip()
+        if len(text) <= limit:
+            return text
+        window = text[:limit]
+        cut = max(window.rfind(". "), window.rfind("! "), window.rfind("? "),
+                  window.rfind("."), window.rfind("!"), window.rfind("?"))
+        if cut >= int(limit * 0.5):
+            return text[:cut + 1].strip()
+        return window.rsplit(" ", 1)[0].rstrip(",.;:— ") + "…"
+
     async def generate_dynamic_insight(
         self, market_state: dict, platform: str = "twitter",
         lesson: str = "", lean: str = "state",
@@ -392,7 +406,8 @@ class AIContentService:
             return None
         import re as _re
         ms = market_state or {}
-        char_limit = 270 if platform == "twitter" else 600
+        # Twitter/X ~280, Threads 500 (was wrongly 600 → posts got cut mid-sentence).
+        char_limit = 270 if platform == "twitter" else 500
 
         facts = []
         if ms.get("regime"):
@@ -436,7 +451,11 @@ class AIContentService:
             f"- Standalone: interesting even with zero context. Lead with the concrete current "
             f"observation, then the lesson. Calm, honest, first-person, a touch wry. No pitch, no "
             f"advice, no hype, no emojis.\n"
-            f"- Hard max {char_limit - 30} characters. End with rigacap.com/track-record ONLY if it fits naturally."
+            f"- CONCISION IS THE CRAFT: pick ONE, at most TWO of the data points above — do NOT "
+            f"list them all. Write a COMPLETE, finished thought that lands well UNDER "
+            f"{char_limit - 60} characters. A tight post that ends cleanly beats a longer one "
+            f"that gets cut off mid-sentence — never run to the limit and trail off.\n"
+            f"- End with rigacap.com/track-record ONLY if it fits naturally."
         )
         try:
             text = await self._call_claude(prompt)
@@ -446,8 +465,7 @@ class AIContentService:
             text = _re.sub(r'^(Twitter|Instagram|Twitter/X|Threads|IG):\s*', '', text, flags=_re.IGNORECASE).strip()
             hashtags = "#Investing #RiskManagement #MarketsToday #RigaCap"
             eff_limit = max(120, char_limit - len(hashtags) - 2)
-            if len(text) > eff_limit:
-                text = text[:eff_limit - 1].rsplit(" ", 1)[0] + "…"
+            text = self._trim_to_sentence(text, eff_limit)
             return SocialPost(
                 post_type="research_insight", platform=platform, status="draft",
                 text_content=text, hashtags=hashtags, ai_generated=True, ai_model=CLAUDE_MODEL,
@@ -466,7 +484,7 @@ class AIContentService:
         seeds = self.INSIGHT_SEEDS
         idx = (seed_idx if seed_idx is not None else 0) % len(seeds)
         seed = seeds[idx]
-        char_limit = 270 if platform == "twitter" else 600
+        char_limit = 270 if platform == "twitter" else 500  # Threads caps at 500
         prompt = (
             f"Write ONE {platform} post for Erik, founder of RigaCap. It must be a STANDALONE "
             f"insight a smart stranger finds genuinely surprising — they should think 'huh, I "
@@ -486,8 +504,7 @@ class AIContentService:
             text = _re.sub(r'^(Twitter|Instagram|Twitter/X|Threads|IG):\s*', '', text, flags=_re.IGNORECASE).strip()
             hashtags = "#Investing #RiskManagement #Behavioralfinance #RigaCap"
             eff_limit = max(120, char_limit - len(hashtags) - 2)
-            if len(text) > eff_limit:
-                text = text[:eff_limit - 1].rsplit(" ", 1)[0] + "…"
+            text = self._trim_to_sentence(text, eff_limit)
             return SocialPost(
                 post_type="research_insight",
                 platform=platform,
