@@ -8252,6 +8252,7 @@ RigaCap Admin · Biweekly TPE
                     from app.core.database import async_session as _async_session, SocialPost
                     from app.services.ai_content_service import ai_content_service
                     from app.services.post_scheduler_service import post_scheduler_service
+                    from app.core.config import settings as _settings
                     try:
                         prob = float(_cfg.get("insight_prob", 0.4))
                         if _cfg.get("force_insight") or _rnd.random() <= prob:
@@ -8280,7 +8281,7 @@ RigaCap Admin · Biweekly TPE
                         for d in drafts:
                             tok = post_scheduler_service.generate_approve_token(d.id)
                             post_now = f"https://api.rigacap.com/api/admin/social/posts/{d.id}/approve-email?token={tok}"
-                            review = f"{settings.FRONTEND_URL}/app"
+                            review = f"{_settings.FRONTEND_URL}/app"
                             txt = (d.text_content or "").replace("\n", "<br>")
                             tags = f"<span style='color:#9ca3af;'>{d.hashtags}</span>" if d.hashtags else ""
                             blocks.append(f"""
