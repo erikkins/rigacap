@@ -51,20 +51,27 @@ const HeroSection = ({ onGetStarted }) => (
         <em className="text-claret italic font-normal">Individual price.</em>
       </h1>
 
+      {/* The single strongest hook, shown as a visual contrast — not buried in
+          prose. First thing a (mostly-mobile) visitor sees after the headline. */}
+      <div className="grid grid-cols-2 max-w-[560px] mb-8 border border-rule-dark rounded-[2px] overflow-hidden">
+        <div className="bg-paper p-5 sm:p-6 border-r border-rule-dark">
+          <div className="font-body text-[0.66rem] tracking-[0.15em] uppercase text-ink-mute mb-2">2008 &middot; S&amp;P 500</div>
+          <div className="font-display font-normal text-ink leading-none" style={{ fontSize: 'clamp(2.4rem, 11vw, 3.25rem)', fontVariationSettings: '"opsz" 96' }}>&minus;38%</div>
+        </div>
+        <div className="bg-paper-card p-5 sm:p-6" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>
+          <div className="font-body text-[0.66rem] tracking-[0.15em] uppercase text-ink-mute mb-2">2008 &middot; RigaCap</div>
+          <div className="font-display font-medium text-claret leading-none" style={{ fontSize: 'clamp(2.4rem, 11vw, 3.25rem)', fontVariationSettings: '"opsz" 96' }}>&minus;0.5%</div>
+        </div>
+      </div>
+
       <p
-        className="font-display italic text-ink-mute text-xl sm:text-[1.2rem] leading-relaxed max-w-[640px] mb-3"
+        className="font-display italic text-ink-mute text-lg sm:text-xl leading-relaxed max-w-[560px] mb-8"
         style={{ fontVariationSettings: '"opsz" 24' }}
       >
-        The biggest threat to your returns isn't the next crash &mdash; it's selling into it. Built so you can hold through the storm instead of bailing at the bottom.
+        The biggest threat to your returns isn't the next crash &mdash; it's selling into it.
       </p>
 
-      {/* $59 is the founding rate while seats remain — UPDATE TO $129 ONCE
-          FOUNDING HITS 100 (or wire to /api/billing/founding-status). */}
-      <p className="text-[0.95rem] text-ink-mute leading-relaxed max-w-[640px] mb-10">
-        In 2008 the S&amp;P 500 fell 38%. <strong className="text-ink font-medium">RigaCap's strategy fell 0.5%.</strong> A survivorship-free momentum strategy with a <strong className="text-ink font-medium">19% worst loss across 21 years</strong> &mdash; built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>. <strong className="text-ink font-medium">$59/month founding</strong>, not 1% a year.
-      </p>
-
-      <div className="flex flex-wrap gap-4 items-center mb-0">
+      <div className="flex flex-wrap gap-4 items-center mb-12">
         <button
           onClick={() => onGetStarted('founding')}
           className="inline-block px-7 py-4 bg-ink text-paper text-[0.95rem] font-medium rounded-[2px] no-underline hover:bg-claret transition-all"
@@ -80,7 +87,8 @@ const HeroSection = ({ onGetStarted }) => (
       </div>
 
       {/* SURFACE-MARKER:landing-hero-stats-START */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-7 mt-20 pt-8 border-t border-rule">
+      {/* Stats pulled up directly under the CTA (was mt-20 → off-screen on mobile). */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-7 pt-8 border-t border-rule">
         {[
           ['+32%', 'Last 24 months, annualized · vs S&P +20% · backtest*'],
           ['2.20', 'Sharpe, last 24 months · vs S&P 1.18'],
@@ -96,6 +104,13 @@ const HeroSection = ({ onGetStarted }) => (
         ))}
       </div>
       {/* SURFACE-MARKER:landing-hero-stats-END */}
+
+      {/* $59 is the founding rate while seats remain — UPDATE TO $129 ONCE
+          FOUNDING HITS 100 (or wire to /api/billing/founding-status). Moved BELOW
+          the proof+CTA so credibility is there for scrollers without blocking action. */}
+      <p className="text-[0.95rem] text-ink-mute leading-relaxed max-w-[640px] mt-12">
+        A survivorship-free momentum strategy with a <strong className="text-ink font-medium">19% worst loss across 21 years</strong> &mdash; built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>. <strong className="text-ink font-medium">$59/month founding</strong>, not 1% a year.
+      </p>
     </div>
   </section>
 );
@@ -189,7 +204,39 @@ const PerformanceSection = () => (
       </div>
 
       {/* SURFACE-MARKER:perf-comparison-table-START */}
-      <div className="overflow-x-auto my-10">
+      {/* Mobile: stacked cards so the Max Drawdown column (the whole point) isn't
+          scrolled off-screen. Desktop: the table. */}
+      <div className="sm:hidden space-y-4 my-8">
+        {[
+          { strat: 'Raw 12-month momentum, net of costs', ann: '13.2%', sharpe: '0.69', dd: '57%', ddColor: '#8F2D3D', hi: false },
+          { strat: 'S&P 500 (price)', ann: '9.8%', sharpe: '—', dd: '55%', ddColor: '#8F2D3D', hi: false },
+          { strat: 'RigaCap — risk-managed', ann: '8.3%', sharpe: '0.73', dd: '19%', ddColor: '#2D5F3F', hi: true },
+        ].map((r) => (
+          <div
+            key={r.strat}
+            className={`border border-rule rounded-[2px] p-4 ${r.hi ? 'bg-paper-card' : 'bg-paper'}`}
+            style={r.hi ? { boxShadow: 'inset 3px 0 0 #7A2430' } : {}}
+          >
+            <div className={`text-[0.95rem] mb-3 ${r.hi ? 'font-semibold text-ink' : 'text-ink-mute'}`}>{r.strat}</div>
+            <div className="grid grid-cols-3 gap-2 text-center" style={{ fontFeatureSettings: '"tnum"' }}>
+              <div>
+                <div className="font-body text-[0.6rem] tracking-[0.1em] uppercase text-ink-mute mb-1">Annual</div>
+                <div className={`font-mono text-[1rem] ${r.hi ? 'font-medium text-ink' : 'text-ink-mute'}`}>{r.ann}</div>
+              </div>
+              <div>
+                <div className="font-body text-[0.6rem] tracking-[0.1em] uppercase text-ink-mute mb-1">Sharpe</div>
+                <div className={`font-mono text-[1rem] ${r.hi ? 'font-medium text-ink' : 'text-ink-mute'}`}>{r.sharpe}</div>
+              </div>
+              <div>
+                <div className="font-body text-[0.6rem] tracking-[0.1em] uppercase text-ink-mute mb-1">Max DD</div>
+                <div className="font-mono text-[1rem] font-semibold" style={{ color: r.ddColor }}>{r.dd}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden sm:block my-10">
         <table className="w-full border-collapse" style={{ fontFeatureSettings: '"tnum"' }}>
           <thead>
             <tr>
