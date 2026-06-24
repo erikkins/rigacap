@@ -8,6 +8,7 @@ comment suggestions for the founder to post manually.
 Daily 9 AM ET delivery via admin email.
 """
 import logging
+import re
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional
 
@@ -267,11 +268,15 @@ class EngagementService:
             "'sounds reassuring until…', 'until the real damage…', 'the hardest part isn't X — "
             "it's Y', 'the real X isn't Y, it's Z'. ANY reply that finds the catch, "
             "caveat, or risk hiding in the author's point is a refutation. Do not write it.\n"
-            "- FINAL CHECK before you output: read your own first 8 words. If they reference, "
-            "restate, or negate the author's framing ('The hardest part of…', 'The thing about "
-            "X isn't…', 'Most people think…'), DELETE the reply and either open directly with "
-            "the standalone observation or output SKIP. The opening must be the idea, not a "
-            "set-up against their idea.\n"
+            "- OUTPUT CONTRACT (absolute): your entire output is EITHER the finished reply, "
+            "OR the single word SKIP — nothing else. NEVER show drafts, reasoning, "
+            "self-corrections, or notes. Do not write 'let me try again', 'that's a yes-but', "
+            "'Wait', 'on second thought', or anything about your own process. Run every check "
+            "SILENTLY in your head. If a candidate reply opens by referencing or negating the "
+            "author's framing ('The hardest part of…', 'The thing about X isn't…', 'Most people "
+            "think…'), silently discard it and output either a clean reply that opens with the "
+            "observation itself, or SKIP. The reader must never see anything but a polished "
+            "reply or the bare word SKIP.\n"
             "- 1-2 sentences max. No hashtags. No emojis. "
             "- Em-dashes are welcome — they're editorial. "
             "- SOUND HUMAN: never start with 'Interesting' or 'Great point' or 'Just'. "
@@ -332,9 +337,25 @@ class EngagementService:
         if clean:
             # SKIP guard: the model declines dunk-bait (brags/victory laps where any
             # honest reply reads as a put-down). Callers treat "" as no-opportunity.
-            if clean.strip().upper().rstrip('.') == "SKIP":
-                logger.info(f"[ENGAGEMENT] SKIP — @{author} tweet is dunk-bait, no honest non-putdown reply")
+            stripped = clean.strip()
+            _low = stripped.lower()
+            # Leaked chain-of-thought: the self-check sometimes narrates ("that's a
+            # yes-but, let me try again — SKIP"). Treat any such leakage, or output
+            # that resolves to SKIP, as a skip — never ship the monologue as a reply.
+            _meta = (
+                "let me try again", "let me rewrite", "that's a yes-but", "yes-but shape",
+                "on second thought", "i'll try again", "let me reconsider", "scratch that",
+                "actually, skip", "this is a refutation", "this reads as",
+            )
+            _resolves_skip = (
+                stripped.upper().rstrip('.') == "SKIP"
+                or bool(re.search(r"(^|[\s\-—.])SKIP\.?\s*$", stripped, re.IGNORECASE))
+            )
+            if _resolves_skip or any(m in _low for m in _meta):
+                logger.info(f"[ENGAGEMENT] SKIP — @{author}: resolved to skip "
+                            f"(leaked={any(m in _low for m in _meta)})")
                 return ""
+            logger.info(f"[ENG-REPLY] @{author}: {clean}")
             return clean
         return "(Voice filter failed — manual draft needed; banned terms detected in all attempts)"
 
