@@ -123,6 +123,79 @@ def pitfwu_last_date(ref: str = "AAPL"):
     return df.index.max() if df is not None else None
 
 
+# ----------------------------------------------------------------- READ veneer
+# Split-adjust the RAW bars at read time (Option A). Ported from
+# scripts/pitfwu_veneer.py (non-EXT path — live needs current data, not the
+# survivorship-caveated pre-2016 extension). Validated 100% vs the pickle.
+_CA = None
+CORP_ACTIONS_KEY = "pitfwu/corp_actions/calendar.parquet"
+
+
+def load_corp_actions():
+    global _CA
+    if _CA is None:
+        try:
+            raw = _s3().get_object(Bucket=BUCKET, Key=CORP_ACTIONS_KEY)["Body"].read()
+            _CA = pd.read_parquet(io.BytesIO(raw))
+        except Exception as e:
+            logger.warning(f"[PITFWU] corp-actions load failed ({e}); split-adjust = no-op")
+            _CA = pd.DataFrame(columns=["symbol", "type", "old_rate", "new_rate", "date"])
+    return _CA
+
+
+def split_factors(symbol: str, ca=None):
+    """Sorted [(ex_date, factor)] — forward (factor>1) and reverse (factor<1) splits."""
+    ca = ca if ca is not None else load_corp_actions()
+    out = []
+    if ca is None or ca.empty:
+        return out
+    sub = ca[(ca["symbol"] == symbol) & (ca["type"].isin(["forward_splits", "reverse_splits"]))]
+    for _, e in sub.iterrows():
+        try:
+            old, new = float(e["old_rate"]), float(e["new_rate"])
+            if old > 0 and new > 0 and e.get("date"):
+                out.append((pd.Timestamp(e["date"]), new / old))
+        except (TypeError, ValueError):
+            continue
+    return sorted(out)
+
+
+def split_adjusted(symbol: str, asof=None, ca=None) -> Optional[pd.DataFrame]:
+    """RAW bars with splits (ex-date <= asof) applied. None asof = all known
+    splits (fully adjusted to today, matching the pickle/all_data.parquet)."""
+    df = _read_pitfwu_bars(symbol)
+    if df is None or df.empty:
+        return None
+    df = df.copy()
+    asof = pd.Timestamp(asof) if asof is not None else df.index.max()
+    for ex, factor in split_factors(symbol, ca):
+        if ex <= asof:
+            mask = df.index < ex
+            for col in ("open", "high", "low", "close"):
+                if col in df:
+                    df.loc[mask, col] = df.loc[mask, col] / factor
+            if "volume" in df:
+                df["volume"] = df["volume"].astype(float)
+                df.loc[mask, "volume"] = df.loc[mask, "volume"] * factor
+    return df
+
+
+def load_scoped(symbols: List[str]) -> tuple:
+    """Read split-adjusted bars for `symbols` from PITFWU. Returns
+    ({sym: df}, missing[]) — `missing` = symbols with no PITFWU file (caller
+    falls back to all_data.parquet for those so a gap never drops a name)."""
+    ca = load_corp_actions()
+    out, missing = {}, []
+    for s in symbols:
+        df = split_adjusted(s, ca=ca)
+        if df is None or df.empty:
+            missing.append(s)
+        else:
+            df.index.name = "date"
+            out[s] = df
+    return out, missing
+
+
 def append_pitfwu_bars(symbols: List[str], start, end, execute: bool = False, client=None) -> dict:
     """Fetch RAW bars [start,end] and append to each symbol's pitfwu/bars file.
     Only dates AFTER the symbol's current last bar are added (new fetch wins on

@@ -3022,6 +3022,67 @@ def handler(event, context):
             print(f"❌ pitfwu_append failed: {e}\n{traceback.format_exc()}")
             return {"status": "error", "error": str(e)}
 
+    # PITFWU shadow-diff (close-the-loop step 2) — validate the PITFWU read path
+    # against the live all_data.parquet read for the scoped universe BEFORE any
+    # cutover. Read-only. Compares latest-common-date close + volume per symbol;
+    # if those match, every downstream indicator/signal (deterministic from the
+    # bars) matches too. Reports coverage gaps (symbols missing from PITFWU).
+    if event.get("pitfwu_shadow_diff"):
+        print("🔬 PITFWU shadow-diff vs all_data.parquet")
+        def _shadow():
+            import json as _json, boto3
+            from app.services.data_export import data_export_service, S3_BUCKET
+            from app.services import pitfwu_store as ps
+            # scoped universe = same selection as _scoped_parquet_load
+            s3 = boto3.client("s3", region_name="us-east-1")
+            objs = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix="signals/universe-history/")
+            keys = sorted(o["Key"] for o in objs.get("Contents", []) if o["Key"].endswith(".json"))
+            scoped = []
+            if keys:
+                uni = _json.loads(s3.get_object(Bucket=S3_BUCKET, Key=keys[-1])["Body"].read())
+                for r in uni.get("rankings", []):
+                    if len(scoped) >= 600:
+                        break
+                    if not r.get("is_excluded") and r.get("symbol") and not r["symbol"].startswith("^"):
+                        scoped.append(r["symbol"])
+            cache_a = data_export_service.import_parquet(symbols=scoped)  # all_data.parquet
+            ca = ps.load_corp_actions()
+            checked = matched = 0
+            missing, mism = [], []
+            for s in scoped:
+                a = cache_a.get(s)
+                if a is None or len(a) == 0:
+                    continue
+                b = ps.split_adjusted(s, ca=ca)
+                if b is None or len(b) == 0:
+                    missing.append(s); continue
+                common = a.index.intersection(b.index)
+                if len(common) == 0:
+                    missing.append(s); continue
+                d = common.max()
+                ac, bc = float(a.loc[d, "close"]), float(b.loc[d, "close"])
+                av, bv = float(a.loc[d, "volume"]), float(b.loc[d, "volume"])
+                checked += 1
+                cl_ok = abs(ac - bc) < 0.01 or abs(ac - bc) / max(ac, 1e-9) < 0.001
+                vol_ok = av == 0 or abs(av - bv) / max(av, 1e-9) < 0.02
+                if cl_ok and vol_ok:
+                    matched += 1
+                elif len(mism) < 15:
+                    mism.append({"sym": s, "date": str(d.date()), "close_a": round(ac, 2),
+                                 "close_b": round(bc, 2), "vol_a": av, "vol_b": bv})
+            return {"status": "success", "scoped": len(scoped), "checked": checked,
+                    "matched": matched, "match_pct": round(100 * matched / checked, 2) if checked else None,
+                    "missing_from_pitfwu": len(missing), "missing_sample": missing[:15],
+                    "mismatches": mism}
+        try:
+            result = _shadow()
+            print(f"🔬 PITFWU shadow-diff: {result}")
+            return result
+        except Exception as e:
+            import traceback
+            print(f"❌ pitfwu_shadow_diff failed: {e}\n{traceback.format_exc()}")
+            return {"status": "error", "error": str(e)}
+
     if event.get("universe_refresh"):
         print("🌐 Universe refresh — full-universe ranking from a thin parquet slice")
         def _universe_refresh():

@@ -195,8 +195,31 @@ class DataExportService:
         # Indices for the regime filter (Alpaca doesn't serve them, but they ARE
         # in all_data.parquet via the pickle's yfinance path) + SPY.
         syms.update(["SPY", "^VIX", "^GSPC"])
-        print(f"📦 Scoped parquet load: {len(syms)} symbols (top-{topn} liquid universe + indices)")
-        return self.import_parquet(symbols=sorted(syms))
+        sym_list = sorted(syms)
+
+        # PITFWU READ (close-the-loop step 2, flag-gated DORMANT). When
+        # PITFWU_READ=true, read the FRESH per-symbol PITFWU store (split-adjust
+        # at read) instead of the frozen all_data.parquet, falling back to
+        # all_data.parquet for any symbol PITFWU lacks (gaps like BRK-B) + the
+        # indices (Alpaca doesn't serve them). Off by default = unchanged.
+        if os.environ.get("PITFWU_READ", "").lower() in ("1", "true", "yes"):
+            try:
+                from app.services import pitfwu_store as _ps
+                from app.services.scanner import scanner_service as _ss
+                got, missing = _ps.load_scoped([s for s in sym_list if not s.startswith("^")])
+                # compute the indicators the scan expects (PITFWU stores raw OHLCV)
+                for _s, _df in list(got.items()):
+                    got[_s] = _ss._ensure_indicators(_df)
+                fallback_syms = sorted(set(missing) | {s for s in sym_list if s.startswith("^")})
+                if fallback_syms:
+                    got.update(self.import_parquet(symbols=fallback_syms))
+                print(f"📦 PITFWU scoped read: {len(got)} symbols ({len(missing)} fell back to all_data + {len([s for s in sym_list if s.startswith('^')])} indices)")
+                return got
+            except Exception as e:
+                print(f"⚠️ PITFWU read failed ({e}) — falling back to all_data.parquet scoped read")
+
+        print(f"📦 Scoped parquet load: {len(sym_list)} symbols (top-{topn} liquid universe + indices)")
+        return self.import_parquet(symbols=sym_list)
 
     def import_symbols(self, symbols: List[str]) -> Dict[str, pd.DataFrame]:
         """
