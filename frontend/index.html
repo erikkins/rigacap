@@ -6,6 +6,41 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Google Consent Mode v2 + GA4. gtag loads on EVERY page load with consent
+         default-DENIED, so events fire in cookieless/modeled mode immediately —
+         we no longer go blind on visitors who bounce before the cookie banner
+         (this was hiding ~90% of paid-search traffic). The banner GRANTS consent;
+         it no longer gates whether tracking loads at all. -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      // Deny by default until the user accepts. wait_for_update gives the banner
+      // a moment to grant before the first hits fire (avoids losing/dbl-counting).
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: 'denied',
+        wait_for_update: 500
+      });
+      // Improve cookieless modeling/attribution while denied.
+      gtag('set', 'url_passthrough', true);
+      gtag('set', 'ads_data_redaction', true);
+      // If the user already accepted on a prior visit, grant before first hit.
+      try {
+        if (localStorage.getItem('rigacap_cookie_consent') === 'accepted') {
+          gtag('consent', 'update', {
+            ad_storage: 'granted', ad_user_data: 'granted',
+            ad_personalization: 'granted', analytics_storage: 'granted'
+          });
+        }
+      } catch (e) {}
+      gtag('js', new Date());
+      gtag('config', 'G-0QKQRXTFSX');
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0QKQRXTFSX"></script>
+
     <!-- Editorial typography: Fraunces (display) + IBM Plex Sans (body) + IBM Plex Mono (data) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

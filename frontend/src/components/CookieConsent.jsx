@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 
 const CONSENT_KEY = 'rigacap_cookie_consent';
-const GA4_ID = 'G-0QKQRXTFSX';
 
-function loadGA4() {
-  if (window.gtag) return;
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`;
-  document.head.appendChild(script);
-  window.dataLayer = window.dataLayer || [];
-  function gtag() { window.dataLayer.push(arguments); }
-  window.gtag = gtag;
-  gtag('js', new Date());
-  gtag('config', GA4_ID);
+// Consent Mode v2: gtag is loaded in index.html with consent default-DENIED, so
+// analytics already fires in cookieless/modeled mode. This banner only flips the
+// consent SIGNAL — it no longer controls whether tracking loads. Accept → grant
+// (full cookie-based tracking); Decline → stays denied (cookieless modeling
+// continues, GDPR-compliant). Either way we can now see paid traffic + funnel drop-off.
+function updateConsent(granted) {
+  if (typeof window.gtag !== 'function') return;
+  const v = granted ? 'granted' : 'denied';
+  window.gtag('consent', 'update', {
+    ad_storage: v,
+    ad_user_data: v,
+    ad_personalization: v,
+    analytics_storage: v,
+  });
 }
 
 export default function CookieConsent() {
@@ -22,7 +24,7 @@ export default function CookieConsent() {
   useEffect(() => {
     const consent = localStorage.getItem(CONSENT_KEY);
     if (consent === 'accepted') {
-      loadGA4();
+      updateConsent(true);   // re-affirm (index.html already granted on first load)
     } else if (!consent) {
       setVisible(true);
     }
@@ -30,12 +32,13 @@ export default function CookieConsent() {
 
   const accept = () => {
     localStorage.setItem(CONSENT_KEY, 'accepted');
-    loadGA4();
+    updateConsent(true);
     setVisible(false);
   };
 
   const decline = () => {
     localStorage.setItem(CONSENT_KEY, 'declined');
+    updateConsent(false);
     setVisible(false);
   };
 
