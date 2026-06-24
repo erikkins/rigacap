@@ -1844,6 +1844,22 @@ def handler(event, context):
                 print(f"⚠️ Failed to chain WF cache (non-fatal): {ce}")
             _log_step("WF Cache Chain", "ok", "async fire-and-forget")
 
+            # 9b. Chain PITFWU daily append (parquet mode — close-the-loop step 1).
+            # Additive: keeps the per-symbol RAW store current so the read path can
+            # move off the frozen all_data.parquet. Separate async invocation so it
+            # adds no time/memory to the scan; can't affect signals.
+            if os.environ.get("PRICE_SOURCE", "pickle").lower() == "parquet":
+                try:
+                    import boto3, json as _json
+                    boto3.client('lambda', region_name='us-east-1').invoke(
+                        FunctionName=os.environ.get('WORKER_FUNCTION_NAME', 'rigacap-prod-worker'),
+                        InvocationType='Event',
+                        Payload=_json.dumps({"pitfwu_append": True})
+                    )
+                    print("📈 Chained PITFWU daily append")
+                except Exception as ce:
+                    print(f"⚠️ Failed to chain PITFWU append (non-fatal): {ce}")
+
             # 10. Chain CSV export (async, separate Lambda invocation)
             try:
                 import boto3, json as _json
@@ -2972,6 +2988,40 @@ def handler(event, context):
     # days from all_data.parquet (a thin slice — not the full OHLCV history that
     # caused the OOM), computes last_close + 60d avg volume per symbol, ranks,
     # and writes the authoritative universe-history snapshot the scoped load reads.
+    # PITFWU daily append (Jun 24 2026, close-the-loop step 1) — keep the
+    # per-symbol RAW bar store current so the read path can move off the frozen
+    # all_data.parquet. ADDITIVE: writes pitfwu/bars/{sym}.parquet only; does NOT
+    # touch the live read path or signals. Appends the gap (PITFWU last date ->
+    # today) for the scoped symbols. Memory-safe (only touched symbols' recent
+    # bars). {"pitfwu_append": {"symbols": [...]}} optional explicit list.
+    if event.get("pitfwu_append"):
+        _cfg = event.get("pitfwu_append") or {}
+        def _do_pitfwu_append():
+            import pandas as _pd
+            from app.services import pitfwu_store as ps
+            syms = _cfg.get("symbols") if isinstance(_cfg, dict) else None
+            if not syms:
+                syms = [s for s in scanner_service.data_cache.keys() if not s.startswith("^")]
+            last = ps.pitfwu_last_date()  # reference (AAPL) last bar
+            if last is not None:
+                start = (last - _pd.Timedelta(days=5)).date().isoformat()   # small overlap; per-symbol dedupe handles it
+            else:
+                start = (_pd.Timestamp.now().normalize() - _pd.Timedelta(days=400)).date().isoformat()
+            end = _pd.Timestamp.now().date().isoformat()
+            print(f"📈 PITFWU append: {len(syms)} symbols, gap {start}..{end}")
+            summary = ps.append_pitfwu_bars(syms, start, end, execute=True)
+            new_last = ps.pitfwu_last_date()
+            return {"status": "success", "symbols": len(syms), "gap": f"{start}..{end}",
+                    "summary": summary, "pitfwu_last_date": str(new_last.date()) if new_last is not None else None}
+        try:
+            result = _do_pitfwu_append()
+            print(f"📈 PITFWU append result: {result}")
+            return result
+        except Exception as e:
+            import traceback
+            print(f"❌ pitfwu_append failed: {e}\n{traceback.format_exc()}")
+            return {"status": "error", "error": str(e)}
+
     if event.get("universe_refresh"):
         print("🌐 Universe refresh — full-universe ranking from a thin parquet slice")
         def _universe_refresh():
