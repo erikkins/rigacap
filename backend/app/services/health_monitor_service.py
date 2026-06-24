@@ -336,6 +336,22 @@ class HealthMonitorService:
 
     async def _check_pickle_freshness(self) -> HealthCheck:
         """Check when pickle was last updated."""
+        # PARQUET MODE (Jun 24 2026): the pickle is a FALLBACK, not the read path
+        # — the daily scan reads the scoped parquet and skips the pickle export,
+        # so a stale pickle is EXPECTED and not actionable. Don't red-alarm on it
+        # daily. (Subscriber-facing freshness is covered by the Dashboard + SPY
+        # CSV checks, which the daily fetch keeps current.) The parquet base
+        # freshness is tracked by the close-the-loop work.
+        if os.environ.get("PRICE_SOURCE", "pickle").lower() == "parquet":
+            _lm = self._s3_last_modified("prices/all_data.pkl.gz")
+            return HealthCheck(
+                category="Data Freshness", name="Pickle Freshness",
+                status=HealthStatus.GREEN,
+                value=f"{_hours_since(_lm):.1f}h ago" if _lm else "—",
+                threshold="n/a (parquet mode)",
+                message="Parquet mode — pickle is a fallback, not the read path; staleness expected.",
+                resolution="",
+            )
         last_mod = self._s3_last_modified("prices/all_data.pkl.gz")
         if last_mod is None:
             return HealthCheck(
