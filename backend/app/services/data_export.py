@@ -207,10 +207,17 @@ class DataExportService:
                 from app.services import pitfwu_store as _ps
                 from app.services.scanner import scanner_service as _ss
                 got, missing = _ps.load_scoped([s for s in sym_list if not s.startswith("^")])
+                # Short-history fallback: a symbol the gap-only backfill left with
+                # < 250 PITFWU bars would under-rank (universe needs >=200). Send
+                # those to all_data (full history) too, so PITFWU can never drop or
+                # under-rank a name vs the current path.
+                _short = [s for s, d in got.items() if d is None or len(d) < 250]
+                for s in _short:
+                    got.pop(s, None)
                 # compute the indicators the scan expects (PITFWU stores raw OHLCV)
                 for _s, _df in list(got.items()):
                     got[_s] = _ss._ensure_indicators(_df)
-                fallback_syms = sorted(set(missing) | {s for s in sym_list if s.startswith("^")})
+                fallback_syms = sorted(set(missing) | set(_short) | {s for s in sym_list if s.startswith("^")})
                 if fallback_syms:
                     got.update(self.import_parquet(symbols=fallback_syms))
                 print(f"📦 PITFWU scoped read: {len(got)} symbols ({len(missing)} fell back to all_data + {len([s for s in sym_list if s.startswith('^')])} indices)")
