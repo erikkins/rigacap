@@ -55,12 +55,12 @@ const HeroSection = ({ onGetStarted }) => (
           prose. First thing a (mostly-mobile) visitor sees after the headline. */}
       <div className="grid grid-cols-2 max-w-[600px] mb-8 border border-rule-dark rounded-[2px] overflow-hidden">
         <div className="bg-paper p-5 sm:p-7 border-r border-rule-dark">
-          <div className="font-body text-[0.7rem] tracking-[0.15em] uppercase text-ink-mute mb-2">2008 &middot; S&amp;P 500</div>
+          <div className="font-body text-[0.82rem] sm:text-[0.78rem] tracking-[0.12em] uppercase text-ink-mute mb-2.5">2008 &middot; S&amp;P 500</div>
           {/* red = the bad outcome (matches the perf table's drawdown red) */}
           <div className="font-display font-normal leading-none" style={{ fontSize: 'clamp(3rem, 15vw, 4.25rem)', fontVariationSettings: '"opsz" 144', color: '#8F2D3D' }}>&minus;38%</div>
         </div>
         <div className="bg-paper-card p-5 sm:p-7" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>
-          <div className="font-body text-[0.7rem] tracking-[0.15em] uppercase text-ink-mute mb-2">2008 &middot; RigaCap</div>
+          <div className="font-body text-[0.82rem] sm:text-[0.78rem] tracking-[0.12em] uppercase text-ink-mute mb-2.5">2008 &middot; RigaCap</div>
           {/* green = the GOOD outcome — 0.5% is the win, not a loss to fear */}
           <div className="font-display font-semibold leading-none" style={{ fontSize: 'clamp(3rem, 15vw, 4.25rem)', fontVariationSettings: '"opsz" 144', color: '#2D5F3F' }}>&minus;0.5%</div>
         </div>
