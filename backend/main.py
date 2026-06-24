@@ -5328,8 +5328,28 @@ def handler(event, context):
         _cfg = event.get("generate_research_insight") if isinstance(event.get("generate_research_insight"), dict) else {}
         async def _gen_insight():
             import random as _random
+            from datetime import datetime as _dt
+            from sqlalchemy import delete as _sa_delete, select as _sa_select
             from app.core.database import async_session, SocialPost
             from app.services.ai_content_service import ai_content_service
+            # Cleanup tool: drop today's research_insight DRAFTS (e.g. to clear a
+            # test-generated pile). {"clear_today": true}. Only ever touches
+            # status='draft' so an approved/published post is never removed.
+            if _cfg.get("clear_today"):
+                async with async_session() as db:
+                    res = await db.execute(
+                        _sa_select(SocialPost).where(
+                            SocialPost.post_type == "research_insight",
+                            SocialPost.status == "draft",
+                        )
+                    )
+                    _today = _dt.utcnow().date()
+                    ids = [p.id for p in res.scalars().all()
+                           if p.created_at and p.created_at.date() == _today]
+                    if ids:
+                        await db.execute(_sa_delete(SocialPost).where(SocialPost.id.in_(ids)))
+                        await db.commit()
+                    return {"status": "cleared", "deleted": len(ids), "ids": ids}
             prob = float(_cfg.get("prob", 0.4))
             if not _cfg.get("force") and _random.random() > prob:
                 return {"status": "skipped_today", "prob": prob}
