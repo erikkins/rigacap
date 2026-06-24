@@ -8237,12 +8237,79 @@ RigaCap Admin · Biweekly TPE
                     since_hours=hours,
                 )
 
-                if not opportunities:
-                    print("📭 No engagement opportunities found")
-                    return {"status": "ok", "opportunities": 0}
-
                 if opportunities and opportunities[0].get("error"):
                     return {"status": "error", "error": opportunities[0]["error"]}
+
+                # --- Original research-insight drafts (the "randos") ---
+                # Folded into THIS daily email so Erik approves everything in one
+                # place. A random gate fires the generator some days, not others →
+                # naturally 1-4/week (this job runs Mon-Fri); never a fixed day.
+                # {"force_insight": true} / {"insight_prob": x} override for tests.
+                async def _build_insight_section(_cfg):
+                    import random as _rnd
+                    from datetime import datetime as _dt
+                    from sqlalchemy import select as _select
+                    from app.core.database import async_session as _async_session, SocialPost
+                    from app.services.ai_content_service import ai_content_service
+                    from app.services.post_scheduler_service import post_scheduler_service
+                    try:
+                        prob = float(_cfg.get("insight_prob", 0.4))
+                        if _cfg.get("force_insight") or _rnd.random() <= prob:
+                            seed_idx = _rnd.randrange(len(ai_content_service.INSIGHT_SEEDS))
+                            async with _async_session() as _db:
+                                for platform in ("twitter", "threads"):
+                                    p = await ai_content_service.generate_research_insight(
+                                        platform=platform, seed_idx=seed_idx)
+                                    if p:
+                                        _db.add(p)
+                                await _db.commit()
+                        # Render today's research-insight drafts (whatever exists)
+                        async with _async_session() as _db:
+                            _res = await _db.execute(
+                                _select(SocialPost)
+                                .where(SocialPost.post_type == "research_insight",
+                                       SocialPost.status == "draft")
+                                .order_by(SocialPost.id.desc()).limit(12)
+                            )
+                            _today = _dt.utcnow().date()
+                            drafts = [d for d in _res.scalars().all()
+                                      if d.created_at and d.created_at.date() == _today]
+                        if not drafts:
+                            return "", 0
+                        blocks = []
+                        for d in drafts:
+                            tok = post_scheduler_service.generate_approve_token(d.id)
+                            post_now = f"https://api.rigacap.com/api/admin/social/posts/{d.id}/approve-email?token={tok}"
+                            review = f"{settings.FRONTEND_URL}/app"
+                            txt = (d.text_content or "").replace("\n", "<br>")
+                            tags = f"<span style='color:#9ca3af;'>{d.hashtags}</span>" if d.hashtags else ""
+                            blocks.append(f"""
+                    <tr><td style="padding:8px 0 0;">
+                        <div style="background:#fffbeb;border-left:3px solid #f59e0b;padding:12px 14px;border-radius:4px;">
+                            <p style="margin:0 0 6px;font-size:11px;color:#92400e;text-transform:uppercase;letter-spacing:0.05em;">
+                                ✨ {d.platform} &middot; #{d.id}</p>
+                            <p style="margin:0 0 8px;font-size:14px;color:#111827;line-height:1.55;">{txt} {tags}</p>
+                            <a href="{post_now}" style="display:inline-block;background:#059669;color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:7px 16px;border-radius:6px;margin-right:8px;">Post now &rarr;</a>
+                            <a href="{review}" style="display:inline-block;color:#6b7280;text-decoration:none;font-size:13px;padding:7px 4px;">Schedule / edit in dashboard</a>
+                        </div>
+                    </td></tr>""")
+                        section = f"""
+                    <tr><td style="padding:12px 0 4px;">
+                        <span style="font-size:11px;color:#92400e;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;">
+                            Original content &middot; ready to publish</span>
+                    </td></tr>
+                    {''.join(blocks)}
+                    <tr><td style="padding:10px 0;"><div style="border-top:2px solid #e5e7eb;"></div></td></tr>"""
+                        return section, len(drafts)
+                    except Exception as _e:
+                        print(f"⚠️ research-insight section failed: {_e}")
+                        return "", 0
+
+                insight_html, insight_count = await _build_insight_section(cfg)
+
+                if not opportunities and not insight_html:
+                    print("📭 No engagement opportunities or insights")
+                    return {"status": "ok", "opportunities": 0, "insights": 0}
 
                 # Build email
                 rows = []
@@ -8269,14 +8336,15 @@ RigaCap Admin · Biweekly TPE
                         </div>
                     </td></tr>""")
 
-                html = f"""<!DOCTYPE html>
-<html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f3f4f6;">
-<table cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;margin:0 auto;background:#fff;">
-<tr><td style="background:#172554;padding:14px 20px;">
-<h1 style="margin:0;color:#fff;font-size:17px;font-weight:700;">
-🎯 Engagement Opportunities &middot; {len(opportunities)} posts
-</h1></td></tr>
+                _reply_n = len(opportunities)
+                _hdr_bits = []
+                if _reply_n:
+                    _hdr_bits.append(f"{_reply_n} reply opp{'s' if _reply_n != 1 else ''}")
+                if insight_count:
+                    _hdr_bits.append(f"{insight_count} draft{'s' if insight_count != 1 else ''}")
+                _hdr = " &middot; ".join(_hdr_bits) or "nothing today"
+
+                _reply_block = (f"""
 <tr><td style="padding:8px 20px;background:#f9fafb;border-bottom:1px solid #e5e7eb;">
 <p style="margin:0;font-size:13px;color:#6b7280;">
 Copy a suggested reply, tweak if needed, paste on the post. 5 minutes max.
@@ -8284,19 +8352,44 @@ Copy a suggested reply, tweak if needed, paste on the post. 5 minutes max.
 <tr><td style="padding:4px 20px 16px;">
 <table cellpadding="0" cellspacing="0" style="width:100%;">
 {''.join(rows)}
-</table></td></tr>
+</table></td></tr>""" if _reply_n else "")
+
+                _insight_block = (f"""
+<tr><td style="padding:4px 20px 0;">
+<table cellpadding="0" cellspacing="0" style="width:100%;">
+{insight_html}
+</table></td></tr>""" if insight_html else "")
+
+                html = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f3f4f6;">
+<table cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;margin:0 auto;background:#fff;">
+<tr><td style="background:#172554;padding:14px 20px;">
+<h1 style="margin:0;color:#fff;font-size:17px;font-weight:700;">
+🎯 Engagement &amp; Content &middot; {_hdr}
+</h1></td></tr>
+{_insight_block}
+{_reply_block}
 <tr><td style="padding:10px 20px;background:#f9fafb;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center;">
-RigaCap Admin &middot; Engagement Opportunities
+RigaCap Admin &middot; "Post now" publishes the draft immediately (one click, no login)
 </td></tr></table></body></html>"""
+
+                _subj_bits = []
+                if _reply_n:
+                    _subj_bits.append(f"{_reply_n} engagement")
+                if insight_count:
+                    _subj_bits.append(f"{insight_count} ready-to-post draft{'s' if insight_count != 1 else ''}")
+                _subject = "🎯 " + " + ".join(_subj_bits) if _subj_bits else "🎯 RigaCap daily engagement"
 
                 ok = await admin_email_service.send_email(
                     to_email="erik@rigacap.com",
-                    subject=f"🎯 {len(opportunities)} Engagement Opportunities",
+                    subject=_subject,
                     html_content=html,
                 )
                 return {
                     "status": "ok" if ok else "email_failed",
-                    "opportunities": len(opportunities),
+                    "opportunities": _reply_n,
+                    "insights": insight_count,
                     "accounts_scanned": len([h for h, _, _ in __import__('app.services.engagement_service', fromlist=['MONITORED_ACCOUNTS']).MONITORED_ACCOUNTS]),
                 }
 
