@@ -8241,6 +8241,39 @@ RigaCap Admin · Biweekly TPE
     # finance accounts, filters for topics we have takes on, generates
     # Claude-drafted comment suggestions. Sent as admin email at 9 AM ET.
     # {"engagement_opportunities": {"_": 1}}
+    # Direct voice tester — runs the reply generator against canned tweets (no live
+    # Twitter scan), so we can iterate on the reply voice instantly and repeatably.
+    # {"test_engagement_reply": {}} uses the flagged-example set; pass {"tweets": [
+    # {"author":"x","text":"...","topics":["fear"]}]} to test your own.
+    if event.get("test_engagement_reply"):
+        _cfg = event.get("test_engagement_reply")
+        _cfg = _cfg if isinstance(_cfg, dict) else {}
+        from app.services.engagement_service import engagement_service
+        DEFAULT_TWEETS = [
+            {"author": "sentimentrader", "topics": ["signal", "fear"],
+             "text": "SPX is near 7365, but the NYSE Arms Index sits at 1.14. Some selling pressure is evident, but this is not a panic reading. For traders waiting for a fear-driven entry, the key signal would be a more extreme washout."},
+            {"author": "RyanDetrick", "topics": ["breadth", "signal"],
+             "text": "Heads up: we just saw a breadth divergence with the S&P near highs but fewer stocks participating. These have preceded some choppy stretches historically."},
+            {"author": "unusual_whales", "topics": ["bull market"],
+             "text": "Jamie Dimon says this is the best economy he's seen in decades and the bull market has years left to run."},
+            {"author": "PeterLBrandt", "topics": ["silver", "prediction"],
+             "text": "Silver is coiling for a massive move. My target is $75 by year end. Chart never lies."},
+        ]
+        tweets = _cfg.get("tweets") or DEFAULT_TWEETS
+        out = []
+        for t in tweets:
+            try:
+                reply = engagement_service._generate_comment(
+                    tweet_text=t.get("text", ""), author=t.get("author", ""),
+                    matched_topics=t.get("topics", []),
+                )
+            except Exception as _e:
+                reply = f"(error: {_e})"
+            out.append({"author": t.get("author"), "skip": (reply == ""), "reply": reply})
+        for o in out:
+            print(f"[VOICE-TEST] @{o['author']}: {'SKIP' if o['skip'] else o['reply']}")
+        return {"status": "ok", "results": out}
+
     if event.get("engagement_opportunities"):
         print("🎯 Engagement opportunities scan")
         try:

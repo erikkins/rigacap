@@ -352,10 +352,10 @@ class EngagementService:
                 or bool(re.search(r"(^|[\s\-—.])SKIP\.?\s*$", stripped, re.IGNORECASE))
             )
             if _resolves_skip or any(m in _low for m in _meta):
-                logger.info(f"[ENGAGEMENT] SKIP — @{author}: resolved to skip "
-                            f"(leaked={any(m in _low for m in _meta)})")
+                print(f"[ENGAGEMENT] SKIP — @{author}: resolved to skip "
+                      f"(leaked={any(m in _low for m in _meta)})")
                 return ""
-            logger.info(f"[ENG-REPLY] @{author}: {clean}")
+            print(f"[ENG-REPLY] @{author}: {clean}")
             return clean
         return "(Voice filter failed — manual draft needed; banned terms detected in all attempts)"
 
