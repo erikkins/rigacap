@@ -397,8 +397,13 @@ class HealthMonitorService:
                     resolution="Run {'pitfwu_append': {}} and verify it chains after daily_scan",
                 )
             last_d = last.date() if hasattr(last, "date") else last
-            today_et = datetime.now(pytz.timezone("America/New_York")).date()
-            expected = _last_market_day(today_et)  # most recent CLOSED session
+            now_et = datetime.now(pytz.timezone("America/New_York"))
+            # EOD bars only exist AFTER the close + the 4:30pm scan/append (~5pm ET).
+            # Before that on a trading day, the freshest possible bar is the PRIOR
+            # session — otherwise we'd false-alarm every morning expecting a bar that
+            # today's session hasn't produced yet.
+            ref_date = now_et.date() if now_et.hour >= 17 else (now_et.date() - timedelta(days=1))
+            expected = _last_market_day(ref_date)  # most recent CLOSED+settled session
             days_behind = (expected - last_d).days
             if last_d >= expected:
                 status = HealthStatus.GREEN

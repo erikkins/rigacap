@@ -863,7 +863,7 @@ def handler(event, context):
 
     # Pipeline health report — runs WITHOUT pickle (lightweight S3/CW/DB checks only)
     # Must be handled BEFORE _ensure_lambda_data_loaded() to skip the 2+ GB pickle load
-    if event.get("pipeline_health_report"):
+    if "pipeline_health_report" in event:
         print("🩺 Pipeline health report triggered")
         try:
             async def _run_health_report():
