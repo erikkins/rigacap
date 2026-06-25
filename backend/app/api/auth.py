@@ -176,6 +176,44 @@ def _check_2fa_required(user: User, trust_token: Optional[str] = None) -> bool:
     return True
 
 
+async def _ping_admin_new_signup(email: str, method: str, req=None):
+    """Instant admin ping the moment a REAL account is created. Best-effort —
+    wrapped so it can never block, delay, or fail the signup itself."""
+    try:
+        low = (email or "").lower()
+        # don't ping on internal / obvious test signups
+        if any(t in low for t in ("@example.com", "+test", "test@test",
+                                   "erik@rigacap.com", "erikkins@gmail.com")):
+            return
+        from app.services.email_service import admin_email_service
+        from app.core.database import async_session, User
+        from sqlalchemy import select, func as _f
+        n = None
+        try:
+            async with async_session() as _db:
+                n = (await _db.execute(select(_f.count()).select_from(User))).scalar()
+        except Exception:
+            pass
+        ref = country = ""
+        if req is not None:
+            ref = req.headers.get("referer") or req.headers.get("referrer") or ""
+            country = req.headers.get("cloudfront-viewer-country") or ""
+        subject = f"🟢 New signup: {email} ({method})"
+        body = (
+            "<html><body style='font-family:-apple-system,sans-serif;'>"
+            "<h2 style='margin:0 0 8px;'>New signup 🎉</h2>"
+            f"<p style='font-size:16px;margin:0 0 6px;'><b>{email}</b> &middot; via <b>{method}</b></p>"
+            f"<p style='color:#555;margin:0 0 4px;'>Total accounts now: <b>{n if n is not None else '—'}</b></p>"
+            f"<p style='color:#555;margin:0 0 4px;'>Referrer: {ref or '—'}{(' &middot; ' + country) if country else ''}</p>"
+            "<p style='margin:12px 0 0;'>Trace their path in <b>admin &rarr; Traffic</b>.</p>"
+            "</body></html>"
+        )
+        await admin_email_service.send_email(
+            to_email="erik@rigacap.com", subject=subject, html_content=body)
+    except Exception:
+        pass
+
+
 @router.post("/register", response_model=TokenResponse)
 async def register(
     request: RegisterRequest,
@@ -236,6 +274,8 @@ async def register(
 
     await db.commit()
     await db.refresh(user)
+
+    await _ping_admin_new_signup(user.email, "email", req)
 
     # Generate tokens
     access_token = create_access_token(str(user.id))
@@ -486,6 +526,12 @@ async def google_auth(
     await db.commit()
     await db.refresh(user)
 
+    if is_new_user:
+        await _ping_admin_new_signup(
+            user.email,
+            "google" if getattr(user, "google_id", None) else "apple",
+            req)
+
     # Welcome email now fires on subscription creation (founder/standard split),
     # not at registration — see billing.handle_subscription_created (Jun 23 2026).
 
@@ -605,6 +651,12 @@ async def apple_auth(
 
     await db.commit()
     await db.refresh(user)
+
+    if is_new_user:
+        await _ping_admin_new_signup(
+            user.email,
+            "google" if getattr(user, "google_id", None) else "apple",
+            req)
 
     # Welcome email now fires on subscription creation (founder/standard split),
     # not at registration — see billing.handle_subscription_created (Jun 23 2026).
