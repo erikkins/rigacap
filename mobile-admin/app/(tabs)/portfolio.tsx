@@ -55,9 +55,9 @@ export default function Portfolio() {
     );
   }
 
-  const positions: any[] = pick(pf, 'positions', 'holdings', 'open_positions') || [];
+  const positions: any[] = pick(pf, 'open_positions', 'positions', 'holdings') || [];
   const totalValue = pick(pf, 'total_value', 'equity', 'portfolio_value', 'value');
-  const cash = pick(pf, 'cash', 'cash_balance', 'available_cash');
+  const cash = pick(pf, 'current_cash', 'cash', 'cash_balance', 'available_cash');
   const totalReturn = pick(pf, 'total_return_pct', 'return_pct', 'pnl_pct');
   const regimeName = (pick(regime, 'regime', 'current_regime', 'name') || '').toString();
   const regimeColor = Regime[regimeName] || Palette.inkLight;
@@ -92,9 +92,12 @@ export default function Portfolio() {
           ) : (
             positions.map((p, i) => {
               const sym = pick(p, 'symbol', 'ticker') || '?';
-              const ret = pick(p, 'return_pct', 'pnl_pct', 'gain_pct', 'unrealized_pct');
-              const val = pick(p, 'value', 'market_value', 'position_value');
+              const ret = pick(p, 'pnl_pct', 'return_pct', 'gain_pct', 'unrealized_pct');
               const shares = pick(p, 'shares', 'qty', 'quantity');
+              const cur = pick(p, 'current_price', 'price');
+              const val =
+                pick(p, 'value', 'market_value', 'position_value') ??
+                (typeof cur === 'number' && typeof shares === 'number' ? cur * shares : undefined);
               return (
                 <View key={`${sym}-${i}`} style={styles.posRow}>
                   <View style={{ flex: 1 }}>

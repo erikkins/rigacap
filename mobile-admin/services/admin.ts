@@ -65,7 +65,11 @@ export async function getServiceStatus(): Promise<ServiceStatus> {
 
 // ── Live model portfolio ──────────────────────────────────────────
 export async function getModelPortfolio(): Promise<any> {
-  const { data } = await api.get('/api/admin/model-portfolio');
+  // Without portfolio_type the API returns { live, walkforward } nested — request
+  // the live book so we get a flat object with positions/value/cash directly.
+  const { data } = await api.get('/api/admin/model-portfolio', {
+    params: { portfolio_type: 'live' },
+  });
   return data;
 }
 

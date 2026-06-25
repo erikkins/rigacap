@@ -4,8 +4,10 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import {
   AdminStats,
   FoundingStatus,
@@ -22,6 +24,7 @@ const money = (n: number) =>
   '$' + Math.round(n).toLocaleString('en-US');
 
 export default function Glance() {
+  const router = useRouter();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [svc, setSvc] = useState<ServiceStatus | null>(null);
   const [founding, setFounding] = useState<FoundingStatus | null>(null);
@@ -82,8 +85,12 @@ export default function Glance() {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Palette.claret} />}
       >
-        {/* Pipeline health banner */}
-        <View style={[styles.banner, { borderColor: bannerColor }]}>
+        {/* Pipeline health banner — tap for per-service detail */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => router.push('/services')}
+          style={[styles.banner, { borderColor: bannerColor }]}
+        >
           <View style={[styles.dot, { backgroundColor: bannerColor }]} />
           <View style={{ flex: 1 }}>
             <Text style={styles.bannerTitle}>
@@ -96,10 +103,11 @@ export default function Glance() {
                 : 'Status unknown'}
             </Text>
             <Text style={styles.bannerSub}>
-              {svc ? `overall_status: ${svc.overall_status}` : 'Pull to refresh'}
+              {svc ? 'Tap to see every service' : 'Pull to refresh'}
             </Text>
           </View>
-        </View>
+          <Ionicons name="chevron-forward" size={20} color={Palette.inkLight} />
+        </TouchableOpacity>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 

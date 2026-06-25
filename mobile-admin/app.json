@@ -50,7 +50,11 @@
     },
     "updates": {
       "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 5000
+      "fallbackToCacheTimeout": 5000,
+      "url": "https://u.expo.dev/4c1d1b71-5265-41ce-8029-b68a463b7d81"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }
