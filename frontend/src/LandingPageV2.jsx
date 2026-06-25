@@ -44,12 +44,19 @@ const HeroSection = ({ onGetStarted }) => (
       <SectionLabel>Institution-grade momentum &middot; Est. 2026</SectionLabel>
 
       <h1
-        className="font-display font-normal text-ink mb-8 tracking-[-0.025em] leading-[1.02]"
+        className="font-display font-normal text-ink mb-5 tracking-[-0.025em] leading-[1.02]"
         style={{ fontSize: 'clamp(2.5rem, 5.5vw, 4.5rem)', fontVariationSettings: '"opsz" 144' }}
       >
         Institutional discipline.<br />
         <em className="text-claret italic font-normal">Individual price.</em>
       </h1>
+
+      {/* Plain-English "what is this" — the hero asked for two CTAs (Start Trial,
+          Claim a Founding Seat $59/mo) before ever saying what the product does.
+          This earns the ask. Deliberately no "drawdown" jargon (crash/downturn). */}
+      <p className="text-ink text-[1.15rem] sm:text-[1.2rem] leading-[1.5] max-w-[560px] mb-8">
+        Momentum buy-and-sell signals, built around the crash instead of the rally &mdash; so you can actually hold through a downturn.
+      </p>
 
       {/* The single strongest hook, shown as a visual contrast — not buried in
           prose. First thing a (mostly-mobile) visitor sees after the headline. */}
@@ -81,10 +88,10 @@ const HeroSection = ({ onGetStarted }) => (
           Claim a Founding Seat &middot; $59/mo
         </button>
         <a
-          href="/methodology"
+          href="/track-record"
           className="inline-block px-7 py-4 border border-rule-dark text-ink text-[1.05rem] font-medium rounded-[2px] no-underline hover:border-ink transition-all"
         >
-          See the methodology
+          See the track record
         </a>
       </div>
 
@@ -111,7 +118,7 @@ const HeroSection = ({ onGetStarted }) => (
           FOUNDING HITS 100 (or wire to /api/billing/founding-status). Moved BELOW
           the proof+CTA so credibility is there for scrollers without blocking action. */}
       <p className="text-[1.05rem] text-ink-mute leading-relaxed max-w-[640px] mt-12">
-        A survivorship-free momentum strategy with a <strong className="text-ink font-medium">19% worst loss across 21 years</strong> &mdash; built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>. <strong className="text-ink font-medium">$59/month founding</strong>, not 1% a year.
+        A momentum strategy with a <strong className="text-ink font-medium">19% worst loss across 21 years</strong> of testing &mdash; through 2008, COVID, and 2022. Built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>. <strong className="text-ink font-medium">$59/month founding</strong>, not 1% a year.
       </p>
     </div>
   </section>
