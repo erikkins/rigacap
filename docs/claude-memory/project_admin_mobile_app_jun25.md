@@ -47,6 +47,8 @@ metadata:
 - **Erik's iPhone = "EK17"** — registered under the team, included in the internal ad-hoc profile → install QR will work on it. (Other entries "EKX"/family iPads are noise.)
 - Build in flight: `e6d997a6-540d-418e-a84e-2e17d695a461` (https://expo.dev/accounts/rigacap/projects/rigacap-admin/builds/e6d997a6-540d-418e-a84e-2e17d695a461). When finished → install QR on EK17, open app, log in. NOTE: nothing pushes until the app has registered its token at least once (open + login on a real build).
 
+**OTA GOTCHA (Jun 25, fixed):** after `eas update:configure` + first build + `eas update --branch preview`, updates did NOT reach the device even though build runtimeVersion (1.0.0) == update runtimeVersion and the build was on channel `preview`. Cause: **the `preview` channel was not pointed at the `preview` branch** ("No branches are pointed to this channel"). EAS did NOT auto-link them. Fix = `eas channel:edit preview --branch preview` (one-time). Now every `eas update --branch preview` reaches builds on channel preview. To deliver OTA: device must be on an OTA-capable build (12136de0+, NOT the first build e6d997a6), then fully kill+relaunch TWICE (ON_LOAD: first launch downloads, second applies). Verify-which-build trick: tap the health banner — service list opens only on 12136de0+.
+
 **Next steps (in README "Outstanding work"):**
 1. (done) eas init + projectId.
 3. **Ads milestone 2** — build `GET /api/admin/ads/summary` (Google Ads API, dev token + OAuth refresh in Lambda env/Secrets, NEVER in app) returning {spend,clicks,impressions,conversions,cpc,date_range,campaigns[]}. App already renders it.
