@@ -23,6 +23,15 @@ const money = (n: any) => (typeof n === 'number' ? '$' + Math.round(n).toLocaleS
 const signedMoney = (n: any) =>
   typeof n === 'number' ? `${n >= 0 ? '+' : '−'}$${Math.abs(Math.round(n)).toLocaleString('en-US')}` : '—';
 const pct = (n: any) => (typeof n === 'number' ? `${n >= 0 ? '+' : ''}${n.toFixed(1)}%` : '—');
+const heldFor = (iso: any) => {
+  if (!iso) return undefined;
+  try {
+    const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    return d <= 0 ? 'today' : `held ${d}d`;
+  } catch {
+    return undefined;
+  }
+};
 const toneColor = (n: any) =>
   typeof n === 'number' ? (n >= 0 ? Palette.positive : Palette.negative) : Palette.inkLight;
 
@@ -146,6 +155,7 @@ export default function Portfolio() {
               const sym = pick(p, 'symbol', 'ticker') || '?';
               const shares = pick(p, 'shares', 'qty', 'quantity');
               const entry = pick(p, 'entry_price', 'cost_basis', 'avg_price');
+              const held = heldFor(pick(p, 'entry_date', 'entered_at', 'opened_at'));
               const q = quotes[sym];
               const cur = q?.price ?? pick(p, 'current_price', 'price');
               const val =
@@ -170,6 +180,7 @@ export default function Portfolio() {
                     <Text style={styles.posMeta}>
                       {shares != null ? `${shares} sh` : ''}
                       {val != null ? `${shares != null ? ' · ' : ''}${money(val)}` : ''}
+                      {held ? ` · ${held}` : ''}
                     </Text>
                     <Text style={styles.posPrices}>
                       {typeof entry === 'number' ? `entry $${entry.toFixed(2)}` : ''}
