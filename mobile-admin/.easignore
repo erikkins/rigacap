@@ -1,0 +1,4 @@
+# EAS Build should only include the mobile app
+node_modules
+.expo
+dist

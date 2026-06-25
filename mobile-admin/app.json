@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "RigaCap Admin",
+    "slug": "rigacap-admin",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "rigacapadmin",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F1E8"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.rigacap.admin",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.rigacap.admin",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F5F1E8"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#7A2430"
+        }
+      ],
+      "expo-font"
+    ],
+    "extra": {
+      "router": {
+        "origin": "https://rigacap.com"
+      },
+      "eas": {
+        "projectId": "REPLACE_WITH_eas_init"
+      }
+    },
+    "updates": {
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 5000
+    }
+  }
+}
