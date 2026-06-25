@@ -308,7 +308,12 @@ class EngagementService:
         )
 
         def _call_claude(extra_directive: Optional[str]) -> Optional[str]:
-            system = base_system + ("\n\n" + extra_directive if extra_directive else "")
+            # Prompt-cache the big static base_system (reused across every tweet in
+            # the scan + voice-filter retries). extra_directive (retry hints) is
+            # appended as a separate, uncached block so the cached prefix is stable.
+            system = [{"type": "text", "text": base_system, "cache_control": {"type": "ephemeral"}}]
+            if extra_directive:
+                system.append({"type": "text", "text": extra_directive})
             try:
                 resp = httpx.post(
                     "https://api.anthropic.com/v1/messages",
@@ -326,9 +331,15 @@ class EngagementService:
                     timeout=15,
                 )
                 if resp.status_code == 200:
-                    content = resp.json().get("content", [])
+                    body = resp.json()
+                    _u = body.get("usage", {})
+                    print(f"[CACHE] eng reply: write={_u.get('cache_creation_input_tokens', 0)} "
+                          f"read={_u.get('cache_read_input_tokens', 0)} fresh_in={_u.get('input_tokens', 0)}")
+                    content = body.get("content", [])
                     if content and content[0].get("type") == "text":
                         return content[0]["text"].strip().strip('"')
+                else:
+                    logger.warning(f"Claude comment HTTP {resp.status_code}: {resp.text[:300]}")
             except Exception as e:
                 logger.warning(f"Claude comment generation failed: {e}")
             return None

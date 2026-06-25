@@ -876,7 +876,8 @@ class ReplyScannerService:
         payload = {
             "model": CLAUDE_MODEL,
             "max_tokens": 256,
-            "system": system_prompt or REPLY_SYSTEM_PROMPT,
+            # Prompt-cache the static reply system prompt across a bulk scan run.
+            "system": [{"type": "text", "text": system_prompt or REPLY_SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
             "messages": [
                 {"role": "user", "content": user_prompt}
             ],

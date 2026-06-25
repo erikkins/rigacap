@@ -274,7 +274,8 @@ class InstagramCommentService:
             payload = {
                 "model": CLAUDE_MODEL,
                 "max_tokens": 128,
-                "system": COMMENT_REPLY_SYSTEM_PROMPT,
+                # Prompt-cache the static IG-comment system prompt across a run.
+                "system": [{"type": "text", "text": COMMENT_REPLY_SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
                 "messages": [{"role": "user", "content": user_prompt}],
             }
 

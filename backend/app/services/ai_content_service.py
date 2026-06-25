@@ -529,7 +529,10 @@ class AIContentService:
         payload = {
             "model": CLAUDE_MODEL,
             "max_tokens": 1024,
-            "system": SYSTEM_PROMPT,
+            # Prompt-cache the (large, static) system prompt: randos generate
+            # twitter+threads back-to-back and bulk runs fire many calls, so the
+            # shared prefix is reused within the 5-min cache window (−90% on reads).
+            "system": [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
             "messages": [
                 {"role": "user", "content": user_prompt}
             ],

@@ -165,7 +165,9 @@ class NewsletterGeneratorService:
             json={
                 "model": "claude-sonnet-4-6",
                 "max_tokens": max_tokens,
-                "system": SYSTEM_PROMPT,
+                # Prompt-cache the static newsletter system prompt — an issue
+                # generates several sections back-to-back within the cache window.
+                "system": [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
                 "messages": [{"role": "user", "content": prompt}],
             },
             timeout=30,
