@@ -9,20 +9,20 @@ metadata:
 
 # Session snapshot — Jun 25 2026
 
-**Context:** Erik accidentally closed VS Code earlier and lost a session. Recovered the lost work from transcript `701a2e93…jsonl` and set up checkpoint discipline ([[feedback_checkpoint_memory_during_session]]).
+**Context:** Recovered from a lost session (VS Code close) via transcript `701a2e93`. Checkpoint discipline active ([[feedback_checkpoint_memory_during_session]]). Full detail in [[project_admin_mobile_app_jun25]].
 
 **Accomplished this session:**
-- Recovered the **Admin mobile app** thread (origin request + "native Expo, push-first" decision).
-- Resolved the open fork → **separate Expo app** (not bolted onto subscriber `mobile/`).
-- **Built the full `mobile-admin/` scaffold** (git-tracked): auth (email/pw + 2FA, admin-role gate), api/notifications/theme reused from `mobile/`, 4 tabs (Glance, Users, Portfolio, Ads), components, README. Details in [[project_admin_mobile_app_jun25]].
+- Recovered the **Admin mobile app** thread; resolved fork → **separate Expo app**.
+- **Built `mobile-admin/` scaffold** (git-tracked): auth (email/pw+2FA, admin-role gate), reused api/notifications/theme from `mobile/`, 4 tabs (Glance/Users/Portfolio/Ads), README.
+- **Wired admin alerts → push (DONE, working-tree only, not pushed/deployed).** New helper `push_notification_service.send_to_admin_email()` (self-contained session, ADMIN_EMAILS-gated, best-effort). Called from `email_service.send_admin_alert()` (scan/hygiene/canary → Glance) and `auth.py _ping_admin_new_signup` (signups → Users). Pushes to the single to_email to avoid loop-duplication. All 3 files py_compile OK.
 
 **Key context a fresh session needs:**
-- `tsc` only showed ENVIRONMENTAL errors (no node_modules yet) — code is sound, mirrors `mobile/` patterns.
-- Ads tab is a milestone-2 placeholder (backend `/api/admin/ads/summary` not built; needs Google Ads OAuth server-side).
-- Push infra exists: backend `push_notification_service.send_to_user(...)`.
+- Reuse works because the admin app registers its Expo token under the SAME erik@rigacap.com user → existing `send_to_user` fan-out reaches it.
+- Nothing pushes until: `cd mobile-admin && npm install && npx eas init` → real projectId in app.json → device build.
+- Caveat: subscriber `mobile/` app (if on same phone) also buzzes (no per-app token column). Harmless; defer the `app`-column fix.
 
-**In flight / next (offered, awaiting Erik's pick):**
-1. `npm install` + `npx eas init` → real projectId in app.json.
-2. Wire admin email alerts (new-account / 0-signal-scan / hygiene) → push to Erik's user_id.
-3. Build the Ads API endpoint (milestone 2).
-4. Verify real `model-portfolio` payload shape → tighten types.
+**Next / open (awaiting Erik):**
+1. Deploy the backend push changes (3 files, working tree only).
+2. eas init + projectId + device build to actually receive pushes.
+3. Ads milestone-2 endpoint `/api/admin/ads/summary` (Google Ads OAuth server-side).
+4. Verify real model-portfolio payload shape → tighten types.
