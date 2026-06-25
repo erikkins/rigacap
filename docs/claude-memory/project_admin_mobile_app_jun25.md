@@ -39,8 +39,16 @@ metadata:
 
 **ADMIN ALERTS → PUSH: DONE (Jun 25, reuses existing push infra).** The admin app registers its Expo token under the SAME erik@rigacap.com user, so pushing to that user reaches the admin app for free. Added `push_notification_service.send_to_admin_email(to_email,title,body,data)` — self-contained (opens own session), ADMIN_EMAILS-gated (never pushes a normal subscriber), best-effort. Wired in 2 places: (a) `email_service.send_admin_alert()` — pushes to THAT to_email only (it's sometimes called in a `for admin in ADMIN_EMAILS` loop → fan-out would duplicate), covers 0-signal scan alarm + hygiene + canary + missing-positions, data.screen=glance; (b) `auth.py _ping_admin_new_signup` — new-account ping, data.screen=users. All 3 files py_compile OK. CAVEAT: pushes also reach the subscriber `mobile/` app if installed on same phone (PushToken has no per-app column) — harmless (own phone); clean fix = add `app` column to PushToken, defer unless it annoys. NOTE: still needs `eas init` + projectId + a device build before any push actually arrives.
 
+**EAS BUILD (Jun 25) — DONE setting up, preview build running:**
+- EAS project: **`@rigacap/rigacap-admin`**, projectId **`4c1d1b71-5265-41ce-8029-b68a463b7d81`** (owner=rigacap, written in app.json). Apple team `PWYELC3252` "Erik Kins (Individual)".
+- eas.json: `development`=physical device (dev client), added `simulator` profile, `preview`=standalone internal (what Erik chose — JS embedded, push works untethered).
+- **Bug fixed:** EAS build server `npm install` hit a react/react-dom@19.2.7 peer conflict → fix = `mobile-admin/.npmrc` `legacy-peer-deps=true` (mobile/ has the same) + commit package-lock.json. Committed `1977b6d`.
+- Apple credentials for `com.rigacap.admin` already set up (Erik's first interactive dev-build attempt got past credentials before the npm fail). Preview build then ran NON-interactive (creds reused, no Apple prompt).
+- **Erik's iPhone = "EK17"** — registered under the team, included in the internal ad-hoc profile → install QR will work on it. (Other entries "EKX"/family iPads are noise.)
+- Build in flight: `e6d997a6-540d-418e-a84e-2e17d695a461` (https://expo.dev/accounts/rigacap/projects/rigacap-admin/builds/e6d997a6-540d-418e-a84e-2e17d695a461). When finished → install QR on EK17, open app, log in. NOTE: nothing pushes until the app has registered its token at least once (open + login on a real build).
+
 **Next steps (in README "Outstanding work"):**
-1. `cd mobile-admin && npm install && npx eas init` → paste real projectId into app.json (needed for push tokens).
+1. (done) eas init + projectId.
 3. **Ads milestone 2** — build `GET /api/admin/ads/summary` (Google Ads API, dev token + OAuth refresh in Lambda env/Secrets, NEVER in app) returning {spend,clicks,impressions,conversions,cpc,date_range,campaigns[]}. App already renders it.
 4. Verify `model-portfolio` real payload shape → tighten types in services/admin.ts.
 5. (optional) Add Strategy/Social/Newsletter/Hygiene glance cards later if Erik wants more of the 11 web tabs.

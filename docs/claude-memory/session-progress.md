@@ -9,20 +9,18 @@ metadata:
 
 # Session snapshot — Jun 25 2026
 
-**Context:** Recovered from a lost session (VS Code close) via transcript `701a2e93`. Checkpoint discipline active ([[feedback_checkpoint_memory_during_session]]). Full detail in [[project_admin_mobile_app_jun25]].
+**Context:** Recovered from a lost session via transcript `701a2e93`. Checkpoint discipline active ([[feedback_checkpoint_memory_during_session]]). Full detail in [[project_admin_mobile_app_jun25]].
 
 **Accomplished this session:**
-- Recovered the **Admin mobile app** thread; resolved fork → **separate Expo app**.
-- **Built `mobile-admin/` scaffold** (git-tracked): auth (email/pw+2FA, admin-role gate), reused api/notifications/theme from `mobile/`, 4 tabs (Glance/Users/Portfolio/Ads), README.
-- **Wired admin alerts → push (DONE, working-tree only, not pushed/deployed).** New helper `push_notification_service.send_to_admin_email()` (self-contained session, ADMIN_EMAILS-gated, best-effort). Called from `email_service.send_admin_alert()` (scan/hygiene/canary → Glance) and `auth.py _ping_admin_new_signup` (signups → Users). Pushes to the single to_email to avoid loop-duplication. All 3 files py_compile OK.
+- Built **`mobile-admin/`** — separate Expo admin app (Glance/Users/Portfolio/Ads, email+2FA login gated on role=admin). tsc clean, bundles clean.
+- **Wired admin alerts → push** (new helper `send_to_admin_email`, called from `send_admin_alert` + new-signup ping). **DEPLOYED to prod** (CI/CD green, commits `468fd68`+`a2165f4`).
+- **EAS set up + preview build running.** Project `@rigacap/rigacap-admin`, projectId `4c1d1b71-...`, owner=rigacap. Fixed build-server peer-dep fail with `.npmrc legacy-peer-deps=true` (commit `1977b6d`). Apple creds done; **EK17 = Erik's iPhone, registered**.
 
-**Key context a fresh session needs:**
-- Reuse works because the admin app registers its Expo token under the SAME erik@rigacap.com user → existing `send_to_user` fan-out reaches it.
-- Nothing pushes until: `cd mobile-admin && npm install && npx eas init` → real projectId in app.json → device build.
-- Caveat: subscriber `mobile/` app (if on same phone) also buzzes (no per-app token column). Harmless; defer the `app`-column fix.
+**In flight:**
+- iOS **preview** build `e6d997a6-540d-418e-a84e-2e17d695a461` (queued→building, ~15min). Background watcher `b2kmbhgtx` polls it and will notify on finish. Dev server `b6cbe2vtu` still running on :8081.
 
-**Next / open (awaiting Erik):**
-1. Deploy the backend push changes (3 files, working tree only).
-2. eas init + projectId + device build to actually receive pushes.
-3. Ads milestone-2 endpoint `/api/admin/ads/summary` (Google Ads OAuth server-side).
-4. Verify real model-portfolio payload shape → tighten types.
+**Next when build finishes:**
+1. Get install QR → install on EK17 → open + log in (login registers push token).
+2. Verify a real alert pushes to the phone.
+3. Ads milestone-2 endpoint `/api/admin/ads/summary` (Google Ads OAuth server-side) — still TODO.
+4. Optional: tighten model-portfolio types vs real payload.
