@@ -2,6 +2,7 @@
   "expo": {
     "name": "RigaCap Admin",
     "slug": "rigacap-admin",
+    "owner": "rigacap",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -44,7 +45,7 @@
         "origin": "https://rigacap.com"
       },
       "eas": {
-        "projectId": "REPLACE_WITH_eas_init"
+        "projectId": "4c1d1b71-5265-41ce-8029-b68a463b7d81"
       }
     },
     "updates": {
