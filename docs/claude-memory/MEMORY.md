@@ -1,5 +1,9 @@
 # Stocker App - Key Learnings
 
+## ▶▶▶ RESUME (Jun 25) — ADMIN iPHONE APP build (native Expo, push-first). Context recovered after a lost session.
+- [Admin mobile app — goal, decisions, backend endpoints, next steps](project_admin_mobile_app_jun25.md) — native Expo admin, push-first; admin-tab data + Ads API; never app-store. Existing `mobile/` user app is May-5 stale — OPEN fork: separate app (leaning) vs bolt-on. Backend auth + `/api/admin/*` already exist. Next: confirm fork → scaffold.
+- [Checkpoint memory DURING the session, not at shutdown](feedback_checkpoint_memory_during_session.md) — no shutdown hook can save context; Erik lost a session Jun 25 via VS Code close. Recover via `claude --resume` (not `--continue`).
+
 ## ▶▶▶ RESUME (Jun 17 EOD) — 0-SIGNAL BUG SOLVED = MOMENTUM_SECTOR_CAP=0 (not memory). Parquet flip LIVE. Digest reworked + sent.
 - **[Full root cause + parquet + teething (READ FIRST)](project_oom_scan_zero_jun15.md)** — The 3-day 0-signal bug was **`MOMENTUM_SECTOR_CAP=0`**: rank_stocks `if count < CAP` with CAP=0 dropped EVERY sector'd stock → ranked collapsed to ~1 → 0 signals. Only bit when sectors loaded (daily scan), not recovery/diag paths (sectors empty) — THE "scan=0/recovery=correct" pattern, and why it never repro'd locally. Fixed: cap<=0 = disabled (rank 1→100). I chased 4 wrong theories first (memory, fetch/merge, settlement, "Lambda runtime") — print-level [DASH-DIAG] in the Lambda finally nailed it.
 - **Parquet flip SHIPPED + LIVE (`PRICE_SOURCE=parquet`):** scoped partial read (top-600 universe + indices from all_data.parquet) → mem 2353→1486MB, OOM gone. Flag = instant rollback. **TEETHING: recovery is now `{"daily_scan":true}` (fetches), NOT export_dashboard_cache (gives stale parquet-base signals).**
