@@ -801,6 +801,20 @@ async def revoke_comp(
     return {"message": "Comp subscription revoked"}
 
 
+# Internal/test accounts excluded from growth + revenue stats so the admin
+# dashboard reflects REAL users (mirrors the skip-list in
+# auth._ping_admin_new_signup). erikkins+test@... is caught by the +test pattern.
+_TEST_EMAIL_LIKE = ["%+test%", "%@example.com", "%test@test%"]
+_TEST_EMAIL_EXACT = ["erik@rigacap.com", "erikkins@gmail.com"]
+
+
+def _exclude_test_users(col=User.email):
+    """SQLAlchemy AND-condition excluding internal/test accounts by email."""
+    conds = [col.notilike(p) for p in _TEST_EMAIL_LIKE]
+    conds += [func.lower(col) != e for e in _TEST_EMAIL_EXACT]
+    return and_(*conds)
+
+
 @router.get("/stats", response_model=AdminStatsResponse)
 async def get_admin_stats(
     admin: User = Depends(get_admin_user),
@@ -811,16 +825,23 @@ async def get_admin_stats(
     today_start = trading_today_start()
     week_ago = now - timedelta(days=7)
 
+    # All counts exclude internal/test accounts (see _exclude_test_users) so the
+    # dashboard reflects real users — e.g. erikkins+test must not show as "1 new".
+    sub_join = lambda q: q.select_from(Subscription).join(User, Subscription.user_id == User.id)
+
     # Total users
-    total_result = await db.execute(select(func.count(User.id)))
+    total_result = await db.execute(
+        select(func.count(User.id)).where(_exclude_test_users())
+    )
     total_users = total_result.scalar()
 
     # Active trials
     trials_result = await db.execute(
-        select(func.count(Subscription.id)).where(
+        sub_join(select(func.count(Subscription.id))).where(
             and_(
                 Subscription.status == "trial",
-                Subscription.trial_end > now
+                Subscription.trial_end > now,
+                _exclude_test_users(),
             )
         )
     )
@@ -828,16 +849,19 @@ async def get_admin_stats(
 
     # Paid subscribers
     paid_result = await db.execute(
-        select(func.count(Subscription.id)).where(Subscription.status == "active")
+        sub_join(select(func.count(Subscription.id))).where(
+            and_(Subscription.status == "active", _exclude_test_users())
+        )
     )
     paid_subscribers = paid_result.scalar()
 
     # Expired trials
     expired_result = await db.execute(
-        select(func.count(Subscription.id)).where(
+        sub_join(select(func.count(Subscription.id))).where(
             and_(
                 Subscription.status == "trial",
-                Subscription.trial_end <= now
+                Subscription.trial_end <= now,
+                _exclude_test_users(),
             )
         )
     )
@@ -845,24 +869,32 @@ async def get_admin_stats(
 
     # Disabled users
     disabled_result = await db.execute(
-        select(func.count(User.id)).where(User.is_active == False)
+        select(func.count(User.id)).where(
+            and_(User.is_active == False, _exclude_test_users())
+        )
     )
     disabled_users = disabled_result.scalar()
 
     # New users today
     today_result = await db.execute(
-        select(func.count(User.id)).where(User.created_at >= today_start)
+        select(func.count(User.id)).where(
+            and_(User.created_at >= today_start, _exclude_test_users())
+        )
     )
     new_users_today = today_result.scalar()
 
     # New users this week
     week_result = await db.execute(
-        select(func.count(User.id)).where(User.created_at >= week_ago)
+        select(func.count(User.id)).where(
+            and_(User.created_at >= week_ago, _exclude_test_users())
+        )
     )
     new_users_week = week_result.scalar()
 
-    # MRR (Monthly Recurring Revenue) - $10 per subscriber
-    mrr = paid_subscribers * 10.0
+    # MRR — rough estimate (assumes ~standard monthly price). TODO: sum actual
+    # amounts from stripe_price_id once a price->amount map exists. With test
+    # users excluded this is $0 until there's a real paying subscriber.
+    mrr = paid_subscribers * 129.0
 
     return AdminStatsResponse(
         total_users=total_users,
