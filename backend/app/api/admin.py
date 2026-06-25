@@ -4498,6 +4498,53 @@ async def admin_hygiene_corp_actions(
 # the soft CTA instead of the trial). Admin-only.
 # ============================================================================
 
+@router.get("/pageviews/summary")
+async def pageviews_summary(
+    days: int = Query(7, ge=1, le=90),
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Cookieless pageview report — totals, paid (gclid) share, mobile share, top
+    paths (to see land → drop), by traffic source, and a daily trend, over `days`."""
+    from app.core.database import PageView
+
+    since = datetime.utcnow() - timedelta(days=days)
+    where = PageView.created_at >= since
+
+    async def _count(*extra):
+        return (await db.execute(
+            select(func.count()).select_from(PageView).where(where, *extra)
+        )).scalar() or 0
+
+    total = await _count()
+    paid = await _count(PageView.gclid.isnot(None))
+    mobile = await _count(PageView.is_mobile.is_(True))
+
+    by_path = (await db.execute(
+        select(PageView.path, func.count().label("n")).where(where)
+        .group_by(PageView.path).order_by(func.count().desc()).limit(25)
+    )).all()
+    src = func.coalesce(PageView.utm_source, "direct / organic")
+    by_source = (await db.execute(
+        select(src, func.count()).where(where)
+        .group_by(src).order_by(func.count().desc()).limit(15)
+    )).all()
+    by_day = (await db.execute(
+        select(func.date(PageView.created_at), func.count()).where(where)
+        .group_by(func.date(PageView.created_at)).order_by(func.date(PageView.created_at))
+    )).all()
+
+    return {
+        "days": days,
+        "total": total,
+        "paid_clicks": paid,
+        "mobile": mobile,
+        "by_path": [{"path": p, "count": int(n)} for p, n in by_path],
+        "by_source": [{"source": s, "count": int(n)} for s, n in by_source],
+        "by_day": [{"date": str(d), "count": int(n)} for d, n in by_day],
+    }
+
+
 @router.get("/newsletter-signups")
 async def get_newsletter_signups(
     report_type: Optional[str] = Query(None, description="Filter by report_type (e.g. market_measured)"),

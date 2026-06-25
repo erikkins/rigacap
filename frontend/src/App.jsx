@@ -55,6 +55,7 @@ import LoginModal from './components/LoginModal';
 import { formatDate, formatChartDate } from './utils/formatDate';
 import SubscriptionBanner from './components/SubscriptionBanner';
 import CookieConsent from './components/CookieConsent';
+import PageViewBeacon from './components/PageViewBeacon';
 import TwoFactorSettings from './components/TwoFactorSettings';
 // DoubleSignals, MomentumRankings, ApproachingTrigger removed — absorbed into unified dashboard
 
@@ -4797,6 +4798,7 @@ export default function App() {
   return (
     <AuthProvider>
       <ScrollToTop />
+      <PageViewBeacon />
       <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path="/" element={<LandingPageV2 />} />

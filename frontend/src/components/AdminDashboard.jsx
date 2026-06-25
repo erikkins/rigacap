@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Users, Activity, DollarSign, Clock, Search, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, Plus, Zap, TrendingUp, AlertCircle, CheckCircle, PlayCircle, RefreshCw, Beaker, Bot, Settings, Share2, Server, Briefcase, Sparkles, Calculator, Shield, Mail, Lock, Loader2, Edit3, X as XIcon, Stethoscope } from 'lucide-react';
+import { Users, Activity, DollarSign, Clock, Search, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, Plus, Zap, TrendingUp, AlertCircle, CheckCircle, PlayCircle, RefreshCw, Beaker, Bot, Settings, Share2, Server, Briefcase, Sparkles, Calculator, Shield, Mail, Lock, Loader2, Edit3, X as XIcon, Stethoscope, BarChart3 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import StrategyGenerator from './StrategyGenerator';
@@ -11,6 +11,7 @@ import FlexibleBacktest from './FlexibleBacktest';
 import SocialTab from './SocialTab';
 import HygieneTab from './HygieneTab';
 import LeadsTab from './LeadsTab';
+import TrafficTab from './TrafficTab';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -23,6 +24,7 @@ const TABS = [
   { id: 'social', label: 'Social', icon: Share2 },
   { id: 'newsletter', label: 'Newsletter', icon: Mail },
   { id: 'leads', label: 'Leads', icon: Sparkles },
+  { id: 'traffic', label: 'Traffic', icon: BarChart3 },
   { id: 'hygiene', label: 'Hygiene', icon: Stethoscope },
   { id: 'users', label: 'Users', icon: Users },
 ];
@@ -35,7 +37,7 @@ export default function AdminDashboard() {
     try {
       const params = new URLSearchParams(window.location.search);
       const fromUrl = params.get('tab');
-      if (fromUrl && ['overview','portfolio','strategies','lab','autopilot','social','newsletter','leads','hygiene','users'].includes(fromUrl)) {
+      if (fromUrl && ['overview','portfolio','strategies','lab','autopilot','social','newsletter','leads','traffic','hygiene','users'].includes(fromUrl)) {
         return fromUrl;
       }
     } catch (e) {}
@@ -461,6 +463,10 @@ export default function AdminDashboard() {
 
       {activeTab === 'leads' && (
         <LeadsTab fetchWithAuth={fetchWithAuth} />
+      )}
+
+      {activeTab === 'traffic' && (
+        <TrafficTab fetchWithAuth={fetchWithAuth} />
       )}
 
       {activeTab === 'hygiene' && (

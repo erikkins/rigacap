@@ -566,6 +566,25 @@ class NewsletterPreference(Base):
     source = Column(String(50), nullable=True)  # where the signup happened
 
 
+class PageView(Base):
+    """Cookieless, first-party pageview beacon. Fires for EVERY visitor regardless
+    of cookie consent — no cookie, no persistent identifier, no stored IP → no
+    consent banner required. This is the low-volume visibility that GA4 can't give
+    us (consent-denied visits are invisible there). Aggregate analytics only."""
+    __tablename__ = "page_views"
+
+    id = Column(BigInteger, primary_key=True)
+    path = Column(String(300), index=True)
+    referrer = Column(String(500), nullable=True)
+    utm_source = Column(String(120), nullable=True)
+    utm_medium = Column(String(120), nullable=True)
+    utm_campaign = Column(String(200), nullable=True)
+    gclid = Column(String(200), nullable=True)        # Google click id → attributes paid
+    country = Column(String(2), nullable=True)          # coarse, from CloudFront header
+    is_mobile = Column(Boolean, nullable=True)
+    created_at = Column(DateTime, default=func.now(), index=True)
+
+
 class StrategyAdaptiveParams(Base):
     """Per-period optimized strategy params from biweekly TPE.
 

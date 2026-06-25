@@ -4,7 +4,7 @@ Signals API - Trading signal endpoints
 
 import os
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Response
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from typing import List, Optional
@@ -3377,6 +3377,57 @@ class NewsletterSubscribeRequest(BaseModel):
     turnstile_token: str
     report_type: str  # 'market_measured' | 'regime_report'
     source: Optional[str] = None
+
+
+class PageHitRequest(BaseModel):
+    path: str
+    ref: Optional[str] = None
+    utm_source: Optional[str] = None
+    utm_medium: Optional[str] = None
+    utm_campaign: Optional[str] = None
+    gclid: Optional[str] = None
+
+
+_BOT_UA = ("bot", "spider", "crawl", "slurp", "preview", "headless",
+           "lighthouse", "monitor", "pingdom", "facebookexternalhit", "embedly")
+
+
+@public_router.post("/hit", status_code=204)
+async def public_page_hit(
+    req: PageHitRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Cookieless, first-party pageview beacon. No auth, no cookie, no PII, no stored
+    IP — fires for EVERY visitor (incl. consent-denied), which is the visibility GA4
+    can't give us at low volume. Fire-and-forget: never errors the client."""
+    from app.core.database import PageView
+    try:
+        ua = (request.headers.get("user-agent") or "").lower()
+        if not ua or any(b in ua for b in _BOT_UA):
+            return Response(status_code=204)
+
+        def _t(v, n):
+            v = (v or "").strip()
+            return v[:n] or None
+
+        country = (request.headers.get("cloudfront-viewer-country")
+                   or request.headers.get("x-country") or "")[:2].upper() or None
+        is_mobile = any(m in ua for m in ("mobi", "android", "iphone", "ipad", "ipod"))
+        db.add(PageView(
+            path=_t(req.path, 300) or "/",
+            referrer=_t(req.ref, 500),
+            utm_source=_t(req.utm_source, 120),
+            utm_medium=_t(req.utm_medium, 120),
+            utm_campaign=_t(req.utm_campaign, 200),
+            gclid=_t(req.gclid, 200),
+            country=country,
+            is_mobile=is_mobile,
+        ))
+        await db.commit()
+    except Exception:
+        pass  # analytics beacon must never surface an error to the visitor
+    return Response(status_code=204)
 
 
 @public_router.post("/subscribe-newsletter")
