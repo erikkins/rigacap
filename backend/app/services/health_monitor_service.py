@@ -213,6 +213,7 @@ class HealthMonitorService:
         check_methods = [
             self._check_pickle_size,
             self._check_pickle_freshness,
+            self._check_pitfwu_freshness,
             self._check_dashboard_freshness,
             self._check_spy_csv_freshness,
             self._check_worker_memory,
@@ -370,6 +371,57 @@ class HealthMonitorService:
             message=f"Last updated: {last_mod.strftime('%Y-%m-%d %H:%M')} UTC",
             resolution="Check daily_scan CloudWatch logs, may need manual invoke" if status != HealthStatus.GREEN else "",
         )
+
+    async def _check_pitfwu_freshness(self) -> HealthCheck:
+        """PITFWU store freshness — the LIVE read path in parquet mode, and the alarm
+        that REPLACES the (now-silenced) pickle freshness check. If the daily
+        pitfwu_append chain stalls, the per-symbol store goes stale and every scan
+        reads old bars. Pickle mode => n/a."""
+        if os.environ.get("PRICE_SOURCE", "pickle").lower() != "parquet":
+            return HealthCheck(
+                category="Data Freshness", name="PITFWU Freshness",
+                status=HealthStatus.GREEN, value="—",
+                threshold="n/a (pickle mode)",
+                message="Not in parquet mode — PITFWU is not the read path.",
+                resolution="",
+            )
+        try:
+            from app.services import pitfwu_store
+            last = pitfwu_store.pitfwu_last_date()  # ref symbol (AAPL)
+            if last is None:
+                return HealthCheck(
+                    category="Data Freshness", name="PITFWU Freshness",
+                    status=HealthStatus.RED, value="MISSING",
+                    threshold="current trading session",
+                    message="PITFWU store unreadable — no last bar for the ref symbol.",
+                    resolution="Run {'pitfwu_append': {}} and verify it chains after daily_scan",
+                )
+            last_d = last.date() if hasattr(last, "date") else last
+            today_et = datetime.now(pytz.timezone("America/New_York")).date()
+            expected = _last_market_day(today_et)  # most recent CLOSED session
+            days_behind = (expected - last_d).days
+            if last_d >= expected:
+                status = HealthStatus.GREEN
+            elif days_behind <= 4:          # <=1 session behind, weekend-safe
+                status = HealthStatus.YELLOW
+            else:
+                status = HealthStatus.RED
+            return HealthCheck(
+                category="Data Freshness", name="PITFWU Freshness",
+                status=status,
+                value=f"last bar {last_d.isoformat()}",
+                threshold=f"current = {expected.isoformat()}",
+                message=f"PITFWU last bar {last_d.isoformat()}; last closed session {expected.isoformat()}.",
+                resolution="pitfwu_append chain likely stalled — run {'pitfwu_append': {}} and check daily_scan logs" if status != HealthStatus.GREEN else "",
+            )
+        except Exception as e:
+            return HealthCheck(
+                category="Data Freshness", name="PITFWU Freshness",
+                status=HealthStatus.YELLOW, value="ERROR",
+                threshold="current trading session",
+                message=f"PITFWU freshness check failed: {e}",
+                resolution="Investigate pitfwu_store.pitfwu_last_date()",
+            )
 
     async def _check_dashboard_freshness(self) -> HealthCheck:
         """Check when dashboard.json was last updated."""
