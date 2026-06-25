@@ -3153,12 +3153,25 @@ class AdminEmailService(EmailService):
 </table>
 </body></html>"""
 
-        return await self.send_email(
+        ok = await self.send_email(
             to_email=to_email,
             subject=f"⚠️ {subject}",
             html_content=html,
             text_content=message,
         )
+
+        # Mirror the alert to the admin's phone (admin mobile app). Pushes to
+        # THIS to_email only — send_admin_alert is sometimes called once per
+        # admin in a loop, so a fan-out-to-all here would duplicate. Best-effort.
+        try:
+            from app.services.push_notification_service import push_notification_service
+            await push_notification_service.send_to_admin_email(
+                to_email, f"⚠️ {subject}", message, data={"screen": "glance"}
+            )
+        except Exception:
+            pass
+
+        return ok
 
     async def send_strategy_analysis_email(
         self,

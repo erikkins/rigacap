@@ -210,6 +210,17 @@ async def _ping_admin_new_signup(email: str, method: str, req=None):
         )
         await admin_email_service.send_email(
             to_email="erik@rigacap.com", subject=subject, html_content=body)
+        # Mirror to the admin phone app (best-effort) — deep-links to Users tab.
+        try:
+            from app.services.push_notification_service import push_notification_service
+            await push_notification_service.send_to_admin_email(
+                "erik@rigacap.com",
+                f"🟢 New signup: {email}",
+                f"{email} signed up via {method}. Total accounts: {n if n is not None else '—'}.",
+                data={"screen": "users"},
+            )
+        except Exception:
+            pass
     except Exception:
         pass
 

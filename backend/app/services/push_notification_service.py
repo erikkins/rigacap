@@ -198,6 +198,49 @@ class PushNotificationService:
             data={"screen": "signal_detail", "symbol": symbol, "type": "sell_alert"},
         )
 
+    async def send_to_admin_email(
+        self,
+        to_email: str,
+        title: str,
+        body: str,
+        data: Optional[dict] = None,
+    ) -> int:
+        """Push an admin alert to one admin's devices (the admin mobile app
+        registers under that account, so this reuses the existing push path).
+
+        Self-contained: opens its own DB session so non-DB callers like the
+        email service can fire-and-forget. Best-effort — never raises. Only
+        sends if the address is on the ADMIN_EMAILS allowlist, so a stray call
+        can never push to a normal subscriber.
+        """
+        import os
+        from sqlalchemy import func
+        from app.core.database import async_session, User
+
+        try:
+            email = (to_email or "").strip().lower()
+            admin_emails = set(
+                e.strip().lower()
+                for e in os.environ.get("ADMIN_EMAILS", "erik@rigacap.com").split(",")
+                if e.strip()
+            )
+            if not email or email not in admin_emails:
+                return 0
+
+            async with async_session() as db:
+                result = await db.execute(
+                    select(User).where(func.lower(User.email) == email)
+                )
+                user = result.scalar_one_or_none()
+                if user is None:
+                    return 0
+                # Push bodies must be short — trim long alert text.
+                snippet = body if len(body) <= 178 else body[:175] + "..."
+                return await self.send_to_user(db, str(user.id), title, snippet, data)
+        except Exception as e:
+            logger.warning(f"send_to_admin_email failed for {to_email}: {e}")
+            return 0
+
 
 # Singleton
 push_notification_service = PushNotificationService()
