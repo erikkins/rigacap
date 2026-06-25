@@ -63,6 +63,24 @@ export async function getServiceStatus(): Promise<ServiceStatus> {
   return data;
 }
 
+// ── Live intraday quotes (daily change) ───────────────────────────
+export interface LiveQuote {
+  price: number;
+  change: number; // $ change vs prev close
+  change_pct: number; // % change vs prev close
+  prev_close?: number;
+}
+
+// Same source the subscriber app uses (/api/quotes/live). Returns a map keyed
+// by symbol. Empty object on no symbols.
+export async function getLiveQuotes(symbols: string[]): Promise<Record<string, LiveQuote>> {
+  if (!symbols.length) return {};
+  const { data } = await api.get('/api/quotes/live', {
+    params: { symbols: symbols.join(',') },
+  });
+  return (data?.quotes as Record<string, LiveQuote>) || {};
+}
+
 // ── Live model portfolio ──────────────────────────────────────────
 export async function getModelPortfolio(): Promise<any> {
   // Without portfolio_type the API returns { live, walkforward } nested — request
