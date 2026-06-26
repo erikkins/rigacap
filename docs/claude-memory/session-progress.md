@@ -7,21 +7,17 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jun 25 2026
+# Session snapshot — Jun 26 2026
 
-**Context:** Built + shipped the RigaCap **admin mobile app** (Expo, `mobile-admin/`); Erik live-testing on EK17, iterating fast via OTA. Detail [[project_admin_mobile_app_jun25]]. Discipline [[feedback_checkpoint_memory_during_session]].
+**Context:** Admin mobile app ([[project_admin_mobile_app_jun25]]) live on EK17, working OTA (channel `preview`→branch `preview` linked). Discipline [[feedback_checkpoint_memory_during_session]].
 
-**Done + deployed:**
-- App live on EK17 (build `12136de0`, OTA-capable). Backend: admin alerts→push, stats/MRR exclude test users (commit `07c746e`).
-- **OTA pipeline WORKING.** Key gotcha fixed: `preview` channel wasn't linked to `preview` branch → `eas channel:edit preview --branch preview`. Now `eas update --branch preview` reaches the phone (kill+relaunch TWICE: ON_LOAD downloads then applies).
-- Portfolio iterated to a **mobilized card layout** (NOT the web table — Erik's call): header Total Value/Today/Cash/Total Return + mini row Trades/Win Rate/Realized/Unrealized; per-position 4-line card (since-entry %/$, date·days·sh, entry→cur·HWM, today move), all numberOfLines=1 (fixed "held 9d" wrap). Live current price + daily change from /api/quotes/live (30s poll). Latest OTA group `e7864450` — awaiting Erik's look.
+**Done this session:**
+- **Ads endpoint WIRED + LIVE end-to-end.** Approach: Google Ads Script (first-party, no dev token/OAuth) → `POST /api/admin/ads/ingest` (shared-secret `X-Ads-Ingest-Secret` vs `ADS_INGEST_SECRET` env) → S3 `ads/latest.json` in the shared private bucket `rigacap-prod-price-data-...` (Erik chose shared, `ads/` prefix). `GET /ads/summary` (admin JWT) serves it. Erik pasted the script (`mobile-admin/google-ads-ingest.template.js`), ran it (real data: $355.51/58 clicks/2270 impr/0 conv), scheduled hourly. App Ads tab now shows it + "updated Xm ago" (OTA `196d5974`).
+- **MRR fixes:** exclude test users (earlier) AND now **comped subs** (`comped_at IS NULL`) from paid_subscribers + MRR — was $645 (5 comped × $129) → $0. Pushed `444e7c0`, deploy in progress (~4min); Erik refreshes after.
 
-**Live data confirms:** model book = 20 positions entered Jun 15 (~9d), TotalValue ~$100.6k, Today −$854/−1.2%, Return +0.6%, Unrealized +$1457.
+**Key facts:** `ADS_INGEST_SECRET` set on API Lambda via safe read-modify-write (survives code deploys, NOT a terraform apply — ⚠️ add to tfvars before next apply; value in /tmp/ads_ingest_secret.txt). Lambda S3 IAM scoped to price-data bucket only.
 
-**▶ TOMORROW (Erik's call, Jun 26): wire the Ads API endpoint** — build `GET /api/admin/ads/summary` (Google Ads API, dev token + OAuth refresh token in Lambda env/Secrets, NEVER in app) returning {spend, clicks, impressions, conversions, cpc, date_range, campaigns[]}. The app's Ads tab ALREADY consumes it (404→placeholder today), so it lights up with zero app work — just OTA after. Context for the campaign + measurement gaps: [[project_ad_conversion_tracking_jun24]] (stability-search-test-a; currently screenshots only, no API). First step: confirm where Google Ads API creds live / create a developer token + OAuth.
-
-**Healthy as of EOD Jun 25:** daily scan + parquet process ran clean — NO error/OOM/freshness noise (the Jun-15 OOM + sector-cap sagas staying quiet).
-
-**Also in flight / next:**
-- Awaiting Erik's read on the new Portfolio card layout (tune spacing/order) — OTA `e7864450`.
-- Rainy-day backlog: [[project_alpha_maximizer_sleeve_idea]] (PITFWU-based separate alpha product).
+**Next / open:**
+- Offered (Erik's call): a "Comped: N" stat on Glance; an "updated ago" was already added to Ads.
+- Earlier backlog: alpha-maximizer sleeve [[project_alpha_maximizer_sleeve_idea]]; ad conversion 0s = measurement [[project_ad_conversion_tracking_jun24]].
+- Erik mentioned wanting to "look at some other stuff" — still open.
