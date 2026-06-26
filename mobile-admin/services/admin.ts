@@ -17,6 +17,7 @@ export interface AdminStats {
   new_users_today: number;
   new_users_week: number;
   mrr: number;
+  comped_subscribers?: number;
 }
 
 export interface UserSummary {

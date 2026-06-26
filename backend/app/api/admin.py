@@ -473,6 +473,7 @@ class AdminStatsResponse(BaseModel):
     new_users_today: int
     new_users_week: int
     mrr: float  # Monthly recurring revenue
+    comped_subscribers: int = 0  # active but comped ($0) — shown separately from paid
 
 
 class ServiceStatusResponse(BaseModel):
@@ -860,6 +861,19 @@ async def get_admin_stats(
     )
     paid_subscribers = paid_result.scalar()
 
+    # Comped subscribers — active but comped ($0). Counted separately so it's
+    # visible without inflating paid/MRR.
+    comped_result = await db.execute(
+        sub_join(select(func.count(Subscription.id))).where(
+            and_(
+                Subscription.status == "active",
+                Subscription.comped_at.isnot(None),
+                _exclude_test_users(),
+            )
+        )
+    )
+    comped_subscribers = comped_result.scalar()
+
     # Expired trials
     expired_result = await db.execute(
         sub_join(select(func.count(Subscription.id))).where(
@@ -909,7 +923,8 @@ async def get_admin_stats(
         disabled_users=disabled_users,
         new_users_today=new_users_today,
         new_users_week=new_users_week,
-        mrr=mrr
+        mrr=mrr,
+        comped_subscribers=comped_subscribers,
     )
 
 

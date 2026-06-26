@@ -117,6 +117,7 @@ export default function Glance() {
             <StatCard label="New today" value={stats?.new_users_today ?? '—'} tone="positive" />
             <StatCard label="New this week" value={stats?.new_users_week ?? '—'} />
             <StatCard label="Paid subs" value={stats?.paid_subscribers ?? '—'} />
+            <StatCard label="Comped" value={stats?.comped_subscribers ?? '—'} />
             <StatCard label="Active trials" value={stats?.active_trials ?? '—'} />
             <StatCard label="Total users" value={stats?.total_users ?? '—'} />
             <StatCard
