@@ -9,15 +9,16 @@ metadata:
 
 # Session snapshot — Jun 26 2026
 
-**Context:** Admin mobile app ([[project_admin_mobile_app_jun25]]) live on EK17, working OTA (channel `preview`→branch `preview` linked). Discipline [[feedback_checkpoint_memory_during_session]].
+**Context:** Shapes/alpha-sleeve research ([[project_alpha_maximizer_sleeve_idea]]). Erik back on wifi; first edge run EXECUTING NOW. Discipline [[feedback_checkpoint_memory_during_session]].
 
-**Done this session:**
-- **Ads endpoint WIRED + LIVE end-to-end.** Approach: Google Ads Script (first-party, no dev token/OAuth) → `POST /api/admin/ads/ingest` (shared-secret `X-Ads-Ingest-Secret` vs `ADS_INGEST_SECRET` env) → S3 `ads/latest.json` in the shared private bucket `rigacap-prod-price-data-...` (Erik chose shared, `ads/` prefix). `GET /ads/summary` (admin JWT) serves it. Erik pasted the script (`mobile-admin/google-ads-ingest.template.js`), ran it (real data: $355.51/58 clicks/2270 impr/0 conv), scheduled hourly. App Ads tab now shows it + "updated Xm ago" (OTA `196d5974`).
-- **MRR fixes:** exclude test users (earlier) AND now **comped subs** (`comped_at IS NULL`) from paid_subscribers + MRR — was $645 (5 comped × $129) → $0. Pushed `444e7c0`, deploy in progress (~4min); Erik refreshes after.
+**Earlier today (shipped):** Ads endpoint live (Google Ads Script→/ads/ingest→S3→app hourly); MRR excludes test+comped subs (→$0) + Comped card; Ads "updated Xm ago".
 
-**Key facts:** `ADS_INGEST_SECRET` set on API Lambda via safe read-modify-write (survives code deploys, NOT a terraform apply — ⚠️ add to tfvars before next apply; value in /tmp/ads_ingest_secret.txt). Lambda S3 IAM scoped to price-data bucket only.
+**RUNNING NOW — cup-and-handle edge test:**
+- Cmd: `PITFWU_LOCAL=~/pitfwu_cache AWS_PROFILE=rigacap backend/venv/bin/python scripts/shapes_entry_edge.py` (background task `b3pneu0tu`; watcher `biydvu6ws` polls cache/bars/tiers, breaks on "saved →"). Erik wants ongoing status updates.
+- Detector FIXED (handle window excluded today; AAPL smoke=6 sane breakouts/9y). Two-step: Tier-1 (2016-2020) + Tier-2 held-out (2021-2026), checkpoints each → `scripts/shapes_entry_edge_results.json`.
+- Phase when last checked: downloading ~2GB cache (panels first, 214MB in), compute not started. Output stdout empty until universe built.
+- Reads edge = median forward return of breakout days vs baseline @ 5/10/20/40/60d. Cost ~$0 (local M4 Max compute; one-time S3 egress).
 
-**Next / open:**
-- Offered (Erik's call): a "Comped: N" stat on Glance; an "updated ago" was already added to Ads.
-- Earlier backlog: alpha-maximizer sleeve [[project_alpha_maximizer_sleeve_idea]]; ad conversion 0s = measurement [[project_ad_conversion_tracking_jun24]].
-- Erik mentioned wanting to "look at some other stuff" — still open.
+**Next after results land:** interpret Tier-1 vs Tier-2 stability; then add the **naive (survivorship-biased) vs rigorous (PiT) CONTRAST** = the differentiation deliverable (Erik's framing: moat is PITFWU rigor, not "find cups"). Then more shapes (VCP, H&S/key-reversal=Bear Ripper), orthogonality vs ensemble, regime split.
+
+**UNCOMMITTED (on disk, safe):** `scripts/shapes_entry_edge.py` (new), `scripts/pitfwu_veneer.py` (PITFWU_LOCAL write-through cache), `legacy/sql/` (137 extracted procs). Commit when Erik asks. Legacy procs = idea catalog only (rewrite modern, don't trust legacy math).
