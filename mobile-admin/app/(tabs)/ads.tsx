@@ -1,11 +1,9 @@
 /**
  * Ads — Google Ads spend/clicks/conversions at a glance.
  *
- * MILESTONE 2: the backend /api/admin/ads/summary endpoint isn't built yet
- * (needs server-side Google Ads API auth — developer token + OAuth refresh
- * token; creds must never live in the app). Until that ships, getAdsSummary()
- * returns null on 404 and we render a "not configured" state. The full layout
- * is already here so wiring the endpoint lights it up with no UI work.
+ * Data: a Google Ads Script POSTs campaign stats hourly to /api/admin/ads/ingest;
+ * /ads/summary serves the latest snapshot (with updated_at). getAdsSummary()
+ * returns null on 404 (no snapshot yet) → "not configured" state.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -18,6 +16,20 @@ import { Fonts, FontSize, Palette, Radii, Spacing } from '@/constants/theme';
 
 const money = (n: any) => (typeof n === 'number' ? '$' + n.toFixed(2) : '—');
 const int = (n: any) => (typeof n === 'number' ? n.toLocaleString('en-US') : '—');
+const prettyRange = (s: any) => (s ? String(s).toLowerCase().replace(/_/g, ' ') : 'last 30 days');
+const updatedAgo = (iso: any) => {
+  if (!iso) return null;
+  try {
+    const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+    if (m < 1) return 'updated just now';
+    if (m < 60) return `updated ${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `updated ${h}h ago`;
+    return `updated ${Math.floor(h / 24)}d ago`;
+  } catch {
+    return null;
+  }
+};
 
 export default function Ads() {
   const [ads, setAds] = useState<AdsSummary | null>(null);
@@ -78,7 +90,10 @@ export default function Ads() {
           </View>
         ) : (
           <>
-            <Section title="Spend" hint={ads?.date_range || 'last 14 days'}>
+            {updatedAgo(ads?.updated_at) ? (
+              <Text style={styles.freshness}>{updatedAgo(ads?.updated_at)}</Text>
+            ) : null}
+            <Section title="Spend" hint={prettyRange(ads?.date_range)}>
               <View style={styles.grid}>
                 <StatCard label="Spend" value={money(ads?.spend)} />
                 <StatCard label="Clicks" value={int(ads?.clicks)} />
@@ -117,6 +132,12 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Palette.paper },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Palette.paper },
   content: { padding: Spacing.lg, paddingBottom: Spacing.xxl },
+  freshness: {
+    fontFamily: Fonts.mono.regular,
+    fontSize: FontSize.xs,
+    color: Palette.inkLight,
+    marginBottom: Spacing.md,
+  },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
   placeholder: {
     backgroundColor: Palette.paperCard,
