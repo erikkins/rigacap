@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timedelta
 from app.core.timezone import trading_today_start
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, desc
@@ -906,6 +906,63 @@ async def get_admin_stats(
         new_users_week=new_users_week,
         mrr=mrr
     )
+
+
+# ── Ads (Google Ads Script → ingest → summary) ───────────────────────────────
+# A Google Ads Script (runs inside Google Ads, first-party — no dev token/OAuth)
+# POSTs campaign stats to /ads/ingest on a schedule. Auth there is a shared
+# secret header (Ads Scripts can't carry a JWT). /ads/summary serves the last
+# snapshot to the admin app. The snapshot lives in S3 (ads/latest.json) — no DB
+# migration needed.
+_ADS_S3_KEY = "ads/latest.json"
+
+
+def _ads_s3():
+    import boto3
+    return boto3.client("s3", region_name="us-east-1")
+
+
+@router.post("/ads/ingest")
+async def ingest_ads_snapshot(
+    payload: dict,
+    x_ads_ingest_secret: str = Header(None),
+):
+    """Receive a Google Ads stats snapshot from the Ads Script.
+
+    Auth = shared secret (ADS_INGEST_SECRET env), NOT admin JWT — the Ads Script
+    can only send a static header.
+    """
+    import os
+
+    expected = os.environ.get("ADS_INGEST_SECRET")
+    if not expected:
+        raise HTTPException(status_code=503, detail="Ads ingest not configured")
+    if not x_ads_ingest_secret or x_ads_ingest_secret != expected:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad ingest secret")
+
+    snapshot = dict(payload or {})
+    snapshot["updated_at"] = datetime.utcnow().isoformat() + "Z"
+    try:
+        _ads_s3().put_object(
+            Bucket=settings.S3_BUCKET,
+            Key=_ADS_S3_KEY,
+            Body=json.dumps(snapshot).encode("utf-8"),
+            ContentType="application/json",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to store ads snapshot: {e}")
+    return {"status": "ok", "stored_at": snapshot["updated_at"]}
+
+
+@router.get("/ads/summary")
+async def get_ads_summary(admin: User = Depends(get_admin_user)):
+    """Serve the latest Google Ads snapshot to the admin app. 404 until the first
+    ingest lands (the app renders a 'not configured' state on 404)."""
+    try:
+        resp = _ads_s3().get_object(Bucket=settings.S3_BUCKET, Key=_ADS_S3_KEY)
+    except Exception:
+        raise HTTPException(status_code=404, detail="No ads snapshot yet")
+    return json.loads(resp["Body"].read())
 
 
 @router.get("/service-status", response_model=ServiceStatusResponse)
