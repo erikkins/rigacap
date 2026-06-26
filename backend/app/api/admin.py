@@ -922,6 +922,12 @@ def _ads_s3():
     return boto3.client("s3", region_name="us-east-1")
 
 
+def _ads_bucket():
+    # Private data bucket (PRICE_DATA_BUCKET) — same one main.py uses for S3 JSON.
+    from app.services.data_export import S3_BUCKET
+    return S3_BUCKET
+
+
 @router.post("/ads/ingest")
 async def ingest_ads_snapshot(
     payload: dict,
@@ -944,7 +950,7 @@ async def ingest_ads_snapshot(
     snapshot["updated_at"] = datetime.utcnow().isoformat() + "Z"
     try:
         _ads_s3().put_object(
-            Bucket=settings.S3_BUCKET,
+            Bucket=_ads_bucket(),
             Key=_ADS_S3_KEY,
             Body=json.dumps(snapshot).encode("utf-8"),
             ContentType="application/json",
@@ -959,7 +965,7 @@ async def get_ads_summary(admin: User = Depends(get_admin_user)):
     """Serve the latest Google Ads snapshot to the admin app. 404 until the first
     ingest lands (the app renders a 'not configured' state on 404)."""
     try:
-        resp = _ads_s3().get_object(Bucket=settings.S3_BUCKET, Key=_ADS_S3_KEY)
+        resp = _ads_s3().get_object(Bucket=_ads_bucket(), Key=_ADS_S3_KEY)
     except Exception:
         raise HTTPException(status_code=404, detail="No ads snapshot yet")
     return json.loads(resp["Body"].read())
