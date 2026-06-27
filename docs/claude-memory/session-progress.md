@@ -7,16 +7,16 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jun 27 2026 (Sat) — END OF A MARATHON SHAPES SESSION
+# Session snapshot — Jun 27 2026 (Sat) — REGIME-ADAPTIVE BREAKTHROUGH + robustness/daily checks
 
-**Context:** Multi-day Bull Rider / Bear Ripper shapes research complementing defensive t30v. Survivorship-free PITFWU, two-step, local M4 Max, cache `~/pitfwu_cache` (now ~1GB incl EXT). Erik north star: **20% CAGR / <20% MaxDD**.
+**Context:** Multi-day Bull Rider / Bear Ripper shapes research. Survivorship-free PITFWU, two-step, local M4 Max, cache `~/pitfwu_cache` (~1GB incl EXT). Erik north star: 20% CAGR / <20% MaxDD / >1 Sharpe / >1 Calmar. Scripts: shape_lab.py, exit_lab.py, three_way_blend.py, regime_adaptive.py, robustness.py, omr_regime_test.py.
 
-**BUILT (all uncommitted, safe on disk):** `scripts/shape_lab.py` (shape factory: registry, regime-gating `regime=bull|bear`, per-shape exits via hold_panel, per-shape CAPS via shape_panel+cap_per_shape), `exit_lab.py` (exit factory + sweep), `omr_regime_test.py`, `three_way_blend.py`. `shapes_portfolio.simulate` now supports hold_panel + shape caps. EXT layer (`v.EXT=True`, ~21y back to 2004-12, 6 bears) verified working; pre-2016 survivorship-biased (label).
+**⭐⭐ THE WIN — REGIME-ADAPTIVE SWITCH (regime_adaptive.py):** route OFFENSE by regime — UNCAPPED Bull Rider when SPY>200MA, Bear Ripper when SPY<200MA, on a t30v core. HELD-OUT (2021-26) 20% core/80% offense = **20.1% CAGR / 1.05 Sharpe / -18.0% MaxDD / 1.12 Calmar = ALL 4 GOALS HIT, out-of-sample.** Beats t30v (15.3/0.90/-17.6) on every axis. Static blends never could (always traded return for safety). Uncapping bull offense added the missing ~4pts CAGR; switch sidesteps Bull Rider's bear-bleed.
 
-**⭐ THE HONEST VERDICT (three_way_blend, held-out vs full):** **20%/<20% NOT reached with a STATIC blend.** Ceiling ~15% CAGR within DD budget. KEY: which sleeve helps FLIPS by regime — Full-period (bull-heavy): Bull Rider star (14%/0.90, optimizer wants 70%), Bear Ripper≈0. Held-out (incl 2022): Bull Rider dead weight (0%), Bear Ripper the diversifier (corr −0.00 to t30v; 50/50 → Sharpe 1.06, MaxDD −8.9% halved). Sleeves = risk-shaping/regime-specialized, not a path to 20% CAGR. Bull Rider per-shape caps helped DD (−43.7→−33.8) but didn't fix Sharpe (still correlated factor).
+**⚠️ TWO HONESTY CAVEATS (under active test):**
+1. **Full period (2016-26) only ~13% CAGR** — 20% is NOT uniform; strong in 2021-26, muted earlier → maybe window-specific. RUNNING NOW: `robustness.py` (task `bv3vl3nvr`) tests regime-adaptive across 5 rolling windows 2009-2026 (EXT) — does it hit ~18-20% CONSISTENTLY or only 2021-26? Prints a row per window. THE decider.
+2. **MaxDD is BIWEEKLY-APPROX → understates true daily DD.** Daily test: single-backtest t30v daily MaxDD = **23.7%** vs walk-forward biweekly 17.6%. So "<20%" blend claims are optimistic; true daily DD deeper. Mix of resolution + single-vs-walkforward strategy diff. Clean daily PROD t30v needs walk_forward_service to emit daily equity (deferred, deeper change). `pitfwu_wf.run()` now takes trail/max_pos/size params (daily single-backtest t30v).
 
-**⭐ NEXT (the compelling move): REGIME-ADAPTIVE allocation** — Bull Rider in bull regime, Bear Ripper in bear regime, driven by the existing 7-regime engine. Static blend can't win both regimes; switching might capture Bull's bull-CAGR + Bear's bear-protection = real shot at 20%/<20%. Build this first next session.
+**NEXT:** read robustness scorecard when `bv3vl3nvr` lands → if consistent ~20% = productize; if not = harden the regime signal (crude SPY-200MA → use the 7-regime engine). Then daily-MaxDD confirmation. Trust CAGR/Sharpe (solid biweekly), treat MaxDD as approx.
 
-**Validated facts:** Bear Ripper durable across 6 bears/2 eras (bear-OMR +0.5-0.9%/53-57% win). Bull Rider shapes (cup/vcp/db/inv_hs) all +0.96-1.42% held-out edge but CORRELATED to t30v (~0.59). Exit truth: time-stops beat trailing (noise at short horizon). Real t30v = `pitfwu_wf_periods.wf(...,20,4.5,30,volw=1.0)` MDD 17.6/18.5%=advertised.
-
-**Other:** newsletter draft saved [[project_newsletter_exit_stops_topic]] (future issue, not Jun 28). Curiosity backlog: Bull/Bear Ripper as standalone product. backend/app/services/backtester.py has the additive equity_curve field. Commit all when Erik asks.
+**UNCOMMITTED (safe on disk):** all scripts/*.py shapes work, shapes_portfolio.py (hold_panel+caps), pitfwu_veneer.py, pitfwu_wf.py (params), backend/app/services/backtester.py (equity_curve), legacy/sql/. Newsletter draft [[project_newsletter_exit_stops_topic]]. Commit when Erik asks.
