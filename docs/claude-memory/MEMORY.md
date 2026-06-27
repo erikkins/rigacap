@@ -1,5 +1,8 @@
 # Stocker App - Key Learnings
 
+## 📰 QUEUED NEWSLETTER TOPIC — time-stop vs trailing-stop ("Why cut-your-losses can be the losing move")
+- [Draft + framing](project_newsletter_exit_stops_topic.md) — Erik wants it in a FUTURE issue (NOT Jun 28's, already written). Principle piece, no recipe leak; anchors on t30v's public wide trail. Draft is ready to drop in.
+
 ## ▶▶▶ RESUME (Jun 25) — ADMIN iPHONE APP build (native Expo, push-first). Context recovered after a lost session.
 - [Admin mobile app — goal, decisions, backend endpoints, next steps](project_admin_mobile_app_jun25.md) — native Expo admin, push-first; admin-tab data + Ads API; never app-store. Existing `mobile/` user app is May-5 stale — OPEN fork: separate app (leaning) vs bolt-on. Backend auth + `/api/admin/*` already exist. Next: confirm fork → scaffold.
 - [Checkpoint memory DURING the session, not at shutdown](feedback_checkpoint_memory_during_session.md) — no shutdown hook can save context; Erik lost a session Jun 25 via VS Code close. Recover via `claude --resume` (not `--continue`).
