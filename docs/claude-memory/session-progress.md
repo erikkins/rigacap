@@ -7,18 +7,16 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jun 27 2026 (Sat)
+# Session snapshot — Jun 27 2026 (Sat) — END OF A MARATHON SHAPES SESSION
 
-**Context:** TWO SLEEVES complementing defensive t30v: **Bull Rider** (up-mkt offense) + **Bear Ripper** (down/vol offense). Survivorship-free PITFWU, two-step (T1 2016-20 / T2 held-out 21-26), local M4 Max, `~/pitfwu_cache`. Factories: `scripts/shape_lab.py` + `scripts/exit_lab.py`. Ensemble baseline = REAL prod t30v via `pitfwu_wf_periods.wf(...,20,4.5,30,volw=1.0)` (MDD 17.6/18.5%=advertised).
+**Context:** Multi-day Bull Rider / Bear Ripper shapes research complementing defensive t30v. Survivorship-free PITFWU, two-step, local M4 Max, cache `~/pitfwu_cache` (now ~1GB incl EXT). Erik north star: **20% CAGR / <20% MaxDD**.
 
-**REGIME-GATING BUILT (this session):** `bull_regime(end)` = SPY>200MA (PiT); `@register_shape(..., regime="bull"|"bear"|None)`; gate applied per-shape in `load()`. OMR now `regime="bear"` (Bear Ripper #1), hold 10. inv_hs exit fixed to hold 20 (sweep winner).
+**BUILT (all uncommitted, safe on disk):** `scripts/shape_lab.py` (shape factory: registry, regime-gating `regime=bull|bear`, per-shape exits via hold_panel, per-shape CAPS via shape_panel+cap_per_shape), `exit_lab.py` (exit factory + sweep), `omr_regime_test.py`, `three_way_blend.py`. `shapes_portfolio.simulate` now supports hold_panel + shape caps. EXT layer (`v.EXT=True`, ~21y back to 2004-12, 6 bears) verified working; pre-2016 survivorship-biased (label).
 
-**SHAPE ROSTER:** Bull Rider 4 = cup_handle(t20)+vcp(t20)+double_bottom(t10)+inv_hs(t20), all held-out edge +0.96..+1.42%. Bear Ripper = pullback_bounce/OMR (bear-gated, mean-rev). Earlier cup+db blend w/ t30v held-out Sharpe 0.99@50/50.
+**⭐ THE HONEST VERDICT (three_way_blend, held-out vs full):** **20%/<20% NOT reached with a STATIC blend.** Ceiling ~15% CAGR within DD budget. KEY: which sleeve helps FLIPS by regime — Full-period (bull-heavy): Bull Rider star (14%/0.90, optimizer wants 70%), Bear Ripper≈0. Held-out (incl 2022): Bull Rider dead weight (0%), Bear Ripper the diversifier (corr −0.00 to t30v; 50/50 → Sharpe 1.06, MaxDD −8.9% halved). Sleeves = risk-shaping/regime-specialized, not a path to 20% CAGR. Bull Rider per-shape caps helped DD (−43.7→−33.8) but didn't fix Sharpe (still correlated factor).
 
-**IN FLIGHT (task b90ks4dww, partial):** standalone portfolio: Bull Rider 4-basket Tier-2 held-out CAGR 8.1%/Sharpe 0.45/MaxDD -43.7% — WEAKER standalone than cup+db (vcp/inv_hs added drawdown). BUT standalone ≠ verdict; the t30v BLEND (ortho) is. Bear Ripper OMR Tier-1 -0.6%/0.03 (expected — T1 mostly bull, gated off); Tier-2 (2022-bear, where it should earn keep) still computing.
+**⭐ NEXT (the compelling move): REGIME-ADAPTIVE allocation** — Bull Rider in bull regime, Bear Ripper in bear regime, driven by the existing 7-regime engine. Static blend can't win both regimes; switching might capture Bull's bull-CAGR + Bear's bear-protection = real shot at 20%/<20%. Build this first next session.
 
-**NEXT:** run ORTHO (vs real t30v) for (a) Bull Rider 4-basket and (b) bear-gated OMR — the blend is the real test. Then 3-way blend t30v+BullRider+BearRipper. Possibly trim the 4-basket (vcp/inv_hs hurt standalone DD) or only count their blend contribution.
+**Validated facts:** Bear Ripper durable across 6 bears/2 eras (bear-OMR +0.5-0.9%/53-57% win). Bull Rider shapes (cup/vcp/db/inv_hs) all +0.96-1.42% held-out edge but CORRELATED to t30v (~0.59). Exit truth: time-stops beat trailing (noise at short horizon). Real t30v = `pitfwu_wf_periods.wf(...,20,4.5,30,volw=1.0)` MDD 17.6/18.5%=advertised.
 
-**Also re-explained to Erik (he asked twice):** time-stop > trailing stop because at SHORT horizon price moves = NOISE (whipsaw), edge is TIME-bounded; t30v's 30% trail works only because it holds MONTHS where drops = real trend breaks. Match exit to whether price carries info at the horizon.
-
-**UNCOMMITTED (safe on disk):** scripts/shape_lab.py, exit_lab.py, omr_regime_test.py, shapes_*.py, shapes_portfolio.py (hold_panel), pitfwu_veneer.py, pitfwu_wf.py, backend/app/services/backtester.py (equity_curve), legacy/sql/. Commit when Erik asks.
+**Other:** newsletter draft saved [[project_newsletter_exit_stops_topic]] (future issue, not Jun 28). Curiosity backlog: Bull/Bear Ripper as standalone product. backend/app/services/backtester.py has the additive equity_curve field. Commit all when Erik asks.
