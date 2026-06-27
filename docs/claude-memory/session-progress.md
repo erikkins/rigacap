@@ -7,16 +7,19 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jun 26 2026
+# Session snapshot — Jun 27 2026
 
-**Context:** Bull Rider shapes research — survivorship-free PITFWU, two-step (Tier-1 2016-20 / Tier-2 held-out 21-26), local M4 Max, cache `~/pitfwu_cache`. [[project_alpha_maximizer_sleeve_idea]]. Vision (Erik): Bull Rider = a BASKET of multiple orthogonal shapes, not just C&H; exits may be shared/per-shape/stacked — unknown yet.
+**Context:** Bull Rider shapes research — survivorship-free PITFWU, two-step (Tier-1 2016-20 / Tier-2 held-out 21-26), local M4 Max, cache `~/pitfwu_cache`. [[project_alpha_maximizer_sleeve_idea]]. Vision: Bull Rider = a basket of orthogonal shapes, per-shape exits, blended as a complement to t30v.
 
-**KEY VALIDATION DONE:** orthogonality now uses the REAL prod t30v (`pitfwu_wf_periods.wf(start,end,20,4.5,30,volw=1.0)`, strategy_id 6) — standalone MDD **17.6%/18.5% = matches advertised ~19%**. Enabled by adding `equity_curve` field to BacktestResult (additive/inert, popped in to_dict, Erik-approved). Cup-and-handle held-out: a ~25% sleeve nudges t30v Sharpe 0.90→0.93, flat DD (modest but real); full 50/50 Sharpe 0.99. Bull Rider keeps its OWN logic (don't force ensemble mechanics — Erik corrected my over-think).
+**TWO FACTORIES BUILT + WORKING (`scripts/shape_lab.py` + `scripts/exit_lab.py`):**
+- shape registry `@register_shape(name, exit=...)`; commands `list|edge|portfolio|ortho`; basket = OR of shapes; per-shape exits via a hold panel threaded into `shapes_portfolio.simulate(hold_panel=)`. Shapes: cup_handle (exit 20d), double_bottom reversal (exit 10d).
+- exit registry `@register_exit`; `sweep` crosses entry×exit, two-step, held-out. 10 exits (time_10/20/40, trail_10/20/30, tgt20_stop8, stairstep, keyrev_60, volstop_20).
 
-**⭐ SHAPE FACTORY BUILT (`scripts/shape_lab.py`):** registry `@register_shape(name)` + detector(o,h,l,c,vol)->bool[]; commands `list|edge|portfolio|ortho <shape1,shape2,...>`; basket = OR of shapes; shared 20d time-exit (registry has per-shape `exit` slot for later). Specimen #1 cup_handle, #2 **double_bottom (reversal — orthogonal candidate)**. double_bottom held-out edge = **+0.96%, win 53.5%, n=579** (works!). Reuses simulate/perf (shapes_portfolio) + real_ensemble_equity (shapes_orthogonality, lazy import).
+**KEY RESULTS (held-out):**
+- Exit sweep: **exits are PER-SHAPE.** cup→time_20 best (+1.19% med); double_bottom→time_10 best (+1.06%). EVERY stop whipsaws (all negative held-out median; tgt20_stop8 worst −8.15%). Time-exits dominate short-horizon breakouts.
+- Per-shape-exit basket vs REAL t30v: best blend **Sharpe 0.99 at 50/50** (t30v alone 0.90). Progression as we added shape+exits: 0.90→0.93(cup)→0.95(+db shared)→**0.99(+db per-shape)**. Standalone DD tightened −37→−34.5%.
+- **Ensemble leg = REAL prod t30v** (`pitfwu_wf_periods.wf(...,20,4.5,30,volw=1.0)`, MDD 17.6/18.5% = advertised ~19%). Enabled by additive `BacktestResult.equity_curve` field (inert, Erik-approved).
 
-**IN FLIGHT:** basket ortho `cup_handle,double_bottom` vs real t30v running (task `bxqikcx08`) — tests if adding the reversal shape diversifies t30v MORE than cup alone (the multi-shape payoff).
+**WHY TIME-EXIT > STOPS (Erik's "make it make sense", answered):** edge is TIME-bounded (~10-20d drift, decays); stops trigger on intraday NOISE (volatile momentum names dip→recover), realizing whipsaw losses with no upside gain. Time-exit = minimum-assumption, edge-matched. Contrast: t30v's 30% trail works because it holds MONTHS (real trend breaks). Same firm, opposite horizons, opposite right exit.
 
-**NEXT (Erik's idea, agreed pending basket result): EXIT FACTORY** — symmetric `@register_exit` registry (menu already exists in shapes_tpe.exit_sim: trail/hard-stop/target/stairstep/key-reversal/time/vol-gate). A `sweep` crosses entry×exit, two-step, held-out → answers shared-vs-per-shape-vs-stacked empirically ("blind to entry"). GUARDRAIL: exits overfit viciously (TPE tail-chased) → MUST be two-step + robust (Sharpe) objective.
-
-**UNCOMMITTED (on disk, safe):** scripts/shape_lab.py + shapes_*.py (7), pitfwu_veneer.py (cache), pitfwu_wf.py, backend/app/services/backtester.py (equity_curve field), legacy/sql/ (137 procs). Commit when Erik asks.
+**NEXT (open):** add more orthogonal shapes (the lever); maybe stacked exits; eventually a daily t30v curve for exact blend MDD (currently biweekly-approx). UNCOMMITTED (safe on disk): scripts/shape_lab.py, exit_lab.py, shapes_*.py, shapes_portfolio.py (hold_panel), pitfwu_veneer.py, pitfwu_wf.py, backend/app/services/backtester.py (equity_curve), legacy/sql/. Commit when Erik asks.
