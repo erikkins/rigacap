@@ -1,5 +1,8 @@
 # Stocker App - Key Learnings
 
+## 🏷️ MARKETING: "survivorship-free" is TABLE STAKES, not a tagline
+- [Why + how to apply](feedback_survivorship_free_not_marketing.md) — internal rigor only; keep out of customer copy. Lead with result + thesis (modern-market momentum), not methodology hygiene.
+
 ## 📰 QUEUED NEWSLETTER TOPIC — time-stop vs trailing-stop ("Why cut-your-losses can be the losing move")
 - [Draft + framing](project_newsletter_exit_stops_topic.md) — Erik wants it in a FUTURE issue (NOT Jun 28's, already written). Principle piece, no recipe leak; anchors on t30v's public wide trail. Draft is ready to drop in.
 

@@ -7,16 +7,19 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jun 27 2026 (Sat) — REGIME-ADAPTIVE BREAKTHROUGH + robustness/daily checks
+# Session snapshot — Jun 29 2026 (Mon)
 
-**Context:** Multi-day Bull Rider / Bear Ripper shapes research. Survivorship-free PITFWU, two-step, local M4 Max, cache `~/pitfwu_cache` (~1GB incl EXT). Erik north star: 20% CAGR / <20% MaxDD / >1 Sharpe / >1 Calmar. Scripts: shape_lab.py, exit_lab.py, three_way_blend.py, regime_adaptive.py, robustness.py, omr_regime_test.py.
+**Context:** Bull Rider / Bear Ripper shapes research. Survivorship-free PITFWU, EXT (`v.EXT=True`, back to 2004). Local M4 Max, cache `~/pitfwu_cache`. Scripts: shape_lab, exit_lab, three_way_blend, regime_adaptive, robustness, omr_regime_test, shape_edge_eras, reverse_swap, t30v_eras.
 
-**⭐⭐ THE WIN — REGIME-ADAPTIVE SWITCH (regime_adaptive.py):** route OFFENSE by regime — UNCAPPED Bull Rider when SPY>200MA, Bear Ripper when SPY<200MA, on a t30v core. HELD-OUT (2021-26) 20% core/80% offense = **20.1% CAGR / 1.05 Sharpe / -18.0% MaxDD / 1.12 Calmar = ALL 4 GOALS HIT, out-of-sample.** Beats t30v (15.3/0.90/-17.6) on every axis. Static blends never could (always traded return for safety). Uncapping bull offense added the missing ~4pts CAGR; switch sidesteps Bull Rider's bear-bleed.
+**⭐ "WHY recent-only" ANSWERED + REFRAMED as MODERN-ERA:**
+- Shape entry edge (shape_edge_eras.py) is MODERN: neg/zero 2009-2016, positive 2017-20, strong 2021-26 — same all 4 shapes. NOT overfit (raw no-fit), NOT survivorship (relative measure).
+- t30v by era (t30v_eras.py): 3.1%→7.0%→8.6%→**19.5%** (monotonic) — t30v is ALSO modern-favored. Dual frame: real 21y strategy, MUCH stronger recently.
+- **HONEST CAVEAT (Erik's instinct):** EVERYTHING peaks 2021-26 → the ~20% is BULL-AMPLIFIED, not durable. Defensible claim = "modern-market momentum, edge since 2017, ~10-12% durable, recent yrs much stronger" — NOT a 20% banner.
 
-**⚠️ TWO HONESTY CAVEATS (under active test):**
-1. **Full period (2016-26) only ~13% CAGR** — 20% is NOT uniform; strong in 2021-26, muted earlier → maybe window-specific. RUNNING NOW: `robustness.py` (task `bv3vl3nvr`) tests regime-adaptive across 5 rolling windows 2009-2026 (EXT) — does it hit ~18-20% CONSISTENTLY or only 2021-26? Prints a row per window. THE decider.
-2. **MaxDD is BIWEEKLY-APPROX → understates true daily DD.** Daily test: single-backtest t30v daily MaxDD = **23.7%** vs walk-forward biweekly 17.6%. So "<20%" blend claims are optimistic; true daily DD deeper. Mix of resolution + single-vs-walkforward strategy diff. Clean daily PROD t30v needs walk_forward_service to emit daily equity (deferred, deeper change). `pitfwu_wf.run()` now takes trail/max_pos/size params (daily single-backtest t30v).
+**REVERSE-SWAP was VACUOUS (Erik caught it — "too on the nose"):** mirrored because the only fitted knob (core weight) was 50/50 in BOTH halves → out-of-sample = in-sample. Need a REAL reverse-swap that fits the SELECTED choices (per-shape EXITS + shape roster) on one half, validates on other — THAT can actually fail. = the next build.
 
-**NEXT:** read robustness scorecard when `bv3vl3nvr` lands → if consistent ~20% = productize; if not = harden the regime signal (crude SPY-200MA → use the 7-regime engine). Then daily-MaxDD confirmation. Trust CAGR/Sharpe (solid biweekly), treat MaxDD as approx.
+**MARKETING RULE (new memory [[feedback_survivorship_free_not_marketing]]):** survivorship-free = TABLE STAKES, keep OUT of customer copy; lead with result+thesis.
 
-**UNCOMMITTED (safe on disk):** all scripts/*.py shapes work, shapes_portfolio.py (hold_panel+caps), pitfwu_veneer.py, pitfwu_wf.py (params), backend/app/services/backtester.py (equity_curve), legacy/sql/. Newsletter draft [[project_newsletter_exit_stops_topic]]. Commit when Erik asks.
+**NEXT (Erik leaning: fresh next session):** (1) REAL reverse-swap (fit exit/shape selection A→test B + reverse); (2) shape-PARAMETER sweep on untested levers (depth/breadth/handle/volume/RS/pivot/VCP-contraction) w/ reverse-swap as overfit guardrail; (3) daily-DD curve (pitfwu_wf.run() now takes trail/max_pos/size → daily t30v; biweekly understates: t30v 17.6%→23.7% daily); (4) Bear Ripper expansion. Erik NOT giving up on Bull Rider.
+
+**UNCOMMITTED (safe on disk):** all scripts/*.py shapes work, shapes_portfolio.py, pitfwu_veneer.py, pitfwu_wf.py, backend/app/services/backtester.py (equity_curve). Newsletter draft [[project_newsletter_exit_stops_topic]]. Commit when Erik asks.
