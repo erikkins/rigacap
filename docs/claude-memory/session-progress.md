@@ -7,14 +7,17 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jun 30 2026 (Tue) — DURABLE diversifier found + 7-regime wrapper built
+# Session snapshot — Jun 30 2026 (Tue) — REGIME-AS-KNOB CRACKED IT: 2 durable diversifiers
 
-**Context:** Shapes research (diversifiers to complement t30v). Survivorship-free PITFWU, EXT to 2004. Cache `~/pitfwu_cache`. Engine: scripts/shape_tpe.py — parameterize shape → TPE → OBJECTIVE v2 = blend-improvement vs REAL t30v (min across A=2016-20/B=2021-26, rev-swap baked in), bull-regime gate, n<30 guard. Lessons: exit selection = PORTFOLIO Sharpe not per-trade; momentum-family=durable-but-correlated, mean-reversion=orthogonal.
+**Context:** Shapes research (orthogonal diversifiers to complement t30v). Survivorship-free PITFWU, EXT to 2004. Engine: scripts/shape_tpe.py — parameterize shape → TPE → OBJECTIVE v2 = blend-improvement vs REAL t30v (min across A=2016-20/B=2021-26, rev-swap baked in). Multi-shape (pullback_ma, oversold_bounce), RSI feature. Now n_startup=40, regime is a TPE KNOB.
 
-**⭐⭐ BREAKTHROUGH — `oversold_bounce` is the FIRST DURABLE orthogonal diversifier.** Deep RSI<15 + 18% drop capitulation reclaim in bull (bull cousin of OMR). Blend-improvement +0.20 A / +0.27 B (BOTH halves → min +0.20). SELECTIVE: n=92/161 (vs pullback_ma's 24,000=beta=+0.00, rejected). Sleeve low-return (1.5-4.4% CAGR) but uncorrelated (best blend wants 70-80% sleeve). LESSON: mean-reversion at the EXTREME (capitulation), not shallow dips, is the durable orthogonal factor.
+**⭐ REGIME-AS-TPE-KNOB built (REGIME_GATES: all/bull/rotating/chop/calm_bull/bear/capitulation/recovery, strict SUPERSET — 'all'=no gate so can't hurt optimum).** Uses scripts/regime_research.py (production 7-regime classifier, point-in-time, cached `~/pitfwu_cache/regime/`). Per-symbol regime label injected in load_data; np.isin gate in detect; categorical knob in objective. v.EXT save/restore added to regime_series.
 
-**⭐ 7-REGIME WRAPPER BUILT (scripts/regime_research.py):** production classifier (app.services.market_regime, 7 regimes) point-in-time across PITFWU, cached `~/pitfwu_cache/regime/`. SURPRISE composition: BOTH eras ~70% rotating_bull (strong_bull RARE 1-5%). My "A=rotating/B=trending" hypothesis WRONG — but truth better: modern mkt is predominantly rotating_bull (choppy uptrend) → explains why capitulation-reversion is durable, shallow-pullback fails, breakouts lumpy. Regimes don't separate ERAS; value is PER-DAY gating, esp bear sub-regimes (panic_crash/recovery/weak_bear) for capitulation shapes.
+**⭐⭐⭐ TWO DURABLE ORTHOGONAL DIVERSIFIERS FOUND (both halves, robust):**
+1. **pullback_ma @ `calm_bull` = +0.327 blend-Sharpe** (was +0.00 UNGATED → regime knob RESCUED it; top-6 all calm_bull, identical params: depth 3-9%, mom_min 0.46, hold 40; sleeve 11.8%A/5.1%B CAGR — decent RETURN too). CONFIRMS thesis: era-fragility WAS regime-dependence. Dip-buying works in CALM LOW-VOL TRENDS, drowned by chop/bear otherwise.
+2. **oversold_bounce @ bull/all = +0.232** (deep RSI<15 capitulation, regime-AGNOSTIC = stock-level selective; 250-trial confirmed). Small-n caveat (n31-63).
+They fire in DIFFERENT regimes → should STACK not overlap.
 
-**NEXT = wire regime label as a TPE-SELECTABLE gate in shape_tpe** (each shape chooses which of 7 regimes it fires in; bear sub-regimes for oversold/OMR) → re-hunt building on oversold_bounce. Then: productize oversold_bounce as a diversifier sleeve; more shapes (range_breakout/gap_go controls). Bear Ripper expansion; Bull Rider alive.
+**NEXT:** (1) STACK t30v + pullback@calm_bull + oversold — do lifts add? (2) EXT pre-2016 third-holdout on both winners (B n=42 thin). (3) re-hunt breakout shapes (cup/vcp) WITH regime knob (maybe want strong_bull). Method note: regime knob is superset → never rerun without it; read WHICH gate winner picks to know if regime mattered.
 
-**UNCOMMITTED (safe on disk):** shape_tpe.py (multi-shape: pullback_ma+oversold_bounce, RSI feature), regime_research.py, all scripts/*.py, shapes_portfolio.py (exit_specs), shape_lab.py, pitfwu_wf.py, backend/.../backtester.py. Memories: [[feedback_survivorship_free_not_marketing]], newsletter [[project_newsletter_exit_stops_topic]]. Commit when Erik asks.
+**UNCOMMITTED (safe on disk):** shape_tpe.py, regime_research.py, all scripts/*.py, shapes_portfolio.py, shape_lab.py, pitfwu_wf.py, backend/.../backtester.py. Memories: [[feedback_survivorship_free_not_marketing]], newsletter [[project_newsletter_exit_stops_topic]]. Commit when Erik asks.

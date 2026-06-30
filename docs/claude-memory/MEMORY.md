@@ -1,5 +1,8 @@
 # Stocker App - Key Learnings
 
+## 🔒 TODO — "TOP SECRET DOSSIER" (internal master blueprint of ALL working logic)
+- [Full system dossier plan](project_secret_dossier.md) — Erik wants the signal-intelligence file + PDF turned into a complete internal blueprint ("if leaked, they could duplicate our whole system"). INTERNAL ONLY, mark confidential; never public.
+
 ## 🏷️ MARKETING: "survivorship-free" is TABLE STAKES, not a tagline
 - [Why + how to apply](feedback_survivorship_free_not_marketing.md) — internal rigor only; keep out of customer copy. Lead with result + thesis (modern-market momentum), not methodology hygiene.
 
