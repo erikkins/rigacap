@@ -7,17 +7,18 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jun 30 2026 (Tue) — 7-REGIME ALLOCATOR built + EXT-validated (drawdown edge PROVEN)
+# Session snapshot — Jun 30 2026 (Tue) — 7-REGIME ALLOCATOR fully validated (incl DAILY DD)
 
-**Context:** Shapes research → orthogonal diversifiers + regime-adaptive allocation on t30v. Survivorship-free PITFWU, EXT to 2004. Engine shape_tpe.py (TPE, blend-improvement-vs-t30v objective, regime-as-knob via prod 7-regime classifier regime_research.py). Two validated diversifiers: pullback_ma@calm_bull (+0.327), oversold_bounce@bull (+0.232). Modern mkt ~70% rotating_bull. Erik remote (/remote-control).
+**Context:** Shapes research → 7-regime adaptive allocator on t30v. Survivorship-free PITFWU. Two TPE-validated diversifiers: pullback_ma@calm_bull (+0.327), oversold_bounce@bull (+0.232). Allocator (scripts/regime_allocator*.py) = PURE ROTATION: calm_bull→pullback, capitulation(panic/recovery/weak_bear)→oversold, else(~85% rotating_bull)→t30v. Erik remote.
 
-**⭐⭐⭐ 7-REGIME ADAPTIVE ALLOCATOR (scripts/regime_allocator.py) — the synthesis, WORKS.** Routes offense by live regime: calm_bull→pullback_ma, capitulation(panic_crash/recovery/weak_bear)→oversold_bounce, else(~85%, rotating_bull)→t30v. Capital always deployed (no dead money — fixes static-stack CAGR collapse). On 2016-26: BEATS t30v on CAGR+Sharpe+DD in ALL windows — A 13.0/1.08/-8.3, B 18.9/1.12/-13.4, FULL 17.2/1.25/-10.9 (vs t30v 8.6/0.65/-14, 15.2/0.90/-18, 12.1/0.84/-18.5). core 0% (PURE ROTATION) wins. ≈ Erik's 20%/<20% goal w/ DD margin, consistent across halves.
+**VALIDATION COMPLETE (4 layers all passed):**
+1. Cross-half TPE (objective=blend-improvement vs t30v, min A/B).
+2. EXT pre-2016 third-holdout (frozen params): DD-reduction robust ALL windows; CAGR boost CONDITIONAL on volatility (2009-12 won all axes; 2013-15 calm-grind only DD).
+3. All-weather (regime_allocator_allweather.py, 4 windows 2009-2026): PURE ROTATION (core 0%) is robust pick — best worst-window Sharpe 0.61, beats t30v on DD 4/4 windows + Sharpe 3/4 (loses only calm 2013-15 on return). No core dilution needed.
+4. ⭐ DAILY-DD (regime_allocator_daily.py, single-backtest daily t30v proxy): 2021-26 t30v daily DD=-23.7% (biweekly understated -17.6%) → ALLOCATOR -13.5% = nearly HALVED, <20% CONFIRMED at daily res.
 
-**⭐ EXT THIRD-HOLDOUT (regime_allocator_ext.py, pre-2016 FROZEN params) = HONEST PARTIAL PROOF:**
-- 2009-2012 (25% capitulation): allocator BEATS t30v all 3 axes (5.5/0.64/-8.5 vs 3.1/0.34/-13.2).
-- 2013-2015 (calm grind, 4% capitulation): only DD wins; CAGR/Sharpe DRAG (-1.7 CAGR); best=core 100%=just t30v.
-- **VERDICT: drawdown reduction is ROBUST/out-of-sample (every window). CAGR boost is CONDITIONAL on volatility/capitulation being present.** Maps to "capital-preserver/thrives-in-turbulence" positioning. Not a free lunch — regime-conditional. (pre-2016 surv-biased → read RELATIVE deltas.)
+**⭐ MARKETING READ (Erik's framing: future~recent past, lead with last 2yr not 20yr):** LAST 2YR (2024-26) = t30v 36.7%/1.91/-14.7%, allocator 32.2%/1.80/-12.9%. Recent 2yr is the HEADLINE (vs 20yr ~9%). CATCH: last 2yr was CALM bull (5% capitulation) → t30v ALONE edged allocator on return; allocator's edge needs turbulence. = PRODUCT FORK: "Maximizer"=t30v alone (~37% recent), "Preserver/all-weather"=allocator (halves DD in turbulence, small cost in calm).
 
-**NEXT:** (1) find ONE robust core weight across ALL windows 2009→2026 (moderate core ~50-70% guards the 2013-2015 calm-grind drag vs pure rotation). (2) daily-DD confirmation (biweekly understates). (3) re-hunt breakout shapes w/ regime knob. (4) [[project_secret_dossier]] internal blueprint TODO.
+**NEXT (proposed, Erik to confirm):** draft side-by-side "Maximizer vs Preserver" marketing framing (recent-2yr headline + honest turbulence tradeoff). Also: re-hunt breakout shapes w/ regime knob; [[project_secret_dossier]] internal blueprint.
 
-**UNCOMMITTED (safe on disk):** shape_tpe.py, regime_research.py, stack_sleeves.py, regime_allocator.py, regime_allocator_ext.py, all scripts/*.py + shapes_portfolio/shape_lab/pitfwu_wf/backtester. Memories: [[feedback_survivorship_free_not_marketing]], [[project_secret_dossier]], [[project_newsletter_exit_stops_topic]]. Commit when Erik asks.
+**UNCOMMITTED (safe on disk):** all scripts/*.py incl shape_tpe, regime_research, stack_sleeves, regime_allocator(_ext/_allweather/_daily), shapes_portfolio, shape_lab, pitfwu_wf, backtester. Memories: [[feedback_survivorship_free_not_marketing]], [[project_secret_dossier]], [[project_newsletter_exit_stops_topic]]. Commit when Erik asks.
