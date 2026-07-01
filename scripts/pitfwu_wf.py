@@ -53,7 +53,7 @@ def _vix():
     return x
 
 
-def run(start, end, vb_on=True, n=100):
+def run(start, end, vb_on=True, n=100, trail=0.12, max_pos=6, size=0.15):
     panel, ca = v.load_panel(), v.load_corp_actions()
     uni = [s for s in v.universe_asof(start, 400, panel) if s not in _EXCLUDED_SET and not s.startswith("^")][:n]
     cache = {}
@@ -67,9 +67,9 @@ def run(start, end, vb_on=True, n=100):
     scanner_service.universe = list(cache.keys())
 
     bt = BacktesterService()
-    bt.trailing_stop_pct = 0.12; bt.dd_tighten_threshold_pct = 0
+    bt.trailing_stop_pct = trail; bt.dd_tighten_threshold_pct = 0
     bt.dwap_threshold_pct = 0.05; bt.near_50d_high_pct = 3.0
-    bt.max_positions = 6; bt.position_size_pct = 0.15; bt.min_price = 15.0
+    bt.max_positions = max_pos; bt.position_size_pct = size; bt.min_price = 15.0
     if vb_on:
         bt.cb_pause_basket_enabled = True; bt.cb_pause_basket_symbols = BASKET
         bt.cb_pause_basket_position_size_pct = 10.0; bt.cb_pause_basket_trail_pct = 8.0
@@ -79,7 +79,8 @@ def run(start, end, vb_on=True, n=100):
     ann = ((1 + r.total_return_pct / 100) ** (1 / yrs) - 1) * 100
     cal = ann / r.max_drawdown_pct if r.max_drawdown_pct > 0 else 0
     return {"ann": ann, "sharpe": r.sharpe_ratio, "mdd": r.max_drawdown_pct,
-            "calmar": cal, "total": r.total_return_pct, "trades": len(r.trades)}
+            "calmar": cal, "total": r.total_return_pct, "trades": len(r.trades),
+            "equity_curve": getattr(r, "equity_curve", None)}
 
 
 if __name__ == "__main__":
