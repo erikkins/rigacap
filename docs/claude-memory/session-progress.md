@@ -7,14 +7,21 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jul 1 2026 (Wed) — marketing draft + BREAKOUT hunt (biggest lift yet)
+# Session snapshot — Jul 1 2026 (Wed) — breakout pushes return but breaks DD discipline → 3 tiers
 
-**Context:** Shapes research → 7-regime adaptive allocator on t30v (FULLY validated last session: cross-half TPE, EXT holdout, all-weather, daily-DD). Engine shape_tpe.py (blend-improvement-vs-t30v objective, regime-as-knob). Diversifiers: pullback_ma@calm_bull(+0.327), oversold_bounce@bull(+0.232). Allocator = pure regime rotation. Erik remote.
+**Context:** Shapes research → 7-regime adaptive allocator on t30v (validated last session). Engine shape_tpe.py (blend-improvement objective, regime-as-knob). Diversifiers: pullback_ma@calm_bull(+0.327), oversold_bounce@bull(+0.232). Allocator = pure regime rotation. Erik remote.
 
-**✅ MARKETING FRAMING drafted:** `design/documents/maximizer-vs-preserver-framing.md`. One engine/two modes: **Maximizer** (t30v, ~37% last-2yr) vs **Preserver** (allocator, halves DD in turbulence, small cost in calm). Lead with last-2yr (not 20yr=research credibility); honest tradeoff; self-selection not filtration; NEVER recipe; survivorship-free not a tagline. Status draft, allocator still research-stage.
+**✅ MARKETING FRAMING drafted** `design/documents/maximizer-vs-preserver-framing.md` (Maximizer=t30v vs Preserver=allocator; lead last-2yr, honest tradeoff, no recipe).
 
-**⭐⭐ BREAKOUT HUNT = BIGGEST blend-improvement yet: +0.369** (beats pullback +0.327, oversold +0.232). Added parameterized `breakout` shape to shape_tpe (buffer/vol_mult/mom_min/hold + hi50_1 feature). Winner: **regime='rotating_bull'** (the DOMINANT ~70-85% regime), buffer 1.4%/vol×1.38/hold29; sleeve 22.7%A/39.8%B CAGR, Sharpe 1.17/1.27; top-6 all rotating, tight. HONEST READ: it's "a BETTER momentum engine in rotating_bull" not a diversifier (blend wants 90% of it = replacing t30v, not diversifying). Momentum-family + likely MODERN-ONLY (breakouts had 0 edge pre-2016) → EXT holdout MANDATORY. 39.8% CAGR flattered by regime gate dodging 2022.
+**⭐ BREAKOUT shape (added to shape_tpe): biggest blend-improvement +0.369 @ regime=rotating_bull** (dominant ~70-85% regime), high-return sleeve. v2 allocator (regime_allocator_v2.py) routes rotating_bull→breakout: MODERN 2016-20=30.3%/1.48/-12.6, 2021-26=41.3%/1.42/-16.0 (≈DOUBLES v1). EXT holdout: modern-only-ish (helped calm 2013-15, HURT volatile 2009-12).
 
-**⏸️ IN FLIGHT (built, Erik STOPPED the run — awaiting his call):** `regime_allocator_v2.py` — routes rotating_bull→breakout (instead of t30v). THE "push further" test: if breakout beats t30v in the ~85% rotating regime, whole-system return could jump. Windows A/B/full. **NEXT: run v2 + EXT-validate breakout (the skeptic's test, since modern-only).**
+**⭐⭐ PRESSURE TEST (breakout_pressure.py — walk-forward + costs) = SHARP VERDICT:**
+- WALK-FORWARD OOS (re-opt on past, test next unseen yr): stitched **33.9% CAGR / 1.14 Sharpe / MaxDD −33.5%**. Years lumpy (2020 +59%, 2021 +4%/−31%, 2025 +85%). Params unstable across folds.
+- COSTS: 15bps→29.6%, 30bps→27.1%, 50bps→23.9% (Erik right — costs cost ~6pts, NOT the dealbreaker; commissions dead, this is spread+slippage+self-impact which taxes breakout-chasing specifically).
+- **THE MIRAGE WAS DRAWDOWN, NOT RETURN.** Return mostly REAL (~30% OOS after costs, down from static 41%). But true OOS DD = −33% (not the −16% biweekly showed). Breakout = high-return HIGH-RISK momentum engine.
 
-**UNCOMMITTED (safe on disk):** shape_tpe.py (+breakout), regime_allocator_v2.py, maximizer-vs-preserver-framing.md, all prior scripts. Memories: [[feedback_survivorship_free_not_marketing]], [[project_secret_dossier]], [[project_newsletter_exit_stops_topic]]. Commit when Erik asks.
+**PRODUCT = 3 HONEST TIERS (risk dial, same engine):** t30v (base) → **v1 Preserver** (rot→t30v, ~19%/−13%, all-weather) → **v2 Maximizer++** (rot→breakout, ~30% OOS/−33%, aggressive-growth; CANNOT be sold as capital-preservation).
+
+**NEXT (Erik to pick):** (a) lock 3-tier framing into the doc, or (b) keep pushing — tame breakout's −33% (drawdown guard / trailing stop / position cap on the breakout sleeve). Also pending: [[project_secret_dossier]].
+
+**UNCOMMITTED (safe on disk):** shape_tpe.py(+breakout), regime_allocator_v2.py, breakout_pressure.py, maximizer-vs-preserver-framing.md, all prior. Memories: [[feedback_survivorship_free_not_marketing]], [[project_secret_dossier]], [[project_newsletter_exit_stops_topic]]. Commit when Erik asks.
