@@ -5,65 +5,65 @@
     "block": "Replace everything between two literal start/end markers (e.g., `{/* SURFACE-MARKER:foo-START */}` and `{/* SURFACE-MARKER:foo-END */}`) with `replace_template`. The markers themselves stay; the content between them is fully replaced. Idempotent.",
     "manual": "Cannot be safely auto-replaced. Listed in the manual checklist with line hints + guidance."
   },
-
   "entries": [
     {
-      "id": "trackrecordv2-hero-avgreturn",
+      "id": "trackrecordv2-hero-recent-return",
       "file": "frontend/src/TrackRecordPageV2.jsx",
       "type": "regex",
-      "description": "Hero stat card 1 — Average Return",
-      "line_hint": 59,
-      "find": "\\['\\+204%', 'Average Return',",
-      "replace": "['+{wf_5y_avg_total_return_pct_rounded}%', 'Average Return',"
+      "description": "Headline grid — Last 24 Months annualized",
+      "line_hint": 114,
+      "find": "\\['\\+32%', 'Last 24 Months',",
+      "replace": "['+{canon_recent_annualized_pct_rounded}%', 'Last 24 Months',"
     },
     {
-      "id": "trackrecordv2-hero-worst",
+      "id": "trackrecordv2-hero-recent-sharpe",
       "file": "frontend/src/TrackRecordPageV2.jsx",
       "type": "regex",
-      "description": "Hero stat card 2 — Worst Start Date",
-      "line_hint": 60,
-      "find": "\\['\\+86%', 'Worst Start Date',",
-      "replace": "['+{wf_5y_worst_start_pct_rounded}%', 'Worst Start Date',"
+      "description": "Headline grid — Recent Sharpe",
+      "line_hint": 115,
+      "find": "\\['2\\.20', 'Recent Sharpe',",
+      "replace": "['{canon_recent_sharpe_str}', 'Recent Sharpe',"
     },
     {
-      "id": "trackrecordv2-hero-sharpe",
+      "id": "trackrecordv2-hero-annualized",
       "file": "frontend/src/TrackRecordPageV2.jsx",
       "type": "regex",
-      "description": "Hero stat card 3 — Sharpe Ratio",
-      "line_hint": 61,
-      "find": "\\['0\\.95', 'Avg Sharpe Ratio',",
-      "replace": "['{wf_5y_avg_sharpe}', 'Avg Sharpe Ratio',"
+      "description": "Headline grid — 21yr Annualized",
+      "line_hint": 116,
+      "find": "\\['8\\.3%', 'Annualized',",
+      "replace": "['{canon_annualized_pct}%', 'Annualized',"
     },
     {
       "id": "trackrecordv2-hero-mdd",
       "file": "frontend/src/TrackRecordPageV2.jsx",
       "type": "regex",
-      "description": "Hero stat card 4 — Max Drawdown",
-      "line_hint": 62,
-      "find": "\\['32%', 'Avg Max Drawdown',",
-      "replace": "['{wf_5y_avg_max_drawdown_pct_rounded}%', 'Avg Max Drawdown',"
+      "description": "Headline grid — 21yr Max Drawdown",
+      "line_hint": 117,
+      "find": "\\['19%', 'Max Drawdown',",
+      "replace": "['{canon_max_drawdown_pct}%', 'Max Drawdown',"
     },
-
     {
       "id": "trackrecordv2-perf-table",
       "file": "frontend/src/TrackRecordPageV2.jsx",
-      "type": "block",
+      "type": "manual",
       "description": "5-Year Performance comparison table — RigaCap walk-forward + SPY benchmark",
       "start_marker": "{/* SURFACE-MARKER:perf-comparison-table-START */}",
       "end_marker": "{/* SURFACE-MARKER:perf-comparison-table-END */}",
-      "replace_template": "\n          <div className=\"overflow-x-auto\">\n            <table className=\"w-full border-collapse\" style={{{{ fontFeatureSettings: '\"tnum\"' }}}}>\n              <thead>\n                <tr>\n                  {{['Series', '5-Year Return', 'Annualized', 'Sharpe', 'Max Drawdown'].map((h, i) => (\n                    <th key={{h}} className={{`py-3 ${{i === 0 ? 'text-left pr-4' : 'text-right px-5'}} font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark`}}>\n                      {{h}}\n                    </th>\n                  ))}}\n                </tr>\n              </thead>\n              <tbody>\n                <tr className=\"border-b border-rule bg-paper-card\">\n                  <td className=\"py-4 pr-4 text-[0.95rem] font-semibold text-ink\">RigaCap walk-forward (avg. of {wf_5y_num_start_dates_label})</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">+{wf_5y_avg_total_return_pct_rounded}%</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">~{wf_5y_avg_annualized_pct_marketing}%</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">{wf_5y_avg_sharpe}</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">{wf_5y_avg_max_drawdown_pct_rounded}%</td>\n                </tr>\n                <tr>\n                  <td className=\"py-4 pr-4 text-[0.95rem] italic text-ink-mute\">S&P 500 (SPY, price only)</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">+{wf_5y_spy_avg_pct_rounded}%</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">~13%</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">&mdash;</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">&mdash;</td>\n                </tr>\n              </tbody>\n            </table>\n          </div>\n          "
+      "replace_template": "\n          <div className=\"overflow-x-auto\">\n            <table className=\"w-full border-collapse\" style={{{{ fontFeatureSettings: '\"tnum\"' }}}}>\n              <thead>\n                <tr>\n                  {{['Series', '5-Year Return', 'Annualized', 'Sharpe', 'Max Drawdown'].map((h, i) => (\n                    <th key={{h}} className={{`py-3 ${{i === 0 ? 'text-left pr-4' : 'text-right px-5'}} font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark`}}>\n                      {{h}}\n                    </th>\n                  ))}}\n                </tr>\n              </thead>\n              <tbody>\n                <tr className=\"border-b border-rule bg-paper-card\">\n                  <td className=\"py-4 pr-4 text-[0.95rem] font-semibold text-ink\">RigaCap walk-forward (avg. of {wf_5y_num_start_dates_label})</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">+{wf_5y_avg_total_return_pct_rounded}%</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">~{wf_5y_avg_annualized_pct_marketing}%</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">{wf_5y_avg_sharpe}</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">{wf_5y_avg_max_drawdown_pct_rounded}%</td>\n                </tr>\n                <tr>\n                  <td className=\"py-4 pr-4 text-[0.95rem] italic text-ink-mute\">S&P 500 (SPY, price only)</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">+{wf_5y_spy_avg_pct_rounded}%</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">~13%</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">&mdash;</td>\n                  <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">&mdash;</td>\n                </tr>\n              </tbody>\n            </table>\n          </div>\n          ",
+      "_disabled_note": "DISABLED Jul 1 2026 — block template held STALE 5y-window markup that would REVERT the live 21yr-canon table. Rebuild the template to the current structure (RECENT_ROWS/FOUNDATION_ROWS) before re-enabling.",
+      "target": "Rebuild perf-comparison table template to 21yr canon (live_canon) before re-enabling as block."
     },
-
     {
       "id": "landingv2-perf-table",
       "file": "frontend/src/LandingPageV2.jsx",
-      "type": "block",
+      "type": "manual",
       "description": "Performance comparison table on landing — same content as TrackRecordV2 (different indentation)",
       "start_marker": "{/* SURFACE-MARKER:perf-comparison-table-START */}",
       "end_marker": "{/* SURFACE-MARKER:perf-comparison-table-END */}",
-      "replace_template": "\n      <div className=\"overflow-x-auto my-10\">\n        <table className=\"w-full border-collapse\" style={{{{ fontFeatureSettings: '\"tnum\"' }}}}>\n          <thead>\n            <tr>\n              {{['Series', '5-Year Return', 'Annualized', 'Sharpe', 'Max Drawdown'].map((h, i) => (\n                <th key={{h}} className={{`py-3 ${{i === 0 ? 'text-left pr-4' : 'text-right px-5'}} font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark`}}>\n                  {{h}}\n                </th>\n              ))}}\n            </tr>\n          </thead>\n          <tbody>\n            <tr className=\"border-b border-rule bg-paper-card\">\n              <td className=\"py-4 pr-4 text-[0.95rem] font-semibold text-ink\">RigaCap walk-forward (avg. of {wf_5y_num_start_dates_label})</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">+{wf_5y_avg_total_return_pct_rounded}%</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">~{wf_5y_avg_annualized_pct_marketing}%</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">{wf_5y_avg_sharpe}</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">{wf_5y_avg_max_drawdown_pct_rounded}%</td>\n            </tr>\n            <tr>\n              <td className=\"py-4 pr-4 text-[0.95rem] italic text-ink-mute\">S&P 500 (SPY, price only)</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">+{wf_5y_spy_avg_pct_rounded}%</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">~13%</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">&mdash;</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">&mdash;</td>\n            </tr>\n          </tbody>\n        </table>\n      </div>\n      "
+      "replace_template": "\n      <div className=\"overflow-x-auto my-10\">\n        <table className=\"w-full border-collapse\" style={{{{ fontFeatureSettings: '\"tnum\"' }}}}>\n          <thead>\n            <tr>\n              {{['Series', '5-Year Return', 'Annualized', 'Sharpe', 'Max Drawdown'].map((h, i) => (\n                <th key={{h}} className={{`py-3 ${{i === 0 ? 'text-left pr-4' : 'text-right px-5'}} font-body font-medium text-[0.75rem] tracking-[0.15em] uppercase text-ink-mute border-b border-rule-dark`}}>\n                  {{h}}\n                </th>\n              ))}}\n            </tr>\n          </thead>\n          <tbody>\n            <tr className=\"border-b border-rule bg-paper-card\">\n              <td className=\"py-4 pr-4 text-[0.95rem] font-semibold text-ink\">RigaCap walk-forward (avg. of {wf_5y_num_start_dates_label})</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">+{wf_5y_avg_total_return_pct_rounded}%</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">~{wf_5y_avg_annualized_pct_marketing}%</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">{wf_5y_avg_sharpe}</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] font-medium text-ink\">{wf_5y_avg_max_drawdown_pct_rounded}%</td>\n            </tr>\n            <tr>\n              <td className=\"py-4 pr-4 text-[0.95rem] italic text-ink-mute\">S&P 500 (SPY, price only)</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">+{wf_5y_spy_avg_pct_rounded}%</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">~13%</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">&mdash;</td>\n              <td className=\"py-4 px-5 text-right font-mono text-[0.95rem] text-ink-mute\">&mdash;</td>\n            </tr>\n          </tbody>\n        </table>\n      </div>\n      ",
+      "_disabled_note": "DISABLED Jul 1 2026 — block template held STALE 5y-window markup that would REVERT the live 21yr-canon table. Rebuild the template to the current structure (RECENT_ROWS/FOUNDATION_ROWS) before re-enabling.",
+      "target": "Rebuild perf-comparison table template to 21yr canon (live_canon) before re-enabling as block."
     },
-
     {
       "id": "landingv2-faq-expected-returns",
       "file": "frontend/src/LandingPageV2.jsx",
@@ -74,7 +74,6 @@
       "target": "Drop simulation/friction split; use walk-forward result directly: 'The 5-year walk-forward average is ~{wf_5y_avg_annualized_pct_marketing}% annualized — meaningfully above the S&P's ~13% historical, with worst-case start date still returning +{wf_5y_worst_start_pct_rounded}% over five years. Past performance does not predict future results.'",
       "guidance": "Rewrite as walk-forward-direct framing. No friction haircut narrative needed (most readers don't notice it)."
     },
-
     {
       "id": "landingv2-faq-why-publish-lower",
       "file": "frontend/src/LandingPageV2.jsx",
@@ -85,7 +84,6 @@
       "target": "Either delete this FAQ entry, or pivot to: 'Why don't you publish higher numbers like other services?' with answer about avoiding cherry-picked windows / over-fit backtests / outlier-inflated averages.",
       "guidance": "Recommend deletion; the question doesn't make sense once the friction-adjusted column is gone."
     },
-
     {
       "id": "landingv2-faq-pricing",
       "file": "frontend/src/LandingPageV2.jsx",
@@ -95,7 +93,6 @@
       "find": "targeting 21\\.5% annualized returns",
       "replace": "targeting ~{wf_5y_avg_annualized_pct_marketing}% annualized returns"
     },
-
     {
       "id": "landingv2-faq-down-year",
       "file": "frontend/src/LandingPageV2.jsx",
@@ -106,7 +103,6 @@
       "target": "Recompute from clean-data equity curves; verify 2022/2024 yearly numbers before publishing",
       "guidance": "Pending equity-curve verification — defer this edit until clean per-year data is available"
     },
-
     {
       "id": "social-launch-cards-v2-card1-annualized",
       "file": "design/brand/social-launch-cards-v2.html",
@@ -153,7 +149,6 @@
       "find": "<div class=\"stat-label\">S&P 500</div><div class=\"stat-value\">\\+84%</div>",
       "replace": "<div class=\"stat-label\">S&P 500</div><div class=\"stat-value\">+{wf_5y_spy_avg_pct_rounded}%</div>"
     },
-
     {
       "id": "email-welcome-html-track-record",
       "file": "backend/app/services/email_service.py",
@@ -190,7 +185,6 @@
       "find": "the strategy's friction-adjusted ~21\\.5% annualized vs SPY",
       "replace": "the strategy's ~{wf_5y_avg_annualized_pct_marketing}% annualized vs SPY"
     },
-
     {
       "id": "blog-2022-story-headline",
       "file": "frontend/src/Blog2022StoryPage.jsx",
@@ -200,7 +194,6 @@
       "find": "the average total return is \\+384% vs\\. the S&P's \\+84%\\.",
       "replace": "the average total return is +{wf_5y_avg_total_return_pct_rounded}% vs. the S&P's +{wf_5y_spy_avg_pct_rounded}%."
     },
-
     {
       "id": "blog-index-featured-title",
       "file": "frontend/src/BlogIndexPage.jsx",
@@ -210,7 +203,6 @@
       "find": "Inside Our 5-Year Walk-Forward: \\+384%",
       "replace": "Inside Our 5-Year Walk-Forward: +{wf_5y_avg_total_return_pct_rounded}%"
     },
-
     {
       "id": "marketing-strategy-doc-section15",
       "file": "docs/MarketingNewsletterStrategyCLAUDE.md",
@@ -221,7 +213,6 @@
       "target": "Two sub-blocks: 5-Year Walk-Forward (avg/best/worst/Sharpe/MaxDD), SPY benchmark. Drop the Simulation vs Friction-Adjusted framing entirely.",
       "guidance": "This is the source-of-truth doc — must rewrite carefully. Use canonical_numbers.json values. Update both the numbers AND the framing."
     },
-
     {
       "id": "investor-report-html",
       "file": "design/documents/rigacap-investor-report.html",
@@ -232,7 +223,6 @@
       "target": "Replace 5y row with canonical clean-data numbers; flag 10y row as 'pending clean re-run' or hold until 10y refresh lands",
       "guidance": "After edit, regenerate PDF via Chrome headless command in CLAUDE.md"
     },
-
     {
       "id": "signal-intelligence-html",
       "file": "design/documents/rigacap-signal-intelligence.html",
@@ -243,7 +233,6 @@
       "target": "Replace 5y row with canonical clean-data numbers; carry-vs-no-carry numbers updated to 160 vs 155 from this week's ablation; regen PDF",
       "guidance": "Coordinate with investor report update; same vintage applies."
     },
-
     {
       "id": "claude-md-ensemble-section",
       "file": "CLAUDE.md",
@@ -255,7 +244,6 @@
       "guidance": "Internal doc but read by every Claude session — keep accurate to avoid future drift"
     }
   ],
-
   "out_of_repo_checklist": [
     {
       "surface": "Twitter/X profile bio",

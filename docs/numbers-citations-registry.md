@@ -8,6 +8,15 @@
 
 ## 1 · Canonical numbers (source of truth)
 
+> ⚠️ **SUPERSEDED (Jul 1 2026).** Everything in this section is the RETIRED May-27 T3 t10/s8
+> (5y-window) lens. The LIVE canonical is the **21-year continuous canon** — see
+> `docs/canonical_numbers.json` → `live_canon`: **8.3% ann / 0.73 Sharpe / 19% MaxDD**
+> (2007-2026), plus last-24mo **+32% / 2.20 / 8.5% MaxDD**, vs raw-momentum-net 13.2%/0.69/57%
+> and SPY 9.8%/55%. The live `/track-record` page already reflects this; the numbers below do
+> **not**, and must not be published. Also: the surface `find`-patterns in
+> `scripts/perf_citations_surface_map.json` target retired (+204%/+86%/32%) values and need
+> re-pointing before the propagator is run again.
+
 These are the numbers every surface must converge on. Any divergence from this table is a defect.
 
 **Vintage**: `2026-05-27` — T3 t10/s8 on live production pickle (`prices/all_data.pkl.gz`, downloaded May 25 2026), **52 weekly Monday start dates** Jan 4 → Dec 27 2021, 5-year forward window each. **Single source script**: `scripts/wf_dd_tighten_stop.py` with `--dd-threshold 10 --tight-stop 8 --baseline-stop 12`.

@@ -1,11 +1,41 @@
 {
-  "_doc": "Single source of truth for performance numbers. Edited by hand when a new walk-forward refresh lands. Consumed by scripts/refresh_perf_citations.py to patch all surfaces. See docs/numbers-citations-registry.md for surface inventory.",
-  "_update_protocol": "1. Re-run walk-forward. 2. Update this file. 3. Run scripts/refresh_perf_citations.py --apply. 4. Walk the manual checklist it generates. 5. Commit with message 'Refresh performance citations to <vintage>'.",
-  "vintage": "2026-04-28",
-  "vintage_label": "Clean-data 8-date 5y, carry-on",
-  "vintage_source": "/tmp/wf_5y_8dates_summary.csv",
+  "_doc": "Single source of truth for performance numbers. LENS NOTE (reconciled Jul 1 2026): the LIVE site (/track-record, TrackRecordPageV2.jsx) is on the 21-YEAR CONTINUOUS canon — 'live_canon' below is AUTHORITATIVE. The 'wf_5y_*' and 'wf_11y' keys further down are a DIFFERENT, RETIRED-AS-HEADLINE lens (5-year rolling windows / 2015-start 11y, ~21% annualized) kept ONLY for reference — do NOT publish them as the headline. Consumed by scripts/refresh_perf_citations.py; surface inventory in docs/numbers-citations-registry.md.",
+  "_update_protocol": "1. Re-run the walk-forward. 2. Update 'live_canon' here. 3. RE-POINT scripts/perf_citations_surface_map.json to the current TrackRecordPageV2 structure (its find-patterns are stale — they target retired +204%/+86%/32% values not on the page). 4. THEN run scripts/refresh_perf_citations.py --apply. 5. Walk the checklist. 6. Commit 'Refresh performance citations to <vintage>'.",
+  "_WARNING_propagator": "SAFE now that live_canon matches the site, BUT the surface_map find-patterns are still stale — running --apply today is a no-op on the track-record hero (won't find the retired patterns), NOT a regression. Re-point the surface map before relying on the propagator again.",
+
+  "vintage": "2026-06-10",
+  "vintage_label": "21-year continuous canon (2007-2026) — honest reckoning lens, LIVE on site",
+  "vintage_source": "frontend/src/TrackRecordPageV2.jsx (RECENT_ROWS + FOUNDATION_ROWS)",
+
+  "live_canon": {
+    "_doc": "AUTHORITATIVE — mirrors the live /track-record page. 21-year continuous walk-forward 2007-2026 (single continuous path, NOT window-averaged). Sub-stats (per-year, trades) should be regenerated from the Jun-10 walk-forward run on the next full refresh.",
+    "lens": "21-year continuous, 2007-2026",
+    "annualized_pct": 8.3,
+    "sharpe": 0.73,
+    "max_drawdown_pct": 19,
+    "recent_24mo": {
+      "annualized_pct": 32.0, "sharpe": 2.20, "sortino": 3.76, "max_drawdown_pct": 8.5,
+      "spy_annualized_pct": 19.9, "spy_sharpe": 1.18, "spy_sortino": 1.05, "spy_max_drawdown_pct": 19.0,
+      "raw_momentum_gross_annualized_pct": 71.9, "raw_momentum_gross_sharpe": 1.35, "raw_momentum_gross_max_drawdown_pct": 37.7
+    },
+    "comparisons_21yr": {
+      "raw_momentum_net_annualized_pct": 13.2, "raw_momentum_net_sharpe": 0.69, "raw_momentum_net_max_drawdown_pct": 57,
+      "spy_annualized_pct": 9.8, "spy_max_drawdown_pct": 55
+    }
+  },
+
+  "_retired_lens_below": "Everything below (wf_5y_*, wf_11y, wf_5y_per_start_date, cascade_guard) is the RETIRED 5-year-window / 2015-11y lens. Superseded as headline Jun 10 2026 when the site moved to the 21-year continuous canon above. Reference only — DO NOT publish as headline.",
+
   "track_length_5y": true,
   "track_length_10y_pending": true,
+
+  "_flat_canon_note": "Flat top-level mirror of live_canon for the propagator (template.format(**canonical) can't resolve nested keys). Keep in sync with live_canon above.",
+  "canon_annualized_pct": 8.3,
+  "canon_sharpe": 0.73,
+  "canon_max_drawdown_pct": 19,
+  "canon_recent_annualized_pct_rounded": 32,
+  "canon_recent_sharpe_str": "2.20",
+  "canon_recent_max_drawdown_pct": 8.5,
 
   "wf_5y_avg_total_return_pct": 160.22,
   "wf_5y_avg_total_return_pct_rounded": 160,
@@ -120,7 +150,7 @@
       "vintage": "2026-04-28",
       "label": "Clean-data 8-date 5y, carry-on",
       "key_numbers": "+160% avg / +109% worst / +252% best / 0.92 / 20.4% MDD / ~21.1% ann",
-      "status": "CANONICAL"
+      "status": "RETIRED AS HEADLINE — 5y-window lens; superseded Jun 10 2026 by the 21-year continuous canon (see live_canon). Reference only."
     },
     {
       "vintage": "2026-04-28",
@@ -137,8 +167,14 @@
     {
       "vintage": "2026-04-29",
       "label": "Clean-data 11y, single start, fixed Trial 37 params",
-      "key_numbers": "+675% / 0.95 / 28.1% MDD over 10.5 years. Annualized 21.6% (within rounding of 5y's 21.1% — strongest consistency check).",
-      "status": "CANONICAL — long-window companion to the 5y multi-start canonical. Use both: 5y for distribution disclosure, 11y for consistency confirmation."
+      "key_numbers": "+675% / 0.95 / 28.1% MDD over 10.5 years. Annualized 21.6% (2015-start 11y).",
+      "status": "RETIRED AS HEADLINE — 2015-start 11y lens; superseded Jun 10 2026 by the 21-year continuous (2007-2026) canon. Reference only."
+    },
+    {
+      "vintage": "2026-06-10",
+      "label": "21-year continuous canon (2007-2026) — honest reckoning lens, LIVE on /track-record",
+      "key_numbers": "8.3% ann / 0.73 Sharpe / 19% MDD (21y continuous) + last-24mo +32% / 2.20 / 8.5% MDD. vs raw-momentum-net 13.2%/0.69/57% and SPY 9.8%/55%.",
+      "status": "CANONICAL — see live_canon block; this is what the live site publishes."
     }
   ]
 }
