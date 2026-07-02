@@ -7,18 +7,18 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jul 2 2026 (Thu) — Phase 2 prod Preserver PORT PROVEN FAITHFUL (penny-exact)
+# Session snapshot — Jul 2 2026 (Thu) — PARKED at Phase 2 review gate (Erik "sitting for a bit")
 
-**Context:** 2-TIER product (Base=Preserver / Maximizer++=paid add-on). Branch `research/shape-diversifiers-regime-allocator`. Phase 0 (SSOT) on MAIN b2b8624. Phase 1 daily tier vintages done (Preserver last-2yr 31/1.75/-13, 2021-26 19/1.33/-13). Framing doc = 2-tier + pricing.
+**Full state + open questions:** [[project_preserver_2tier_phase2]] (the resume note — read first).
 
-**⭐⭐ PHASE 2 PORT PROVEN FAITHFUL — 3 new ADDITIVE files under backend/app/services/ (NOTHING live touched):**
-- `preserver_sleeves.py` — detectors (pullback_ma/oversold_bounce, frozen params) + route(regime) + SLEEVE_FNS/SLEEVE_HOLD. Signal parity vs research = EXACT (0 mismatches).
-- `preserver_signal_service.py` — build_daily_signals(): route→ t30v passthrough (rotating/range ~70%) OR sleeve (calm_bull→pullback, capitulation{panic/recovery/weak_bear}→oversold), $-vol top-N. Routing validated.
-- `preserver_portfolio.py` — replay_sleeve() position-level sim. Reproduces research shapes_portfolio.simulate **TO THE PENNY (maxAbsDiff=0.0000)** for both sleeves over 2016-20.
-- **CONCLUSION: wired to prod, Preserver WILL reproduce validated research numbers exactly. No drift.**
+**PRODUCT:** 2-tier risk dial. Base=**Preserver** ($129/mo; last-2yr 31%/1.75/-13%, 2021-26 19%/1.33/-13%). Add-on=**Maximizer++** (+$100-120/mo→$229-249; last-2yr 49%/1.94/-17%, 2021-26 36%/1.61/-20%). Core t30v (live, 20yr 8.3%/0.73/19%) = engine under both.
 
-**KEY ARCH (from Explore trace):** ensemble_signals table has NO strategy_id (single-strategy) → need PARALLEL table+builder. Reusable-safe: scanner_service.data_cache (dict[sym,DataFrame] FULL OHLCV+dwap/ma50/ma200), rank_stocks_momentum, market_regime_service. Daily scan: main.py:1151 _run_daily_scan → signals.py:774 compute_shared_dashboard_data (t30v buy_signals + regime) → ensemble_signal_service.persist_signals (main.py:1653).
+**⭐ DELIVERED this session:** product overview `design/documents/rigacap-2tier-product-overview.{html,png,pdf}` — sent to Erik (incl high-res single-page vector PDF). Rebuilt in CORRECT brand after Erik flagged navy/gold was OLD.
 
-**⚠️ NEXT = FIRST LIVE-INFRA TOUCH (needs Erik sign-off before applying, per CLAUDE.md migration-first/off-hours):** (a) new storage table (migration-first) + (b) daily-scan SHADOW wiring (regime→route→run book→store, NOT served) + (c) DESIGN DECISION: regime book-transition rule (on regime flip, liquidate+rotate OR hold-t30v-till-exit+layer-sleeve?) — shapes the schema. Then tier field + tier-aware serving. Asked Erik: write up shadow-wiring+migration design for review, OR settle book-transition rule first.
+**⭐ BRAND RULE (new memory [[feedback_brand_claret_paper]]):** brand = CLARET + PAPER editorial (paper #F5F1E8 / ink #141210 / claret #7A2430; Fraunces + IBM Plex Sans; source frontend/tailwind.config.js). **NEVER navy/gold again** (retired). HTML→PDF: --virtual-time-budget for fonts + @page size (1080x1360) for single full-bleed page.
 
-**PHASES:** 0✅1✅ 2(port done, plumbing next) 3(roll copy). Memories: [[feedback_survivorship_free_not_marketing]], [[project_secret_dossier]], [[project_newsletter_exit_stops_topic]].
+**PHASE 2 STATUS:** prod Preserver port PROVEN FAITHFUL (penny-exact) — all offline files built (backend/app/services/preserver_{sleeves,signal_service,portfolio,service}.py + backend/migrations/preserver_shadow_tables.sql + design doc). ALL on research branch, undeployed, nothing live touched.
+
+**⚠️ REVIEW GATE (next = LIVE INFRA, needs Erik ✅):** (1) book-transition rule — rec **Option B (hold-to-exit+layer)**; (2) schedule migration off-hours. Then: migration→verify→shadow hook (isolated)→2-4wk shadow validation→tier field→serving→launch.
+
+**PARKED THREADS:** Phase 3 (roll 2-tier across landing/emails/social + fix ~5 stale social-launch-cards-v2 citations; landing-copy-3tier.md still 3-tier). Uncommitted on research branch: all Phase-2 backend files + product HTML + docs (Phase-0 SSOT fix already on MAIN b2b8624). [[project_secret_dossier]] TODO. Memories: [[feedback_survivorship_free_not_marketing]], [[project_newsletter_exit_stops_topic]].
