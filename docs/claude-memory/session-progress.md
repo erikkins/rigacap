@@ -7,17 +7,16 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jul 2 2026 (Thu) — 2-tier locked in framing doc + Phase 2 STARTED (sleeve port validated)
+# Session snapshot — Jul 2 2026 (Thu) — Phase 2 Step 2 done (shadow signal builder validated)
 
-**Context:** Regime-adaptive engine → 2-TIER product. Branch `research/shape-diversifiers-regime-allocator`. Phase 0 (SSOT) on MAIN b2b8624. Phase 1 tier vintages done.
+**Context:** 2-TIER product (Base=Preserver / Maximizer++=paid add-on) from regime-adaptive engine. Branch `research/shape-diversifiers-regime-allocator`. Phase 0 (SSOT) on MAIN b2b8624. Phase 1 tier vintages done (daily shippable: Preserver last-2yr 31/1.75/-13, 2021-26 19/1.33/-13; Maxpp 49/1.94/-17, 36/1.61/-20). Framing doc + landing copy drafted.
 
-**✅ FRAMING DOC updated to 2-TIER + pricing** (`design/documents/maximizer-vs-preserver-framing.md`): BASE=Preserver ($129/mo, contains t30v Core engine, on-brand preservation); Maximizer++=paid ADD-ON ~+$100-120/mo → $229-249/mo aggressive tier (sub-brand for firewall; separate-product only if different audience); Core t30v = engine+proof underneath (not a separate product). Daily numbers in table. Caution: price on DURABLE +7pp not the 49% peak.
+**⭐ PHASE 2 PROGRESS (productionize Preserver — ALL ADDITIVE, nothing live touched):**
+- Step1 ✅ `backend/app/services/preserver_sleeves.py` — prod port of pullback_ma+oversold_bounce detectors (frozen params) + route(regime). PARITY vs research = EXACT (0 mismatches).
+- Step2 ✅ `backend/app/services/preserver_signal_service.py` — build_daily_signals(data_cache, regime, t30v_buy_signals, date): route→ t30v passthrough (rotating_bull/range_bound ~70%) OR sleeve (calm_bull→pullback, capitulation{panic/recovery/weak_bear}→oversold), ranked by $-vol top-N. Validated: routing correct all regimes; pullback generates books (strong/weak_bull 8/8, 1/2); t30v passthrough works.
 
-**⭐ PHASE 2 STARTED — productionize Preserver (additive, migration-safe):**
-- **STEP 1 ✅ DONE + PARITY-VALIDATED:** created `backend/app/services/preserver_sleeves.py` — prod port of pullback_ma + oversold_bounce detectors (frozen validated params) + `route(regime)` (calm_bull→pullback, capitulation{panic/recovery/weak_bear}→oversold, else→t30v). Parity vs research = EXACT (0 mismatches, apples-to-apples w/ base filter). Pure functions, NOTHING live touched.
-- **PHASE 2 SEQUENCE:** 1✅ sleeves→prod. 2 SHADOW signal generator (daily scan computes regime via market_regime.py→route→gen Preserver signals under NEW strategy_id, store, DON'T serve). 3 shadow validation ~weeks. 4 tier field (MIGRATION-FIRST, off-hours). 5 tier-aware serving (flagged). 6 Preserver model portfolio.
-- SAFETY: new strategy_id (t30v path untouched); shadow before serve; migration-first; reuse daily-scan data.
+**⭐ ARCHITECTURE FINDINGS (Explore trace):** `ensemble_signals` table has NO strategy_id (single-strategy); dashboard/process_entries single-strategy → CANNOT reuse; need PARALLEL table+builder. Reusable safe: scanner_service.data_cache (dict[sym,DataFrame] w/ FULL OHLCV+dwap/ma50/ma200), rank_stocks_momentum, market_regime_service. Pipeline: main.py:1151 _run_daily_scan → signals.py:774 compute_shared_dashboard_data (builds t30v buy_signals + regime) → ensemble_signal_service.persist_signals (main.py:1653).
 
-**NEXT (asked Erik):** Step 2 — trace daily-scan signal-gen path (how t30v signals generated+stored) then stand up shadow Preserver generator. Still additive/safe.
+**⭐ KEY INSIGHT:** sleeves fire RARELY (oversold ~35 signals/4.5yr) → Preserver is a HELD PORTFOLIO (entries carried `hold` days), NOT a daily signal feed. 0-signal capitulation days = normal (holds existing). → shadow VALIDATION must check accumulated PORTFOLIO equity vs research curve, not daily signals.
 
-**PHASES:** 0✅ 1✅ 2(in progress) 3(roll copy). Landing copy `design/documents/landing-copy-3tier.md` (needs 2-tier update in Phase 3). Memories: [[feedback_survivorship_free_not_marketing]], [[project_secret_dossier]], [[project_newsletter_exit_stops_topic]].
+**NEXT (asked Erik):** build Preserver PORTFOLIO REPLAY (accumulate routed entries into held book, per-sleeve hold + t30v in dominant regime) + shadow-validate equity reproduces research Preserver curve. THEN storage table (migration-first) + daily-scan wiring. Phases: 0✅1✅2(in prog)3. Memories: [[feedback_survivorship_free_not_marketing]], [[project_secret_dossier]], [[project_newsletter_exit_stops_topic]].
