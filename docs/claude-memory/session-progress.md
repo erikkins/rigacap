@@ -7,16 +7,17 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jul 2 2026 (Thu) — 2-TIER product decided + Maximizer++ add-on pricing tested
+# Session snapshot — Jul 2 2026 (Thu) — 2-tier locked in framing doc + Phase 2 STARTED (sleeve port validated)
 
-**Context:** Regime-adaptive engine → product. Branch `research/shape-diversifiers-regime-allocator`. Phase 0 (SSOT) on MAIN b2b8624. Phase 1 tier vintages DONE (daily shippable + long biweekly). Landing copy `design/documents/landing-copy-3tier.md`.
+**Context:** Regime-adaptive engine → 2-TIER product. Branch `research/shape-diversifiers-regime-allocator`. Phase 0 (SSOT) on MAIN b2b8624. Phase 1 tier vintages done.
 
-**⭐ PRODUCT SHAPE DECIDED (Erik): 2-TIER.**
-- BASE = Core+Preserver = one balanced drawdown-controlled product (Preserver CONTAINS the t30v Core engine — runs t30v ~70% rotating_bull, overlays defense in calm/capitulation). On-brand "capital preservation." $129/mo std, $1099/yr.
-- Maximizer++ = the open packaging Q → decided direction: leaning PAID ADD-ON (my rec) w/ a sub-brand name (e.g. "Velocity") for brand firewall; go fully SEPARATE PRODUCT only if aggressive audience ≠ existing $250k+ preserver base. Deciding factor = AUDIENCE (same base→add-on; different→separate).
+**✅ FRAMING DOC updated to 2-TIER + pricing** (`design/documents/maximizer-vs-preserver-framing.md`): BASE=Preserver ($129/mo, contains t30v Core engine, on-brand preservation); Maximizer++=paid ADD-ON ~+$100-120/mo → $229-249/mo aggressive tier (sub-brand for firewall; separate-product only if different audience); Core t30v = engine+proof underneath (not a separate product). Daily numbers in table. Caution: price on DURABLE +7pp not the 49% peak.
 
-**⭐ PRICING PRESSURE-TEST (Maximizer++ add-on):** Rec **+$100-120/mo → aggressive tier $229-249/mo (~$2-2.5k/yr annual)**. Rationale: fee-drag @$249/mo = 1.0-1.2% on $250k (at psych ceiling ~1%), 0.6% on $500k; incremental value +17pp/yr (fee=~14% of value, trivial); competitive band premium ($200 SA-Pro → $395-449 top quant, base $129 mid-market); +$100 filters risk-intolerant users (paywall = revenue + risk-screen). **CAUTION: price on DURABLE ~+7pp incremental NOT the 48.9% recent peak.** Founding-analog ~+$79/mo.
+**⭐ PHASE 2 STARTED — productionize Preserver (additive, migration-safe):**
+- **STEP 1 ✅ DONE + PARITY-VALIDATED:** created `backend/app/services/preserver_sleeves.py` — prod port of pullback_ma + oversold_bounce detectors (frozen validated params) + `route(regime)` (calm_bull→pullback, capitulation{panic/recovery/weak_bear}→oversold, else→t30v). Parity vs research = EXACT (0 mismatches, apples-to-apples w/ base filter). Pure functions, NOTHING live touched.
+- **PHASE 2 SEQUENCE:** 1✅ sleeves→prod. 2 SHADOW signal generator (daily scan computes regime via market_regime.py→route→gen Preserver signals under NEW strategy_id, store, DON'T serve). 3 shadow validation ~weeks. 4 tier field (MIGRATION-FIRST, off-hours). 5 tier-aware serving (flagged). 6 Preserver model portfolio.
+- SAFETY: new strategy_id (t30v path untouched); shadow before serve; migration-first; reuse daily-scan data.
 
-**PHASE 1 DAILY NUMBERS (clean, shippable):** Last-2yr Core 35.7/1.87/-14.7, Preserver 31.3/1.75/-12.9, Maxpp 48.9/1.94/-17.3. 2021-26 Core 17.5/1.10/-23.7, Preserver 19.4/1.33/-13.5, Maxpp 36.2/1.61/-19.9 (vol-scale holds vs raw -33%). Preserver = better DEFAULT (dominates in turbulence; Core wins calm melt-ups).
+**NEXT (asked Erik):** Step 2 — trace daily-scan signal-gen path (how t30v signals generated+stored) then stand up shadow Preserver generator. Still additive/safe.
 
-**NEXT (asked Erik):** fold 2-tier + add-on pricing into framing doc, OR Phase 2 productionize Preserver (the base ships first). Memories: [[feedback_survivorship_free_not_marketing]], [[project_secret_dossier]], [[project_newsletter_exit_stops_topic]].
+**PHASES:** 0✅ 1✅ 2(in progress) 3(roll copy). Landing copy `design/documents/landing-copy-3tier.md` (needs 2-tier update in Phase 3). Memories: [[feedback_survivorship_free_not_marketing]], [[project_secret_dossier]], [[project_newsletter_exit_stops_topic]].
