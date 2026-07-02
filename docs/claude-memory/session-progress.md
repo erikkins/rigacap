@@ -7,19 +7,16 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jul 2 2026 (Thu) — Phase 1 tier vintages: validated first cut
+# Session snapshot — Jul 2 2026 (Thu) — 2-TIER product decided + Maximizer++ add-on pricing tested
 
-**Context:** 3-tier product (Preserver/Core-t30v/Maximizer++) from regime-adaptive engine. On branch `research/shape-diversifiers-regime-allocator`. SSOT fix + surface-map fix on MAIN (b2b8624, Phase 0 done). 12-miss audit: 11/12 already-fixed (live surfaces honest); only stale = social-launch-cards-v2.html (superseded brand asset). Surface-map polish DEFERRED to Phase 3 (rebuilt then anyway).
+**Context:** Regime-adaptive engine → product. Branch `research/shape-diversifiers-regime-allocator`. Phase 0 (SSOT) on MAIN b2b8624. Phase 1 tier vintages DONE (daily shippable + long biweekly). Landing copy `design/documents/landing-copy-3tier.md`.
 
-**⭐ PHASE 1 FIRST CUT DONE (scripts/tier_vintages.py, 2009-2026 continuous EXT, biweekly):**
-| tier | Ann | Sharpe | MaxDD(biwk) |
-| Core t30v [SANITY] | 9.2% | 0.74 | -19.5% |
-| Preserver (v1) | 11.2% | 0.93 | -16.2% |
-| Maximizer++ (v2 vol-sc) | 15.7% | 1.04 | -17.0% |
-- **SANITY PASSED:** Core 9.2/0.74/-19.5 ≈ canonical 8.3/0.73/19 (Sharpe+DD near-exact; +1pp ann = 2009-vs-2007 start + EXT surv-bias) → methodology validated, tiers trustworthy.
-- **KEY FINDING: Preserver DOMINATES plain t30v over 17y** (higher return, higher Sharpe, LOWER DD) → productionizing it = UPGRADING Core, not just adding a tier.
-- Maximizer++ tops return (15.7/1.04), vol-scaling brake holds it.
+**⭐ PRODUCT SHAPE DECIDED (Erik): 2-TIER.**
+- BASE = Core+Preserver = one balanced drawdown-controlled product (Preserver CONTAINS the t30v Core engine — runs t30v ~70% rotating_bull, overlays defense in calm/capitulation). On-brand "capital preservation." $129/mo std, $1099/yr.
+- Maximizer++ = the open packaging Q → decided direction: leaning PAID ADD-ON (my rec) w/ a sub-brand name (e.g. "Velocity") for brand firewall; go fully SEPARATE PRODUCT only if aggressive audience ≠ existing $250k+ preserver base. Deciding factor = AUDIENCE (same base→add-on; different→separate).
 
-**CAVEATS before publishable:** (1) MaxDD is BIWEEKLY = understates; Maximizer++ true DAILY DD ~-25% (2021 momentum crash is a daily event); Preserver/Core less affected. (2) pre-2016 EXT surv-biased (~1pp lift). (3) 2009 start not 2007.
+**⭐ PRICING PRESSURE-TEST (Maximizer++ add-on):** Rec **+$100-120/mo → aggressive tier $229-249/mo (~$2-2.5k/yr annual)**. Rationale: fee-drag @$249/mo = 1.0-1.2% on $250k (at psych ceiling ~1%), 0.6% on $500k; incremental value +17pp/yr (fee=~14% of value, trivial); competitive band premium ($200 SA-Pro → $395-449 top quant, base $129 mid-market); +$100 filters risk-intolerant users (paywall = revenue + risk-screen). **CAUTION: price on DURABLE ~+7pp incremental NOT the 48.9% recent peak.** Founding-analog ~+$79/mo.
 
-**NEXT (asked Erik):** (a) run daily-DD + recent-window (last-2yr per tier) pass for SHIPPABLE numbers, OR (b) proceed to Phase 2 productionize Preserver (the validated cut may be enough). Phases: 0✅ → 1 (this) → 2 productionize Preserver → 3 roll 3-tier. Landing copy draft `design/documents/landing-copy-3tier.md`. Product=RISK DIAL 3 detents, Preserver=$250k+ fit. Memories: [[feedback_survivorship_free_not_marketing]], [[project_secret_dossier]], [[project_newsletter_exit_stops_topic]].
+**PHASE 1 DAILY NUMBERS (clean, shippable):** Last-2yr Core 35.7/1.87/-14.7, Preserver 31.3/1.75/-12.9, Maxpp 48.9/1.94/-17.3. 2021-26 Core 17.5/1.10/-23.7, Preserver 19.4/1.33/-13.5, Maxpp 36.2/1.61/-19.9 (vol-scale holds vs raw -33%). Preserver = better DEFAULT (dominates in turbulence; Core wins calm melt-ups).
+
+**NEXT (asked Erik):** fold 2-tier + add-on pricing into framing doc, OR Phase 2 productionize Preserver (the base ships first). Memories: [[feedback_survivorship_free_not_marketing]], [[project_secret_dossier]], [[project_newsletter_exit_stops_topic]].
