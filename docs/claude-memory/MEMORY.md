@@ -6,6 +6,9 @@
 ## 🧭 RESUME — 2-TIER PRODUCT + Phase 2 Preserver at the live-infra review gate
 - [State + open questions](project_preserver_2tier_phase2.md) — Preserver base ($129) + Maximizer++ add-on (+$100-120); Phase-2 prod port PROVEN faithful (penny-exact), all offline files built; GATE: Erik ✅ book-transition rule B + schedule migration. Product overview HTML/PNG/PDF delivered.
 
+## 🚨 BUG (Jul 7, DEFERRED by Erik) — dashboard SELL ribbons use STALE 12% trail; email/model use live 30%
+- [Sell-alert parity bug + rollup TODO](project_sell_alert_parity_bug_jul7.md) — dashboard `generate_sell_signals` hardcodes `settings.TRAILING_STOP_PCT=12` (signals.py:1818) → flags exits at 12%; email EOD pass (main.py:1938) + model exits use `_get_regime_trailing_stop`=30% → correct. All-subscriber premature-exit risk. Erik pushed into 3 exits (only WULF real). Model portfolio VERIFIED unaffected (uses 30%). Also: EOD alert = 1 email/symbol, no ROLLUP (Erik wants rollup). Both deferred to finish Preserver migration.
+
 ## 🔒 TODO — "TOP SECRET DOSSIER" (internal master blueprint of ALL working logic)
 - [Full system dossier plan](project_secret_dossier.md) — Erik wants the signal-intelligence file + PDF turned into a complete internal blueprint ("if leaked, they could duplicate our whole system"). INTERNAL ONLY, mark confidential; never public.
 
