@@ -170,9 +170,14 @@ class BacktestResult:
     # Source-rich telemetry — see BacktesterService._request_pause for entry shape.
     pause_events: List[Dict] = field(default_factory=list)
 
+    # Daily equity curve [{date, equity}] — for research / walk-forward analysis.
+    # Popped in to_dict so API payloads stay small (can be hundreds of points).
+    equity_curve: List[Dict] = field(default_factory=list)
+
     def to_dict(self):
         result = {**asdict(self)}
-        result.pop('raw_positions', None)  # Don't expose internal state
+        result.pop('raw_positions', None)   # Don't expose internal state
+        result.pop('equity_curve', None)    # research-only; keep API payload small
         result['positions'] = [p.to_dict() for p in self.positions]
         result['trades'] = [t.to_dict() for t in self.trades]
         return result
@@ -2921,6 +2926,7 @@ class BacktesterService:
             end_date=dates[-1].strftime('%Y-%m-%d'),
             debug_info=debug_info,
             pause_events=list(self._pause_events),
+            equity_curve=equity_curve,
             **enhanced_metrics
         )
 

@@ -7,20 +7,25 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jul 1 2026 (Wed) — breakout -33% = irreducible MOMENTUM CRASH; 3 tiers confirmed
+# Session snapshot — Jul 7 2026 (Tue) — rule B ✅, PHASE 2 DB PLUMBING CODE-COMPLETE (dark-launch gated); next = commit + off-hours migration + deploy
 
-**Context:** Shapes research → 7-regime adaptive allocator on t30v. Engine shape_tpe.py (blend-improvement objective, regime-as-knob via prod 7-regime classifier). Sleeves: pullback_ma@calm_bull(+0.327), oversold_bounce@bull(+0.232), breakout@rotating_bull(+0.369). Allocator = pure regime rotation. Erik remote/intermittent.
+**Full state:** [[project_preserver_2tier_phase2]]. Brand: [[feedback_brand_claret_paper]] (claret+paper only). Names LOCKED: Preserver/Core/Maximizer (t30v + Maximizer++ = internal only).
 
-**✅ MARKETING draft** `design/documents/maximizer-vs-preserver-framing.md`.
+**⭐ rule B ✅ (Erik)** — hold-to-exit + layer (no churn on regime flip; positions exit by own hold; new entries from active book). Unblocks the Preserver migration → Track A can start.
 
-**⭐ BREAKOUT pressure-tested (breakout_pressure.py) + DD-tamed (breakout_tame.py):**
-- Return REAL: walk-forward OOS 33.9%/1.14, cost-robust (15bps→29.6%, 50bps→23.9% — Erik right, costs cost ~6pts not dealbreaker; commissions dead, real cost=spread+slippage+self-impact on breakout-chasing).
-- **The -33% was the MIRAGE (in DRAWDOWN not return).** True OOS DD -32/-33% (not the -16% biweekly showed).
-- **WHERE it lives: 2021 momentum unwind. 2021DD -32%, LAST-2YR DD -21%, full -32%.** Not the recent regime.
-- **⭐⭐ MECHANICAL REGIME FLAG CAN'T SAVE IT (Erik's idea, honestly tested):** during Feb-May 2021 unwind the classifier read **100% rotating_bull** — regime never left home, so ALL regime-exit overlays = identical to baseline (-32%). Because it was a MOMENTUM-FACTOR unwind (leadership crashed while INDEX stayed healthy) → INVISIBLE to a market-regime classifier by construction. = textbook "momentum crash", INTRINSIC to breakout strategies. Only defenses = factor signals / position stops = the overfit knobs Erik wants to avoid. → -33% is largely IRREDUCIBLE by clean means = the intrinsic cost of the ~30% return.
+**⭐ PHASE 2 SHADOW COMPUTE CORE COMPLETE + PROVEN (all backend/app/services/, additive, undeployed):** preserver_sleeves.py (detectors signal-exact), preserver_signal_service.py (routing), preserver_portfolio.py replay_sleeve (PENNY-EXACT vs research), preserver_service.py PreserverBook LIVE-ROBUST (days_held counter; to_positions/from_state serialization; re-validated 2634d = $167,048, round-trip ✓).
 
-**PRODUCT = 3 HONEST TIERS (confirmed):** t30v base → **v1 Preserver** (rot→t30v, ~19%/-13%, all-weather, no factor-crash exposure) → **v2 Maximizer++** (rot→breakout, ~30% OOS/-33% tail/-21% recent, owns MOMENTUM-CRASH RISK; growth-seekers only, NOT capital-preservation).
+**⭐⭐ DB PLUMBING CODE-COMPLETE (Jul 7, uncommitted on research branch, validated to LOAD, needs REAL-DB test):**
+- `run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n=15)` IMPLEMENTED in preserver_service.py: reconstruct book from latest PreserverBookSnapshot → route → advance one day (rule B) → pg_insert-upsert today's routed PreserverSignals + fresh snapshot → commit. Async ✓.
+- 2 SQLAlchemy models in database.py (PreserverSignal, PreserverBookSnapshot) — columns MATCH backend/migrations/preserver_shadow_tables.sql; load ✓.
+- Isolated daily-scan hook ADDED in main.py after §6 ensemble-persist (~line 1665): try/except (never aborts scan) + **env-gated `PRESERVER_SHADOW` (dark launch — code deploy = NO-OP until env set)**. Regime chain type-verified: RegimeType(str,Enum).value → data['regime_forecast']['current_regime'] string → route() buckets match EXACTLY (no silent t30v fallthrough). main.py parses ✓.
+- **DEPLOY SEQUENCE (all safe, dark until last step):** (1) commit ✅ (`ca5f5d3`); (2) apply migration off-hours via `{"run_migration": true}` worker (or add SQL to runner) → verify 2 tables exist; (3) deploy code (hook still dormant — env unset); (4) set `PRESERVER_SHADOW=true` via SAFE read-modify-write (NEVER --environment); (5) watch ~1wk of scans (🕯️ log line) → compare vs offline replay; (6) flip tiers. Rollback = unset env.
+- **⚠️ run_shadow_day has NEVER hit a real DB** — parses + models load, but upsert paths + snapshot round-trip need one dry run before step 4 env-gate.
 
-**NEXT (Erik to pick):** lock 3-tier framing (w/ "momentum-crash risk" label on Maximizer++) into the doc; OR other angle. Pending: [[project_secret_dossier]].
+**Q&A this turn — Maximizer on a 1-day regime blip (99% rotating_bull, occasional 1-day strong_bull flip):** essentially a NON-EVENT. Breakout sleeve is ENTRY-gated on rotating_bull but HOLDS 29 days through ANY regime (breakout_tame.py) + rule B = no churn on flip. So: no forced exits, at most 1 day of paused breakout entries (near-full book ⇒ ~0 free slots ⇒ ~0 cost), self-heals next day. DELIBERATE: we did NOT build flatten-on-flip because the 2021 −33% momentum crash happened at 100% rotating_bull the whole time — regime flags can't catch momentum crashes; the brake is factor-vol scaling (Barroso), classifier left free to blip. Caveat: Maximizer routing/vol-brake still RESEARCH-only (only Preserver ported); exact strong_bull→sleeve mapping not frozen (v2 lumps into else→t30v) but barely matters on a 1-day blip under rule B.
 
-**UNCOMMITTED (safe on disk):** shape_tpe.py, regime_allocator_v2.py, breakout_pressure.py, breakout_tame.py, maximizer-vs-preserver-framing.md, all prior. Memories: [[feedback_survivorship_free_not_marketing]], [[project_secret_dossier]], [[project_newsletter_exit_stops_topic]]. Commit when Erik asks.
+**NEXT (unblocked, Erik to pick):** (a) schedule off-hours migration → shadow, or (b) parallel Stripe add-on wiring (config.py MAXPP env vars + safe Lambda RMW + checkout line item + has_maxpp_addon migration-first + portal + gating).
+
+**⭐ STRIPE add-on prices CREATED (Erik):** Standard $100/mo=price_1Tqf2nCOYW9ZRoIIkfELxlzb, Founder $79/mo=price_1Tqf2nCOYW9ZRoII6rbnXbhF, Annual $1000/yr=price_1Tqf2nCOYW9ZRoIISghdCu2W (in launch-plan doc). NEXT wire: config.py STRIPE_PRICE_ID_MAXPP_STANDARD/_FOUNDING/_ANNUAL getenv + set Lambda env (SAFE RMW) + checkout add-on line item + has_maxpp_addon entitlement col (migration-first) + portal + gating.
+
+**⚠️ RECOMMENDED NEXT (asked Erik, my vote):** (1) COMMIT the large uncommitted pile (Phase 2 files + launch docs + naming + stripe IDs) on research branch — overdue hygiene before live-infra work; (2) implement DB plumbing (critical path); (3) Stripe wiring parallel. Launch = week of July 21, 2-wk sprint gated on shadow validation. Memories: [[project_secret_dossier]], [[feedback_survivorship_free_not_marketing]], [[project_newsletter_exit_stops_topic]].

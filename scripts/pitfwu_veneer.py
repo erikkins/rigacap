@@ -18,10 +18,15 @@ only bites when an in-window split pushes a price under $15 (rare in recent wind
 Stage v2 (full event engine) re-derives as-of EACH sim day. This module exposes both.
 """
 import io
+import os
 import boto3
 import pandas as pd
 
 BUCKET = "rigacap-prod-price-data-149218244179"
+# Offline / fast-path: if PITFWU_LOCAL points at a dir mirroring the S3 key
+# layout (e.g. ~/pitfwu_cache/pitfwu/bars/AAPL.parquet), reads come from disk
+# instead of S3 — required for plane/offline runs, and much faster otherwise.
+PITFWU_LOCAL = os.environ.get("PITFWU_LOCAL")
 _S3 = None
 _PANEL = None
 _CA = None
@@ -44,7 +49,20 @@ def s3():
 
 
 def _read_parquet(key):
-    return pd.read_parquet(io.BytesIO(s3().get_object(Bucket=BUCKET, Key=key)["Body"].read()))
+    if PITFWU_LOCAL:
+        p = os.path.join(PITFWU_LOCAL, key)
+        if os.path.exists(p):
+            return pd.read_parquet(p)
+    df = pd.read_parquet(io.BytesIO(s3().get_object(Bucket=BUCKET, Key=key)["Body"].read()))
+    if PITFWU_LOCAL:  # write-through: warm the cache with exactly what we touch
+        try:
+            p = os.path.join(PITFWU_LOCAL, key)
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            df.to_parquet(p)
+        except Exception:
+            pass
+    return df
+
 
 
 # ---------------------------------------------------------------- universe

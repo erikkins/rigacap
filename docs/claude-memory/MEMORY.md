@@ -1,5 +1,11 @@
 # Stocker App - Key Learnings
 
+## 🎨 BRAND = CLARET + PAPER (editorial). NEVER navy/gold (retired)
+- [Brand tokens + rule](feedback_brand_claret_paper.md) — paper #F5F1E8 / ink #141210 / claret #7A2430; Fraunces + IBM Plex Sans. Source: frontend/tailwind.config.js. Ref impl: rigacap-2tier-product-overview.html.
+
+## 🧭 RESUME — 2-TIER PRODUCT + Phase 2 Preserver at the live-infra review gate
+- [State + open questions](project_preserver_2tier_phase2.md) — Preserver base ($129) + Maximizer++ add-on (+$100-120); Phase-2 prod port PROVEN faithful (penny-exact), all offline files built; GATE: Erik ✅ book-transition rule B + schedule migration. Product overview HTML/PNG/PDF delivered.
+
 ## 🔒 TODO — "TOP SECRET DOSSIER" (internal master blueprint of ALL working logic)
 - [Full system dossier plan](project_secret_dossier.md) — Erik wants the signal-intelligence file + PDF turned into a complete internal blueprint ("if leaked, they could duplicate our whole system"). INTERNAL ONLY, mark confidential; never public.
 
