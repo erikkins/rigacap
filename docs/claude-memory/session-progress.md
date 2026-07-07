@@ -7,20 +7,28 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jul 7 2026 (late) — BOTH shadows LIVE, parity fixed, Stripe done; now on MARKETING DOCS
+# Session snapshot — Jul 7 2026 (late) — engine work DONE, now deep in MARKETING (hero directions)
 
-Full state: [[project_preserver_2tier_phase2]]. Brand: claret/paper ([[feedback_brand_claret_paper]]) — BUT for PRINTABLES use WHITE bg (paper wastes ink), claret OK as light accent. Names LOCKED: Preserver/Core/Maximizer.
+Full state: [[project_preserver_2tier_phase2]]. Names LOCKED: Preserver/Core/Maximizer.
 
-## ✅ SHIPPED TODAY (all deployed + verified)
-1. **Preserver shadow LIVE** (PRESERVER_SHADOW=true) + **Maximizer shadow LIVE** (MAXIMIZER_SHADOW=true). BOTH record at Jul 8 4pm scan → verify `🕯️ Preserver shadow:` + `🚀 Maximizer shadow:` logs + 1 row each preserver_*/maximizer_* tables. ~1wk validate → tier serving. Rollback=unset env.
-2. Maximizer port (main 5cadc41): breakout detector signal-parity EXACT, replay mechanics PENNY-EXACT, MaximizerBook (rule B + entry-time vol-brake, eq_hist serialized). Migration applied+verified, real-DB dry-run passed. Sleeves=time-stops (breakout29/pullback40/oversold11), Core=30%trail@20pos; sleeves@15.
-3. **Dashboard sell-ribbon PARITY BUG fixed** (1bf75b9) — 12%→live 30% trail. [[project_sell_alert_parity_bug_jul7]]. DEFERRED: rollup sell-email + 12% fallbacks signals.py:839/848/1123.
-4. **Stripe Maximizer add-on COMPLETE** — has_maxpp_addon col, checkout+webhook, env vars set + smoke-tested (LIVE prices $79/$100/$1000).
+## ✅ ENGINE WORK SHIPPED TODAY (deployed+verified)
+- **BOTH tier shadows LIVE** (PRESERVER_SHADOW + MAXIMIZER_SHADOW =true). Record at Jul 8 4pm scan → verify `🕯️`+`🚀` logs + rows in preserver_*/maximizer_* tables.
+- Maximizer port: breakout detector signal-EXACT, replay PENNY-EXACT, MaximizerBook (vol-brake). Dashboard sell-ribbon parity fix (12%→30%) [[project_sell_alert_parity_bug_jul7]]. Stripe add-on complete+smoke-tested.
 
-## 🖊️ NOW — MARKETING/DOCS queue (Erik pivoted here)
-1. ✅ **Journey doc DELIVERED** — `design/documents/rigacap-journey.{html,pdf}` (5pg, white bg, light claret, Fraunces/Plex). Myth-busting timeline: DWAP→today via "accepted idea→what data showed→what we did" (8 milestones: tight-stops/concentration/reckoning/honest-lag/regimes/vol-brake). Numbers = honest canon, no recipe leak. AWAITING Erik feedback: dedication line? tighten 5pg→3? bolder timeline dots?
-2. **Sales doc** — sell to personas (salesperson onboarding). NEXT.
-3. Update Signal Intelligence doc + investor doc (non-critical).
-4. **Marketing story overhaul + website HERO** ("woefully off for the superpowers"). Big business urgency.
+## 🖊️ MARKETING DOCS — in progress (design/documents/, house style: Fraunces+Plex)
+- ✅ **rigacap-journey.{html,pdf}** DELIVERED — Erik "perfect doc" (father keepsake; 6pg white bg, light claret; myth-busting DWAP→today; ends w/ tier numbers Preserver +31%/-13%, Maximizer +49%/-17%).
+- ✅ **rigacap-sales-playbook.{html,pdf}** DELIVERED — internal/confidential; filtration-not-conversion, A/F matrix, 4 personas (Preserver/RIA/Growth-seeker/[Market-Maximizer=release]), objection handbook, qualifying qs, guardrails.
+- ✅ **WEBSITE HERO — LOCKED** (`design/documents/hero-knob-final.{html,png}`): **3D KNURLED AMP KNOB w/ GOLD POINTER** (Erik chose this over the glossy Strat-bell version he also tried). Headline **"One knob. Preserve to maximize."** (NOT "these go to 11" — Spinal Tap IP; killed). Claret chip **"Buy/Sell Signals · You Execute"** + kicker **"The Systematic Trading System"** (Erik LOVES these — answer "what IS this" for cold visitor; DO NOT remove). Plain subhead (you execute at your broker). Proof "~⅓ market's worst drawdown · Two decades every regime · Tiers launching this month". Numbers **1=lower-left/Preserve → 11=lower-right/Maximize** (had them backwards, fixed). Preserve(green)/Maximize(claret) labels = 23px uppercase (Erik "make stronger"). **SECRETS: metal umlaut over 11 (Spın̈al Tap nod) + RIGACAP maker's mark on knob face + signature HTML comment** ("sign your work"). ✅ LOCKED — Erik: "yes, this is the one!"
+- Explorations archived: hero-directions.{html} (A/B/C dial), hero-knob-directions.{html,png} (D/E/F), Strat-bell in git history. Ref knob img in scratchpad/ref_knob.jpg.
+- NEXT after lock: build hero into live frontend (staged research branch, GATED not deployed) + cascade to landing + social.
 
-Branch: research/shape-diversifiers-regime-allocator (merged to main 5×; checked out). PDF gen: headless Chrome --print-to-pdf.
+## 🛠️ PRODUCT NOTE (Erik asked): Maximizer→Preserver fallback WORKS
+Add-on = separate Stripe line-item on Preserver base. Cancel just add-on (Portal) → base stays → webhook subscription.updated re-detects → has_maxpp_addon=false → served Preserver. No migration (signals service). TODO at live-serving: (1) configure Stripe Portal to allow removing add-on item; (2) guard orphan case (add-on requires base).
+
+## ⚠️⚠️ RULES REINFORCED (Erik corrected me twice this session)
+1. **NEVER "survivorship-free" in OUTWARD/customer copy** (heroes) — it's TABLE STAKES not marketing ([[feedback_survivorship_free_not_marketing]]). FINE in INTERNAL docs (sales playbook keeps it, due-diligence framing). Scrubbed all heroes + journey (journey→plainer lang, better for father anyway).
+2. **Hero must say WHAT IT IS to a cold visitor** — not jargon ("regime-adaptive momentum"). Fix: red chip "Buy/Sell Signals · You Execute" + plain subhead ("sends you the buy/sell calls, you execute at your broker"). Signals-only product.
+3. Printables = WHITE bg (paper wastes ink), claret OK as light accent.
+4. GATE: no live TIER performance claims on public site until shadows validate (~1wk). Proof lines use drawdown/regime/"tiers launching", not live tier numbers.
+
+## NEXT (Erik queue): pick hero → build full hero + cascade landing/social. Then Signal Intelligence + investor doc updates (non-critical). Branch: research/... (merged to main 6×).
