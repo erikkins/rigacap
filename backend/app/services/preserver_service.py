@@ -101,11 +101,79 @@ class PreserverBook:
         return b
 
 
-def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache):
-    """SHADOW daily hook (wired into _run_daily_scan after compute_shared_dashboard_data).
+async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_positions: int = 15):
+    """SHADOW daily hook — records only, never served; ADDITIVE (new tables, t30v path untouched).
 
-    Skeleton — final wiring gated on the migration + sign-off (see
-    design/documents/preserver-productionization-design.md). Must be called inside a
-    try/except in the daily scan so it can never abort the live pipeline.
+    Wired into _run_daily_scan AFTER compute_shared_dashboard_data, INSIDE a try/except so it can
+    never abort the live pipeline. Requires the migration (preserver_shadow_tables.sql) applied.
+    Each run: reconstruct the sleeve book from the last snapshot -> route by regime -> advance one
+    day (rule B) -> persist today's routed candidates + a fresh book snapshot. The t30v leg in
+    rotating/range regimes is the live model portfolio (referenced elsewhere), not re-entered here.
+    Returns a small summary dict. NEEDS testing against a real DB before deploy.
     """
-    raise NotImplementedError("Wired in the shadow-deploy step, after the migration + sign-off.")
+    from datetime import date as _date
+    from sqlalchemy import select
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+    from app.core.database import PreserverSignal, PreserverBookSnapshot
+    from app.services.preserver_signal_service import build_daily_signals
+    from app.services.preserver_sleeves import SLEEVE_HOLD
+
+    sd = signal_date
+    if isinstance(sd, str):
+        sd = _date.fromisoformat(sd[:10])
+    elif hasattr(sd, "date") and not isinstance(sd, _date):
+        sd = sd.date()
+
+    # 1) reconstruct the sleeve book from the latest snapshot (or start fresh)
+    last_row = (await db.execute(
+        select(PreserverBookSnapshot).order_by(PreserverBookSnapshot.snapshot_date.desc()).limit(1)
+    )).scalars().first()
+    if last_row and isinstance(last_row.positions_json, dict):
+        st = last_row.positions_json
+        book = PreserverBook.from_state(cash=st.get("cash", CAP0), positions=st.get("positions", []),
+                                        n_positions=n_positions)
+    else:
+        book = PreserverBook(n_positions=n_positions)
+
+    # 2) route + today's routed candidates (sleeve regimes feed the book; t30v leg is live-referenced)
+    src, cands = build_daily_signals(data_cache, regime, t30v_signals, sd, max_positions=n_positions)
+    book_cands = ([{"symbol": c["symbol"], "hold": SLEEVE_HOLD[src]} for c in cands]
+                  if src in SLEEVE_SOURCES else [])
+
+    # 3) today's prices (latest close per symbol from the shared cache)
+    price_of = {}
+    for s, df in data_cache.items():
+        try:
+            if df is not None and len(df):
+                price_of[s] = float(df["close"].iloc[-1])
+        except Exception:
+            pass
+
+    # 4) advance the sleeve book one trading day
+    equity = book.advance_day(sd, src, book_cands, price_of)
+
+    # 5) persist today's routed candidates (upsert) + the book snapshot (upsert)
+    for c in cands:
+        if not c.get("symbol"):
+            continue
+        stmt = pg_insert(PreserverSignal).values(
+            signal_date=sd, symbol=c["symbol"], price=c.get("price"), source=src, regime=regime,
+            dollar_volume=c.get("dollar_volume"), hold_days=c.get("hold_days"), status="active")
+        stmt = stmt.on_conflict_do_update(
+            constraint="uq_preserver_signal_date_symbol",
+            set_={"price": stmt.excluded.price, "source": stmt.excluded.source,
+                  "regime": stmt.excluded.regime, "dollar_volume": stmt.excluded.dollar_volume,
+                  "hold_days": stmt.excluded.hold_days, "status": stmt.excluded.status})
+        await db.execute(stmt)
+
+    snap = {"cash": book.cash, "positions": book.to_positions()}
+    snap_stmt = pg_insert(PreserverBookSnapshot).values(
+        snapshot_date=sd, regime=regime, active_source=src, equity=equity, positions_json=snap)
+    snap_stmt = snap_stmt.on_conflict_do_update(
+        index_elements=[PreserverBookSnapshot.snapshot_date],
+        set_={"regime": snap_stmt.excluded.regime, "active_source": snap_stmt.excluded.active_source,
+              "equity": snap_stmt.excluded.equity, "positions_json": snap_stmt.excluded.positions_json})
+    await db.execute(snap_stmt)
+    await db.commit()
+    return {"source": src, "regime": regime, "equity": round(equity, 2),
+            "held": len(book.pos), "signals": len(cands)}

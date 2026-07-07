@@ -1663,6 +1663,28 @@ def handler(event, context):
             _log_step("Signal Persistence", "ok" if persisted > 0 or not data.get('buy_signals') else "warning",
                        f"{persisted} persisted")
 
+            # 6b. Preserver SHADOW record (Phase 2) — ADDITIVE, records-only, NEVER served.
+            # Fully isolated in try/except: it can never abort the live scan. Writes only to
+            # the new preserver_* tables (migration preserver_shadow_tables.sql); the t30v
+            # path above is untouched. Gated by PRESERVER_SHADOW env so it's a dark launch
+            # until the migration is applied + we're ready to start the ~1wk shadow window.
+            if os.getenv("PRESERVER_SHADOW", "").lower() in ("1", "true", "yes"):
+                try:
+                    from app.services.preserver_service import run_shadow_day
+                    _regime = (data.get('regime_forecast') or {}).get('current_regime')
+                    if _regime:
+                        async with async_session() as _psh_db:
+                            _psh = await run_shadow_day(
+                                _psh_db, today_et, _regime,
+                                data.get('buy_signals', []),
+                                scanner_service.data_cache,
+                            )
+                        print(f"🕯️ Preserver shadow: {_psh}")
+                    else:
+                        print("🕯️ Preserver shadow skipped — no regime in dashboard data")
+                except Exception as she:
+                    print(f"⚠️ Preserver shadow failed (non-fatal, live scan unaffected): {she}")
+
             # 7a. Check model portfolio exits using closing prices (catches trailing stops
             # that triggered in the last 5 min after the final intraday check at 3:55 PM)
             exit_result = []

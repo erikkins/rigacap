@@ -160,6 +160,41 @@ class EnsembleSignal(Base):
     )
 
 
+class PreserverSignal(Base):
+    """Preserver-tier daily routed BUY candidates (SHADOW; parallel table to ensemble_signals,
+    never touches the t30v path). Migration: backend/migrations/preserver_shadow_tables.sql."""
+    __tablename__ = "preserver_signals"
+
+    id = Column(Integer, primary_key=True)
+    signal_date = Column(Date, nullable=False, index=True)
+    symbol = Column(String(10), nullable=False, index=True)
+    price = Column(Float)
+    source = Column(String(20), nullable=False)   # t30v | pullback_ma | oversold_bounce
+    regime = Column(String(20))                   # 7-regime label that day
+    dollar_volume = Column(Float)                 # selection key
+    hold_days = Column(Integer)
+    status = Column(String(20), default="active", index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint('signal_date', 'symbol', name='uq_preserver_signal_date_symbol'),
+    )
+
+
+class PreserverBookSnapshot(Base):
+    """Daily snapshot of the Preserver shadow held book + equity (tracks live equity vs the
+    research range; also carries the book state so it survives across daily runs)."""
+    __tablename__ = "preserver_book_snapshots"
+
+    id = Column(Integer, primary_key=True)
+    snapshot_date = Column(Date, nullable=False, unique=True, index=True)
+    regime = Column(String(20))
+    active_source = Column(String(20))            # which book drove entries today
+    equity = Column(Float)                        # mark-to-market book value
+    positions_json = Column(JSON)                 # [{symbol, source, shares, entry, hold, days_held}]
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class Position(Base):
     """Open trading positions"""
     __tablename__ = "positions"
