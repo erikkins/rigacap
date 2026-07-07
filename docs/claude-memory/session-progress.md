@@ -7,16 +7,16 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jul 7 2026 (Tue) — 2-TIER LAUNCH PROGRAM kicked off (waitlist-first)
+# Session snapshot — Jul 7 2026 (Tue) — 2-TIER LAUNCH PROGRAM: naming LOCKED, waitlist-first, sprint teed up
 
-**Full product/Phase-2 state:** [[project_preserver_2tier_phase2]]. Brand rule: [[feedback_brand_claret_paper]] (claret+paper ONLY, never navy/gold).
+**Full state:** [[project_preserver_2tier_phase2]] (resume note — read first). Brand: [[feedback_brand_claret_paper]] (claret+paper ONLY).
 
-**⭐ LAUNCH DECISIONS LOCKED (Erik):** (1) WAITLIST-FIRST — market live t30v recent numbers now + waitlist, build in parallel, flip tiers live when Phase 2 shadow-validates. (2) Pricing: Base Preserver unchanged $129/$59-founding/$1099; Maximizer++ = paid ADD-ON **+$100/mo → $229** (founding +$79, annual +$1000→~$2099). (3) SEGMENT BOTH audiences.
+**⭐ NAMING LOCKED (Jul 7):** customer-facing = **Preserver** (base) · **Core** (engine, under both) · **Maximizer** (aggressive add-on, dropped "++"). INTERNAL-ONLY never public: `t30v` (Core's research code, treat like the recipe) + `Maximizer++` (retired). Scrubbed + regenerated customer asset `design/documents/rigacap-2tier-product-overview.{html,png,pdf}` (0 residual). Renamed Maximizer++→Maximizer across ALL docs. Trademark-check "Maximizer" (maybe "RigaCap Maximizer" lockup).
 
-**⭐ WAITLIST DURATION (just discussed):** gate launch on shadow validation NOT calendar. ~4 WEEKS realistic. KEY nuance: short live shadow only exercises t30v-passthrough (~70% rotating_bull); rare sleeve regimes (calm_bull ~5%, capitulation ~10-15%) may not occur — BUT sleeve paths already penny-exact validated OFFLINE (10+yr history), so live shadow just confirms PIPELINE runs clean (~1-2wk), not wait-for-rare-regime. Plan: wk0 migration+deploy shadow, wk1-2 confirm pipeline+build demand+read tier-split, wk3 soft-launch to founders, wk4 fire. Keep ≤4wk so demand doesn't stale. Asked Erik: bake 4wk/validation-gated timeline into plan + build waitlist mechanics next.
+**⭐ LAUNCH DECISIONS (locked):** WAITLIST-FIRST (no waitlist APP — too much effort for 14 days; just market the launch + follow/reply/existing-list). Pricing: Base Preserver unchanged $129/$59-founding/$1099; Maximizer add-on **+$100/mo→$229** ($79 founding, $1000/yr annual). SEGMENT BOTH audiences. **Launch window = WEEK OF JULY 21.** 2-WEEK SPRINT (4wk ceiling), gated on shadow validation NOT calendar (sleeve paths already penny-exact offline → live shadow just confirms pipeline ~1wk).
 
-**DOCS DELIVERED:** `design/documents/2tier-launch-plan.md` (spec+checklist), `2tier-social-marketing-strategy.md` (segment-both: Preserver=$250k+/advisers/LinkedIn; Maximizer++=aggressive-growth/X/YouTube; honest-gate what-to-say-now-vs-later). Product overview `rigacap-2tier-product-overview.{html,png,pdf}` (claret/paper) delivered earlier.
+**DOCS DELIVERED (design/documents/):** 2tier-launch-plan.md, 2tier-social-marketing-strategy.md, 2tier-launch-campaign.md (T-10 cadence + copy per channel), maximizer-vs-preserver-framing.md (naming section added), rigacap-2tier-product-overview.{html,png,pdf}.
 
-**⚠️ ERIK'S ACTION:** create Stripe "Maximizer++ Add-on" product w/ 3 Prices ($100/mo, $79/mo founding, $1000/yr) → give IDs. THEN I wire: config env vars STRIPE_PRICE_ID_MAXPP_*, checkout add-on line item, has_maxpp_addon entitlement col (MIGRATION-FIRST), portal toggle, gating. Billing trace: config.py:44-47 price IDs, billing.py:80 create_checkout_session, database.py:725 Subscription.stripe_price_id.
+**⚠️ ERIK'S 2 ACTIONS TO START SPRINT CLOCK (day 0):** (1) ✅ book-transition rule B (Preserver Phase 2); (2) create Stripe "Maximizer Add-on" product w/ 3 Prices ($100/$79-founding/$1000-yr) → give IDs. THEN I wire config env STRIPE_PRICE_ID_MAXPP_*, checkout add-on line item, has_maxpp_addon entitlement col (MIGRATION-FIRST), portal, gating. (Billing: config.py:44-47, billing.py:80, database.py:725.)
 
-**PARALLEL BUILDABLE-NOW (no billing risk):** waitlist mechanics (landing CTAs + tier-tag endpoint), 2-tier landing update (claret/paper), social cards rebuild. Track A (product) still gated on rule-B ✅ + migration. Memories: [[project_secret_dossier]], [[feedback_survivorship_free_not_marketing]], [[project_newsletter_exit_stops_topic]].
+**NEXT / PARALLEL (buildable now):** landing-copy-3tier.md still 3-TIER → needs 2-tier rewrite (base+add-on, Core=engine not middle tier). Launch content build-out. Phase 2 (Track A) files all done + penny-validated on research branch, undeployed. Memories: [[project_secret_dossier]], [[feedback_survivorship_free_not_marketing]], [[project_newsletter_exit_stops_topic]].

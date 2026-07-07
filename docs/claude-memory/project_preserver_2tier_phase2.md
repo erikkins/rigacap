@@ -12,6 +12,9 @@ metadata:
 Erik asked to "sit for a bit" here. Shareable product overview delivered:
 `design/documents/rigacap-2tier-product-overview.{html,png,pdf}` (navy/gold, risk-dial, both tiers + Core engine, honest backtest labels).
 
+## NAMING (LOCKED Jul 7)
+Customer-facing: **Preserver** (base) · **Core** (engine, under both) · **Maximizer** (aggressive add-on, dropped the "++"). INTERNAL-ONLY, never public: **`t30v`** (Core's research code) + **`Maximizer++`** (retired) — treat t30v like the recipe. Product overview HTML/PNG/PDF already scrubbed + regenerated. Trademark-check "Maximizer" (maybe "RigaCap Maximizer" lockup).
+
 ## THE PRODUCT (decided)
 **RISK DIAL, 2 tiers, one engine.** Under both = **Core t30v** (live, 20yr record: 8.3%/0.73/19% 2007-26) — the engine+proof, NOT a separate product.
 - **BASE = Preserver** (flagship, on-brand "capital preservation"): t30v + regime-adaptive defense. Daily backtest last-2yr **31%/1.75/-13%**, 2021-26 (incl 2022) **19%/1.33/-13%** (~half the DD in turbulence). **$129/mo, $1,099/yr.** For $250k+ preservers/advisers.
