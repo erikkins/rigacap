@@ -74,6 +74,7 @@ class SubscriptionResponse(BaseModel):
 
 class CheckoutRequest(BaseModel):
     plan: str = "monthly"  # "monthly" or "annual"
+    maximizer: bool = False  # add the Maximizer add-on as a second subscription item
 
 
 @router.post("/create-checkout", response_model=CheckoutResponse)
@@ -95,6 +96,8 @@ async def create_checkout_session(
 
     # Determine which price ID to use.
     plan = request.plan if request else "monthly"
+    want_maximizer = bool(request and request.maximizer)
+    addon_price_id = None
     if plan == "annual":
         price_id = settings.STRIPE_PRICE_ID_ANNUAL
         if not price_id:
@@ -102,13 +105,16 @@ async def create_checkout_session(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Annual plan not configured"
             )
+        if want_maximizer:
+            addon_price_id = settings.STRIPE_PRICE_ID_MAXPP_ANNUAL
     else:
         # Monthly: founding ($59) while seats remain, else standard ($129).
         # Server-side decision so the price can't be spoofed from the client,
         # and so 'founding'/'monthly' CTAs both resolve to the correct live
         # price. (Jun 23 2026 — replaces the single $39 STRIPE_PRICE_ID.)
         fstat = await founding_status(db)
-        if fstat["open"] or not settings.STRIPE_PRICE_ID_STANDARD:
+        founding_open = fstat["open"] or not settings.STRIPE_PRICE_ID_STANDARD
+        if founding_open:
             price_id = settings.STRIPE_PRICE_ID            # founding $59
         else:
             price_id = settings.STRIPE_PRICE_ID_STANDARD   # standard $129
@@ -117,6 +123,16 @@ async def create_checkout_session(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Monthly plan not configured"
             )
+        if want_maximizer:
+            # Add-on tracks the base tier: founding add-on while founding is open, else standard.
+            addon_price_id = (settings.STRIPE_PRICE_ID_MAXPP_FOUNDING if founding_open
+                              else settings.STRIPE_PRICE_ID_MAXPP_STANDARD)
+
+    if want_maximizer and not addon_price_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximizer add-on not configured"
+        )
 
     import stripe
     stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -138,11 +154,16 @@ async def create_checkout_session(
         )
         existing_sub = result.scalar_one_or_none()
 
+        # Base plan + optional Maximizer add-on as a second subscription item.
+        line_items = [{"price": price_id, "quantity": 1}]
+        if addon_price_id:
+            line_items.append({"price": addon_price_id, "quantity": 1})
+
         # Create checkout session
         checkout_params = {
             "customer": user.stripe_customer_id,
             "mode": "subscription",
-            "line_items": [{"price": price_id, "quantity": 1}],
+            "line_items": line_items,
             "success_url": f"{settings.FRONTEND_URL}/dashboard?checkout=success&session_id={{CHECKOUT_SESSION_ID}}",
             "cancel_url": f"{settings.FRONTEND_URL}/pricing?checkout=canceled",
         }
@@ -407,12 +428,38 @@ def _get_period_dates(sub: dict):
     return start, end
 
 
+def _maxpp_price_ids() -> set:
+    """The configured Maximizer add-on price IDs (empty strings excluded)."""
+    return {p for p in (
+        settings.STRIPE_PRICE_ID_MAXPP_STANDARD,
+        settings.STRIPE_PRICE_ID_MAXPP_FOUNDING,
+        settings.STRIPE_PRICE_ID_MAXPP_ANNUAL,
+    ) if p}
+
+
 def _get_price_id(sub: dict) -> Optional[str]:
-    """Extract price ID from subscription dict."""
+    """BASE (Preserver) price ID — the item that is NOT the Maximizer add-on.
+
+    A subscription may carry 2 items (base + add-on) in arbitrary order, so pick the
+    first non-add-on item; fall back to the first item if all are add-ons (shouldn't
+    happen). Keeps stripe_price_id + founding detection anchored to the base plan.
+    """
     items = sub.get("items", {}).get("data", [])
-    if items:
-        return items[0].get("price", {}).get("id")
-    return None
+    if not items:
+        return None
+    maxpp = _maxpp_price_ids()
+    base = [it for it in items if it.get("price", {}).get("id") not in maxpp]
+    pick = base[0] if base else items[0]
+    return pick.get("price", {}).get("id")
+
+
+def _detect_maxpp_addon(sub: dict) -> bool:
+    """True if any subscription item is a Maximizer add-on price."""
+    maxpp = _maxpp_price_ids()
+    if not maxpp:
+        return False
+    items = sub.get("items", {}).get("data", [])
+    return any(it.get("price", {}).get("id") in maxpp for it in items)
 
 
 async def handle_subscription_created(sub: dict, db: AsyncSession):
@@ -453,6 +500,7 @@ async def handle_subscription_created(sub: dict, db: AsyncSession):
     subscription.status = status_map.get(sub.get("status", ""), sub.get("status", ""))
     subscription.stripe_subscription_id = sub.get("id")
     subscription.stripe_price_id = _get_price_id(sub)
+    subscription.has_maxpp_addon = _detect_maxpp_addon(sub)
     if period_start:
         subscription.current_period_start = datetime.fromtimestamp(period_start)
     if period_end:
@@ -520,6 +568,9 @@ async def handle_subscription_updated(sub: dict, db: AsyncSession):
     new_status = status_map.get(sub.get("status", ""), sub.get("status", ""))
     subscription.status = new_status
     subscription.stripe_subscription_id = sub.get("id")
+    # Re-detect the Maximizer add-on so adding/removing it via the Customer Portal
+    # (which fires subscription.updated) toggles the entitlement.
+    subscription.has_maxpp_addon = _detect_maxpp_addon(sub)
     if period_start:
         subscription.current_period_start = datetime.fromtimestamp(period_start)
     if period_end:

@@ -757,7 +757,12 @@ class Subscription(Base):
 
     # Stripe subscription (after trial converts)
     stripe_subscription_id = Column(String(255), nullable=True)
-    stripe_price_id = Column(String(255), nullable=True)
+    stripe_price_id = Column(String(255), nullable=True)  # the BASE (Preserver) price item
+
+    # Maximizer add-on entitlement (2-tier launch). Set from the webhook when any
+    # subscription item matches a MAXPP price. Column added DB-first via
+    # maximizer_addon_entitlement.sql (server_default keeps existing rows safe).
+    has_maxpp_addon = Column(Boolean, nullable=False, server_default="false", default=False)
 
     # Billing periods
     current_period_start = Column(DateTime, nullable=True)
@@ -828,6 +833,7 @@ class Subscription(Base):
             "current_period_end": self.current_period_end.isoformat() if self.current_period_end else None,
             "cancel_at_period_end": self.cancel_at_period_end,
             "has_stripe_subscription": bool(self.stripe_subscription_id),
+            "has_maximizer": bool(self.has_maxpp_addon),
         }
 
 
