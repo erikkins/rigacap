@@ -1685,6 +1685,27 @@ def handler(event, context):
                 except Exception as she:
                     print(f"⚠️ Preserver shadow failed (non-fatal, live scan unaffected): {she}")
 
+            # 6c. Maximizer SHADOW record (Phase 2) — ADDITIVE, records-only, NEVER served.
+            # Same isolation as the Preserver shadow above: fully wrapped in try/except (can
+            # never abort the live scan), writes only to the new maximizer_* tables, t30v path
+            # untouched. Gated by MAXIMIZER_SHADOW env (independent dark launch).
+            if os.getenv("MAXIMIZER_SHADOW", "").lower() in ("1", "true", "yes"):
+                try:
+                    from app.services.maximizer_service import run_shadow_day as _run_max_shadow
+                    _mregime = (data.get('regime_forecast') or {}).get('current_regime')
+                    if _mregime:
+                        async with async_session() as _msh_db:
+                            _msh = await _run_max_shadow(
+                                _msh_db, today_et, _mregime,
+                                data.get('buy_signals', []),
+                                scanner_service.data_cache,
+                            )
+                        print(f"🚀 Maximizer shadow: {_msh}")
+                    else:
+                        print("🚀 Maximizer shadow skipped — no regime in dashboard data")
+                except Exception as mshe:
+                    print(f"⚠️ Maximizer shadow failed (non-fatal, live scan unaffected): {mshe}")
+
             # 7a. Check model portfolio exits using closing prices (catches trailing stops
             # that triggered in the last 5 min after the final intraday check at 3:55 PM)
             exit_result = []
