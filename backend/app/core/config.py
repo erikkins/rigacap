@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     STRIPE_PRICE_ID: str = os.getenv("STRIPE_PRICE_ID", "")  # FOUNDING monthly ($59) while seats remain
     STRIPE_PRICE_ID_STANDARD: str = os.getenv("STRIPE_PRICE_ID_STANDARD", "")  # Standard monthly ($129) after founding closes
     STRIPE_PRICE_ID_ANNUAL: str = os.getenv("STRIPE_PRICE_ID_ANNUAL", "")  # Annual subscription price ($1099)
+    # Maximizer add-on (Phase 2, 2-tier launch) — separate Stripe subscription ITEM layered on
+    # the Preserver base. Founding add-on +$79/mo, standard +$100/mo, annual +$1,000/yr.
+    # (Internal key MAXPP = the retired "Maximizer++" research name; customer-facing = "Maximizer".)
+    STRIPE_PRICE_ID_MAXPP_STANDARD: str = os.getenv("STRIPE_PRICE_ID_MAXPP_STANDARD", "")  # +$100/mo
+    STRIPE_PRICE_ID_MAXPP_FOUNDING: str = os.getenv("STRIPE_PRICE_ID_MAXPP_FOUNDING", "")  # +$79/mo (founding)
+    STRIPE_PRICE_ID_MAXPP_ANNUAL: str = os.getenv("STRIPE_PRICE_ID_MAXPP_ANNUAL", "")  # +$1,000/yr
     FOUNDING_SEAT_LIMIT: int = int(os.getenv("FOUNDING_SEAT_LIMIT", "100"))  # founding seats before price -> standard
     STRIPE_REFERRAL_COUPON_ID: str = os.getenv("STRIPE_REFERRAL_COUPON_ID", "REFERRAL_1MONTH_FREE")
 
