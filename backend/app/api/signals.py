@@ -1746,8 +1746,15 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
     }
 
 
-async def _get_positions_with_guidance(db: AsyncSession, user, regime_forecast_data: dict):
-    """Get user-specific positions with sell guidance (~200ms)."""
+async def _get_positions_with_guidance(db: AsyncSession, user, regime_forecast_data: dict,
+                                       trailing_stop_pct: float = 30.0):
+    """Get user-specific positions with sell guidance (~200ms).
+
+    trailing_stop_pct MUST be the live regime-adjusted t30v value (~30%), the SAME
+    stop the email EOD alert (main.py) and the model-portfolio exits use — NOT the
+    stale fixed 12%. Passing 12 here paints SELL ribbons on positions the model is
+    still holding (Jul 7 2026 parity bug: dashboard flagged 4 exits, model wanted 1).
+    """
     from app.services.market_regime import market_regime_service, RegimeForecast
     from app.core.config import settings
 
@@ -1811,11 +1818,13 @@ async def _get_positions_with_guidance(db: AsyncSession, user, regime_forecast_d
                 except Exception:
                     pass
 
-            # Fixed trailing stop — regime adjustments disabled (validated: fixed beats adaptive by +18pp ann)
+            # Trailing stop = the live regime-adjusted t30v value passed in by the caller
+            # (parity with the email EOD alert + model-portfolio exits). Was hardcoded to
+            # settings.TRAILING_STOP_PCT (12%), which flagged SELLs the model still held.
             positions_with_guidance = scanner_service.generate_sell_signals(
                 positions=pos_dicts,
                 regime_forecast=regime_forecast_obj,
-                trailing_stop_pct=settings.TRAILING_STOP_PCT,
+                trailing_stop_pct=trailing_stop_pct,
             )
     except Exception as e:
         import traceback
@@ -1903,9 +1912,16 @@ async def get_dashboard_data(
             'subscription_required': True,
         }
 
-    # Add user-specific positions with sell guidance (~200ms)
+    # Add user-specific positions with sell guidance (~200ms).
+    # Trailing stop must track the live model/email exit (regime-adjusted t30v value,
+    # ~30%), NOT the stale fixed 12% — read the same effective value the dashboard cache
+    # exposes (regime_adjustments.effective.trailing_stop_pct); default to the live 30%.
+    regime_trail_pct = (
+        (cached.get('regime_adjustments') or {}).get('effective', {}).get('trailing_stop_pct')
+        or 30.0
+    )
     positions_with_guidance = await _get_positions_with_guidance(
-        db, user, cached.get('regime_forecast')
+        db, user, cached.get('regime_forecast'), regime_trail_pct
     )
 
     # Capture unfiltered fresh signal metadata before position filtering
