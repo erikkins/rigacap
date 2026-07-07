@@ -22,8 +22,8 @@ WULF hwm28.98 exit20.24 = **−30.2%** ✅ breached 30% (stop 20.29). GLW hwm255
 ## Verdict
 **Email was CORRECT** (WULF = only genuine 30%-trail model exit). **Dashboard is STALE** — a MISSED spot in the t30v 12%→30% display-parity sweep (see [[project-preserver-2tier-phase2]] follow-up #2 "t30v DISPLAY PARITY SWEEP"; [[feedback_wf_prod_parity]]: any UI exit param MUST be the live t30v value). Affects **ALL subscribers** — dashboard tells everyone to exit at 12% while the model holds to 30% → premature exits. Erik was pushed into 3 exits (GLW/MRVL/UMC) the model would still HOLD; only WULF was real.
 
-## TWO fixes (both DEFERRED Jul 7 to finish the Preserver migration; Erik still wants rollup)
-1. **PRIMARY money bug:** signals.py:1818 → use `_get_regime_trailing_stop(data)` (or 30) so dashboard ribbons == email == model. All-subscriber prod change.
+## TWO fixes
+1. **✅ FIXED + DEPLOYED (Jul 7, commit 1bf75b9 → main 3f494e7):** dashboard `_get_positions_with_guidance` now takes `trailing_stop_pct` param; caller reads `cached['regime_adjustments']['effective']['trailing_stop_pct']` (default 30.0) and passes it into generate_sell_signals (signals.py:1815). VERIFIED: at 30% only WULF flags SELL, old 12% flagged all 4 → dashboard==email==model. Only 1 caller, 1 generate_sell_signals site. LEFT AS FOLLOW-UP: harden the 12% fallbacks at signals.py:839/848/1123 (only hit if StrategyAdaptiveParams t30v_cutover row is missing — latent landmine, not active).
 2. **SECONDARY (Erik's original ask, he reaffirmed "single rollup email is the better option"):** the EOD alert pass (main.py:1938) sends **one `send_sell_alert` per symbol** (email_service.send_sell_alert is single-symbol only). Build a **consolidated rollup** email listing all positions that exited that day. Latent today (only 1 breached), but the day ≥2 breach 30% it'll spray N emails.
 
 Both ride a normal deploy. Get Erik's explicit nod that dashboard should align to 30% (he's ~confirmed) before flipping what every subscriber sees.

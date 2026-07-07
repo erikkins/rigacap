@@ -195,6 +195,42 @@ class PreserverBookSnapshot(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class MaximizerSignal(Base):
+    """Maximizer-tier daily routed BUY candidates (SHADOW; parallel table, never touches the
+    t30v path). Same shape as PreserverSignal but source can also be 'breakout'.
+    Migration: backend/migrations/maximizer_shadow_tables.sql."""
+    __tablename__ = "maximizer_signals"
+
+    id = Column(Integer, primary_key=True)
+    signal_date = Column(Date, nullable=False, index=True)
+    symbol = Column(String(10), nullable=False, index=True)
+    price = Column(Float)
+    source = Column(String(20), nullable=False)   # t30v | pullback_ma | oversold_bounce | breakout
+    regime = Column(String(20))                   # 7-regime label that day
+    dollar_volume = Column(Float)                 # selection key
+    hold_days = Column(Integer)
+    status = Column(String(20), default="active", index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint('signal_date', 'symbol', name='uq_maximizer_signal_date_symbol'),
+    )
+
+
+class MaximizerBookSnapshot(Base):
+    """Daily snapshot of the Maximizer shadow held book + equity (carries book state incl. the
+    vol-brake equity history so it survives across daily runs)."""
+    __tablename__ = "maximizer_book_snapshots"
+
+    id = Column(Integer, primary_key=True)
+    snapshot_date = Column(Date, nullable=False, unique=True, index=True)
+    regime = Column(String(20))
+    active_source = Column(String(20))            # which book drove entries today
+    equity = Column(Float)                        # mark-to-market book value
+    positions_json = Column(JSON)                 # {cash, positions:[...], eq_hist:[...]}
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class Position(Base):
     """Open trading positions"""
     __tablename__ = "positions"
