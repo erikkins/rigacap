@@ -7,19 +7,17 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jul 8 2026 — LANDING 2-tier rebuild ~DONE (uncommitted); queue: commit → Track Record → Social engine
+# Session snapshot — Jul 8 2026 — LANDING done+consistent (uncommitted); IN FLIGHT: Track Record page rebuild; then Social engine
 
 ## ✅ 21YR WALK-FORWARD NUMBERS (scripts/tier_vintages_21y.py → tier_curves_21y.json; 2007-2026 daily, pre-2016 EXT survivorship-caveat):
-- **Preserver: 8.6% / 0.88 Sharpe / −13.2% MaxDD** (≈ market return, ¼ the drawdown)
-- **Maximizer: 14.5% / 0.95 / −20.4%** (BEATS S&P 9.8% AND raw-mom 13.2% on return, at ⅓ market's 55% DD)
-- Benchmarks: S&P 9.8%/−55%, raw 12mo mom 13.2%/0.69/−57%. Recent-2yr (dial): Preserver 31%/−13%, Maximizer 49%/−17% ("last 2 years"). Curves → Track Record chart.
-- Core=7.3% here (vs 8.3% prior canon — reconcile internally; Core stays OUT of ALL public copy per Erik).
+- **RigaCap Preserver: 8.6% / 0.88 / −13.2%** · **RigaCap Maximizer: 14.5% / 0.95 / −20.4%** (Maximizer BEATS S&P 9.8% AND raw-mom 13.2%, at ⅓ market's 55% DD). Benchmarks: S&P 9.8%/−55%, raw mom 13.2%/0.69/−57%. Recent-2yr (dial): Preserver 31%/−13%, Maximizer 49%/−17%. Core=7.3% (INTERNAL, never public).
+- **VERIFIED "2× recovery" (longest underwater vs SPY):** Preserver 2.0yr vs SPY 4.85yr = **2.4× (TRUE)**; Maximizer 3.36yr = only 1.44×. So hero "2×" stat MADE PRESERVER-SPECIFIC (honest).
 
-## ✅ LANDING (LandingPageV2.jsx, uncommitted since 57abfe8, dev localhost:5173) — CORE NUMBERS FULLY SWAPPED → tier numbers:
-- Hero knob (recent 31/49 dial, "last 2 years"), 2-tier Pricing (Opt A), Performance reworked ("Dial your return. Keep the discipline."), table = ROW PER PRODUCT (Preserver/Maximizer 21yr, no Core). Edge section engine+dial. FAQ: returns/Sharpe/flashier/down-year all on tier numbers (Sharpe FAQ flags pre-2016 survivorship caveat since 0.88/0.95 > Buffett 0.79). Advisory "13-20% not 55%". ALL tildes gone, "walk-forward tested" not "backtest", no Core by name/number.
-- Erik micro-fixes done: "Long-horizon" capitalized, "better/more" italic, $229 removed, "unlimited real-time"→"every buy&sell call", widows fixed.
+## ✅ LANDING (LandingPageV2.jsx, uncommitted, dev :5173) — ALL Core numbers gone, one consistent basis:
+- Hero grid now: '21 yrs' / '2×'(Preserver recovery) / '14.5%'(Maximizer 21yr vs S&P 9.8%). Perf table = **RigaCap Preserver/Maximizer** rows (TM: house-mark+descriptor in tables; plain in body). FAQ returns/Sharpe/flashier/down-year on tier numbers (Sharpe FAQ flags survivorship caveat, "Long-horizon" cap). "Drawdown is the whole game" callout FIXED (was "raw mom higher return illusion" — now false; Maximizer OUT-EARNS raw mom 14.5 vs 13.2). Advisory "13-20% not 55%". Zero tildes.
 
-## ⭐ LOAD-BEARING RULES (Erik, Jul 8): NO "Core"/t30v or its numbers in public copy. "Walk-forward tested" not backtest. No tildes on numbers. Recent 31/49 = legit "last 2yr" claim; 21yr = honest anchor.
+## ⏳ OPEN Q for Erik (asked, unanswered): the "Chief Innovation Officer/priced like software" line — applied text-balance (clean 2-liner). Offered Option B one-liner (drop "($59/month founding)" parenthetical + max-w-[680px]). Erik to pick A(2-line, current) or B(1-line trim).
 
-## 🔜 QUEUE (Erik to pick order): (1) COMMIT landing; (2) **Track Record page rebuild + ANIMATED CHART** (3 curves, knob-driven both-or-toggle, Preserver+Maximizer+S&P, NOT Core; data ready in tier_curves_21y.json); (3) **SOCIAL ENGINE revision** (ai_content_service.py — voice not vibing + doesn't know 2-tier/new numbers; needs product context + persona/voice overhaul); (4) Methodology page.
-## ⚙️ Also live/pending: both tier SHADOWS recording daily (gate: no tier CHARGES until Maximizer signals live ~1wk); Stripe add-on built; hero "2× recovery" stat NEEDS VERIFY vs curve before deploy.
+## 🔜 IN FLIGHT: **TRACK RECORD REBUILD** (TrackRecordPageV2.jsx @ /track-record, 278ln — ENTIRELY Core numbers: grid +32/2.20/8.3/19, RECENT_ROWS+FOUNDATION_ROWS, 0.73 callout, per-regime rows, highlights, bear callout ALL need tier swap). Centerpiece = ANIMATED CHART: existing `PortfolioRace.jsx` (385ln) fetches `/portfolio-race.json`. Plan: gen frontend curves JSON (Preserver+Maximizer+**S&P**, downsampled, $100k-norm — S&P NOT yet in tier_curves_21y.json, fetch via yfinance like verify script did), knob-driven both-or-toggle, draws L→R 21yr, NO Core.
+## THEN: Social engine (ai_content_service.py — voice + new 2-tier numbers) → Methodology page.
+## ⭐ RULES: no Core/t30v public; walk-forward not backtest; no tildes on numbers; claret+paper only. GATE: no tier CHARGES until Maximizer signals live (~1wk shadow). Commit only when Erik asks.
