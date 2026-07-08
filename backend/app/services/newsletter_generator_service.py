@@ -45,7 +45,7 @@ EDUCATIONAL_TOPICS = [
     {
         "slug": "drawdown-math",
         "title": "A 50% loss requires a 100% gain to recover. That's not symmetry — that's the trap.",
-        "seed": "Explain drawdown math and why protecting capital matters more than maximizing returns. In our 21-year backtest the worst drawdown was 19%, while the index lost more than half its value twice in the same span. Label all figures as backtested.",
+        "seed": "Explain drawdown math and why protecting capital matters more than maximizing returns. In our 21-year walk-forward Preserver's worst drawdown was 13%, while the index lost more than half its value twice in the same span. Describe all figures as walk-forward.",
     },
     {
         "slug": "wide-stops",
@@ -60,7 +60,7 @@ EDUCATIONAL_TOPICS = [
     {
         "slug": "cash-position",
         "title": "Cash is a position. Sometimes it's the only correct one.",
-        "seed": "Explain why the system moves entirely to cash when market conditions turn hostile, and stays out until conditions recover. The hardest part isn't the math — it's that sitting out feels like failing while markets bounce. Reference the 2008 result: our backtest ended that year roughly flat while the index fell 38%, because it had gone to cash early. Label as backtested.",
+        "seed": "Explain why the system moves entirely to cash when market conditions turn hostile, and stays out until conditions recover. The hardest part isn't the math — it's that sitting out feels like failing while markets bounce. Reference the 2008 result: our walk-forward ended that year roughly flat while the index fell about 37%, because it had gone to cash early. Describe as walk-forward.",
     },
     {
         "slug": "signal-vs-noise",
@@ -75,17 +75,17 @@ EDUCATIONAL_TOPICS = [
     {
         "slug": "momentum-explained",
         "title": "The math behind 'buy what's going up.'",
-        "seed": "Explain momentum as a factor: it's one of the most persistent effects in markets, and also one of the most violent when it unwinds. How our approach looks for recent acceleration inside an established longer trend, penalized for volatility — structure only, no specific lookback windows or weights. Why raw, unmanaged momentum is almost impossible for a human to hold: in our 21-year backtest the raw factor drew down 57%.",
+        "seed": "Explain momentum as a factor: it's one of the most persistent effects in markets, and also one of the most violent when it unwinds. How our approach looks for recent acceleration inside an established longer trend, penalized for volatility — structure only, no specific lookback windows or weights. Why raw, unmanaged momentum is almost impossible for a human to hold: in our 21-year walk-forward the raw factor drew down 57%.",
     },
     {
         "slug": "sharpe-over-decades",
         "title": "What a 'good' Sharpe ratio actually looks like over twenty years.",
-        "seed": "Explain why Sharpe ratios above 1 live in short windows and overfit backtests, while long-horizon Sharpes compress: the S&P 500 scored 0.54 over the last 21 years, Warren Buffett's lifetime figure is about 0.79 ('Buffett's Alpha', Frazzini/Kabiller/Pedersen 2018) — the best ever measured over 30+ years. Our 21-year backtested figure is 0.73. State plainly that ours is backtested where Buffett's is real.",
+        "seed": "Explain why Sharpe ratios above 1 live in short windows and overfit backtests, while long-horizon Sharpes compress: the S&P 500 scored 0.54 over the last 21 years, Warren Buffett's lifetime figure is about 0.79 ('Buffett's Alpha', Frazzini/Kabiller/Pedersen 2018) — the best ever measured over 30+ years. Our 21-year walk-forward figures are Preserver 0.88 and Maximizer 0.95 — above Buffett's, so state plainly that ours is walk-forward (with a pre-2016 survivorship caveat that flatters the early years) where Buffett's is real.",
     },
     {
         "slug": "the-premium",
         "title": "We trail the index most years. On purpose. Here's the deal.",
-        "seed": "Explain the structural trade: a defensive momentum strategy behaves like insurance — it pays its premium in bull-run underperformance and collects in crashes. In our 21-year backtest the strategy beat the index in only about a third of rolling 3-year windows; its wins concentrate almost entirely in periods containing a crash. If you need to beat the market every year, this is the wrong product — and saying so up front is the point.",
+        "seed": "Explain the structural trade: a defensive momentum strategy behaves like insurance — it pays its premium in bull-run underperformance and collects in crashes. In our 21-year walk-forward Preserver beat the index in only about a quarter of rolling 3-year windows; its wins concentrate almost entirely in periods containing a crash. If you need to beat the market every year, this is the wrong product — and saying so up front is the point.",
     },
 ]
 
@@ -117,13 +117,14 @@ NEVER use generic substitutes like "Bull," "Bear," "Strong Bear," "Neutral." Use
 
 POSITIONING (June 2026): RigaCap is behavioral capital insurance — a momentum strategy built so subscribers never get a reason to panic-sell. The newsletter's job is demonstrating discipline in real time, never predicting.
 
-PERFORMANCE NUMBERS — these are the ONLY ones you may cite, and any of them must carry the word "backtest" or "backtested" nearby:
-- 21-year walk-forward backtest (2007-2026): 8.3% a year, worst drawdown 19%
-- The index lost more than half its value twice in that span; raw momentum drew down 57%
-- 2008: the backtest ended the year roughly flat (-0.5%) while the index fell 38%
-- Last 24 months (held-out): +32% annualized
+PERFORMANCE NUMBERS — these are the ONLY ones you may cite; always describe them as WALK-FORWARD, NEVER "backtest":
+- 21-year walk-forward (2007-2026): RigaCap Preserver 8.6% a year, worst drawdown 13%; RigaCap Maximizer 14.5% a year, worst drawdown 20%
+- The index (S&P 500) returned 9.8% a year and lost more than half its value twice in that span; raw momentum returned 13.2% and drew down 57%
+- 2008: both settings ended the year roughly flat (about +0.1%) while the index fell about 37%
+- Last 24 months (held-out): Preserver +31%, Maximizer +49%
+- Sharpe over 21 walk-forward years: Preserver 0.88, Maximizer 0.95 (S&P 0.54; Buffett's lifetime is 0.79 — note our pre-2016 data carries a survivorship caveat that flatters the early years)
 - The LIVE record began June 11, 2026 — it is days old, and we say so plainly
-Never cite any other performance figure, including from older marketing.
+PRODUCT: one engine, two settings — Preserver (preserve) and Maximizer (push). Never cite any other performance figure, including from older marketing, and NEVER the internal "Core"/t30v numbers.
 
 The newsletter has four sections. Each has a job:
 §01 "The Week in Focus" — what the system is seeing right now, in plain English

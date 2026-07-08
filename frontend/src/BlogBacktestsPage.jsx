@@ -440,7 +440,7 @@ export default function BlogBacktestsPage() {
           <h3 className="text-lg font-semibold text-ink mb-4">Related Reading</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Link to="/blog/walk-forward-results" className="block p-4 bg-paper-card rounded border border-rule hover:border-rule-dark transition-colors">
-              <span className="text-ink font-medium">Inside Our 9-Year Walk-Forward</span>
+              <span className="text-ink font-medium">Inside Our 21-Year Walk-Forward</span>
               <span className="block text-ink-light text-sm mt-1">See the walk-forward results that prove our strategy works without hindsight bias.</span>
             </Link>
             <Link to="/blog/momentum-trading" className="block p-4 bg-paper-card rounded border border-rule hover:border-rule-dark transition-colors">

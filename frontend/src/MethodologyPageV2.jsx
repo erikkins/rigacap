@@ -53,7 +53,7 @@ export default function MethodologyPageV2() {
                 {[
                   ['Slippage', '0%', 'Trades execute at exact closing price. Real execution may differ by 0.05–0.2%.', true],
                   ['Commissions', '$0', 'Assumes commission-free broker (standard at most brokers today).', true],
-                  ['SPY benchmark dividends', 'Not reinvested', 'Price return only. Understates SPY by ~1.5–2% annually.', true],
+                  ['SPY benchmark dividends', 'Not reinvested', 'Price return only. Understates SPY by about 1.5–2% annually.', true],
                   ['Market impact', 'None modeled', 'No price impact from position entry/exit. Minimal for portfolios under $500K.', true],
                   ['Data adjustments', 'Split-adjusted', 'Stock splits handled automatically. No dividend adjustment on individual stocks.', false],
                   ['Initial capital', '$100,000', 'Returns are percentage-based, scalable to most portfolio sizes.', false],
@@ -89,16 +89,15 @@ export default function MethodologyPageV2() {
               ever used, and no per-period re-tuning hides hindsight bias.
             </p>
             <p>
-              <strong className="font-medium">The premium, stated plainly:</strong> this strategy is structurally
-              defensive &mdash; it behaves like insurance, and insurance has a premium. In the 21-year backtest it beat
-              the S&amp;P in only <strong className="font-medium">39% of rolling one-year windows, 34% of three-year
-              windows, and 23% of five-year windows</strong>; its wins concentrate almost entirely in periods containing
-              a crash. Measured from its single best relative moment (the March 2009 market bottom, with the strategy in
-              cash against a halved index), it has never reclaimed that relative high. The longest stretch a subscriber
-              would have waited for their own account to make a new high was <strong className="font-medium">2.7
-              years</strong> (the index's own worst wait was 5.5). If you need to beat the index most years, this is the
-              wrong product &mdash; the premium buys a 19% worst drawdown across two decades that included two 50%+
-              index crashes.
+              <strong className="font-medium">The premium, stated plainly:</strong> the Preserver setting is structurally
+              defensive &mdash; it behaves like insurance, and insurance has a premium. Over the 21-year walk-forward it beat
+              the S&amp;P in only <strong className="font-medium">37% of rolling one-year windows, 23% of three-year
+              windows, and 16% of five-year windows</strong>; its wins concentrate almost entirely in periods containing
+              a crash. The longest stretch a subscriber would have waited for their own account to make a new high was
+              <strong className="font-medium"> 2.0 years</strong> (the index's own worst wait was 5.4). If you need to beat
+              the index most years, Preserver is the wrong setting &mdash; the premium buys a 13% worst drawdown across two
+              decades that included two 50%+ index crashes. Maximizer trades that premium back for growth: more drawdown
+              (20%), but it beats the S&amp;P in roughly half of all rolling windows.
             </p>
             <p>
               <strong className="font-medium">Data honesty, stated plainly:</strong> from 2016 onward our research data is
@@ -163,8 +162,8 @@ export default function MethodologyPageV2() {
             <p className="text-ink text-[0.98rem] leading-relaxed max-w-[58ch]">
               When losses cluster &mdash; a sign the market has turned hostile &mdash; the system pauses new entries rather than
               chasing a falling market. Buying into a sharp sell-off is how concentrated strategies turn one bad week into a
-              deep drawdown; stepping back is a meaningful part of how the worst-case drawdown stays near 17% instead of the
-              raw factor's 35%.
+              deep drawdown; stepping back is a meaningful part of how the worst-case drawdown stays at 13% for Preserver
+              and 20% for Maximizer instead of the raw factor's 57%.
             </p>
           </div>
         </div>
@@ -198,7 +197,7 @@ export default function MethodologyPageV2() {
           </div>
 
           <p className="text-[1.02rem] leading-[1.75] text-ink max-w-[62ch] mb-6">
-            The score was validated on hundreds of walk-forward trades across multiple market start dates. Higher-scored signals show a small but statistically significant edge in forward returns (Pearson correlation +0.083, p &lt; 0.05; ~2.4 percentage-point spread between the strongest and weakest quintiles). The edge is real; it is not large enough to override the rest of the system &mdash; rank, regime, and trailing-stop discipline still drive the bulk of long-run performance.
+            The score was validated on hundreds of walk-forward trades across multiple market start dates. Higher-scored signals show a small but statistically significant edge in forward returns (Pearson correlation +0.083, p &lt; 0.05; a roughly 2.4 percentage-point spread between the strongest and weakest quintiles). The edge is real; it is not large enough to override the rest of the system &mdash; rank, regime, and trailing-stop discipline still drive the bulk of long-run performance.
           </p>
 
           <div className="bg-paper-card border-l-[3px] border-claret p-5 max-w-[62ch]">
@@ -218,7 +217,7 @@ export default function MethodologyPageV2() {
           </h2>
 
           <p className="text-[1.05rem] leading-[1.75] text-ink max-w-[62ch] mb-8">
-            The system scans <strong className="font-medium">~6,500 US stocks</strong> across NASDAQ and NYSE daily.
+            The system scans <strong className="font-medium">about 6,500 US stocks</strong> across NASDAQ and NYSE daily.
             All ETFs, leveraged products, inverse funds, commodities, bonds, and crypto products are excluded &mdash; only individual equities.
           </p>
 
@@ -257,11 +256,11 @@ export default function MethodologyPageV2() {
               <tbody>
                 <tr className="border-b border-rule">
                   <td className="py-4 pr-4 text-[0.95rem]">Typical signal on a large-cap name ($50M+ daily volume)</td>
-                  <td className="py-4 pl-4 text-[0.95rem] text-ink">Comfortable at current subscriber levels; collective AUM up to ~$15&ndash;25M deployable</td>
+                  <td className="py-4 pl-4 text-[0.95rem] text-ink">Comfortable at current subscriber levels; collective AUM up to about $15&ndash;25M deployable</td>
                 </tr>
                 <tr className="border-b border-rule">
-                  <td className="py-4 pr-4 text-[0.95rem]">Signal near the universe boundary (~$7.5M daily volume)</td>
-                  <td className="py-4 pl-4 text-[0.95rem] text-ink">Tighter. Collective AUM above ~$2&ndash;3M starts producing noticeable slippage</td>
+                  <td className="py-4 pr-4 text-[0.95rem]">Signal near the universe boundary (about $7.5M daily volume)</td>
+                  <td className="py-4 pl-4 text-[0.95rem] text-ink">Tighter. Collective AUM above about $2&ndash;3M starts producing noticeable slippage</td>
                 </tr>
                 <tr>
                   <td className="py-4 pr-4 text-[0.95rem]">Distribution across a typical month of signals</td>
@@ -307,7 +306,7 @@ export default function MethodologyPageV2() {
               positions through the day but acts on the <strong className="font-medium">closing price</strong>.
             </p>
             <p>
-              The benefit is honesty: because the backtest and the live primary exits use the same end-of-day timing, there's no
+              The benefit is honesty: because the walk-forward and the live primary exits use the same end-of-day timing, there's no
               hidden gap between the simulated results and how the system actually trades. What you see tested is what runs.
             </p>
             <p className="font-display italic text-ink-mute" style={{ fontVariationSettings: '"opsz" 24' }}>

@@ -1542,10 +1542,10 @@ Your friend gets their first month free, and you get a free month when they subs
                     Here's what you actually bought, and it isn't a hot-stock newsletter: RigaCap is built to do one thing exceptionally well &mdash; <strong>keep you invested through the part of the cycle where most people sell at the bottom.</strong> I built it because I got tired of overriding my own rules in a drawdown. The system doesn't have that problem.
                 </p>
                 <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
-                    In 2008, the S&amp;P 500 fell 38%. <strong>RigaCap's strategy fell only 0.5%.</strong> That's not one lucky year &mdash; across 21 years our worst drawdown was <strong>19%</strong>, while the S&amp;P lost more than half its value <em>twice</em>. It still compounded at <strong>8.3% a year</strong>.
+                    In 2008, the S&amp;P 500 fell about 37%. <strong>RigaCap's Preserver setting finished roughly flat.</strong> That's not one lucky year &mdash; across 21 walk-forward years its worst drawdown was <strong>13%</strong>, while the S&amp;P lost more than half its value <em>twice</em>. It still compounded at <strong>8.6% a year</strong> &mdash; market-like return, a quarter of the pain.
                 </p>
                 <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
-                    That 8.3% isn't the biggest number you'll see advertised &mdash; and that's the point. You're buying a path gentle enough that <strong>you never get that reason.</strong> That's the whole product.
+                    That's the Preserver setting &mdash; the gentle path, built so <strong>you never get a reason to sell at the bottom.</strong> When you want more, the same engine dials up to Maximizer: 14.5% a year over that span, at a deeper but still-bounded drawdown. One knob, your call.
                     <a href="https://rigacap.com/track-record" style="color: #7A2430; text-decoration: underline;">See the full track record.</a>
                 </p>
 
@@ -1592,9 +1592,9 @@ Your friend gets their first month free, and you get a free month when they subs
 
 {founder_text}Here's what you actually bought, and it isn't a hot-stock newsletter: RigaCap is built to do one thing exceptionally well — keep you invested through the part of the cycle where most people sell at the bottom. I built it because I got tired of overriding my own rules in a drawdown. The system doesn't have that problem.
 
-In 2008, the S&P 500 fell 38%. RigaCap's strategy fell only 0.5%. That's not one lucky year — across 21 years our worst drawdown was 19%, while the S&P lost more than half its value twice. It still compounded at 8.3% a year.
+In 2008, the S&P 500 fell about 37%. RigaCap's Preserver setting finished roughly flat. That's not one lucky year — across 21 walk-forward years its worst drawdown was 13%, while the S&P lost more than half its value twice. It still compounded at 8.6% a year — market-like return, a quarter of the pain.
 
-That 8.3% isn't the biggest number you'll see advertised — and that's the point. You're buying a path gentle enough that you never get that reason. That's the whole product. See it: https://rigacap.com/track-record
+That's the Preserver setting — the gentle path, built so you never get a reason to sell at the bottom. When you want more, the same engine dials up to Maximizer: 14.5% a year over that span, at a deeper but still-bounded drawdown. One knob, your call. See it: https://rigacap.com/track-record
 
 What you get:
 - Signals after every close: ticker, entry, and a trailing stop that only rises
@@ -1705,7 +1705,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
 
                 <div style="border-left: 2px solid #7A2430; padding: 14px 18px; background: #FAF7F0; margin: 24px 0;">
                     <p style="margin: 0; font-family: Georgia, serif; font-style: italic; font-size: 15px; color: #141210; line-height: 1.6;">
-                        8.3% a year across a 21-year walk-forward backtest — with a worst drawdown of 19% while the index lost half its value twice. Backtested; the live record began June 2026.
+                        Preserver compounded 8.6% a year across a 21-year walk-forward — worst drawdown just 13% while the index lost half its value twice. Maximizer, the aggressive setting, ran 14.5%. The live record began June 2026.
                         <a href="https://rigacap.com/track-record" style="color: #7A2430; text-decoration: underline;">Full track record.</a>
                     </p>
                 </div>
@@ -1911,14 +1911,14 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
 
                 <div style="border-top: 1px solid #DDD5C7; padding: 20px 0;">
                     <p style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #7A2430; margin: 0 0 8px;">Ⅱ / It Trails the Index in Calm Markets</p>
-                    <p style="font-family: Georgia, serif; font-size: 18px; color: #141210; margin: 0 0 8px; font-weight: 500;">In our 21-year backtest, it beat the S&amp;P in only about a third of rolling 3-year windows.</p>
-                    <p style="font-size: 15px; color: #5A544E; margin: 0; line-height: 1.6;">Its wins concentrate around the years markets break. Backtested 2008: −0.5% while the index fell 37.7%. Worst backtested drawdown across 21 years: 19% — over a span in which the index lost more than half its value twice, and a raw momentum portfolio fell 57%. You give up bull-market bragging rights to get that.</p>
+                    <p style="font-family: Georgia, serif; font-size: 18px; color: #141210; margin: 0 0 8px; font-weight: 500;">In our 21-year walk-forward, Preserver beat the S&amp;P in only about a quarter of rolling 3-year windows.</p>
+                    <p style="font-size: 15px; color: #5A544E; margin: 0; line-height: 1.6;">Its wins concentrate around the years markets break. In 2008 it finished roughly flat while the index fell about 37%. Worst drawdown across 21 walk-forward years: 13% — over a span in which the index lost more than half its value twice, and a raw momentum portfolio fell 57%. You give up bull-market bragging rights to get that. (Maximizer, the aggressive setting, takes more drawdown and beats the market.)</p>
                 </div>
 
                 <div style="border-top: 1px solid #DDD5C7; padding: 20px 0;">
                     <p style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #7A2430; margin: 0 0 8px;">Ⅲ / The Math It's Actually Built For</p>
                     <p style="font-family: Georgia, serif; font-size: 18px; color: #141210; margin: 0 0 8px; font-weight: 500;">Investors reliably collect less than their strategies earn.</p>
-                    <p style="font-size: 15px; color: #5A544E; margin: 0; line-height: 1.6;">The gap is behavior — mostly panic-selling somewhere near a bottom. We modeled an investor who capitulates at a 25% drawdown: on the system's backtested path, that trigger never fired in 21 years. The deepest point was 19%. The strategy is built so you never get a reason to quit at the worst moment.</p>
+                    <p style="font-size: 15px; color: #5A544E; margin: 0; line-height: 1.6;">The gap is behavior — mostly panic-selling somewhere near a bottom. We modeled an investor who capitulates at a 25% drawdown: on Preserver's walk-forward path, that trigger never fired in 21 years. The deepest point was 13%. The strategy is built so you never get a reason to quit at the worst moment.</p>
                 </div>
 
                 <div style="border-left: 2px solid #7A2430; padding: 16px 20px; background: #FAF7F0; margin: 24px 0;">
@@ -1943,31 +1943,31 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
                     {first_name},
                 </p>
                 <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
-                    Your free trial ends in <strong>2 days</strong>. Before you decide, here is the record as honestly as I can state it. All of it is backtest — our live record began June 11, 2026, and is days old. It posts publicly from here, good or bad.
+                    Your free trial ends in <strong>2 days</strong>. Before you decide, here is the record as honestly as I can state it. All of it is walk-forward — our live record began June 11, 2026, and is days old. It posts publicly from here, good or bad.
                 </p>
 
                 <table cellpadding="0" cellspacing="0" style="width:100%; border-top: 2px solid #141210; border-bottom: 1px solid #141210; margin: 28px 0;">
                     <tr>
                         <td style="padding: 16px 16px 16px 0; border-right: 1px solid #DDD5C7; text-align: center;">
-                            <div style="font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Backtested Return</div>
-                            <div style="font-family: Georgia, serif; font-size: 32px; color: #141210; margin-top: 4px;">8.3%</div>
+                            <div style="font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Preserver Return</div>
+                            <div style="font-family: Georgia, serif; font-size: 32px; color: #141210; margin-top: 4px;">8.6%</div>
                             <div style="font-family: 'Courier New', monospace; font-size: 10px; color: #8A8279; margin-top: 2px;">/yr · 21-yr walk-forward</div>
                         </td>
                         <td style="padding: 16px; border-right: 1px solid #DDD5C7; text-align: center;">
                             <div style="font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Worst Drawdown</div>
-                            <div style="font-family: Georgia, serif; font-size: 32px; color: #141210; margin-top: 4px;">19%</div>
+                            <div style="font-family: Georgia, serif; font-size: 32px; color: #141210; margin-top: 4px;">13%</div>
                             <div style="font-family: 'Courier New', monospace; font-size: 10px; color: #8A8279; margin-top: 2px;">Index lost half, twice</div>
                         </td>
                         <td style="padding: 16px 0 16px 16px; text-align: center;">
                             <div style="font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Sharpe</div>
-                            <div style="font-family: Georgia, serif; font-size: 32px; color: #141210; margin-top: 4px;">0.73</div>
+                            <div style="font-family: Georgia, serif; font-size: 32px; color: #141210; margin-top: 4px;">0.88</div>
                             <div style="font-family: 'Courier New', monospace; font-size: 10px; color: #8A8279; margin-top: 2px;">vs index 0.54</div>
                         </td>
                     </tr>
                 </table>
 
                 <p style="font-size: 15px; color: #5A544E; margin: 0 0 24px 0; line-height: 1.6;">
-                    For scale on that Sharpe: Buffett's lifetime figure is 0.79 ("Buffett's Alpha," 2018). The last 24 months — held out of all tuning — ran at +32% annualized in backtest, but I'd rather you anchor on the 21-year number. Bull markets flatter everyone.
+                    For scale on that Sharpe: Buffett's lifetime figure is 0.79 ("Buffett's Alpha," 2018) — Preserver's 0.88 edges it, with the honest caveat that our pre-2016 data flatters the early years. The last 24 months — held out of all tuning — ran +31% for Preserver and +49% for Maximizer, but I'd rather you anchor on the 21-year number. Bull markets flatter everyone.
                 </p>
 
                 <div style="border-left: 2px solid #7A2430; padding: 16px 20px; background: #FAF7F0; margin: 24px 0;">
@@ -2007,16 +2007,16 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
 
                 <table cellpadding="0" cellspacing="0" style="width:100%; border-collapse: collapse; margin: 0 0 24px 0;">
                     <tr>
-                        <td style="padding: 12px 16px 12px 0; border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">21-year backtest</td>
-                        <td style="padding: 12px 0; border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; text-align: right; font-family: 'Courier New', monospace; font-size: 15px; color: #141210; font-weight: bold;">8.3% a year</td>
+                        <td style="padding: 12px 16px 12px 0; border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">21-year walk-forward</td>
+                        <td style="padding: 12px 0; border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; text-align: right; font-family: 'Courier New', monospace; font-size: 15px; color: #141210; font-weight: bold;">Preserver 8.6% a year</td>
                     </tr>
                     <tr>
                         <td style="padding: 12px 16px 12px 0; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Worst drawdown</td>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #DDD5C7; text-align: right; font-family: 'Courier New', monospace; font-size: 15px; color: #2D5F3F; font-weight: bold;">&minus;19% <span style="color: #8A8279; font-weight: normal; font-size: 13px;">(index: lost half, twice)</span></td>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #DDD5C7; text-align: right; font-family: 'Courier New', monospace; font-size: 15px; color: #2D5F3F; font-weight: bold;">&minus;13% <span style="color: #8A8279; font-weight: normal; font-size: 13px;">(index: lost half, twice)</span></td>
                     </tr>
                     <tr>
                         <td style="padding: 12px 16px 12px 0; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">2008</td>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #DDD5C7; text-align: right; font-family: 'Courier New', monospace; font-size: 15px; color: #141210; font-weight: bold;">&minus;0.5% <span style="color: #8A8279; font-weight: normal; font-size: 13px;">(index: &minus;37.7%)</span></td>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #DDD5C7; text-align: right; font-family: 'Courier New', monospace; font-size: 15px; color: #141210; font-weight: bold;">+0.1% <span style="color: #8A8279; font-weight: normal; font-size: 13px;">(index: &minus;37%)</span></td>
                     </tr>
                     <tr>
                         <td style="padding: 12px 16px 12px 0; border-bottom: 1px solid #DDD5C7; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5A544E;">Live record</td>

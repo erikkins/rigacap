@@ -10,6 +10,46 @@
 
 These are the numbers every surface must converge on. Any divergence from this table is a defect.
 
+> ⚠️ **SUPERSEDED (2026-07-08):** The product is now **TWO TIERS** — RigaCap Preserver + RigaCap Maximizer — not the single t30v strategy. Everything below the horizontal rule (the May-2026 52-Monday t30v vintage) is **RETIRED, historical-audit only**. **Core/t30v is INTERNAL-ONLY — never cite its name or numbers in public copy.** Use the 2-tier canonical immediately below.
+
+### CURRENT CANONICAL — 2-tier walk-forward (vintage 2026-07-08)
+
+**Source**: `scripts/tier_vintages_21y.py` → `scripts/tier_curves_21y.json` (21-yr daily, 2007–2026) + `scripts/tier_vintages_daily.py` (recent 2-yr, clean standalone window). Live production config: `pwf.run(trail=0.30, max_pos=20, size=0.045)`, regime-routed sleeves. Pre-2016 = disclosed survivorship caveat; 2016+ = survivorship-free, point-in-time. **Say "walk-forward," never "backtest."**
+
+**21-year (2007–2026) — the honest anchor:**
+
+| Metric | Preserver | Maximizer | S&P 500 (price) | Raw momentum |
+|---|---|---|---|---|
+| Annualized | **8.6%** | **14.5%** | 9.8% | 13.2% |
+| Sharpe | 0.88 | 0.95 | 0.54 | 0.69 |
+| Max drawdown | −13% | −20% | −55% | −57% |
+| $100k → | $500k | $1.39M | $535k | — |
+| Calmar | 0.65 | 0.71 | — | — |
+
+**Last 24 months (held-out, clean) — the recent proof (dial shows +31% / +49%):**
+
+| Metric | Preserver | Maximizer | S&P 500 |
+|---|---|---|---|
+| Annualized | **31.3%** | **48.9%** | 19.9% |
+| Sharpe | 1.75 | 1.94 | 1.18 |
+| Calmar | 2.43 | 2.83 | 1.05 |
+| Max drawdown | −12.9% | −17.3% | −19.0% |
+
+**Supporting stats (public-safe):**
+- 2008: both tiers ~flat (+0.1%) while the S&P fell ~37%.
+- Recovery (longest underwater): Preserver 2.0yr, Maximizer 3.4yr, S&P 5.4yr → Preserver recovers ~2× faster (**Preserver-specific** claim; Maximizer is only ~1.4×).
+- Rolling win-rate vs S&P: Preserver 37% / 23% / 16% (1/3/5-yr); Maximizer 54% / 51% / 48%.
+- Preserver adviser cut: −0.9% avg in the S&P's down months (S&P −3.9%), +1.6% in up months, 0.51 monthly correlation, 5 of the S&P's 6 worst months in cash.
+- Sharpe vs Buffett (lifetime 0.79): Preserver 0.88 / Maximizer 0.95 — ABOVE Buffett, so ALWAYS pair with the pre-2016 survivorship caveat.
+
+**INTERNAL ONLY (never public):** Core/t30v 21-yr = 7.3% / 0.76 / −18% (differs from the retired 8.3%/0.73/19% canon — reconcile internally; publish neither).
+
+**Surface rules:** comparison tables use "RigaCap Preserver / RigaCap Maximizer" (house-mark + descriptor, TM). Hero dial leads with recent +31% / +49%; performance tables lead with the 21-yr anchor. No tildes on numbers in customer copy. Survivorship-free language = methodology/diligence context only, never a marketing lead.
+
+---
+
+> **The content below is the RETIRED May-2026 single-strategy (t30v) vintage — historical audit only. Do NOT cite in any surface.**
+
 **Vintage**: `2026-05-27` — T3 t10/s8 on live production pickle (`prices/all_data.pkl.gz`, downloaded May 25 2026), **52 weekly Monday start dates** Jan 4 → Dec 27 2021, 5-year forward window each. **Single source script**: `scripts/wf_dd_tighten_stop.py` with `--dd-threshold 10 --tight-stop 8 --baseline-stop 12`.
 
 **What changed since Apr 28 vintage:**
@@ -228,7 +268,8 @@ Track each canonical refresh so we can audit "what did we claim, when?"
 | 2026-04-28 | "Clean-data 8-date 5y, no-carry (ablation)" | `/tmp/wf_5y_8dates_no_carry_summary.csv` | +155.06% / 0.88 / 18.66% / SPY +90.33%. **Ablation only — not canonical.** Confirms CB pause-carries-periods behavior is a positive trade (better return + Sharpe for small MaxDD cost). |
 | 2026-04-28 | "Clean-data 8-date 5y, no-CG (ablation v2 — true CG counterfactual)" | `/tmp/wf_5y_8dates_no_cg_summary.csv` | +122.49% / 0.78 / 19.24%. **CG impact = +37.7pp return / +3.7pp ann / +0.14 Sharpe / ~neutral MDD.** Replaces Apr 19's over-fit "+87pp / same MDD" claim. Note: v1 attempt had a flag-plumbing bug (override applied at wrong call site); v2 verified via `pause_events=0` across all 8 runs before trusting numbers. |
 | _pending_ | "Clean-data 10y" | TBD | 10y re-run not yet scheduled. |
-| **2026-05-27** | **"T3 t10/s8 on live prod pickle, 52-Monday"** ← **CURRENT CANONICAL** | `/tmp/sweep_52mon_prod_T3_t10s8/summary.csv` | +186.63% med / 23.4% ann / 1.00 Sharpe / 26.41% MDD / +35% worst / +319% best. Adds the DD-conditional trail-tighten lever (when portfolio is ≥10% below peak, trail tightens 12% → 8%) on top of canonical. 52 weekly Mondays over 5y. **Apr 28 vintage RETIRED** — superseded by deliberate evolution (new lever, wider methodology, fresh pickle). Not reproducible on Apr 28 code/data and that's OK. |
+| 2026-05-27 | "T3 t10/s8 on live prod pickle, 52-Monday" (single-strategy t30v) | `/tmp/sweep_52mon_prod_T3_t10s8/summary.csv` | +186.63% med / 23.4% ann / 1.00 Sharpe / 26.41% MDD / +35% worst / +319% best. Single-strategy t30v vintage. **NOW RETIRED** — product split into two tiers (see below). |
+| **2026-07-08** | **"2-tier walk-forward (Preserver + Maximizer)"** ← **CURRENT CANONICAL** | `scripts/tier_vintages_21y.py` → `tier_curves_21y.json` + `scripts/tier_vintages_daily.py` | Product is now TWO tiers on one engine. 21-yr (2007–2026): **Preserver 8.6% / 0.88 / −13%**, **Maximizer 14.5% / 0.95 / −20%** vs S&P 9.8% / −55%, raw-mom 13.2% / −57%. Recent 24mo (clean): **Preserver 31.3% / 1.75 / −12.9%**, **Maximizer 48.9% / 1.94 / −17.3%** (= the 31/49 dial). Core/t30v (7.3% / 0.76 / −18%) retired to INTERNAL-ONLY. All prior t30v/single-strategy vintages RETIRED. Say "walk-forward," never "backtest." |
 
 ---
 

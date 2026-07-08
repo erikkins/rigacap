@@ -125,9 +125,8 @@ const HeroSection = ({ onGetStarted }) => (
             </a>
           </div>
           <div className="text-[0.86rem] text-ink-light leading-relaxed">
-            <strong className="text-ink-mute font-medium">~&#8531; the market&rsquo;s worst drawdown</strong>
-            <span className="text-rule-dark mx-2">&middot;</span>Two decades, every regime
-            <span className="text-rule-dark mx-2">&middot;</span><strong className="text-ink-mute font-medium">Tiers launching this month</strong>
+            <strong className="inline-block whitespace-nowrap text-ink-mute font-medium">&#8531; the market&rsquo;s worst drawdown</strong>
+            <span className="text-rule-dark mx-2">&middot;</span><span className="inline-block whitespace-nowrap">Two decades, every regime</span>
           </div>
         </div>
 
@@ -155,7 +154,7 @@ const HeroSection = ({ onGetStarted }) => (
               </div>
             </div>
             <div className="text-ink-light text-[0.72rem] text-center mt-4 leading-snug">
-              Walk-forward tested &middot; both tiers launch this month
+              Last 2 years, walk-forward &middot; both tiers launch this month
             </div>
           </div>
         </div>
@@ -163,12 +162,11 @@ const HeroSection = ({ onGetStarted }) => (
 
       {/* SURFACE-MARKER:landing-hero-stats-START */}
       {/* Honest proof retained beneath the hero (backtest-labeled). */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-7 pt-10 mt-12 border-t border-rule">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-7 pt-10 mt-12 border-t border-rule">
         {[
-          ['19%', 'Deepest loss in 21 years — the market lost ~55%'],
-          ['21 yrs', 'Tested through 2008, COVID & 2022 — every regime'],
-          ['2.20', 'Sharpe, last 24 months · vs S&P 1.18'],
-          ['0', 'Losing 2-year stretches in 21 years of testing'],
+          ['21 yrs', 'Walk-forward tested — through 2008, COVID & 2022'],
+          ['2×', 'Preserver recovered its worst drawdown twice as fast as the market'],
+          ['14.5%', 'Maximizer’s 21-year return — the S&P did 9.8%'],
         ].map(([value, label]) => (
           <div key={label} className="text-[0.98rem] text-ink-mute leading-snug">
             <strong className="block font-display text-ink text-[1.3rem] font-medium mb-1" style={{ fontVariationSettings: '"opsz" 48' }}>
@@ -180,10 +178,8 @@ const HeroSection = ({ onGetStarted }) => (
       </div>
       {/* SURFACE-MARKER:landing-hero-stats-END */}
 
-      {/* $59 is the founding rate while seats remain — UPDATE TO $129 ONCE
-          FOUNDING HITS 100 (or wire to /api/billing/founding-status). */}
-      <p className="text-[1.05rem] text-ink-mute leading-relaxed max-w-[640px] mt-12">
-        A momentum strategy with a <strong className="text-ink font-medium">19% worst loss across 21 years</strong> of testing &mdash; through 2008, COVID, and 2022. Built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>. <strong className="text-ink font-medium">$59/month founding</strong>, not 1% a year.
+      <p className="text-[1.05rem] text-ink-mute leading-relaxed max-w-[600px] lg:max-w-none mt-12 text-balance lg:whitespace-nowrap">
+        Built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>, priced like software &mdash; not 1% of your money every year.
       </p>
     </div>
   </section>
@@ -235,14 +231,14 @@ const EdgeSection = () => (
       <div className="grid md:grid-cols-3 gap-10 mt-12">
         {[
           {
-            num: 'Ⅰ / DIVERSIFICATION',
-            title: 'A basket, not a few big bets.',
-            text: <>RigaCap spreads risk across a diversified basket of names rather than concentrating into a handful of high-conviction guesses. Diversification is the first line of drawdown defense &mdash; <strong className="font-medium text-ink">no single position can sink the book.</strong></>,
+            num: 'Ⅰ / THE ENGINE',
+            title: 'Regime-adaptive, not static.',
+            text: <>RigaCap reads the market's mood &mdash; seven distinct regimes &mdash; and switches tactics: patient dip-buys in calm trends, deep-rebound buys after panics, aggressive breakouts when momentum pays. <strong className="font-medium text-ink">One engine, a different playbook for each regime.</strong></>,
           },
           {
-            num: 'Ⅱ / RISK-WEIGHTED',
+            num: 'Ⅱ / THE DISCIPLINE',
             title: 'Sized by risk, not conviction.',
-            text: <>Each position is sized by the risk it carries, not by how much we like the story. Capital flows to where it's steadiest, not where it's loudest &mdash; and that one piece of portfolio engineering is <strong className="font-medium text-ink">most of what halves the drawdown versus raw momentum.</strong></>,
+            text: <>Spread across a diversified basket, each position sized by the risk it carries &mdash; not by how much we like the story. It's the one piece of engineering that <strong className="font-medium text-ink">cuts the drawdown by two-thirds versus raw momentum</strong> &mdash; and what makes every setting on the dial survivable.</>,
           },
           {
             num: 'Ⅲ / HONESTY',
@@ -269,11 +265,10 @@ const PerformanceSection = () => (
       <SectionLabel>Performance</SectionLabel>
       <div className="max-w-[680px] mb-6">
         <h2 className="font-display text-ink mb-4 tracking-[-0.02em]" style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.75rem)', fontVariationSettings: '"opsz" 96' }}>
-          Less return. <em className="text-claret italic">Far less pain.</em>
+          Dial your return. <em className="text-claret italic">Keep the discipline.</em>
         </h2>
         <p className="text-ink-mute text-[1.05rem] leading-[1.65]">
-          We don't claim a magic new edge. We take a well-documented anomaly &mdash; momentum &mdash; and harvest it
-          with discipline. Here's the honest tradeoff, measured on survivorship-free data across three downturns.
+          One proven engine, two settings. <strong className="text-ink font-medium">Preserver</strong> protects, <strong className="text-ink font-medium">Maximizer</strong> pushes &mdash; both run the same disciplined momentum core. The last two years walk-forward tested at <strong className="text-ink font-medium">Preserver 31%</strong> and <strong className="text-ink font-medium">Maximizer 49%</strong>. Below is the honest anchor &mdash; the full 21-year record through three downturns, both products on the same basis.
         </p>
       </div>
 
@@ -284,7 +279,8 @@ const PerformanceSection = () => (
         {[
           { strat: 'Raw 12-month momentum, net of costs', ann: '13.2%', sharpe: '0.69', dd: '57%', ddColor: '#8F2D3D', hi: false },
           { strat: 'S&P 500 (price)', ann: '9.8%', sharpe: '—', dd: '55%', ddColor: '#8F2D3D', hi: false },
-          { strat: 'RigaCap — risk-managed', ann: '8.3%', sharpe: '0.73', dd: '19%', ddColor: '#2D5F3F', hi: true },
+          { strat: 'RigaCap Preserver', ann: '8.6%', sharpe: '0.88', dd: '13%', ddColor: '#2D5F3F', hi: true },
+          { strat: 'RigaCap Maximizer', ann: '14.5%', sharpe: '0.95', dd: '20%', ddColor: '#2D5F3F', hi: true },
         ].map((r) => (
           <div
             key={r.strat}
@@ -335,10 +331,16 @@ const PerformanceSection = () => (
               <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium" style={{ color: '#8F2D3D' }}>55%</td>
             </tr>
             <tr className="border-b border-rule bg-paper-card">
-              <td className="py-4 pl-5 pr-4 text-[1.05rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>RigaCap &mdash; risk-managed</td>
-              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">8.3%</td>
-              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">0.73</td>
-              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-semibold" style={{ color: '#2D5F3F' }}>19%</td>
+              <td className="py-4 pl-5 pr-4 text-[1.05rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #2D5F3F' }}>RigaCap Preserver</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">8.6%</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">0.88</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-semibold" style={{ color: '#2D5F3F' }}>13%</td>
+            </tr>
+            <tr className="border-b border-rule bg-paper-card">
+              <td className="py-4 pl-5 pr-4 text-[1.05rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>RigaCap Maximizer</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">14.5%</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">0.95</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-semibold" style={{ color: '#2D5F3F' }}>20%</td>
             </tr>
           </tbody>
         </table>
@@ -346,17 +348,17 @@ const PerformanceSection = () => (
       {/* SURFACE-MARKER:perf-comparison-table-END */}
 
       <p className="text-[0.93rem] text-ink-mute leading-relaxed">
-        Same momentum factor, same universe. <strong className="text-ink font-medium">We cut the maximum drawdown by two-thirds</strong> through diversification, risk-based sizing, disciplined exits, and a market-regime filter that has now been tested through the 2008 financial crisis, the COVID crash, and the 2022 bear. Walk-forward backtest, 2007&ndash;2026; 2016+ data is survivorship-free and point-in-time, pre-2016 carries a survivorship caveat (disclosed in full); price returns, net of modeled costs where shown.<br />
+        Same momentum factor, same universe. <strong className="text-ink font-medium">We cut the maximum drawdown by two-thirds</strong> through diversification, risk-based sizing, disciplined exits, and a market-regime filter that has now been tested through the 2008 financial crisis, the COVID crash, and the 2022 bear. Walk-forward test, 2007&ndash;2026; 2016+ data is survivorship-free and point-in-time, pre-2016 carries a survivorship caveat (disclosed in full); price returns, net of modeled costs where shown.<br />
         <strong className="text-ink font-medium">Live track record now accruing.</strong> See <a href="/methodology" className="text-claret underline underline-offset-2 decoration-1">methodology</a> for all assumptions.
       </p>
 
       <div className="bg-paper-card border-l-[3px] border-claret p-8 mt-12 max-w-[62ch]">
         <h3 className="font-display text-[1.15rem] font-semibold text-ink mb-3" style={{ fontVariationSettings: '"opsz" 48' }}>
-          Why the lower number is the point.
+          Why the drawdown is the whole game.
         </h3>
         <p className="text-ink leading-[1.7]">
-          Raw momentum's higher headline return is mostly an illusion &mdash; <strong className="font-medium">almost no one survives a 57% drawdown to collect it.</strong> In 2008 it lost nearly half its value in a single year; the index did the same twice in two decades. Investors abandon strategies at the bottom. By holding the worst drawdown near 19% across twenty-one years, RigaCap is something you can actually stay invested in through a full cycle &mdash; which is the only way the returns ever reach your account.<br />
-          <em className="font-display italic text-claret">That behavior, not the headline return, is the reason to subscribe.</em>
+          Raw momentum returns 13.2% a year on paper &mdash; but <strong className="font-medium">almost no one survives a 57% drawdown to collect it.</strong> In 2008 it lost nearly half its value in a single year; the index did the same twice in two decades. Investors abandon strategies at the bottom. Maximizer doesn't just cut that loss to a third &mdash; it <strong className="font-medium">out-earns raw momentum outright</strong> (14.5% vs 13.2%). Trimming the worst drawdown to a level you can actually hold is what makes the return reachable at all &mdash; and it's what lets you safely dial the risk <strong className="font-medium">up</strong> to Maximizer instead of blowing up.<br />
+          <em className="font-display italic text-claret">The discipline is the product. The setting is your choice.</em>
         </p>
       </div>
 
@@ -393,7 +395,7 @@ const FounderSection = () => (
             </p>
             <p>
               There's no team, no outside capital, and no marketing department. That's the point.
-              The Ensemble strategy is what I'd been running privately. RigaCap is the version I'm willing to put my name on.
+              The engine behind both tiers is what I'd been running privately. RigaCap is the version I'm willing to put my name on.
             </p>
           </div>
           <a href="/about" className="inline-block mt-8 px-7 py-4 border border-rule-dark text-ink text-[1.05rem] font-medium rounded-[2px] no-underline hover:border-ink transition-all">
@@ -415,7 +417,7 @@ const HowItWorksSection = () => (
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
         {[
-          { title: 'Scan', text: 'Algorithms evaluate ~6,500 US stocks daily, filtered to ~4,000 that meet liquidity and price criteria.' },
+          { title: 'Scan', text: 'Algorithms evaluate 6,500 US stocks daily, filtered to 4,000 that meet liquidity and price criteria.' },
           { title: 'Signal', text: 'When timing, momentum, and risk all align, subscribers receive an alert with entry, stop, and target levels.' },
           { title: 'Execute', text: 'You place the trade through your own broker. RigaCap never touches your capital.' },
           { title: 'Exit', text: 'Trailing stops manage risk automatically. Regime changes trigger systematic de-risking.' },
@@ -444,12 +446,12 @@ const PricingSection = ({ onGetStarted, founding }) => {
       <SectionLabel>Pricing</SectionLabel>
       <div className="max-w-[680px] mb-4">
         <h2 className="font-display text-ink mb-4 tracking-[-0.02em]" style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.75rem)', fontVariationSettings: '"opsz" 96' }}>
-          Two paths in. <em className="text-claret italic">Cancel anytime.</em>
+          One engine. <em className="text-claret italic">Your dial.</em>
         </h2>
         <p className="text-ink-mute text-[1.05rem] leading-[1.65]">
-          The standard rate reflects the value delivered to a self-directed investor with a meaningful portfolio.
-          The founding rate rewards the first 100 subscribers with a locked-in price while the live track record is being built.
-          Advisory firms applying the strategy across client accounts license it at the firm level.
+          Start with <strong className="text-ink font-medium">Preserver</strong>, the capital-preservation base &mdash; founding members lock the rate while the live record builds.
+          Add <strong className="text-ink font-medium">Maximizer</strong> when you want more offense (launching this month, seatbelt included).
+          Advisory firms license the engine at the firm level. Cancel anytime.
         </p>
       </div>
 
@@ -459,17 +461,17 @@ const PricingSection = ({ onGetStarted, founding }) => {
           <span className="absolute -top-3 left-8 bg-claret text-paper text-[0.78rem] font-medium tracking-[0.15em] uppercase px-3 py-1">
             Founding &middot; First 100
           </span>
-          <h3 className="font-display text-[1.3rem] font-medium text-ink mb-1" style={{ fontVariationSettings: '"opsz" 72' }}>Founding Member</h3>
-          <p className="font-display italic text-ink-mute text-[1rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>For those who sign up first.</p>
+          <h3 className="font-display text-[1.3rem] font-medium text-ink mb-1" style={{ fontVariationSettings: '"opsz" 72' }}>Preserver</h3>
+          <p className="font-display italic text-ink-mute text-[1rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>The capital-preservation dial.</p>
           <div className="mb-1">
             <span className="font-display text-[3.5rem] font-normal text-ink leading-none tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>$59</span>
             <span className="text-ink-mute text-[1.05rem] ml-1">/month</span>
           </div>
           <p className="text-ink-mute text-[1rem] leading-relaxed mt-3">
-            Locked at this rate for <strong className="text-claret font-medium">12 months.</strong> Transitions to $129/month afterward. Only <strong className="text-claret font-medium">100 founding seats</strong> &mdash; then it closes.
+            Founding rate, locked <strong className="text-claret font-medium">12 months</strong> &mdash; then $129/month, or <strong className="text-claret font-medium">$1,099/year</strong>. Only <strong className="text-claret font-medium">100 founding seats</strong>, then it closes.
           </p>
           <ul className="list-none my-7 pt-6 border-t border-rule flex-1 space-y-1.5">
-            {['Everything in the standard plan', 'Direct reply line to Erik', 'Grandfathered access to future features', 'Recognition as a founding subscriber', 'Your feedback shapes the product'].map(item => (
+            {['Every buy & sell call the model makes', 'Daily email digest', 'Entry, stop & exit levels', 'Regime-adaptive risk engine', 'Portfolio tracking dashboard', 'Direct reply line to Erik', 'Grandfathered on future features'].map(item => (
               <li key={item} className="text-ink-mute text-[1rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
             ))}
           </ul>
@@ -491,29 +493,32 @@ const PricingSection = ({ onGetStarted, founding }) => {
           )}
         </div>
 
-        {/* Standard */}
-        <div className="bg-paper-card border border-rule p-10 flex flex-col">
-          <h3 className="font-display text-[1.3rem] font-medium text-ink mb-1" style={{ fontVariationSettings: '"opsz" 72' }}>Standard</h3>
-          <p className="font-display italic text-ink-mute text-[1rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>Available once founding seats close.</p>
+        {/* Maximizer — add-on, launching this month (waitlist; not charged until signals live) */}
+        <div className="bg-paper-card border border-rule p-10 flex flex-col relative">
+          <span className="absolute -top-3 left-8 bg-ink text-paper text-[0.78rem] font-medium tracking-[0.15em] uppercase px-3 py-1">
+            Add-on &middot; Launching this month
+          </span>
+          <h3 className="font-display text-[1.3rem] font-medium text-ink mb-1" style={{ fontVariationSettings: '"opsz" 72' }}>+ Maximizer</h3>
+          <p className="font-display italic text-ink-mute text-[1rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>Aggressive growth, seatbelt on.</p>
           <div className="mb-1">
-            <span className="font-display text-[3.5rem] font-normal text-ink leading-none tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>$129</span>
+            <span className="font-display text-[3.5rem] font-normal text-ink leading-none tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>+$100</span>
             <span className="text-ink-mute text-[1.05rem] ml-1">/month</span>
           </div>
           <p className="text-ink-mute text-[1rem] leading-relaxed mt-3">
-            Or <strong className="text-claret font-medium">$1,099/year</strong> billed annually &mdash; three months free.
+            Layers onto Preserver &mdash; the aggressive breakout engine with a momentum-crash brake. <strong className="text-claret font-medium">Founding members get first access</strong> at launch.
           </p>
           <ul className="list-none my-7 pt-6 border-t border-rule flex-1 space-y-1.5">
-            {['Unlimited real-time signals', 'Daily email digest', 'Entry, stop, and target levels', 'Market-regime risk filter', 'Portfolio tracking dashboard', '4,000+ stocks scanned daily', 'Full methodology access'].map(item => (
+            {['Everything in Preserver', 'Aggressive breakout engine in trending markets', 'Volatility seatbelt on the crash tail', 'Higher-return profile for growth-seekers', 'Toggle on or off anytime'].map(item => (
               <li key={item} className="text-ink-mute text-[1rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
             ))}
           </ul>
           <button
-            onClick={() => onGetStarted('monthly')}
+            onClick={() => onGetStarted('founding')}
             className="w-full py-4 border border-ink text-ink text-[1.05rem] font-medium rounded-[2px] text-center hover:bg-ink hover:text-paper transition-colors"
           >
-            Start 7-Day Free Trial
+            Join the founding list
           </button>
-          <p className="text-center text-[0.88rem] text-ink-light mt-3">Credit card required &middot; Cancel anytime</p>
+          <p className="text-center text-[0.88rem] text-ink-light mt-3">First access when signals go live</p>
         </div>
 
         {/* Advisory firms */}
@@ -529,7 +534,7 @@ const PricingSection = ({ onGetStarted, founding }) => {
             <strong className="text-claret font-medium">You remain the fiduciary.</strong>
           </p>
           <ul className="list-none my-7 pt-6 border-t border-rule flex-1 space-y-1.5">
-            {['Everything in Standard', 'Multiple adviser seats', 'Internal use across client books', 'Client-presentable methodology & track record', 'A 19% worst drawdown clients can sit through', 'Direct line to the founder'].map(item => (
+            {['Preserver + Maximizer, firm-wide', 'Multiple adviser seats', 'Internal use across client books', 'Client-presentable methodology & track record', 'Drawdowns clients can sit through — 13% to 20%, not 55%', 'Direct line to the founder'].map(item => (
               <li key={item} className="text-ink-mute text-[1rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
             ))}
           </ul>
@@ -549,13 +554,14 @@ const PricingSection = ({ onGetStarted, founding }) => {
 
 const faqItems = [
   { q: 'Who is this for?', a: <>Two kinds of people. Self-directed investors with meaningful portfolios who've decided indexing alone is too passive and individual active trading has been too emotional — if you've tried to run your own momentum strategy and found yourself overriding your own rules, this is a system that will do the boring parts consistently whether you feel like it or not. And registered investment advisers, who license it at the firm level as a disciplined momentum sleeve their clients can actually hold through a full cycle — see the <a href="/for-advisers" className="text-claret underline underline-offset-2 decoration-1">For Advisers page</a>.</> },
-  { q: 'Who is this NOT for?', a: "Anyone whose goal is beating the index every year. In the 21-year backtest this strategy trailed the S&P in most rolling windows — its entire value concentrates in the years markets break, when it kept the worst loss near 19% while the index lost half. If watching the market run while your account grinds along would make you quit, you'd be paying insurance premiums and cancelling right before the fire. We'd rather tell you that on the front page than learn it from your cancellation survey." },
-  { q: 'Is a 0.73 Sharpe over 21 years actually good?', a: 'Better than it sounds — long-horizon Sharpe ratios live on a compressed scale. Numbers above 1 come from short windows and overfit backtests; over decades the air gets thin. The S&P 500 scored 0.54 across our same 21-year window, and the highest lifetime figure ever measured for any stock or fund with 30+ years of history is Warren Buffett\u2019s 0.79 (\u201cBuffett\u2019s Alpha,\u201d Frazzini, Kabiller & Pedersen, 2018). Ours is backtested and his is real — that distinction matters — but two honest decades put you in that neighborhood, not the neighborhood of strategies promising Sharpe 2.' },
-  { q: 'What returns should I actually expect?', a: "Our twenty-one-year walk-forward backtest (2007–2026) compounds at 8.3% annualized with a 19% maximum drawdown — through the 2008 financial crisis, the COVID crash, and the 2022 bear, a stretch in which the index lost more than half its value twice and raw momentum lost 57%. Those are backtested figures; the strategy now runs live, but its real-time record is just beginning. Underwrite conservatively — think mid-to-high single digits — until that live record builds, which we publish as it does. Past performance, including backtested performance, does not predict future results." },
-  { q: "Why don't you publish flashier numbers like other services?", a: "Because we anchor on what survives scrutiny. We rebuilt our research data to be survivorship-free and strictly point-in-time, then extended it back through 2008 — and each time the honest numbers came in more conservative than our earlier figures, we revised them down and said so. Most services lead with cherry-picked windows or zero-friction simulations no subscriber reproduces. We'd rather publish a true 8% with a 19% worst drawdown across two decades than a flattering number we can't defend." },
+  { q: 'Who is this NOT for?', a: "Anyone who'll bail the moment they trail the market. Both tiers are built to keep you invested through a full cycle, not to win every quarter — even Maximizer, the aggressive setting, is designed to survive the drawdowns that make people capitulate. If watching the index run while your account grinds along for a stretch would make you quit, you'd be paying insurance premiums and cancelling right before the fire. We'd rather tell you that on the front page than learn it from your cancellation survey." },
+  { q: "What's the difference between Preserver and Maximizer?", a: <>Same engine, one knob &mdash; you choose how hard to push. Preserver is the capital-preservation setting: strong momentum returns with a tight drawdown (walk-forward tested at 31% a year over the last two years, 13% worst loss). Maximizer dials up the offense &mdash; an aggressive breakout strategy in trending markets, with a volatility &ldquo;seatbelt&rdquo; that automatically eases exposure when its own turbulence spikes (walk-forward tested at 49% a year, 17% worst loss). Maximizer isn&rsquo;t <em className="italic">better</em>, it&rsquo;s <em className="italic">more</em> &mdash; more return and more drawdown, in roughly equal measure &mdash; so pick the setting that matches how much volatility you can actually sit through. Preserver is the flagship and buyable today; Maximizer is a +$100/month add-on launching this month, with founding members getting first access. Both are walk-forward tested; the live record is just beginning.</> },
+  { q: 'Is your Sharpe ratio actually good?', a: 'Read it honestly. Long-horizon Sharpe ratios live on a compressed scale. Numbers above 1 come from short windows and overfit backtests; over decades the air gets thin. The S&P 500 scored 0.54 across our same 21-year window; Preserver walk-forward tested at 0.88 and Maximizer at 0.95. The highest lifetime figure ever measured for any fund with 30+ years of real history is Warren Buffett\u2019s 0.79 (\u201cBuffett\u2019s Alpha,\u201d Frazzini, Kabiller & Pedersen, 2018). Ours is walk-forward tested and his is real — that distinction matters — and our pre-2016 data carries a survivorship caveat that flatters the early years, so we hold these as strong-but-honest, not a claim to have out-Sharped Buffett.' },
+  { q: 'What returns should I actually expect?', a: "Depends on your setting. Over a 21-year walk-forward (2007–2026, through the 2008 crisis, the COVID crash, and the 2022 bear) Preserver compounds at 8.6% a year with a 13% maximum drawdown; Maximizer at 14.5% with a 20% drawdown — versus the S&P's 9.8% at a 55% drawdown, and raw momentum's 13.2% at 57%. The last two years were far stronger (Preserver 31%, Maximizer 49%), but a two-year window is a tailwind, not a promise — the 21-year figures are the honest anchor because they include every crash. Underwrite to those. Past performance, including walk-forward and simulated results, does not predict future results." },
+  { q: "Why don't you publish flashier numbers like other services?", a: "Because we anchor on what survives scrutiny. We rebuilt our research data to be survivorship-free and strictly point-in-time, then extended it back through 2008 — and each time the honest numbers came in more conservative than our earlier figures, we revised them down and said so. Most services lead with cherry-picked windows or zero-friction simulations no subscriber reproduces. We'd rather publish honest walk-forward figures — Preserver's 8.6% at a 13% worst drawdown, Maximizer's 14.5% at 20% — than a flattering number we can't defend." },
   { q: 'Why $129/month?', a: "You're not paying for a return forecast — you're paying for disciplined risk management: a momentum implementation with roughly a third of the raw factor's drawdown across twenty-one years, and the discipline to keep you invested through a cycle instead of bailing at the bottom. On a meaningful portfolio, the value of not abandoning a strategy in a drawdown dwarfs the $1,548/year — and it's less than a traditional advisor's fee." },
   { q: 'How many signals do you generate?', a: "RigaCap holds a diversified basket of positions, refreshed as fresh signals appear — typically several new entries in a normal month, fewer when the market turns hostile. It's selective, not silent: turnover stays low by design, but the strategy is invested whenever conditions support it." },
-  { q: 'Has the system ever had a down year?', a: "Yes — and we'd rather tell you than hide it. Across twenty-one years of walk-forward backtest the strategy had losing years (2017 and 2018 among them), but the worst peak-to-trough loss across the entire span — including the 2008 financial crisis, the COVID crash, and the 2022 bear — stayed near 19%. The design is built for participation in trends and protection in stress, not to win every quarter. (Backtested; the live record is accruing now.)" },
+  { q: 'Has the system ever had a down year?', a: "Yes — and we'd rather tell you than hide it. Across twenty-one years of walk-forward testing both tiers had losing years (2017 and 2018 among them), but the worst peak-to-trough loss across the entire span — including the 2008 financial crisis, the COVID crash, and the 2022 bear — stayed at 13% for Preserver and 20% for Maximizer, while the market lost 55%. The design is built for participation in trends and protection in stress, not to win every quarter. (Walk-forward tested; the live record is accruing now.)" },
   { q: 'If it works this well, why sell signals instead of running a fund?', a: "Running a fund requires regulatory infrastructure, institutional capital, and a 2+ year live track record — I'm building that now. In the meantime, signals let me prove the system in live markets with real subscribers while bootstrapping. You get access to the same engine I'll eventually deploy with my own capital." },
   { q: 'Can I cancel anytime?', a: 'Yes. No contracts, no commitments. Cancel from your account settings at any time; access continues until the end of your billing period.' },
   { q: 'Do you provide financial advice?', a: 'No. RigaCap provides algorithmic signals and educational information only. RigaCap is not a registered investment advisor. Always do your own research and consider consulting a licensed professional before making investment decisions.' },
@@ -612,7 +618,7 @@ const Footer = () => (
             RigaCap<span className="text-claret">.</span>
           </Link>
           <p className="mt-4 text-[1rem] text-ink-mute leading-relaxed max-w-[32ch]">
-            Ensemble trading signals. The market, measured. Built by one quant researcher, shipping honestly.
+            Regime-adaptive trading signals. The market, measured. Built by one quant researcher, shipping honestly.
           </p>
         </div>
         <div>

@@ -16,7 +16,7 @@ export default function ForAdvisersPage() {
         <div className="border-b-2 border-ink mt-3">
           <div className="flex justify-between text-[0.68rem] tracking-[0.14em] uppercase text-ink-light py-2 border-b border-rule">
             <span>For registered advisers &amp; RIAs</span>
-            <span className="hidden sm:inline">Signals & sizing · Walk-forward backtested</span>
+            <span className="hidden sm:inline">Signals & sizing · Walk-forward tested</span>
           </div>
           <nav className="flex items-center justify-between py-4">
             <Link to="/" className="flex items-center gap-2.5 no-underline">
@@ -44,8 +44,8 @@ export default function ForAdvisersPage() {
             A momentum sleeve you<br />can actually <em className="text-claret italic">defend.</em>
           </h1>
           <p className="mt-5 text-[1.18rem] text-[#3a342e] max-w-[600px] leading-[1.55]">
-            Survivorship-free, walk-forward-validated, and drawdown-controlled — a systematic momentum
-            allocation you can hold a client book through, and explain in a single meeting.
+            Drawdown-controlled and diligence-ready — a systematic momentum sleeve your clients can hold
+            through a crash without capitulating, and you can explain in a single meeting.
           </p>
           <div className="flex flex-wrap gap-3 items-center mt-7">
             <Link to="/" className="bg-claret text-white font-semibold px-5 py-3 rounded-[3px] text-[0.9rem] no-underline hover:bg-claret-light transition-colors">Start your free trial</Link>
@@ -56,14 +56,14 @@ export default function ForAdvisersPage() {
           {/* Insight box */}
           <div className="mt-11 bg-paper-card border border-rule border-t-[3px] border-t-ink p-7 sm:p-8 grid sm:grid-cols-[1.1fr_1fr] gap-8 items-center">
             <div className="font-display font-medium text-[1.7rem] leading-[1.25] tracking-[-0.01em]" style={{ fontVariationSettings: '"opsz" 72' }}>
-              Clients don't fire you at <em className="text-claret italic">−19%.</em><br />They fire you at <em className="text-claret italic">−57%.</em>
+              Clients don't fire you at <em className="text-claret italic">−13%.</em><br />They fire you at <em className="text-claret italic">−57%.</em>
             </div>
             <div>
               <div className="text-[0.7rem] tracking-[0.05em] uppercase text-ink-mute font-semibold mb-3">Worst drawdown · 2007–2026</div>
               {[
                 ['Raw momentum', '100%', '−57%', false],
                 ['S&P 500', '96%', '−55%', false],
-                ['RigaCap', '34%', '−19%', true],
+                ['RigaCap Preserver', '23%', '−13%', true],
               ].map(([label, w, val, good]) => (
                 <div key={label} className="grid grid-cols-[1fr_56px] items-center gap-3 my-2.5">
                   <div>
@@ -85,9 +85,9 @@ export default function ForAdvisersPage() {
           <h2 className="font-display font-medium text-ink mt-2.5 tracking-[-0.01em]" style={{ fontSize: 'clamp(1.6rem, 3vw, 2rem)', fontVariationSettings: '"opsz" 96' }}>The drawdown is the deliverable.</h2>
           <div className="grid sm:grid-cols-3 gap-x-8 gap-y-6 mt-7 border-t border-rule pt-7">
             {[
-              ['Behaviorally holdable', 'Your biggest portfolio risk isn’t the market — it’s a client capitulating at the bottom. A 19% worst case across twenty-one years — through 2008, COVID, and 2022 — is one a client can sit through. The index’s 55% and raw momentum’s 57% aren’t.'],
+              ['Behaviorally holdable', 'Your biggest portfolio risk isn’t the market — it’s a client capitulating at the bottom. A 13% worst case across twenty-one years — through 2008, COVID, and 2022 — is one a client can sit through. The index’s 55% and raw momentum’s 57% aren’t.'],
               ['Diligence you can present', 'Survivorship-free, point-in-time, walk-forward, out-of-sample. The methodology stands up in a committee meeting, not just a marketing deck.'],
-              ['A complement, not a core', 'A disciplined momentum sleeve that sits alongside an indexed core — 0.43 monthly correlation to the S&P over 21 years, sized to your mandate.'],
+              ['A complement, not a core', 'A disciplined momentum sleeve that sits alongside an indexed core — 0.51 monthly correlation to the S&P over 21 years, sized to your mandate.'],
             ].map(([h, p]) => (
               <div key={h}>
                 <h3 className="font-display text-[1.05rem] font-semibold text-claret mb-1.5" style={{ fontVariationSettings: '"opsz" 36' }}>{h}</h3>
@@ -131,7 +131,7 @@ export default function ForAdvisersPage() {
             <table className="w-full border-collapse" style={{ fontFeatureSettings: '"tnum"' }}>
               <thead>
                 <tr>
-                  {['Month', 'S&P 500', 'RigaCap'].map((h, i) => (
+                  {['Month', 'S&P 500', 'RigaCap Preserver'].map((h, i) => (
                     <th key={h} className={`py-2.5 ${i === 0 ? 'text-left' : 'text-right'} font-body font-medium text-[0.72rem] tracking-[0.14em] uppercase text-ink-mute border-b border-rule-dark`}>{h}</th>
                   ))}
                 </tr>
@@ -139,11 +139,11 @@ export default function ForAdvisersPage() {
               <tbody>
                 {[
                   ['Oct 2008', '−16.5%', '0.0%', 'in cash'],
-                  ['Mar 2020', '−13.1%', '−4.7%', ''],
+                  ['Mar 2020', '−13.0%', '0.0%', 'in cash'],
                   ['Feb 2009', '−10.7%', '0.0%', 'in cash'],
                   ['Sep 2008', '−9.9%', '0.0%', 'in cash'],
                   ['Sep 2022', '−9.6%', '0.0%', 'in cash'],
-                  ['Dec 2018', '−9.3%', '−1.3%', ''],
+                  ['Dec 2018', '−9.3%', '−1.0%', ''],
                 ].map(([m, s, r, note]) => (
                   <tr key={m} className="border-b border-rule">
                     <td className="py-2.5 text-[0.9rem] text-ink-mute">{m}</td>
@@ -157,13 +157,13 @@ export default function ForAdvisersPage() {
             </table>
             <div className="text-[0.95rem] text-ink leading-[1.7]">
               <p>
-                Across 21 backtested years, RigaCap averaged <strong className="font-medium">−1.0% in the index's down months</strong> (the
-                index averaged −3.9% in those same months) while keeping <strong className="font-medium">+1.7% per month</strong> when the
-                index was rising. Four of the index's six worst months, the regime filter had the strategy in cash before the month began.
+                Across 21 walk-forward years, Preserver averaged <strong className="font-medium">−0.9% in the index's down months</strong> (the
+                index averaged −3.9% in those same months) while keeping <strong className="font-medium">+1.6% per month</strong> when the
+                index was rising. Five of the index's six worst months, the regime filter had the strategy in cash before the month began.
               </p>
               <p className="mt-3 text-[0.85rem] text-ink-light">
-                That asymmetry — roughly a quarter of the downside, meaningful participation in the upside — is what a 0.43 correlation
-                feels like to a client. Backtested, price returns; see <a href="/methodology" className="text-claret underline underline-offset-2 decoration-1">methodology</a>.
+                That asymmetry — roughly a quarter of the downside, meaningful participation in the upside — is what a 0.51 correlation
+                feels like to a client. Walk-forward, price returns; see <a href="/methodology" className="text-claret underline underline-offset-2 decoration-1">methodology</a>.
               </p>
             </div>
           </div>
@@ -176,7 +176,7 @@ export default function ForAdvisersPage() {
             {[
               ['Turnover & taxes', 'Roughly 50–60 trades a year across 20 positions; typical holds run weeks to months, so gains skew short-term. Most advisers deploy it in tax-advantaged accounts, or accept the tax drag as the cost of the drawdown profile in taxable ones.'],
               ['Workflow', 'Signals and the model book update daily after the close; entries and exits arrive by email with sizing. Implementation is yours, through your custodian — typically minutes a day, not hours.'],
-              ['What clients see', 'A track record page and methodology you can hand them directly — every number backtested, labeled, and reproducible, with the live record accruing in public. Nothing you’d need to walk back later.'],
+              ['What clients see', 'A track record page and methodology you can hand them directly — every number walk-forward tested, labeled, and reproducible, with the live record accruing in public. Nothing you’d need to walk back later.'],
             ].map(([h, p]) => (
               <div key={h}>
                 <h3 className="font-display text-[1.05rem] font-semibold text-claret mb-1.5" style={{ fontVariationSettings: '"opsz" 36' }}>{h}</h3>
@@ -195,7 +195,7 @@ export default function ForAdvisersPage() {
               ['Survivorship-free construction', 'Delisted, merged, and bankrupt names reconstructed from SEC filings. No accidental winners-only inflation.'],
               ['Point-in-time, no look-ahead', 'Universe, prices, and corporate actions adjusted strictly as-of each date.'],
               ['Walk-forward, out-of-sample', 'Validated on dates the parameters never saw; overfit configurations documented and discarded.'],
-              ['Honest, discounted, transparent', 'Backtest figures published net of modeled costs and explicitly discounted for the absence of a live record.'],
+              ['Honest, discounted, transparent', 'Walk-forward figures published net of modeled costs and explicitly discounted for the absence of a live record.'],
             ].map(([h, p]) => (
               <div key={h}>
                 <h4 className="text-[0.95rem] font-semibold text-ink mb-1"><span className="text-claret mr-1.5">—</span>{h}</h4>
@@ -204,7 +204,7 @@ export default function ForAdvisersPage() {
             ))}
           </div>
           <div className="mt-7 bg-paper-card border border-rule border-l-[3px] border-l-claret p-5 text-[0.88rem] text-[#3a342e] leading-[1.6]">
-            <strong className="text-ink">How it works.</strong> RigaCap delivers <strong className="text-ink">signals and a model allocation</strong> — entries, exits, and sizing. You implement across client accounts through your own custodian; <strong className="text-ink">RigaCap never touches client capital, and you remain the fiduciary.</strong> Performance shown is backtested:
+            <strong className="text-ink">How it works.</strong> RigaCap delivers <strong className="text-ink">signals and a model allocation</strong> — entries, exits, and sizing. You implement across client accounts through your own custodian; <strong className="text-ink">RigaCap never touches client capital, and you remain the fiduciary.</strong> Performance shown is walk-forward tested:
             <table className="w-full border-collapse my-4" style={{ fontFeatureSettings: '"tnum"' }}>
               <thead>
                 <tr>
@@ -215,18 +215,32 @@ export default function ForAdvisersPage() {
               </thead>
               <tbody>
                 <tr className="border-b border-rule">
-                  <td className="py-2.5 text-[0.85rem] text-ink font-medium">21 years · 2007–2026 <span className="font-normal text-ink-light italic">— the foundation</span></td>
-                  <td className="py-2.5 text-right font-mono text-[0.9rem] text-ink">8.3%</td>
-                  <td className="py-2.5 text-right font-mono text-[0.9rem] text-ink">0.73</td>
-                  <td className="py-2.5 text-right font-mono text-[0.9rem] text-ink">0.43</td>
-                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-medium" style={{ color: '#2D5F3F' }}>19%</td>
+                  <td className="py-2.5 text-[0.85rem] text-ink font-medium">RigaCap Preserver <span className="font-normal text-ink-light italic">— 21 yr · the sleeve</span></td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] text-ink">8.6%</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] text-ink">0.88</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] text-ink">0.65</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-medium" style={{ color: '#2D5F3F' }}>13%</td>
                 </tr>
                 <tr className="border-b border-rule">
-                  <td className="py-2.5 text-[0.85rem] text-ink font-medium">Last 24 months <span className="font-normal text-ink-light italic">— held-out window</span></td>
-                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-semibold" style={{ color: '#2D5F3F' }}>+32.0%</td>
-                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-semibold text-ink">2.20</td>
-                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-semibold text-ink">3.76</td>
-                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-medium" style={{ color: '#2D5F3F' }}>8.5%</td>
+                  <td className="py-2.5 text-[0.85rem] text-ink">RigaCap Preserver <span className="font-normal text-ink-light italic">— last 24 mo · held-out</span></td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-semibold" style={{ color: '#2D5F3F' }}>+31.3%</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-semibold text-ink">1.75</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-semibold text-ink">2.43</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-medium" style={{ color: '#2D5F3F' }}>12.9%</td>
+                </tr>
+                <tr className="border-b border-rule">
+                  <td className="py-2.5 text-[0.85rem] text-ink font-medium">RigaCap Maximizer <span className="font-normal text-ink-light italic">— 21 yr · aggressive setting</span></td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] text-ink">14.5%</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] text-ink">0.95</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] text-ink">0.71</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-medium" style={{ color: '#2D5F3F' }}>20%</td>
+                </tr>
+                <tr className="border-b border-rule">
+                  <td className="py-2.5 text-[0.85rem] text-ink">RigaCap Maximizer <span className="font-normal text-ink-light italic">— last 24 mo · held-out</span></td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-semibold" style={{ color: '#2D5F3F' }}>+48.9%</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-semibold text-ink">1.94</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-semibold text-ink">2.83</td>
+                  <td className="py-2.5 text-right font-mono text-[0.9rem] font-medium" style={{ color: '#2D5F3F' }}>17.3%</td>
                 </tr>
               </tbody>
             </table>
@@ -248,7 +262,7 @@ export default function ForAdvisersPage() {
 
         {/* Footer */}
         <footer className="py-8 border-t border-rule text-ink-light text-[0.72rem] leading-[1.7]">
-          RigaCap publishes impersonal, regularly-circulated commentary under the publisher's exemption. Not personalized investment advice; advisers remain responsible for suitability and fiduciary duties to their clients. Signals only — RigaCap does not custody or manage client assets. Past performance, including backtested performance, does not guarantee future results.
+          RigaCap publishes impersonal, regularly-circulated commentary under the publisher's exemption. Not personalized investment advice; advisers remain responsible for suitability and fiduciary duties to their clients. Signals only — RigaCap does not custody or manage client assets. Past performance, including walk-forward and simulated performance, does not guarantee future results.
         </footer>
       </div>
     </div>

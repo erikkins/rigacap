@@ -216,10 +216,10 @@ function drawAllCards() {
   fitText(ctx, 'Behavioral capital insurance for your portfolio.', w / 2, 808, 920,
     'bold italic 36px ' + SERIF);
   ctx.fillStyle = FOREST;
-  fitText(ctx, 'Last 24 months: +32% annualized · 2.20 Sharpe (held-out backtest)', w / 2, 872, 920,
+  fitText(ctx, 'Last 24 months, walk-forward: Preserver +31% · Maximizer +49%', w / 2, 872, 920,
     'bold 27px ' + MONO);
   ctx.fillStyle = INK;
-  fitText(ctx, '21-year foundation: worst drawdown 19% — the index lost half, twice', w / 2, 920, 920,
+  fitText(ctx, '21-year foundation: 13% worst drawdown — the index lost half, twice', w / 2, 920, 920,
     '26px ' + MONO);
   ctx.fillStyle = MUTED;
   fitText(ctx, 'Through 2008, COVID, and 2022. Every number labeled. Losers posted too.', w / 2, 985, 900,
@@ -237,7 +237,7 @@ function drawAllCards() {
 
   // Header
   drawWordmark(ctx, 100, 122, 36);
-  drawEyebrow(ctx, 100, 190, '2007–2026 · backtested · price returns · no hindsight');
+  drawEyebrow(ctx, 100, 190, '2007–2026 · walk-forward · price returns · no hindsight');
   drawSegments(ctx, [
     { text: 'Twenty-one years, ', font: '54px ' + SERIF, color: INK },
     { text: 'walk-forward.', font: 'italic 54px ' + SERIF, color: CLARET },
@@ -258,8 +258,8 @@ function drawAllCards() {
   hairline(ctx, 100, w - 100, y + 22);
 
   const rows = [
-    { name: 'RigaCap', ann: '8.3%', sharpe: '0.73', dd: '−19%', ddColor: FOREST, highlight: true },
-    { name: 'Raw momentum, net', ann: '13.2%', sharpe: '0.69', dd: '−57%', ddColor: OXBLOOD, highlight: false },
+    { name: 'RigaCap Preserver', ann: '8.6%', sharpe: '0.88', dd: '−13%', ddColor: FOREST, highlight: true },
+    { name: 'RigaCap Maximizer', ann: '14.5%', sharpe: '0.95', dd: '−20%', ddColor: FOREST, highlight: true },
     { name: 'S&P 500', ann: '9.8%', sharpe: '—', dd: '−55%', ddColor: OXBLOOD, highlight: false },
   ];
 
@@ -296,11 +296,11 @@ function drawAllCards() {
 
   // Drawdown bar comparison — the point of the card
   let by = y + 60;
-  drawEyebrow(ctx, 100, by, 'Worst drawdown, visualized (backtest)');
+  drawEyebrow(ctx, 100, by, 'Worst drawdown, visualized');
 
   const bars = [
-    { name: 'RigaCap', dd: 19, color: FOREST, label: '−19%' },
-    { name: 'Raw momentum', dd: 57, color: OXBLOOD, label: '−57%' },
+    { name: 'Preserver', dd: 13, color: FOREST, label: '−13%' },
+    { name: 'Maximizer', dd: 20, color: FOREST, label: '−20%' },
     { name: 'S&P 500', dd: 55, color: OXBLOOD, label: '−55%' },
   ];
   const barX = 350, barMaxW = 500, barH = 26, ddMax = 57;
@@ -328,7 +328,7 @@ function drawAllCards() {
   fitText(ctx, 'The return you can hold through is the one you collect.', w / 2, by + 90, 900,
     'italic 34px ' + SERIF);
 
-  drawFooter(ctx, w, h, 'Walk-forward backtest: no future data used in any period.');
+  drawFooter(ctx, w, h, 'Walk-forward tested: no future data used in any period.');
 })();
 
 // ── Card 3: How the System Works (3-Factor) ──
@@ -413,7 +413,7 @@ function drawAllCards() {
 
   // Exit rules
   ctx.fillStyle = MUTED;
-  fitText(ctx, 'Exits: 30% trailing stops across ~20 volatility-sized positions.', w / 2, resY + 70, 900,
+  fitText(ctx, 'Exits: wide trailing stops across roughly 20 volatility-sized positions.', w / 2, resY + 70, 900,
     '26px ' + SANS);
   fitText(ctx, 'In hostile regimes, the system holds cash.', w / 2, resY + 112, 900,
     '26px ' + SANS);
@@ -438,7 +438,7 @@ function drawAllCards() {
 
   ctx.fillStyle = MUTED;
   ctx.textAlign = 'left';
-  fitText(ctx, "The index's six worst months in 21 years — and where the system was (backtest)", 100, 308, 880,
+  fitText(ctx, "The index's six worst months in 21 years — and where Preserver was (walk-forward)", 100, 308, 880,
     '23px ' + SANS);
 
   hairline(ctx, 100, w - 100, 348);
@@ -452,16 +452,16 @@ function drawAllCards() {
   drawTracked(ctx, 'Month', monthX, y, 3);
   ctx.textAlign = 'right';
   drawTracked(ctx, 'S&P 500', spyX, y, 3);
-  drawTracked(ctx, 'RigaCap', rigaX, y, 3);
+  drawTracked(ctx, 'Preserver', rigaX, y, 3);
   hairline(ctx, 100, w - 100, y + 22);
 
   const rows = [
     { month: 'Oct 2008', spy: '−16.5%', riga: '0.0%', cash: true },
-    { month: 'Mar 2020', spy: '−13.1%', riga: '−4.7%', cash: false },
+    { month: 'Mar 2020', spy: '−13.0%', riga: '0.0%', cash: true },
     { month: 'Feb 2009', spy: '−10.7%', riga: '0.0%', cash: true },
     { month: 'Sep 2008', spy: '−9.9%', riga: '0.0%', cash: true },
     { month: 'Sep 2022', spy: '−9.6%', riga: '0.0%', cash: true },
-    { month: 'Dec 2018', spy: '−9.3%', riga: '−1.3%', cash: false },
+    { month: 'Dec 2018', spy: '−9.3%', riga: '−1.0%', cash: false },
   ];
 
   const rowStep = 92;
@@ -495,10 +495,10 @@ function drawAllCards() {
   // Punch line — serif italic claret
   ctx.fillStyle = CLARET;
   ctx.textAlign = 'center';
-  fitText(ctx, 'Four of the six, it had already gone to cash.', w / 2, y + 70, 900,
+  fitText(ctx, 'Five of the six, it had already gone to cash.', w / 2, y + 70, 900,
     'italic 37px ' + SERIF);
 
-  drawFooter(ctx, w, h, 'Backtested monthly returns, 2007–2026. Not investment advice.');
+  drawFooter(ctx, w, h, 'Walk-forward monthly returns, 2007–2026. Not investment advice.');
 })();
 
 // ── Card 5: Signal Teaser ──
