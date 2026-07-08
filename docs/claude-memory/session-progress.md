@@ -11,7 +11,11 @@ metadata:
 
 ## ✅ SHIPPED/LIVE (earlier): both tier SHADOWS live (record daily), dashboard sell-parity fix, Stripe add-on complete. Journey doc + sales playbook delivered. FE knob-hero committed (57abfe8).
 
-## 🏃 RUNNING NOW (bg bck921n8h): `scripts/tier_vintages_21y.py` — 21yr DAILY walk-forward of Preserver+Maximizer (v.EXT, 2007-2026, routing+vol-brake). → honest 21yr tier numbers + equity curves → `scripts/tier_curves_21y.json`. Expect CONSERVATIVE (2008/2022 incl., low-double-digit, NOT recent 31/49). Notify on completion.
+## ✅ 21YR WALK-FORWARD DONE (`scripts/tier_vintages_21y.py` → `scripts/tier_curves_21y.json` has metrics + equity curves). NUMBERS (2007-2026 daily, pre-2016 EXT survivorship-caveat):
+- **Preserver: 8.6% CAGR · 0.88 Sharpe · −13.2% MaxDD** (≈ market return at ¼ the drawdown)
+- **Maximizer: 14.5% CAGR · 0.95 Sharpe · −20.4% MaxDD** (BEATS S&P 9.8% AND raw-mom 13.2% on return, at ⅓ the market's 55% DD — the headline)
+- Benchmarks: S&P 9.8%/−55%; Raw 12mo momentum 13.2%/0.69/−57%. (Core=7.3%/0.76/−18.2% INTERNAL — note: differs from prior 8.3% canon, reconcile internally later; Core stays OUT of public copy.)
+- Recent-2yr (dial): Preserver 31%/−13%, Maximizer 49%/−17% — legit walk-forward 2yr, keep as "last 2 years" headline. Curves → Track Record chart.
 
 ## ⭐ ERIK DIRECTIVES (Jul 8, load-bearing):
 1. **NO public copy may show "Core" by name OR its numbers (8.3%/0.73/19%). t30v = INTERNAL only.** Customer sees ONLY Preserver/Maximizer numbers. Generic "engine/dial" language OK.
