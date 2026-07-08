@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The RigaCap Journey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141210; --body:#26221E; --mute:#5A544E; --light:#8A8279;
+    --claret:#7A2430;           /* used sparingly; prints gray on a B&W printer */
+    --rule:#E2DCD1; --rule-dk:#CFC7B8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  @page{ size:letter; margin:0.7in 0.8in; }
+  html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body{ background:#fff; color:var(--body);
+        font-family:'IBM Plex Sans',system-ui,sans-serif; font-size:11.2pt; line-height:1.6;
+        -webkit-font-smoothing:antialiased; }
+  .serif{ font-family:'Fraunces','Georgia',serif; }
+  .wrap{ max-width:7.0in; margin:0 auto; }
+
+  /* ---- masthead ---- */
+  .brand{ letter-spacing:.32em; font-size:9pt; color:var(--claret); font-weight:600; text-transform:uppercase; }
+  h1{ font-family:'Fraunces','Georgia',serif; font-size:38pt; font-weight:600; letter-spacing:-.5px;
+      line-height:1.05; margin:10px 0 6px; color:var(--ink); }
+  h1 i{ color:var(--claret); }
+  .dek{ font-size:13pt; color:var(--mute); max-width:6in; line-height:1.5; }
+  .dek b{ color:var(--ink); }
+  .byline{ font-size:9.5pt; color:var(--light); margin-top:14px; letter-spacing:.02em; }
+  .hr{ height:2px; background:var(--ink); margin:20px 0 6px; }
+  .hr.thin{ height:1px; background:var(--rule-dk); }
+
+  .lede{ font-size:12pt; color:var(--body); margin:22px 0 6px; line-height:1.62; }
+  .lede .drop{ float:left; font-family:'Fraunces',serif; font-size:46pt; line-height:.82;
+               font-weight:600; color:var(--claret); padding:6px 10px 0 0; }
+
+  h2.sec{ font-family:'Fraunces',serif; font-size:13pt; font-weight:600; color:var(--ink);
+          letter-spacing:.02em; margin:26px 0 4px; }
+
+  /* ---- timeline milestones ---- */
+  .mile{ position:relative; padding:14px 0 14px 38px;
+         page-break-inside:avoid; break-inside:avoid; }
+  .mile::before{ content:''; position:absolute; left:9px; top:0; bottom:0; width:2px; background:var(--rule-dk); }
+  .mile:last-child::before{ background:transparent; }
+  .dot{ position:absolute; left:0; top:15px; width:20px; height:20px; border-radius:50%;
+        background:#fff; border:2px solid var(--claret);
+        font-family:'Fraunces',serif; font-size:9.5pt; font-weight:700; color:var(--claret);
+        line-height:1; text-align:center;
+        display:flex; align-items:center; justify-content:center; }
+  .era{ font-size:8.5pt; letter-spacing:.16em; text-transform:uppercase; color:var(--light); font-weight:600; }
+  .mt{ font-family:'Fraunces',serif; font-size:16.5pt; font-weight:600; color:var(--ink);
+       line-height:1.15; margin:2px 0 8px; }
+  .beat{ margin:5px 0; padding-left:0; }
+  .beat .k{ font-size:8.5pt; letter-spacing:.1em; text-transform:uppercase; font-weight:700; }
+  .beat.was .k{ color:var(--light); }
+  .beat.saw .k{ color:var(--claret); }
+  .beat.did .k{ color:var(--ink); }
+  .beat .x{ display:block; margin-top:1px; }
+  .beat.was .x{ color:var(--mute); }
+  .stat-inline{ font-family:'Fraunces',serif; font-weight:600; color:var(--ink); }
+  .call{ margin-top:9px; padding:9px 13px; border:1px solid var(--rule-dk); border-left:3px solid var(--claret);
+         background:#FBFAF7; border-radius:3px; font-size:10pt; color:var(--body); }
+  .call b{ color:var(--ink); font-family:'Fraunces',serif; }
+
+  /* tier result cards (the payoff at the end) */
+  .tres-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:11px 0 3px; }
+  .tres{ border:1px solid var(--rule-dk); border-top:3px solid var(--claret); border-radius:5px; padding:12px 15px; }
+  .tres .tn{ font-family:'Fraunces',serif; font-size:13.5pt; font-weight:600; color:var(--ink); }
+  .tres .tn .lbl{ font-size:8.5pt; color:var(--light); letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
+  .tres .nums{ display:flex; gap:20px; margin:7px 0 5px; }
+  .tres .nums .v{ font-family:'Fraunces',serif; font-size:21pt; font-weight:600; color:var(--claret); line-height:1; }
+  .tres .nums .v .u{ display:block; font-family:'IBM Plex Sans',sans-serif; font-size:8pt; color:var(--light); font-weight:400; letter-spacing:.03em; margin-top:3px; }
+  .tres .tf{ font-size:9.3pt; color:var(--mute); line-height:1.4; }
+  .mininote{ font-size:8.7pt; color:var(--light); font-style:italic; margin-top:3px; }
+
+  /* ---- summary panels ---- */
+  .panels{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:12px 0 6px;
+           page-break-inside:avoid; break-inside:avoid; }
+  .panel{ border:1px solid var(--rule-dk); border-radius:5px; padding:16px 18px; }
+  .panel h3{ font-family:'Fraunces',serif; font-size:11.5pt; font-weight:600; margin-bottom:8px; color:var(--ink); }
+  .panel.retired h3{ color:var(--claret); }
+  .panel ul{ list-style:none; }
+  .panel li{ font-size:10pt; color:var(--body); padding:4px 0; border-bottom:1px solid var(--rule);
+             line-height:1.4; }
+  .panel li:last-child{ border-bottom:0; }
+  .panel li b{ color:var(--ink); }
+  .strike{ color:var(--light); text-decoration:line-through; }
+
+  .close{ page-break-inside:avoid; break-inside:avoid; margin-top:8px; }
+  .close .q{ font-family:'Fraunces',serif; font-style:italic; font-size:15pt; color:var(--ink);
+             line-height:1.4; margin:6px 0 10px; }
+  .foot{ color:var(--light); font-size:8.5pt; margin-top:22px; border-top:1px solid var(--rule-dk);
+         padding-top:12px; line-height:1.5; }
+  .foot b{ color:var(--mute); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">RigaCap · The Story So Far</div>
+  <h1>How a Trading System<br>Learned to <i>Unlearn</i></h1>
+  <p class="dek">The road from <b>DWAP and 8% stop-losses</b> to a two-tier, regime-adaptive
+    engine — told through the comfortable ideas we had to give up along the way. Nearly every
+    real improvement came not from a cleverer signal, but from <b>abandoning something we
+    (and most of the industry) took for granted.</b></p>
+  <div class="byline">A plain-English walkthrough · Prepared July 2026</div>
+
+  <div class="hr"></div>
+
+  <p class="lede"><span class="drop">W</span>hat the system does is simple to say: every day it
+    ranks stocks by momentum, decides what (if anything) to buy, holds through the noise, and —
+    crucially — knows when to step aside. What took years was learning <i>how</i> to do each of
+    those well. The honest version of that journey is a series of moments where the data
+    contradicted a rule we'd inherited or invented, and we chose to believe the data. Here are
+    the ones that mattered.</p>
+
+  <h2 class="sec">The journey, one hard lesson at a time</h2>
+
+  <!-- 1 -->
+  <div class="mile">
+    <div class="dot">1</div>
+    <div class="era">The inheritance · legacy engine</div>
+    <div class="mt">A machine with 45 indicators and 46 rules</div>
+    <div class="beat was"><span class="k">The accepted idea</span><span class="x">More indicators, more rules, more edge. The legacy system had <span class="stat-inline">48 database tables, 45 technical indicators, and 46 trading rules</span> spread across 127 stored procedures, built around a single metric — DWAP (a smoothed average price).</span></div>
+    <div class="beat saw"><span class="k">What the data showed</span><span class="x">Most of the indicators overlapped or simply added noise. A small handful of robust signals did nearly all the real work; the rest was complexity dressed up as sophistication.</span></div>
+    <div class="beat did"><span class="k">What we did</span><span class="x">Ported only the pieces that earned their keep into a clean, modern system — and started measuring everything honestly.</span></div>
+  </div>
+
+  <!-- 2 -->
+  <div class="mile">
+    <div class="dot">2</div>
+    <div class="era">The first big myth · exits</div>
+    <div class="mt">"Cut your losses fast" was costing us the winners</div>
+    <div class="beat was"><span class="k">The accepted idea</span><span class="x">Every trading book preaches it: cut losses quickly with a tight stop (we used <span class="stat-inline">8%</span>, later 12%), and take profits at a fixed target (<span class="stat-inline">+20%</span>).</span></div>
+    <div class="beat saw"><span class="k">What the data showed</span><span class="x">Tight stops shook us out of good positions right before they recovered — death by a thousand small, "disciplined" losses. And the profit target quietly capped the handful of big winners that pay for everything else.</span></div>
+    <div class="beat did"><span class="k">What we did</span><span class="x">Flipped the rule: let winners run, and widen the leash to a <span class="stat-inline">~30% trailing stop</span> that only exits on a genuine trend break. Counter-intuitive, but the math is decisive.</span></div>
+    <div class="call"><b>The lesson:</b> for a momentum strategy, cutting your losses can be the losing move. The rare, enormous winners are the whole game — a tight stop trades them away.</div>
+  </div>
+
+  <!-- 3 -->
+  <div class="mile">
+    <div class="dot">3</div>
+    <div class="era">The second myth · position sizing</div>
+    <div class="mt">Concentration wasn't conviction — it was the disease</div>
+    <div class="beat was"><span class="k">The accepted idea</span><span class="x">"Bet big on your best ideas." Our strongest-looking version held just <span class="stat-inline">5–6 positions at 15–18% each</span>.</span></div>
+    <div class="beat saw"><span class="k">What the data showed</span><span class="x">That concentration turned ordinary market wobbles into stomach-churning drawdowns. One bad name could wreck a whole month. The <i>engine</i> was fine; the <i>sizing</i> was the problem.</span></div>
+    <div class="beat did"><span class="k">What we did</span><span class="x">Spread the same signals across <span class="stat-inline">~20 positions at ~4.5% each</span>. Identical strategy, dramatically smoother ride — the single biggest improvement to how it <i>feels</i> to actually hold.</span></div>
+  </div>
+
+  <!-- 4 -->
+  <div class="mile">
+    <div class="dot">4</div>
+    <div class="era">The reckoning · honesty</div>
+    <div class="mt">Our best numbers were a mirage</div>
+    <div class="beat was"><span class="k">The accepted idea</span><span class="x">A great backtest predicts a great future. We had gaudy ones — hundreds of percent of "return," a headline Sharpe of 1.48, an optimizer run that promised +240%.</span></div>
+    <div class="beat saw"><span class="k">What the data showed</span><span class="x">The numbers were inflated by four quiet sins: <b>stock splits</b> not properly adjusted, <b>survivorship bias</b> (testing only the companies that lived), a single <b>lucky time window</b>, and <b>over-optimization</b> (curve-fitting the past). Strip those away and the gaudy edge largely evaporated.</span></div>
+    <div class="beat did"><span class="k">What we did</span><span class="x">Tore it down and rebuilt on <b>point-in-time data that includes the companies which later failed or were delisted</b> — the unforgiving, honest version. Painful, but every number from here on is real.</span></div>
+    <div class="call"><b>The turning point:</b> the discipline stopped being about the strategy and started being about the <i>measurement</i>. A humbler true number beats an impressive false one, every time.</div>
+  </div>
+
+  <!-- 5 -->
+  <div class="mile">
+    <div class="dot">5</div>
+    <div class="era">The honest engine · Core</div>
+    <div class="mt">It's not built to win every year — and that's the point</div>
+    <div class="beat was"><span class="k">The accepted idea</span><span class="x">The goal of any strategy is to beat the market, every year.</span></div>
+    <div class="beat saw"><span class="k">What the data showed</span><span class="x">Rebuilt honestly over <b>20 continuous years (2007–2026, including 2008, 2020, and 2022)</b>, the engine returned about <span class="stat-inline">8% a year</span> — a touch under the market's ~10% — but with roughly <b>one-third of the market's worst drawdown</b> (~19% vs the market's ~55% in the deep crashes). It <i>lags</i> in roaring bull markets and <i>wins</i> in the frightening ones.</span></div>
+    <div class="beat did"><span class="k">What we did</span><span class="x">Stopped pretending it was a get-rich engine and named it for what it is: <b>capital preservation</b> — behavioral insurance for the moments that make people sell at the bottom. Then aimed it at the person it actually fits, instead of everyone.</span></div>
+  </div>
+
+  <!-- 6 -->
+  <div class="mile">
+    <div class="dot">6</div>
+    <div class="era">A subtler myth · market "weather"</div>
+    <div class="mt">The market isn't just "up" or "down"</div>
+    <div class="beat was"><span class="k">The accepted idea</span><span class="x">There are two states of the world: bull market and bear market. Act accordingly.</span></div>
+    <div class="beat saw"><span class="k">What the data showed</span><span class="x">A choppy, sector-rotating bull behaves nothing like a smooth, powerful one; a panic looks nothing like the recovery that follows it. We found <span class="stat-inline">seven</span> distinguishable "regimes," each rewarding a different tactic.</span></div>
+    <div class="beat did"><span class="k">What we did</span><span class="x">Taught the system to read the regime and switch playbooks — a patient dip-buy in calm uptrends, a deep-rebound buy after capitulations, the momentum engine the rest of the time. One engine, adapting to the weather.</span></div>
+  </div>
+
+  <!-- 7 -->
+  <div class="mile">
+    <div class="dot">7</div>
+    <div class="era">The last myth · crash defense</div>
+    <div class="mt">You can't flag a crash the market can't see</div>
+    <div class="beat was"><span class="k">The accepted idea</span><span class="x">A market-level warning signal will get you out before a crash. Our aggressive breakout engine had one ugly scar: a <span class="stat-inline">-33%</span> plunge in the 2021 "momentum crash."</span></div>
+    <div class="beat saw"><span class="k">What the data showed</span><span class="x">Through that entire crash, every market-regime signal read a calm "rotating bull." The danger was <i>inside</i> the strategy, invisible from the market's altitude — no flag could have fired.</span></div>
+    <div class="beat did"><span class="k">What we did</span><span class="x">Stopped watching the market and started watching the <b>strategy's own turbulence</b>: when its volatility spikes, it automatically eases off the gas — a seatbelt, not a crystal ball. It roughly <b>halves</b> that crash.</span></div>
+  </div>
+
+  <!-- 8 -->
+  <div class="mile">
+    <div class="dot">8</div>
+    <div class="era">Where it landed · today</div>
+    <div class="mt">One engine, a dial you set</div>
+    <div class="beat did"><span class="k">The result</span><span class="x">Everything above rolls into a single <b>risk dial</b> with two settings on the same regime-adaptive engine. You choose the level; the system adapts to the market — and the unlearning paid off in both directions:</span></div>
+    <div class="tres-grid">
+      <div class="tres">
+        <div class="tn">Preserver &nbsp;<span class="lbl">capital protection</span></div>
+        <div class="nums">
+          <span class="v">+31%<span class="u">per year</span></span>
+          <span class="v">−13%<span class="u">worst drop</span></span>
+        </div>
+        <div class="tf">The flagship. Strong growth with the shallow drawdown that lets you actually stay invested.</div>
+      </div>
+      <div class="tres">
+        <div class="tn">Maximizer &nbsp;<span class="lbl">seatbelt on</span></div>
+        <div class="nums">
+          <span class="v">+49%<span class="u">per year</span></span>
+          <span class="v">−17%<span class="u">worst drop</span></span>
+        </div>
+        <div class="tf">Aggressive upside, with the volatility brake keeping the crash tail in check.</div>
+      </div>
+    </div>
+    <div class="mininote">Recent two-year backtest — measured the honest way, the same way every number after Milestone&nbsp;4 is.</div>
+  </div>
+
+  <div class="hr thin"></div>
+  <h2 class="sec">The scoreboard of retired ideas</h2>
+  <div class="panels">
+    <div class="panel retired">
+      <h3>Ideas we let go of</h3>
+      <ul>
+        <li><span class="strike">More indicators = more edge</span> &nbsp;→&nbsp; a few robust signals</li>
+        <li><span class="strike">Cut losses fast (8–12% stop)</span> &nbsp;→&nbsp; a wide ~30% trailing stop</li>
+        <li><span class="strike">Take profits at a target</span> &nbsp;→&nbsp; let winners run</li>
+        <li><span class="strike">Concentrate (5–6 big bets)</span> &nbsp;→&nbsp; diversify (~20 small ones)</li>
+        <li><span class="strike">The backtest is real</span> &nbsp;→&nbsp; test on the ones that failed, too</li>
+        <li><span class="strike">Beat the market every year</span> &nbsp;→&nbsp; win the bad years</li>
+        <li><span class="strike">Bull vs. bear</span> &nbsp;→&nbsp; seven distinct regimes</li>
+        <li><span class="strike">A flag will warn you</span> &nbsp;→&nbsp; watch your own volatility</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Principles we kept</h3>
+      <ul>
+        <li><b>Momentum is real</b> — winners tend to keep winning, for a while.</li>
+        <li><b>Behavior beats brilliance</b> — the edge is not panicking, not a magic indicator.</li>
+        <li><b>Drawdown is the enemy</b> — protect the downside and the returns take care of themselves.</li>
+        <li><b>Measure honestly</b> — a true small number beats a false large one.</li>
+        <li><b>Fit the person, not everyone</b> — the right strategy for the wrong investor still fails.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="hr thin"></div>
+  <div class="close">
+    <div class="era" style="color:var(--claret)">The throughline</div>
+    <p class="q">The biggest edge we found wasn't a smarter signal. It was the willingness to
+      unlearn comfortable ideas — and to demand honesty from the numbers, even when the honest
+      answer was smaller.</p>
+    <p style="font-size:11pt;color:var(--body);line-height:1.6">Every milestone here started the same
+      way: a rule everybody "knew" was right, a set of data that quietly disagreed, and a decision
+      to trust the evidence over the received wisdom. That habit — more than any one indicator —
+      is the actual product.</p>
+  </div>
+
+  <div class="foot">
+    <b>A note on the numbers.</b> Figures are drawn from point-in-time backtests (including the
+    companies that later failed or were delisted) over the periods stated and are rounded for readability; drawdown (worst peak-to-trough decline)
+    is treated as the headline risk measure throughout. Backtested results are not a guarantee of
+    future performance. This document is a plain-English explanation of the system's design history,
+    not investment advice or an offer of any security.
+  </div>
+
+</div>
+</body>
+</html>

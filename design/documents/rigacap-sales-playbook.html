@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RigaCap — Sales Playbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141210; --body:#26221E; --mute:#5A544E; --light:#8A8279;
+    --claret:#7A2430; --claret-lt:#9A3444;
+    --rule:#E2DCD1; --rule-dk:#CFC7B8;
+    --pos:#2D5F3F; --neg:#8F2D3D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  @page{ size:letter; margin:0.65in 0.75in; }
+  html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body{ background:#fff; color:var(--body);
+        font-family:'IBM Plex Sans',system-ui,sans-serif; font-size:10.8pt; line-height:1.55;
+        -webkit-font-smoothing:antialiased; }
+  .serif{ font-family:'Fraunces','Georgia',serif; }
+  .wrap{ max-width:7.0in; margin:0 auto; }
+
+  .tag{ display:inline-block; letter-spacing:.16em; font-size:8pt; color:var(--claret); font-weight:700;
+        text-transform:uppercase; border:1px solid var(--claret); border-radius:3px; padding:2px 8px; }
+  .brand{ letter-spacing:.3em; font-size:9pt; color:var(--mute); font-weight:600; text-transform:uppercase; margin-top:12px; }
+  h1{ font-family:'Fraunces','Georgia',serif; font-size:34pt; font-weight:600; letter-spacing:-.5px;
+      line-height:1.05; margin:6px 0 6px; color:var(--ink); }
+  h1 i{ color:var(--claret); }
+  .dek{ font-size:12pt; color:var(--mute); max-width:6in; line-height:1.5; }
+  .dek b{ color:var(--ink); }
+  .hr{ height:2px; background:var(--ink); margin:18px 0 4px; }
+  .hr.thin{ height:1px; background:var(--rule-dk); margin:22px 0 6px; }
+
+  h2.sec{ font-family:'Fraunces',serif; font-size:15pt; font-weight:600; color:var(--ink);
+          margin:24px 0 8px; letter-spacing:-.2px; }
+  .lead-in{ font-size:8.5pt; letter-spacing:.16em; text-transform:uppercase; color:var(--claret); font-weight:700; margin-bottom:2px; }
+
+  /* principle banner */
+  .principle{ border:1px solid var(--rule-dk); border-left:3px solid var(--claret); border-radius:4px;
+              background:#FBFAF7; padding:16px 20px; margin:14px 0; page-break-inside:avoid; }
+  .principle .big{ font-family:'Fraunces',serif; font-size:17pt; font-weight:600; color:var(--ink); line-height:1.2; }
+  .principle .big i{ color:var(--claret); font-style:italic; }
+  .principle p{ font-size:10.5pt; color:var(--body); margin-top:7px; }
+  .principle b{ color:var(--ink); }
+
+  /* F/A matrix */
+  .fa{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:10px 0; page-break-inside:avoid; }
+  .fa .cell{ border:1px solid var(--rule-dk); border-radius:5px; padding:14px 16px; }
+  .fa .grade{ font-family:'Fraunces',serif; font-size:26pt; font-weight:700; line-height:1; float:left; margin:0 12px 4px 0; }
+  .fa .a .grade{ color:var(--pos); }
+  .fa .f .grade{ color:var(--neg); }
+  .fa .who{ font-weight:600; color:var(--ink); font-size:10.5pt; }
+  .fa .desc{ font-size:9.7pt; color:var(--mute); line-height:1.45; }
+
+  /* tiers */
+  .tiers{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:8px 0; page-break-inside:avoid; }
+  .tier{ border:1px solid var(--rule-dk); border-radius:5px; padding:14px 16px; }
+  .tier.base{ border-top:3px solid var(--pos); }
+  .tier.max{ border-top:3px solid var(--claret); }
+  .tier .n{ font-family:'Fraunces',serif; font-size:14pt; font-weight:600; color:var(--ink); }
+  .tier .pr{ font-family:'Fraunces',serif; font-size:12pt; font-weight:600; margin:2px 0 6px; }
+  .tier.base .pr{ color:var(--pos); } .tier.max .pr{ color:var(--claret); }
+  .tier .pr .per{ font-family:'IBM Plex Sans'; font-size:9pt; color:var(--mute); font-weight:400; }
+  .tier .for{ font-size:9.6pt; color:var(--mute); line-height:1.45; }
+  .tier .for b{ color:var(--ink); }
+
+  /* persona cards */
+  .persona{ border:1px solid var(--rule-dk); border-radius:6px; padding:0; margin:14px 0; overflow:hidden;
+            page-break-inside:avoid; break-inside:avoid; }
+  .persona .head{ background:#FBFAF7; border-bottom:1px solid var(--rule-dk); padding:12px 18px; }
+  .persona .pnum{ font-family:'Fraunces',serif; color:var(--claret); font-weight:700; font-size:11pt; }
+  .persona h3{ font-family:'Fraunces',serif; font-size:16pt; font-weight:600; color:var(--ink); line-height:1.1; margin:1px 0 2px; }
+  .persona .tier-tag{ font-size:8.5pt; letter-spacing:.08em; text-transform:uppercase; font-weight:600; color:var(--mute); }
+  .persona .body{ padding:12px 18px 14px; }
+  .row{ display:grid; grid-template-columns:1.05in 1fr; gap:10px; padding:5px 0; border-bottom:1px solid var(--rule); }
+  .row:last-child{ border-bottom:0; }
+  .row .lab{ font-size:8.5pt; letter-spacing:.06em; text-transform:uppercase; font-weight:700; color:var(--light); padding-top:2px; }
+  .row .val{ font-size:10pt; color:var(--body); line-height:1.5; }
+  .row .val b{ color:var(--ink); }
+  .row.disq .lab{ color:var(--neg); }
+  .row.close .lab{ color:var(--pos); }
+  .row.close .val b{ color:var(--pos); }
+
+  /* objection table */
+  .obj{ width:100%; border-collapse:collapse; margin:8px 0; font-size:9.8pt; }
+  .obj th{ text-align:left; font-size:8pt; letter-spacing:.08em; text-transform:uppercase; color:var(--light);
+           font-weight:700; padding:6px 10px; border-bottom:2px solid var(--rule-dk); }
+  .obj td{ padding:8px 10px; border-bottom:1px solid var(--rule); vertical-align:top; line-height:1.45; }
+  .obj tr{ page-break-inside:avoid; }
+  .obj .q{ color:var(--ink); font-weight:600; width:38%; }
+  .obj .a b{ color:var(--claret); }
+
+  /* two-col lists */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:16px; page-break-inside:avoid; }
+  .box{ border:1px solid var(--rule-dk); border-radius:5px; padding:14px 16px; }
+  .box.do{ border-top:3px solid var(--pos); } .box.dont{ border-top:3px solid var(--neg); }
+  .box h4{ font-family:'Fraunces',serif; font-size:11.5pt; font-weight:600; margin-bottom:6px; }
+  .box.do h4{ color:var(--pos); } .box.dont h4{ color:var(--neg); }
+  .box ul{ list-style:none; }
+  .box li{ font-size:9.6pt; color:var(--body); padding:4px 0; border-bottom:1px solid var(--rule); line-height:1.4; }
+  .box li:last-child{ border-bottom:0; }
+  .box li b{ color:var(--ink); }
+  .qq{ list-style:none; }
+  .qq li{ font-size:10.2pt; color:var(--body); padding:6px 0 6px 22px; position:relative; line-height:1.45; border-bottom:1px solid var(--rule); }
+  .qq li:last-child{ border-bottom:0; }
+  .qq li::before{ content:'“'; position:absolute; left:0; top:4px; font-family:'Fraunces',serif; font-size:15pt; color:var(--claret); }
+  .qq li b{ color:var(--ink); }
+  .qq .tell{ color:var(--mute); font-style:italic; }
+
+  .foot{ color:var(--light); font-size:8pt; margin-top:22px; border-top:1px solid var(--rule-dk); padding-top:12px; line-height:1.5; }
+  .foot b{ color:var(--claret); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="tag">Internal · Sales Enablement · Confidential</span>
+  <div class="brand">RigaCap · The Risk Dial</div>
+  <h1>The Sales Playbook</h1>
+  <p class="dek">How to find the investor this is <i>right</i> for — and disqualify the one it
+    isn't. This product is unusual: <b>the same engine is an A+ for one person and an F for
+    another.</b> Selling it well is an act of matching, not persuading.</p>
+
+  <div class="hr"></div>
+
+  <!-- CORE PRINCIPLE -->
+  <div class="lead-in">The one rule that governs everything</div>
+  <div class="principle">
+    <div class="big">Your job is <i>filtration</i>, not conversion.</div>
+    <p>Do not "close" everyone. A mis-sold investor is worse than a lost one — they churn in
+      three months the moment the market rips and they feel they're "missing out," and they tell
+      people it didn't work. A well-<b>qualified</b> investor stays for years, because you set the
+      expectation honestly on day one. <b>Disqualify fast, and disqualify out loud.</b> The honest
+      "this probably isn't for you" is your most powerful closing tool with the <i>right</i> person.</p>
+  </div>
+
+  <!-- WHAT IT IS -->
+  <div class="lead-in">The honest one-liner (memorize this)</div>
+  <p style="font-size:12pt;color:var(--ink);line-height:1.55;margin:6px 0 4px" class="serif">
+    RigaCap is <i>behavioral capital insurance</i> — a regime-adaptive momentum engine that trades
+    a little bull-market upside for dramatically smaller drawdowns and the discipline to stay
+    invested when everyone else is panicking.</p>
+  <p style="font-size:10.4pt;color:var(--mute);margin-bottom:4px">It is <b style="color:var(--ink)">not</b>
+    a beat-the-market engine. It's a <b style="color:var(--ink)">don't-blow-yourself-up</b> engine.
+    Lead with that. The people it fits will lean in; the people it doesn't will self-select out —
+    which is exactly what you want.</p>
+
+  <!-- F/A MATRIX -->
+  <div class="lead-in">The same product, two grades</div>
+  <div class="fa">
+    <div class="cell a"><span class="grade">A</span><span class="who">The Capital Preserver</span>
+      <div class="desc">Wants to protect what they've built, hates deep drawdowns, values sleeping
+        at night over bragging rights. This product is elite <i>for them</i>.</div></div>
+    <div class="cell f"><span class="grade">F</span><span class="who">The Market Maximizer</span>
+      <div class="desc">Wants to beat the S&amp;P every year and checks the benchmark monthly. This
+        product will frustrate them — and they'll churn. <b style="color:var(--neg)">Do not sell to them.</b></div></div>
+  </div>
+
+  <!-- TIERS -->
+  <div class="lead-in">What you're selling</div>
+  <div class="tiers">
+    <div class="tier base">
+      <div class="n">Preserver <span style="font-size:9pt;color:var(--light)">· base</span></div>
+      <div class="pr">$129<span class="per">/mo · $1,099/yr · founding $59</span></div>
+      <div class="for">The capital-preservation dial. Regime-adaptive defense on the Core engine.
+        <b>For $250k+ preservers &amp; the advisers who serve them.</b> The flagship — most of your sales.</div>
+    </div>
+    <div class="tier max">
+      <div class="n">+ Maximizer <span style="font-size:9pt;color:var(--light)">· add-on</span></div>
+      <div class="pr">+$100<span class="per">/mo → $229 · founding +$79</span></div>
+      <div class="for">Aggressive growth with a <b>volatility seatbelt</b> — full momentum offense,
+        but it auto-eases exposure when its own turbulence spikes. <b>For disciplined growth-seekers.</b></div>
+    </div>
+  </div>
+
+  <div class="hr thin"></div>
+  <h2 class="sec">The four people you'll meet</h2>
+  <p style="font-size:10pt;color:var(--mute);margin-bottom:6px">Sort every prospect into one of
+    these in the first five minutes. Three you sell; the fourth (the Maximizer mindset) you
+    politely release.</p>
+
+  <!-- PERSONA 1 -->
+  <div class="persona">
+    <div class="head">
+      <span class="pnum">01</span> &nbsp;<span class="tier-tag">Preserver · flagship</span>
+      <h3>The Capital Preserver</h3>
+    </div>
+    <div class="body">
+      <div class="row"><div class="lab">Who</div><div class="val">55–70, <b>$250k–$2M</b> investable, at or near retirement — "I've made it; now I can't afford to lose it." Lived through 2008 and/or 2022 and remembers the fear viscerally.</div></div>
+      <div class="row"><div class="lab">Their pain</div><div class="val">Whipsawed between two fears: a big drawdown erasing years of gains, <i>and</i> missing out by sitting in cash. They don't have the time horizon to recover from a −50% year.</div></div>
+      <div class="row"><div class="lab">Your pitch</div><div class="val">"You don't need to beat the market — you need to not get destroyed by it, and not panic-sell at the bottom. This kept its worst drawdown near <b>a third of the market's</b> across 20 years, including 2008 and 2022."</div></div>
+      <div class="row"><div class="lab">Proof to use</div><div class="val">The 20-year survivorship-free backtest: ~19% worst drawdown vs the market's ~55%. The <i>systematic</i> discipline — no emotional exits, ever.</div></div>
+      <div class="row"><div class="lab">Top objection</div><div class="val">"It lags in bull markets." → "Yes — <b>by design.</b> That lag is the premium you pay for the crash protection. You're buying a seatbelt, not a faster car."</div></div>
+      <div class="row disq"><div class="lab">Disqualify if</div><div class="val">They benchmark to the S&amp;P monthly and get itchy about "keeping up." That itch becomes a cancellation the first strong bull quarter.</div></div>
+      <div class="row close"><div class="lab">What closes</div><div class="val"><b>Sleep-at-night + honest expectations.</b> "In a raging bull you'll trail, and that's the deal we're making. In the year that scares everyone, you'll be glad you're here."</div></div>
+    </div>
+  </div>
+
+  <!-- PERSONA 2 -->
+  <div class="persona">
+    <div class="head">
+      <span class="pnum">02</span> &nbsp;<span class="tier-tag">Preserver · the channel play</span>
+      <h3>The Independent RIA / Adviser</h3>
+    </div>
+    <div class="body">
+      <div class="row"><div class="lab">Who</div><div class="val">Fee-only independent RIA, book of <b>$20–200M</b>. Crucially <b>independent</b> — wirehouse advisers (Merrill, Morgan, etc.) can't approve outside strategies, so they're not your buyer.</div></div>
+      <div class="row"><div class="lab">Their pain</div><div class="val">Career risk is <i>asymmetric</i>: they fear underperforming in a bull market (clients leave) more than participating in a crash (everyone's down together). And they dread the panic-selling call at the bottom.</div></div>
+      <div class="row"><div class="lab">Your pitch</div><div class="val">"Position this as a <b>10–20% sleeve</b>, not a core holding. It's the part of the book built to hold up when clients are scared — a <b>behavioral tool</b> that keeps them in their seats. Control wins races, not just speed."</div></div>
+      <div class="row"><div class="lab">Proof to use</div><div class="val">Drawdown control + fully systematic (no adviser discretion to defend to a client). Methodology + risk docs for their due diligence. Client-education one-pagers they can hand out.</div></div>
+      <div class="row"><div class="lab">Top objection</div><div class="val">"No live track record." → "Correct — which is exactly why it starts as a small sleeve, and why we're transparent about the live rollout. <b>Start at 5%, watch it prove out, expand.</b>"</div></div>
+      <div class="row disq"><div class="lab">Disqualify if</div><div class="val">Wirehouse (can't allocate), or they want to white-label a "beat-the-market" story. This is a sleeve + a behavioral tool, not a performance headline.</div></div>
+      <div class="row close"><div class="lab">What closes</div><div class="val"><b>Land and expand.</b> One small sleeve, transparent reporting, grow with proof. The adviser channel is a multi-year relationship, not a one-call close.</div></div>
+    </div>
+  </div>
+
+  <!-- PERSONA 3 -->
+  <div class="persona">
+    <div class="head">
+      <span class="pnum">03</span> &nbsp;<span class="tier-tag">Maximizer · new channel</span>
+      <h3>The Disciplined Growth-Seeker</h3>
+    </div>
+    <div class="body">
+      <div class="row"><div class="lab">Who</div><div class="val">Younger (30–45), higher risk tolerance, growth-minded, follows momentum and tech — <b>but has already been burned</b> by a blow-up (2022, meme stocks, crypto) and knows it.</div></div>
+      <div class="row"><div class="lab">Their pain</div><div class="val">Wants big upside but got wrecked by a drawdown before. Knows, honestly, that they lack the discipline to cut risk at the top — nobody sells into euphoria.</div></div>
+      <div class="row"><div class="lab">Your pitch</div><div class="val">"<b>Offense with a seatbelt.</b> Full momentum upside, but the engine automatically eases off when its own volatility spikes — so you don't ride the next momentum crash to zero. It cut that 2021 crash roughly in half."</div></div>
+      <div class="row"><div class="lab">Proof to use</div><div class="val">Market the <b>durable edge + the crash-brake</b> — never the peak number. The vol-brake is the differentiator vs reckless momentum. Honesty about the aggressive drawdown builds trust here.</div></div>
+      <div class="row"><div class="lab">Top objection</div><div class="val">"Why not just do it myself?" → "Because you won't cut risk at the top — you already know that. This does it for you, systematically, every day."</div></div>
+      <div class="row disq"><div class="lab">Disqualify if</div><div class="val">They want leverage, options, or lottery tickets. This is <i>disciplined</i> momentum, not a casino. Over-promise here and you've made a churn machine.</div></div>
+      <div class="row close"><div class="lab">What closes</div><div class="val"><b>"Upside without the blow-up."</b> Sells as the base Preserver + the Maximizer add-on — offense with the guardrail already installed.</div></div>
+    </div>
+  </div>
+
+  <!-- PERSONA 4 -->
+  <div class="persona">
+    <div class="head">
+      <span class="pnum">04</span> &nbsp;<span class="tier-tag" style="color:var(--neg)">Release · do not sell</span>
+      <h3>The Market Maximizer <span style="font-size:11pt;color:var(--light);font-style:italic;font-weight:400">(walk away)</span></h3>
+    </div>
+    <div class="body">
+      <div class="row"><div class="lab">Who</div><div class="val">Benchmarks to the S&amp;P obsessively, wants to beat it every quarter, measures success purely in return vs the index.</div></div>
+      <div class="row"><div class="lab">Why release</div><div class="val">This product is an <b>F</b> for them. It will underperform in bull runs (by design), they'll feel it acutely, and they'll churn <i>and</i> badmouth. Every one you sign is a future refund + a bad review.</div></div>
+      <div class="row close"><div class="lab">The graceful exit</div><div class="val"><b>"Honestly, this probably isn't the right fit for you — you sound like you want maximum return, and we're built for maximum protection."</b> That line closes the <i>right</i> people in the room and earns respect from the wrong one.</div></div>
+    </div>
+  </div>
+
+  <div class="hr thin"></div>
+  <h2 class="sec">Objection handbook</h2>
+  <table class="obj">
+    <tr><th>When they say…</th><th>You say…</th></tr>
+    <tr><td class="q">"It lags the market."</td><td class="a">That's the feature, not the bug. Reframe to drawdown: <b>"You're trading a bit of bull-market upside for a fraction of the crash. That's the whole trade."</b></td></tr>
+    <tr><td class="q">"There's no live track record."</td><td class="a">Be honest — it's true. <b>"The backtest is survivorship-free and point-in-time, and we're transparent about the live rollout. Start small, watch it prove out."</b> Never imply a live record we don't have.</td></tr>
+    <tr><td class="q">"Why not just buy the index (VOO)?"</td><td class="a"><b>"Indexing has no downside management — you ride the full −55%, and most people panic-sell at the bottom. This is index-like exposure with a discipline overlay."</b></td></tr>
+    <tr><td class="q">"It's just momentum — that's crowded."</td><td class="a"><b>"The edge isn't a secret signal. It's the risk management, the regime adaptation, and the behavioral discipline around momentum."</b> The engine is ordinary; the guardrails aren't.</td></tr>
+    <tr><td class="q">"The fees seem high."</td><td class="a">Be straight about account size: the drag is ~1.5% at $100k but ~0.6% at $250k and ~0.15% at $1M. <b>"It's built for $250k+ — below that, the math is honestly less compelling."</b></td></tr>
+    <tr><td class="q">"How do I know the backtest is real?"</td><td class="a">This is the due-diligence conversation: <b>survivorship-free, point-in-time, includes companies that later failed.</b> (Use "survivorship-free" here — in due diligence — not as an opening line. It's table stakes, not a headline.)</td></tr>
+  </table>
+
+  <div class="hr thin"></div>
+  <h2 class="sec">Qualify in five minutes</h2>
+  <p style="font-size:10pt;color:var(--mute);margin-bottom:6px">Ask these early. The answers sort the prospect into a persona — and tell you when to walk.</p>
+  <ul class="qq">
+    <li>"What kept you up at night in 2022?" <span class="tell">— a real answer = Preserver. A shrug = probably a Maximizer.</span></li>
+    <li>"How often do you compare your portfolio to the S&amp;P?" <span class="tell">— daily/monthly benchmarking = churn risk, disqualify.</span></li>
+    <li>"Have you ever sold at a bottom and regretted it?" <span class="tell">— a yes is the anti-capitulation buying signal.</span></li>
+    <li>"Is your goal to get rich, or to not get poor?" <span class="tell">— the cleanest A/F sort you can ask.</span></li>
+    <li>"Roughly what are you looking to allocate?" <span class="tell">— under $250k, set fee-drag expectations honestly or steer accordingly.</span></li>
+  </ul>
+
+  <div class="hr thin"></div>
+  <h2 class="sec">Guardrails — sell honestly or don't sell</h2>
+  <div class="cols">
+    <div class="box do">
+      <h4>Always</h4>
+      <ul>
+        <li>Lead with the <b>result + thesis</b> (drawdown control), not the methodology.</li>
+        <li>Disclose the <b>bull-market lag up front</b> — it filters and it builds trust.</li>
+        <li>Label every backtest <b>as a backtest.</b></li>
+        <li>Set the <b>multi-year</b> expectation — this is not a quarter-to-quarter product.</li>
+        <li>Match account size to the <b>$250k+</b> sweet spot.</li>
+      </ul>
+    </div>
+    <div class="box dont">
+      <h4>Never</h4>
+      <ul>
+        <li>Never promise <b>beating the market.</b></li>
+        <li>Never say "guaranteed," "can't lose," or imply a <b>live record</b> we don't yet have.</li>
+        <li>Never lead with "survivorship-free" — it's <b>table stakes</b>, save it for due diligence.</li>
+        <li>Never quote the <b>peak</b> aggressive number — sell the durable edge + the brake.</li>
+        <li>Never sell to a <b>Market Maximizer</b> just to hit a number. It costs more than it makes.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>Internal &amp; confidential — sales enablement only. Do not distribute to prospects or the public.</b><br>
+    All performance figures are survivorship-free, point-in-time <b>backtests</b> over the periods stated, rounded for readability, and are <b>not</b> a guarantee of future results. Nothing here is investment advice or an offer of any security. Reps must present all claims in compliance with applicable regulations and disclose that results are backtested and that the live track record is in its early stage.
+  </div>
+
+</div>
+</body>
+</html>

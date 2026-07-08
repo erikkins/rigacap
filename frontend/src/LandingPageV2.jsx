@@ -36,73 +36,139 @@ const LogoMark = () => (
   </svg>
 );
 
+// The Risk Knob — a knurled amp/guitar volume knob with a gold pointer, numbers 1→11
+// (1 = lower-left/Preserve, 11 = lower-right/Maximize). Secret nods: a metal umlaut over
+// the 11 (Spın̈al Tap — never stated in copy) and a "RIGACAP" maker's mark on the face.
+const RiskKnob = ({ size = 340, pointer = 0.62 }) => {
+  const cx = size / 2, cy = size / 2;
+  const Rnum = size * 0.45, Rto = size * 0.378, Rti = size * 0.338, Rbody = size * 0.255, Rcollar = Rbody * 1.18;
+  const pos = (f, r) => { const a = (-135 + f * 270) * Math.PI / 180; return [cx + r * Math.sin(a), cy - r * Math.cos(a)]; };
+  const face = [];
+  for (let i = 0; i < 11; i++) {
+    const f = i / 10, is11 = i === 10;
+    const [x1, y1] = pos(f, Rti), [x2, y2] = pos(f, Rto), [nx, ny] = pos(f, Rnum);
+    const fs = is11 ? 19 : 15, col = is11 ? '#7A2430' : '#141210';
+    face.push(<line key={`t${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={col} strokeWidth={is11 ? 3.6 : 2.4} strokeLinecap="round" />);
+    face.push(<text key={`n${i}`} x={nx} y={ny + fs * 0.35} textAnchor="middle" fontFamily="Fraunces,Georgia,serif" fontSize={fs} fontWeight={is11 ? 700 : 600} fill={col}>{i + 1}</text>);
+    if (is11) {
+      const uy = ny - fs * 0.66;
+      face.push(<circle key="u1" cx={nx - 3.6} cy={uy} r={1.8} fill="#7A2430" />);
+      face.push(<circle key="u2" cx={nx + 3.6} cy={uy} r={1.8} fill="#7A2430" />);
+    }
+  }
+  const knurl = [];
+  for (let k = 0; k < 52; k++) {
+    const a = (k * 360 / 52) * Math.PI / 180, r1 = Rbody, r2 = Rcollar * 0.985;
+    knurl.push(<line key={`k${k}`} x1={cx + r1 * Math.cos(a)} y1={cy + r1 * Math.sin(a)} x2={cx + r2 * Math.cos(a)} y2={cy + r2 * Math.sin(a)} stroke="#000" strokeOpacity={0.38} strokeWidth={1.4} />);
+  }
+  const [ix, iy] = pos(pointer, Rbody * 0.9), [mx, my] = pos(pointer, Rbody * 0.16);
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-auto" xmlns="http://www.w3.org/2000/svg" aria-label="Risk dial from Preserve to Maximize">
+      <defs>
+        <filter id="knobSh" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="8" stdDeviation="10" floodColor="#000" floodOpacity="0.35" /></filter>
+        <radialGradient id="knobDome" cx="38%" cy="28%" r="82%"><stop offset="0%" stopColor="#43392f" /><stop offset="42%" stopColor="#241e18" /><stop offset="100%" stopColor="#0a0806" /></radialGradient>
+        <radialGradient id="knobCollar" cx="40%" cy="28%" r="85%"><stop offset="0%" stopColor="#9a9082" /><stop offset="48%" stopColor="#5c554b" /><stop offset="100%" stopColor="#241f1a" /></radialGradient>
+        <radialGradient id="knobSpec" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" /><stop offset="100%" stopColor="#ffffff" stopOpacity="0" /></radialGradient>
+      </defs>
+      {face}
+      <circle cx={cx} cy={cy} r={Rcollar} fill="url(#knobCollar)" filter="url(#knobSh)" />
+      {knurl}
+      <circle cx={cx} cy={cy} r={Rcollar} fill="none" stroke="#ffffff" strokeOpacity={0.14} strokeWidth={1} />
+      <circle cx={cx} cy={cy} r={Rbody} fill="url(#knobDome)" stroke="#000000" strokeOpacity={0.45} strokeWidth={1} />
+      <circle cx={cx} cy={cy} r={Rbody - 1.5} fill="none" stroke="#ffffff" strokeOpacity={0.1} strokeWidth={2} />
+      <ellipse cx={cx - Rbody * 0.3} cy={cy - Rbody * 0.34} rx={Rbody * 0.52} ry={Rbody * 0.34} fill="url(#knobSpec)" />
+      <line x1={mx} y1={my} x2={ix} y2={iy} stroke="#EFD177" strokeWidth={5.5} strokeLinecap="round" />
+      <line x1={mx} y1={my} x2={ix} y2={iy} stroke="#ffffff" strokeOpacity={0.45} strokeWidth={1.7} strokeLinecap="round" />
+      <circle cx={cx} cy={cy} r={6.5} fill="#141210" />
+      <circle cx={cx} cy={cy} r={6.5} fill="none" stroke="#6f6555" strokeWidth={1} />
+      <text x={cx} y={cy + Rbody * 0.6} textAnchor="middle" fontFamily="IBM Plex Sans,sans-serif" fontSize={8.5} letterSpacing={2.5} fill="#a49a8c" opacity={0.7}>RIGACAP</text>
+    </svg>
+  );
+};
+
 const Navbar = ({ onGetStarted }) => <TopNav onGetStarted={onGetStarted} />;
 
 const HeroSection = ({ onGetStarted }) => (
-  <section className="bg-paper pt-16 pb-12 sm:pt-24 sm:pb-16">
-    <div className="max-w-[920px] mx-auto px-4 sm:px-8">
-      <SectionLabel>Institution-grade momentum &middot; Est. 2026</SectionLabel>
-
-      <h1
-        className="font-display font-normal text-ink mb-5 tracking-[-0.025em] leading-[1.02]"
-        style={{ fontSize: 'clamp(2.5rem, 5.5vw, 4.5rem)', fontVariationSettings: '"opsz" 144' }}
-      >
-        Institutional discipline.<br />
-        <em className="text-claret italic font-normal">Individual price.</em>
-      </h1>
-
-      {/* Plain-English "what is this" — the hero asked for two CTAs (Start Trial,
-          Claim a Founding Seat $59/mo) before ever saying what the product does.
-          This earns the ask. Deliberately no "drawdown" jargon (crash/downturn). */}
-      <p className="text-ink text-[1.15rem] sm:text-[1.2rem] leading-[1.5] max-w-[560px] mb-8">
-        Momentum buy-and-sell signals, built around the crash instead of the rally &mdash; so you can actually hold through a downturn.
-      </p>
-
-      {/* The single strongest hook, shown as a visual contrast — not buried in
-          prose. First thing a (mostly-mobile) visitor sees after the headline. */}
-      <div className="grid grid-cols-2 max-w-[600px] mb-8 border border-rule-dark rounded-[2px] overflow-hidden">
-        <div className="bg-paper p-5 sm:p-7 border-r border-rule-dark">
-          <div className="font-body text-[0.82rem] sm:text-[0.78rem] tracking-[0.12em] uppercase text-ink-mute mb-2.5">2008 &middot; S&amp;P 500</div>
-          {/* red = the bad outcome (matches the perf table's drawdown red) */}
-          <div className="font-display font-normal leading-none" style={{ fontSize: 'clamp(3rem, 15vw, 4.25rem)', fontVariationSettings: '"opsz" 144', color: '#8F2D3D' }}>&minus;38%</div>
+  <section className="bg-paper pt-14 pb-12 sm:pt-20 sm:pb-16 overflow-x-clip">
+    <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.12fr_0.88fr] gap-10 lg:gap-10 items-center">
+        {/* left — the copy: WHAT IT IS first, then the hook */}
+        <div>
+          <span className="inline-block font-body text-[0.7rem] font-bold tracking-[0.14em] uppercase text-paper bg-claret px-3 py-1.5 rounded-[2px]">
+            Buy/Sell Signals &middot; You Execute
+          </span>
+          <div className="font-body text-[0.78rem] font-semibold tracking-[0.2em] uppercase text-ink-mute mt-4">
+            The Systematic Trading System
+          </div>
+          <h1
+            className="font-display font-normal text-ink mt-3 mb-5 tracking-[-0.025em] leading-[1.02]"
+            style={{ fontSize: 'clamp(2.6rem, 5.2vw, 4rem)', fontVariationSettings: '"opsz" 144' }}
+          >
+            One knob.<br />
+            <em className="text-claret not-italic">Preserve to Maximize.</em>
+          </h1>
+          <p className="text-ink-mute text-[1.12rem] sm:text-[1.18rem] leading-[1.5] max-w-[540px] mb-7">
+            RigaCap sends you the <strong className="text-ink font-medium">buy and sell calls</strong> from one engine that reads the market and adapts. Turn it down to guard what you&rsquo;ve built, up to add offense &mdash; <strong className="text-ink font-medium">you set the level, you execute at your broker.</strong>
+          </p>
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4 sm:items-center mb-7">
+            <button
+              onClick={() => onGetStarted('founding')}
+              className="w-full sm:w-auto text-center px-7 py-4 bg-claret text-paper text-[1.02rem] font-medium rounded-[2px] no-underline hover:bg-claret-light transition-all"
+            >
+              Join the founding list
+            </button>
+            <a
+              href="/track-record"
+              className="w-full sm:w-auto text-center px-7 py-4 border border-rule-dark text-ink text-[1.02rem] font-medium rounded-[2px] no-underline hover:border-ink transition-all"
+            >
+              See how it works
+            </a>
+          </div>
+          <div className="text-[0.86rem] text-ink-light leading-relaxed">
+            <strong className="text-ink-mute font-medium">~&#8531; the market&rsquo;s worst drawdown</strong>
+            <span className="text-rule-dark mx-2">&middot;</span>Two decades, every regime
+            <span className="text-rule-dark mx-2">&middot;</span><strong className="text-ink-mute font-medium">Tiers launching this month</strong>
+          </div>
         </div>
-        <div className="bg-paper-card p-5 sm:p-7" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>
-          <div className="font-body text-[0.82rem] sm:text-[0.78rem] tracking-[0.12em] uppercase text-ink-mute mb-2.5">2008 &middot; RigaCap</div>
-          {/* green = the GOOD outcome — 0.5% is the win, not a loss to fear */}
-          <div className="font-display font-semibold leading-none" style={{ fontSize: 'clamp(3rem, 15vw, 4.25rem)', fontVariationSettings: '"opsz" 144', color: '#2D5F3F' }}>&minus;0.5%</div>
+
+        {/* right — the risk dial, each end showing its backtested profile */}
+        <div className="flex justify-center lg:justify-end">
+          <div className="w-full max-w-[380px] bg-paper-deep rounded-lg border border-rule px-7 py-8 flex flex-col items-center">
+            <div className="w-full max-w-[300px]">
+              <RiskKnob size={340} pointer={0.62} />
+            </div>
+            <div className="flex justify-between items-start w-full max-w-[330px] mt-5">
+              <div className="text-center flex-1">
+                <div className="font-display font-semibold uppercase tracking-[0.03em] text-[0.95rem] text-positive">Preserve</div>
+                <div className="font-display text-ink text-[1.55rem] font-medium leading-none mt-1.5" style={{ fontVariationSettings: '"opsz" 48' }}>
+                  +31%<span className="text-ink-light text-[0.8rem] font-normal">/yr</span>
+                </div>
+                <div className="text-ink-light text-[0.78rem] mt-1">&minus;13% worst</div>
+              </div>
+              <div className="w-px self-stretch bg-rule-dark mx-2" />
+              <div className="text-center flex-1">
+                <div className="font-display font-semibold uppercase tracking-[0.03em] text-[0.95rem] text-claret">Maximize</div>
+                <div className="font-display text-ink text-[1.55rem] font-medium leading-none mt-1.5" style={{ fontVariationSettings: '"opsz" 48' }}>
+                  +49%<span className="text-ink-light text-[0.8rem] font-normal">/yr</span>
+                </div>
+                <div className="text-ink-light text-[0.78rem] mt-1">&minus;17% worst</div>
+              </div>
+            </div>
+            <div className="text-ink-light text-[0.72rem] text-center mt-4 leading-snug">
+              Walk-forward tested &middot; both tiers launch this month
+            </div>
+          </div>
         </div>
-      </div>
-
-      <p
-        className="font-display italic text-ink-mute text-lg sm:text-xl leading-relaxed max-w-[560px] mb-8"
-        style={{ fontVariationSettings: '"opsz" 24' }}
-      >
-        The biggest threat to your returns isn't the next crash &mdash; it's selling into it.
-      </p>
-
-      <div className="flex flex-wrap gap-4 items-center mb-12">
-        <button
-          onClick={() => onGetStarted('founding')}
-          className="inline-block px-7 py-4 bg-ink text-paper text-[1.05rem] font-medium rounded-[2px] no-underline hover:bg-claret transition-all"
-        >
-          Claim a Founding Seat &middot; $59/mo
-        </button>
-        <a
-          href="/track-record"
-          className="inline-block px-7 py-4 border border-rule-dark text-ink text-[1.05rem] font-medium rounded-[2px] no-underline hover:border-ink transition-all"
-        >
-          See the track record
-        </a>
       </div>
 
       {/* SURFACE-MARKER:landing-hero-stats-START */}
-      {/* Stats pulled up directly under the CTA (was mt-20 → off-screen on mobile). */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-7 pt-8 border-t border-rule">
+      {/* Honest proof retained beneath the hero (backtest-labeled). */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-7 pt-10 mt-12 border-t border-rule">
         {[
-          ['+32%', 'Last 24 months, annualized · vs S&P +20% · backtest*'],
+          ['19%', 'Deepest loss in 21 years — the market lost ~55%'],
+          ['21 yrs', 'Tested through 2008, COVID & 2022 — every regime'],
           ['2.20', 'Sharpe, last 24 months · vs S&P 1.18'],
-          ['8.3%', 'Annualized across 21 years · 2008, COVID, 2022 included'],
-          ['19%', 'Worst drawdown in 21 years · raw momentum: 57%'],
+          ['0', 'Losing 2-year stretches in 21 years of testing'],
         ].map(([value, label]) => (
           <div key={label} className="text-[0.98rem] text-ink-mute leading-snug">
             <strong className="block font-display text-ink text-[1.3rem] font-medium mb-1" style={{ fontVariationSettings: '"opsz" 48' }}>
@@ -115,8 +181,7 @@ const HeroSection = ({ onGetStarted }) => (
       {/* SURFACE-MARKER:landing-hero-stats-END */}
 
       {/* $59 is the founding rate while seats remain — UPDATE TO $129 ONCE
-          FOUNDING HITS 100 (or wire to /api/billing/founding-status). Moved BELOW
-          the proof+CTA so credibility is there for scrollers without blocking action. */}
+          FOUNDING HITS 100 (or wire to /api/billing/founding-status). */}
       <p className="text-[1.05rem] text-ink-mute leading-relaxed max-w-[640px] mt-12">
         A momentum strategy with a <strong className="text-ink font-medium">19% worst loss across 21 years</strong> of testing &mdash; through 2008, COVID, and 2022. Built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>. <strong className="text-ink font-medium">$59/month founding</strong>, not 1% a year.
       </p>
