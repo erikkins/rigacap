@@ -8,15 +8,6 @@
 
 ## 1 · Canonical numbers (source of truth)
 
-> ⚠️ **SUPERSEDED (Jul 1 2026).** Everything in this section is the RETIRED May-27 T3 t10/s8
-> (5y-window) lens. The LIVE canonical is the **21-year continuous canon** — see
-> `docs/canonical_numbers.json` → `live_canon`: **8.3% ann / 0.73 Sharpe / 19% MaxDD**
-> (2007-2026), plus last-24mo **+32% / 2.20 / 8.5% MaxDD**, vs raw-momentum-net 13.2%/0.69/57%
-> and SPY 9.8%/55%. The live `/track-record` page already reflects this; the numbers below do
-> **not**, and must not be published. Also: the surface `find`-patterns in
-> `scripts/perf_citations_surface_map.json` target retired (+204%/+86%/32%) values and need
-> re-pointing before the propagator is run again.
-
 These are the numbers every surface must converge on. Any divergence from this table is a defect.
 
 > ⚠️ **SUPERSEDED (2026-07-08):** The product is now **TWO TIERS** — RigaCap Preserver + RigaCap Maximizer — not the single t30v strategy. Everything below the horizontal rule (the May-2026 52-Monday t30v vintage) is **RETIRED, historical-audit only**. **Core/t30v is INTERNAL-ONLY — never cite its name or numbers in public copy.** Use the 2-tier canonical immediately below.
