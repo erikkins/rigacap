@@ -38,7 +38,14 @@ Full state: [[project_preserver_2tier_phase2]]. Names LOCKED: Preserver/Core/Max
 2. **Umbrella thesis** = "You set the ambition. We keep the discipline." (Maximizer = offense w/ seatbelt; NOT "we don't chase return" which is the Preserver-only line). Erik agreed-ish.
 3. Commit hero to research branch? (still not deployed). 2008 −38/−0.5 box: dropped, Erik may want back.
 
-## 🔜 NEXT BIG PROJECT (Erik flagged, excited): **rebuild Track Record page w/ ANIMATED CHART** — the out-of-sample equity curve = the proof behind the "walk-forward tested" label.
+## ⏳ LANDING BELOW-THE-FOLD — 2-TIER REBUILD IN PROGRESS (Jul 8, staged, UNCOMMITTED since 57abfe8)
+- SEQUENCE (Erik): push landing FIRST (new design) → then Track Record (animated chart uplift) → then Methodology.
+- Hero polish DONE: proof-line wrap fixed (dropped redundant "Tiers launching this month" from left, it's under the knob); founding para TRIMMED (dropped stat-echo, kept CIO + "$59 not 1%/yr" hook, text-pretty + nowrap for widows).
+- **PRICING REBUILT for Option A** (Erik chose A = Preserver buyable + Maximizer waitlist): header "One engine. Your dial."; **Preserver** card ($59 founding→$129/$1,099, "Every buy & sell call the model makes" — fixed the false "unlimited real-time"); **+ Maximizer** card ("Add-on · Launching this month", +$100, "Join the founding list"→onGetStarted('founding'), "first access when signals go live", NO charge yet, dropped "(→$229)"); **Advisory** card ("Preserver + Maximizer, firm-wide"). Dev server localhost:5173 hot-reload; Erik eyeballing.
+- **STILL OPEN (small):** (1) add "Preserver vs Maximizer" FAQ? (asked Erik). (2) survivorship-free appears 4× in below-fold (lines 249/275/348/557) — all methodology-transparency/caveat contexts NOT hero-leads → my rec KEEP (Erik's "explaining the concept is fine"); awaiting his call. (3) FAQ still single-strategy framing (acceptable). Then commit + DEPLOY landing (merge research→main→CI/CD).
+- ⏰ TODAY 4pm ET: both shadows first record (verify 🕯️/🚀 logs) — product gate, independent of marketing deploy.
+
+## 🔜 NEXT BIG PROJECTS: **Track Record page rebuild w/ ANIMATED CHART** (out-of-sample equity curve = proof behind "walk-forward tested") → then Methodology page.
 
 ## 🛠️ PRODUCT NOTE (Erik asked): Maximizer→Preserver fallback WORKS
 Add-on = separate Stripe line-item on Preserver base. Cancel just add-on (Portal) → base stays → webhook subscription.updated re-detects → has_maxpp_addon=false → served Preserver. No migration (signals service). TODO at live-serving: (1) configure Stripe Portal to allow removing add-on item; (2) guard orphan case (add-on requires base).
