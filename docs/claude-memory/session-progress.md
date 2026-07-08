@@ -45,7 +45,18 @@ Full state: [[project_preserver_2tier_phase2]]. Names LOCKED: Preserver/Core/Max
 - **STILL OPEN (small):** (1) add "Preserver vs Maximizer" FAQ? (asked Erik). (2) survivorship-free appears 4× in below-fold (lines 249/275/348/557) — all methodology-transparency/caveat contexts NOT hero-leads → my rec KEEP (Erik's "explaining the concept is fine"); awaiting his call. (3) FAQ still single-strategy framing (acceptable). Then commit + DEPLOY landing (merge research→main→CI/CD).
 - ⏰ TODAY 4pm ET: both shadows first record (verify 🕯️/🚀 logs) — product gate, independent of marketing deploy.
 
-## 🔜 NEXT BIG PROJECTS: **Track Record page rebuild w/ ANIMATED CHART** (out-of-sample equity curve = proof behind "walk-forward tested") → then Methodology page.
+## ⚠️⚠️ DATA-ATTRIBUTION CORRECTION (Erik caught, Jul 8) — CRITICAL for honest copy
+- **8.3%/0.73/19% (21yr walk-forward) = CORE (t30v), NOT Preserver.** Verified: tier_vintages_daily.py runs ONLY last-2yr + 2021-26 → Preserver 31%/-13% & Maximizer 49%/-17% are RECENT (2yr) clean numbers. Long-history tiers exist (tier_vintages.py 2009-2026) but BIWEEKLY-approx + pre-2016 EXT/survivorship-caveated — NO clean 21yr daily Preserver.
+- HONEST STRUCTURE to thread through site: **Core = 21yr walk-forward-proven engine (8.3%/19%); Preserver/Maximizer = tiers ON it, RECENT records (31/49), launching this month.** Page currently BLURS this (Performance table calls 8.3% row "RigaCap—risk-managed" = actually Core; hero mixes Core-21yr risk + tier-2yr returns). FIX labeling as part of Performance rework.
+
+## ⏳ EDGE + PERFORMANCE SECTIONS — REWORK PROPOSED, AWAITING GREEN-LIGHT (Jul 8)
+- Erik: "less return, less pain" (Performance headline) is the defensive-only Preserver-trap; must become dial-aware. Performance section literally titled callout "Why the lower number is the point" + table shows RigaCap 8.3% < SPY 9.8% < raw-mom 13.2% → sells AGAINST Maximizer's 49%.
+- PROPOSED reframe (Erik to greenlight): Performance headline "Dial your return. Keep the discipline."; lead w/ dial ends (Preserver 31/-13, Maximizer 49/-17 recent); keep 21yr drawdown table as CREDIBILITY relabeled "Core engine"; retire "lower number is the point". Edge: rework 3 pieces → (1) regime-adaptive engine (2) risk discipline (3) dial+seatbelt. + fix Core-vs-tier attribution throughout.
+- ALSO PENDING: 4th hero stat ("0 losing 2-year stretches" — Erik: not intuitive + may be FALSE since 2017+2018 both losing years; my rec = swap for recovery-speed "2× faster" AFTER verifying).
+
+## ✅ MANY hero/FAQ polish edits done (Jul 8): pricing→2-tier (A), founding-para trim, ALL tildes removed, "backtest"→"walk-forward tested" throughout (kept "overfit backtests" for others + legal disclaimer), new Preserver-vs-Maximizer FAQ (better/more now italic), reconciled returns FAQ. Dev server localhost:5173 hot-reload.
+
+## 🔜 NEXT BIG PROJECTS: **Track Record page rebuild w/ ANIMATED CHART** (out-of-sample curve; label Core-21yr vs tiers-recent) → Methodology page.
 
 ## 🛠️ PRODUCT NOTE (Erik asked): Maximizer→Preserver fallback WORKS
 Add-on = separate Stripe line-item on Preserver base. Cancel just add-on (Portal) → base stays → webhook subscription.updated re-detects → has_maxpp_addon=false → served Preserver. No migration (signals service). TODO at live-serving: (1) configure Stripe Portal to allow removing add-on item; (2) guard orphan case (add-on requires base).
