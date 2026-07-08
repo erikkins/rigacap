@@ -21,16 +21,24 @@ Full state: [[project_preserver_2tier_phase2]]. Names LOCKED: Preserver/Core/Max
 - ✅ **WEBSITE HERO — LOCKED** (`design/documents/hero-knob-final.{html,png}`): **3D KNURLED AMP KNOB w/ GOLD POINTER** (Erik chose this over the glossy Strat-bell version he also tried). Headline **"One knob. Preserve to maximize."** (NOT "these go to 11" — Spinal Tap IP; killed). Claret chip **"Buy/Sell Signals · You Execute"** + kicker **"The Systematic Trading System"** (Erik LOVES these — answer "what IS this" for cold visitor; DO NOT remove). Plain subhead (you execute at your broker). Proof "~⅓ market's worst drawdown · Two decades every regime · Tiers launching this month". Numbers **1=lower-left/Preserve → 11=lower-right/Maximize** (had them backwards, fixed). Preserve(green)/Maximize(claret) labels = 23px uppercase (Erik "make stronger"). **SECRETS: metal umlaut over 11 (Spın̈al Tap nod) + RIGACAP maker's mark on knob face + signature HTML comment** ("sign your work"). ✅ LOCKED — Erik: "yes, this is the one!"
 - Explorations archived: hero-directions.{html} (A/B/C dial), hero-knob-directions.{html,png} (D/E/F), Strat-bell in git history. Ref knob img in scratchpad/ref_knob.jpg.
 
-## ✅ FE HERO BUILT (Jul 7, staged — NOT committed/deployed)
-- `frontend/src/LandingPageV2.jsx` (live landing at `/`): added `RiskKnob` React component (SVG, JS geometry — knurled amp knob, gold pointer, umlaut-11, RIGACAP mark) + rebuilt `HeroSection` as 2-col knob hero using Tailwind brand tokens (paper/claret/Fraunces already in tailwind.config.js). Headline now **"One knob. / Preserve to Maximize."** (Maximize capitalized per Erik). VERIFIED rendering live via vite dev + screenshot (`design/documents/fe-hero-render.png`). Compiles clean.
-- KEPT below hero: 4-stat grid + $59 founding para. DROPPED: old headline, 2008 −38/−0.5 box (Erik may want re-added), italic line. CTAs: "Join the founding list"→onGetStarted('founding'); "See how it works"→/track-record.
-- **UNCOMMITTED** on research branch. Erik reviewing. Suggested mobile check before any deploy.
+## ✅ FE HERO — COMMITTED Jul 8 (57abfe8, research branch, NOT deployed) + caption = "Walk-forward tested"
+- Committed: LandingPageV2 knob hero + rigacap-journey.{html,pdf} + rigacap-sales-playbook.{html,pdf} + hero-knob-final.{html,png}. Dial caption LOCKED to **"Walk-forward tested · both tiers launch this month"** (Erik chose).
+- **NEXT MARKETING-DEPLOY STEPS:** (1) Erik mobile-check via Chrome DevTools device mode (headless screenshots unreliable); (2) DECISION PENDING — deploy hero-only NOW vs quick below-the-fold audit first (sections UNDER hero still tell OLD single-product story: old value-prop + pricing w/o Maximizer add-on → risk of disjoint). My lean: quick below-fold audit first. (3) Deploy = merge research→main→CI/CD→live rigacap.com.
+- Broader rollout after hero: rest-of-landing 2-tier alignment · pricing section (Preserver + Maximizer add-on, Stripe wired) · social cards claret/paper · ⭐ Track Record page + ANIMATED CHART (big next project).
+- ⏰ **TODAY 4pm ET: both shadows first record** (verify 🕯️/🚀 logs + rows) — product gate for serving/charging tiers (~1wk), independent of marketing deploy.
 
-## 🧭 POSITIONING DEBATE (open, Jul 7) — resolving the stats + umbrella message
-- Erik: 8.3%(21yr ann) + 19%(MaxDD) are WORST-CASE numbers — is that what we headline? I flagged 8.3% lags market (~9.8%) + undersells.
-- Erik CAUGHT my error: I said "we don't chase return" as thesis → but then what is Maximizer? Correct: that's the PRESERVER line, NOT the product line. **Unifying thesis = "You set the ambition. We keep the discipline."** (managed risk at ANY setting; brand = discipline NOT caution; Maximizer = offense WITH the vol-brake seatbelt). AWAITING Erik's OK on that umbrella phrasing.
-- PROPOSED revised stat grid (drop bare 8.3%, reframe 19% vs MARKET ~55% not vs raw-momentum): **2.20 Sharpe** (unifying risk-adj number, great at any setting) · **19% vs market 55%** (drawdown edge) · **+32% last-24mo** (recent, Maximize-side) · **2008·COVID·2022** (durability). Apply once Erik confirms umbrella.
-- NEXT after lock: cascade direction to rest of landing + social. Then Signal-Intelligence + investor doc updates.
+## (superseded) FE HERO — earlier iteration notes
+- `frontend/src/LandingPageV2.jsx` (live landing `/`): `RiskKnob` React component (SVG geometry — knurled amp knob, gold pointer, umlaut-11, RIGACAP mark) + rebuilt `HeroSection` 2-col knob hero. Headline **"One knob. / Preserve to Maximize."** Chip "Buy/Sell Signals · You Execute" + kicker "The Systematic Trading System" (Erik LOVES, keep). Desktop render verified good (`design/documents/fe-hero-desktop.png`); compiles clean.
+- **⭐ SHOWING TIER NUMBERS AT DIAL ENDS** (Erik: "be honest but bold!", "show them!"): under knob → PRESERVE +31%/−13% · MAXIMIZE +49%/−17% · caption "Backtested · both tiers launch this month". This publishes tier BACKTEST numbers pre-live-launch — Erik OK'd (honest label, not implied-live). Gained back the +49% that was missing.
+- Stat grid (credibility, gains-led per Erik): 19% (vs market ~55%) · 21 yrs (2008/COVID/2022) · 2.20 Sharpe · **0 losing 2-year stretches** (swapped from weak "7 regimes"). Dropped 8.3% (Erik: too small). Mobile safeguards added (CTAs stack, grid-cols-1, overflow-clip).
+- **⚠️ MOBILE SCREENSHOTS UNRELIABLE** — headless Chrome won't apply phone viewport from CLI (renders ~980 clipped → looks "horrid" but it's an ARTIFACT, CSS is responsive). Verify via Chrome DevTools device mode at localhost:5173.
+
+## 🧭 OPEN DECISIONS (Erik to confirm)
+1. **Dial caption label:** verified Core = genuine WALK-FORWARD (pitfwu_wf, survivorship-free, out-of-sample); sleeves = backtest of out-of-sample-validated params. "Backtested" undersells. My lean → **"Walk-forward tested"** (or "Out-of-sample"). AWAITING pick.
+2. **Umbrella thesis** = "You set the ambition. We keep the discipline." (Maximizer = offense w/ seatbelt; NOT "we don't chase return" which is the Preserver-only line). Erik agreed-ish.
+3. Commit hero to research branch? (still not deployed). 2008 −38/−0.5 box: dropped, Erik may want back.
+
+## 🔜 NEXT BIG PROJECT (Erik flagged, excited): **rebuild Track Record page w/ ANIMATED CHART** — the out-of-sample equity curve = the proof behind the "walk-forward tested" label.
 
 ## 🛠️ PRODUCT NOTE (Erik asked): Maximizer→Preserver fallback WORKS
 Add-on = separate Stripe line-item on Preserver base. Cancel just add-on (Portal) → base stays → webhook subscription.updated re-detects → has_maxpp_addon=false → served Preserver. No migration (signals service). TODO at live-serving: (1) configure Stripe Portal to allow removing add-on item; (2) guard orphan case (add-on requires base).
