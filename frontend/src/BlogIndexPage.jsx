@@ -36,7 +36,7 @@ const POSTS = [
   {
     title: 'The 2022 Story',
     path: '/blog/2022-story',
-    description: "The S&P 500 fell 20%. We lost 7.5%. Why that difference is the whole product.",
+    description: "The S&P 500 fell 20%. Our Preserver lost 6.5%. Why that difference is the whole product.",
     category: 'Case Study',
     icon: BarChart3,
   },

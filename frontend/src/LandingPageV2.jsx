@@ -36,73 +36,137 @@ const LogoMark = () => (
   </svg>
 );
 
+// The Risk Knob — a knurled amp/guitar volume knob with a gold pointer, numbers 1→11
+// (1 = lower-left/Preserve, 11 = lower-right/Maximize). Secret nods: a metal umlaut over
+// the 11 (Spın̈al Tap — never stated in copy) and a "RIGACAP" maker's mark on the face.
+const RiskKnob = ({ size = 340, pointer = 0.62 }) => {
+  const cx = size / 2, cy = size / 2;
+  const Rnum = size * 0.45, Rto = size * 0.378, Rti = size * 0.338, Rbody = size * 0.255, Rcollar = Rbody * 1.18;
+  const pos = (f, r) => { const a = (-135 + f * 270) * Math.PI / 180; return [cx + r * Math.sin(a), cy - r * Math.cos(a)]; };
+  const face = [];
+  for (let i = 0; i < 11; i++) {
+    const f = i / 10, is11 = i === 10;
+    const [x1, y1] = pos(f, Rti), [x2, y2] = pos(f, Rto), [nx, ny] = pos(f, Rnum);
+    const fs = is11 ? 19 : 15, col = is11 ? '#7A2430' : '#141210';
+    face.push(<line key={`t${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={col} strokeWidth={is11 ? 3.6 : 2.4} strokeLinecap="round" />);
+    face.push(<text key={`n${i}`} x={nx} y={ny + fs * 0.35} textAnchor="middle" fontFamily="Fraunces,Georgia,serif" fontSize={fs} fontWeight={is11 ? 700 : 600} fill={col}>{i + 1}</text>);
+    if (is11) {
+      const uy = ny - fs * 0.66;
+      face.push(<circle key="u1" cx={nx - 3.6} cy={uy} r={1.8} fill="#7A2430" />);
+      face.push(<circle key="u2" cx={nx + 3.6} cy={uy} r={1.8} fill="#7A2430" />);
+    }
+  }
+  const knurl = [];
+  for (let k = 0; k < 52; k++) {
+    const a = (k * 360 / 52) * Math.PI / 180, r1 = Rbody, r2 = Rcollar * 0.985;
+    knurl.push(<line key={`k${k}`} x1={cx + r1 * Math.cos(a)} y1={cy + r1 * Math.sin(a)} x2={cx + r2 * Math.cos(a)} y2={cy + r2 * Math.sin(a)} stroke="#000" strokeOpacity={0.38} strokeWidth={1.4} />);
+  }
+  const [ix, iy] = pos(pointer, Rbody * 0.9), [mx, my] = pos(pointer, Rbody * 0.16);
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-auto" xmlns="http://www.w3.org/2000/svg" aria-label="Risk dial from Preserve to Maximize">
+      <defs>
+        <filter id="knobSh" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="8" stdDeviation="10" floodColor="#000" floodOpacity="0.35" /></filter>
+        <radialGradient id="knobDome" cx="38%" cy="28%" r="82%"><stop offset="0%" stopColor="#43392f" /><stop offset="42%" stopColor="#241e18" /><stop offset="100%" stopColor="#0a0806" /></radialGradient>
+        <radialGradient id="knobCollar" cx="40%" cy="28%" r="85%"><stop offset="0%" stopColor="#9a9082" /><stop offset="48%" stopColor="#5c554b" /><stop offset="100%" stopColor="#241f1a" /></radialGradient>
+        <radialGradient id="knobSpec" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" /><stop offset="100%" stopColor="#ffffff" stopOpacity="0" /></radialGradient>
+      </defs>
+      {face}
+      <circle cx={cx} cy={cy} r={Rcollar} fill="url(#knobCollar)" filter="url(#knobSh)" />
+      {knurl}
+      <circle cx={cx} cy={cy} r={Rcollar} fill="none" stroke="#ffffff" strokeOpacity={0.14} strokeWidth={1} />
+      <circle cx={cx} cy={cy} r={Rbody} fill="url(#knobDome)" stroke="#000000" strokeOpacity={0.45} strokeWidth={1} />
+      <circle cx={cx} cy={cy} r={Rbody - 1.5} fill="none" stroke="#ffffff" strokeOpacity={0.1} strokeWidth={2} />
+      <ellipse cx={cx - Rbody * 0.3} cy={cy - Rbody * 0.34} rx={Rbody * 0.52} ry={Rbody * 0.34} fill="url(#knobSpec)" />
+      <line x1={mx} y1={my} x2={ix} y2={iy} stroke="#EFD177" strokeWidth={5.5} strokeLinecap="round" />
+      <line x1={mx} y1={my} x2={ix} y2={iy} stroke="#ffffff" strokeOpacity={0.45} strokeWidth={1.7} strokeLinecap="round" />
+      <circle cx={cx} cy={cy} r={6.5} fill="#141210" />
+      <circle cx={cx} cy={cy} r={6.5} fill="none" stroke="#6f6555" strokeWidth={1} />
+      <text x={cx} y={cy + Rbody * 0.6} textAnchor="middle" fontFamily="IBM Plex Sans,sans-serif" fontSize={8.5} letterSpacing={2.5} fill="#a49a8c" opacity={0.7}>RIGACAP</text>
+    </svg>
+  );
+};
+
 const Navbar = ({ onGetStarted }) => <TopNav onGetStarted={onGetStarted} />;
 
 const HeroSection = ({ onGetStarted }) => (
-  <section className="bg-paper pt-16 pb-12 sm:pt-24 sm:pb-16">
-    <div className="max-w-[920px] mx-auto px-4 sm:px-8">
-      <SectionLabel>Institution-grade momentum &middot; Est. 2026</SectionLabel>
-
-      <h1
-        className="font-display font-normal text-ink mb-5 tracking-[-0.025em] leading-[1.02]"
-        style={{ fontSize: 'clamp(2.5rem, 5.5vw, 4.5rem)', fontVariationSettings: '"opsz" 144' }}
-      >
-        Institutional discipline.<br />
-        <em className="text-claret italic font-normal">Individual price.</em>
-      </h1>
-
-      {/* Plain-English "what is this" — the hero asked for two CTAs (Start Trial,
-          Claim a Founding Seat $59/mo) before ever saying what the product does.
-          This earns the ask. Deliberately no "drawdown" jargon (crash/downturn). */}
-      <p className="text-ink text-[1.15rem] sm:text-[1.2rem] leading-[1.5] max-w-[560px] mb-8">
-        Momentum buy-and-sell signals, built around the crash instead of the rally &mdash; so you can actually hold through a downturn.
-      </p>
-
-      {/* The single strongest hook, shown as a visual contrast — not buried in
-          prose. First thing a (mostly-mobile) visitor sees after the headline. */}
-      <div className="grid grid-cols-2 max-w-[600px] mb-8 border border-rule-dark rounded-[2px] overflow-hidden">
-        <div className="bg-paper p-5 sm:p-7 border-r border-rule-dark">
-          <div className="font-body text-[0.82rem] sm:text-[0.78rem] tracking-[0.12em] uppercase text-ink-mute mb-2.5">2008 &middot; S&amp;P 500</div>
-          {/* red = the bad outcome (matches the perf table's drawdown red) */}
-          <div className="font-display font-normal leading-none" style={{ fontSize: 'clamp(3rem, 15vw, 4.25rem)', fontVariationSettings: '"opsz" 144', color: '#8F2D3D' }}>&minus;38%</div>
+  <section className="bg-paper pt-14 pb-12 sm:pt-20 sm:pb-16 overflow-x-clip">
+    <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.12fr_0.88fr] gap-10 lg:gap-10 items-center">
+        {/* left — the copy: WHAT IT IS first, then the hook */}
+        <div>
+          <span className="inline-block font-body text-[0.7rem] font-bold tracking-[0.14em] uppercase text-paper bg-claret px-3 py-1.5 rounded-[2px]">
+            Buy/Sell Signals &middot; You Execute
+          </span>
+          <div className="font-body text-[0.78rem] font-semibold tracking-[0.2em] uppercase text-ink-mute mt-4">
+            The Systematic Trading System
+          </div>
+          <h1
+            className="font-display font-normal text-ink mt-3 mb-5 tracking-[-0.025em] leading-[1.02]"
+            style={{ fontSize: 'clamp(2.6rem, 5.2vw, 4rem)', fontVariationSettings: '"opsz" 144' }}
+          >
+            One knob.<br />
+            <em className="text-claret not-italic">Preserve to Maximize.</em>
+          </h1>
+          <p className="text-ink-mute text-[1.12rem] sm:text-[1.18rem] leading-[1.5] max-w-[540px] mb-7">
+            RigaCap sends you the <strong className="text-ink font-medium">buy and sell calls</strong> from one engine that reads the market and adapts. Turn it down to guard what you&rsquo;ve built, up to add offense &mdash; <strong className="text-ink font-medium">you set the level, you execute at your broker.</strong>
+          </p>
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4 sm:items-center mb-7">
+            <button
+              onClick={() => onGetStarted('founding')}
+              className="w-full sm:w-auto text-center px-7 py-4 bg-claret text-paper text-[1.02rem] font-medium rounded-[2px] no-underline hover:bg-claret-light transition-all"
+            >
+              Join the founding list
+            </button>
+            <a
+              href="/track-record"
+              className="w-full sm:w-auto text-center px-7 py-4 border border-rule-dark text-ink text-[1.02rem] font-medium rounded-[2px] no-underline hover:border-ink transition-all"
+            >
+              See how it works
+            </a>
+          </div>
+          <div className="text-[0.86rem] text-ink-light leading-relaxed">
+            <strong className="inline-block whitespace-nowrap text-ink-mute font-medium">&#8531; the market&rsquo;s worst drawdown</strong>
+            <span className="text-rule-dark mx-2">&middot;</span><span className="inline-block whitespace-nowrap">Two decades, every regime</span>
+          </div>
         </div>
-        <div className="bg-paper-card p-5 sm:p-7" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>
-          <div className="font-body text-[0.82rem] sm:text-[0.78rem] tracking-[0.12em] uppercase text-ink-mute mb-2.5">2008 &middot; RigaCap</div>
-          {/* green = the GOOD outcome — 0.5% is the win, not a loss to fear */}
-          <div className="font-display font-semibold leading-none" style={{ fontSize: 'clamp(3rem, 15vw, 4.25rem)', fontVariationSettings: '"opsz" 144', color: '#2D5F3F' }}>&minus;0.5%</div>
+
+        {/* right — the risk dial, each end showing its backtested profile */}
+        <div className="flex justify-center lg:justify-end">
+          <div className="w-full max-w-[380px] bg-paper-deep rounded-lg border border-rule px-7 py-8 flex flex-col items-center">
+            <div className="w-full max-w-[300px]">
+              <RiskKnob size={340} pointer={0.62} />
+            </div>
+            <div className="flex justify-between items-start w-full max-w-[330px] mt-5">
+              <div className="text-center flex-1">
+                <div className="font-display font-semibold uppercase tracking-[0.03em] text-[0.95rem] text-positive">Preserve</div>
+                <div className="font-display text-ink text-[1.55rem] font-medium leading-none mt-1.5" style={{ fontVariationSettings: '"opsz" 48' }}>
+                  +31%<span className="text-ink-light text-[0.8rem] font-normal">/yr</span>
+                </div>
+                <div className="text-ink-light text-[0.78rem] mt-1">&minus;13% worst</div>
+              </div>
+              <div className="w-px self-stretch bg-rule-dark mx-2" />
+              <div className="text-center flex-1">
+                <div className="font-display font-semibold uppercase tracking-[0.03em] text-[0.95rem] text-claret">Maximize</div>
+                <div className="font-display text-ink text-[1.55rem] font-medium leading-none mt-1.5" style={{ fontVariationSettings: '"opsz" 48' }}>
+                  +49%<span className="text-ink-light text-[0.8rem] font-normal">/yr</span>
+                </div>
+                <div className="text-ink-light text-[0.78rem] mt-1">&minus;17% worst</div>
+              </div>
+            </div>
+            <div className="text-ink-light text-[0.72rem] text-center mt-4 leading-snug">
+              Last 2 years, walk-forward &middot; both tiers launch this month
+            </div>
+          </div>
         </div>
-      </div>
-
-      <p
-        className="font-display italic text-ink-mute text-lg sm:text-xl leading-relaxed max-w-[560px] mb-8"
-        style={{ fontVariationSettings: '"opsz" 24' }}
-      >
-        The biggest threat to your returns isn't the next crash &mdash; it's selling into it.
-      </p>
-
-      <div className="flex flex-wrap gap-4 items-center mb-12">
-        <button
-          onClick={() => onGetStarted('founding')}
-          className="inline-block px-7 py-4 bg-ink text-paper text-[1.05rem] font-medium rounded-[2px] no-underline hover:bg-claret transition-all"
-        >
-          Claim a Founding Seat &middot; $59/mo
-        </button>
-        <a
-          href="/track-record"
-          className="inline-block px-7 py-4 border border-rule-dark text-ink text-[1.05rem] font-medium rounded-[2px] no-underline hover:border-ink transition-all"
-        >
-          See the track record
-        </a>
       </div>
 
       {/* SURFACE-MARKER:landing-hero-stats-START */}
-      {/* Stats pulled up directly under the CTA (was mt-20 → off-screen on mobile). */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-7 pt-8 border-t border-rule">
+      {/* Honest proof retained beneath the hero (backtest-labeled). */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-7 pt-10 mt-12 border-t border-rule">
         {[
-          ['+32%', 'Last 24 months, annualized · vs S&P +20% · backtest*'],
-          ['2.20', 'Sharpe, last 24 months · vs S&P 1.18'],
-          ['8.3%', 'Annualized across 21 years · 2008, COVID, 2022 included'],
-          ['19%', 'Worst drawdown in 21 years · raw momentum: 57%'],
+          ['21 yrs', 'Walk-forward tested — through 2008, COVID & 2022'],
+          ['2×', 'Preserver recovered its worst drawdown twice as fast as the market'],
+          ['14.5%', 'Maximizer’s 21-year return — the S&P did 9.8%'],
         ].map(([value, label]) => (
           <div key={label} className="text-[0.98rem] text-ink-mute leading-snug">
             <strong className="block font-display text-ink text-[1.3rem] font-medium mb-1" style={{ fontVariationSettings: '"opsz" 48' }}>
@@ -114,11 +178,8 @@ const HeroSection = ({ onGetStarted }) => (
       </div>
       {/* SURFACE-MARKER:landing-hero-stats-END */}
 
-      {/* $59 is the founding rate while seats remain — UPDATE TO $129 ONCE
-          FOUNDING HITS 100 (or wire to /api/billing/founding-status). Moved BELOW
-          the proof+CTA so credibility is there for scrollers without blocking action. */}
-      <p className="text-[1.05rem] text-ink-mute leading-relaxed max-w-[640px] mt-12">
-        A momentum strategy with a <strong className="text-ink font-medium">19% worst loss across 21 years</strong> of testing &mdash; through 2008, COVID, and 2022. Built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>. <strong className="text-ink font-medium">$59/month founding</strong>, not 1% a year.
+      <p className="text-[1.05rem] text-ink-mute leading-relaxed max-w-[600px] lg:max-w-none mt-12 text-balance lg:whitespace-nowrap">
+        Built by a former <strong className="text-ink font-medium whitespace-nowrap">Chief Innovation Officer</strong>, priced like software &mdash; not 1% of your money every year.
       </p>
     </div>
   </section>
@@ -170,14 +231,14 @@ const EdgeSection = () => (
       <div className="grid md:grid-cols-3 gap-10 mt-12">
         {[
           {
-            num: 'Ⅰ / DIVERSIFICATION',
-            title: 'A basket, not a few big bets.',
-            text: <>RigaCap spreads risk across a diversified basket of names rather than concentrating into a handful of high-conviction guesses. Diversification is the first line of drawdown defense &mdash; <strong className="font-medium text-ink">no single position can sink the book.</strong></>,
+            num: 'Ⅰ / THE ENGINE',
+            title: 'Regime-adaptive, not static.',
+            text: <>RigaCap reads the market's mood &mdash; seven distinct regimes &mdash; and switches tactics: patient dip-buys in calm trends, deep-rebound buys after panics, aggressive breakouts when momentum pays. <strong className="font-medium text-ink">One engine, a different playbook for each regime.</strong></>,
           },
           {
-            num: 'Ⅱ / RISK-WEIGHTED',
+            num: 'Ⅱ / THE DISCIPLINE',
             title: 'Sized by risk, not conviction.',
-            text: <>Each position is sized by the risk it carries, not by how much we like the story. Capital flows to where it's steadiest, not where it's loudest &mdash; and that one piece of portfolio engineering is <strong className="font-medium text-ink">most of what halves the drawdown versus raw momentum.</strong></>,
+            text: <>Spread across a diversified basket, each position sized by the risk it carries &mdash; not by how much we like the story. It's the one piece of engineering that <strong className="font-medium text-ink">cuts the drawdown by two-thirds versus raw momentum</strong> &mdash; and what makes every setting on the dial survivable.</>,
           },
           {
             num: 'Ⅲ / HONESTY',
@@ -204,11 +265,10 @@ const PerformanceSection = () => (
       <SectionLabel>Performance</SectionLabel>
       <div className="max-w-[680px] mb-6">
         <h2 className="font-display text-ink mb-4 tracking-[-0.02em]" style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.75rem)', fontVariationSettings: '"opsz" 96' }}>
-          Less return. <em className="text-claret italic">Far less pain.</em>
+          Dial your return. <em className="text-claret italic">Keep the discipline.</em>
         </h2>
         <p className="text-ink-mute text-[1.05rem] leading-[1.65]">
-          We don't claim a magic new edge. We take a well-documented anomaly &mdash; momentum &mdash; and harvest it
-          with discipline. Here's the honest tradeoff, measured on survivorship-free data across three downturns.
+          One proven engine, two settings. <strong className="text-ink font-medium">Preserver</strong> protects, <strong className="text-ink font-medium">Maximizer</strong> pushes &mdash; both run the same disciplined momentum core. The last two years walk-forward tested at <strong className="text-ink font-medium">Preserver 31%</strong> and <strong className="text-ink font-medium">Maximizer 49%</strong>. Below is the honest anchor &mdash; the full 21-year record through three downturns, both products on the same basis.
         </p>
       </div>
 
@@ -219,7 +279,8 @@ const PerformanceSection = () => (
         {[
           { strat: 'Raw 12-month momentum, net of costs', ann: '13.2%', sharpe: '0.69', dd: '57%', ddColor: '#8F2D3D', hi: false },
           { strat: 'S&P 500 (price)', ann: '9.8%', sharpe: '—', dd: '55%', ddColor: '#8F2D3D', hi: false },
-          { strat: 'RigaCap — risk-managed', ann: '8.3%', sharpe: '0.73', dd: '19%', ddColor: '#2D5F3F', hi: true },
+          { strat: 'RigaCap Preserver', ann: '8.6%', sharpe: '0.88', dd: '13%', ddColor: '#2D5F3F', hi: true },
+          { strat: 'RigaCap Maximizer', ann: '14.5%', sharpe: '0.95', dd: '20%', ddColor: '#2D5F3F', hi: true },
         ].map((r) => (
           <div
             key={r.strat}
@@ -270,10 +331,16 @@ const PerformanceSection = () => (
               <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium" style={{ color: '#8F2D3D' }}>55%</td>
             </tr>
             <tr className="border-b border-rule bg-paper-card">
-              <td className="py-4 pl-5 pr-4 text-[1.05rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>RigaCap &mdash; risk-managed</td>
-              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">8.3%</td>
-              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">0.73</td>
-              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-semibold" style={{ color: '#2D5F3F' }}>19%</td>
+              <td className="py-4 pl-5 pr-4 text-[1.05rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #2D5F3F' }}>RigaCap Preserver</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">8.6%</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">0.88</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-semibold" style={{ color: '#2D5F3F' }}>13%</td>
+            </tr>
+            <tr className="border-b border-rule bg-paper-card">
+              <td className="py-4 pl-5 pr-4 text-[1.05rem] font-semibold text-ink" style={{ boxShadow: 'inset 3px 0 0 #7A2430' }}>RigaCap Maximizer</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">14.5%</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-medium text-ink">0.95</td>
+              <td className="py-4 px-5 text-right font-mono text-[1.05rem] font-semibold" style={{ color: '#2D5F3F' }}>20%</td>
             </tr>
           </tbody>
         </table>
@@ -281,17 +348,17 @@ const PerformanceSection = () => (
       {/* SURFACE-MARKER:perf-comparison-table-END */}
 
       <p className="text-[0.93rem] text-ink-mute leading-relaxed">
-        Same momentum factor, same universe. <strong className="text-ink font-medium">We cut the maximum drawdown by two-thirds</strong> through diversification, risk-based sizing, disciplined exits, and a market-regime filter that has now been tested through the 2008 financial crisis, the COVID crash, and the 2022 bear. Walk-forward backtest, 2007&ndash;2026; 2016+ data is survivorship-free and point-in-time, pre-2016 carries a survivorship caveat (disclosed in full); price returns, net of modeled costs where shown.<br />
+        Same momentum factor, same universe. <strong className="text-ink font-medium">We cut the maximum drawdown by two-thirds</strong> through diversification, risk-based sizing, disciplined exits, and a market-regime filter that has now been tested through the 2008 financial crisis, the COVID crash, and the 2022 bear. Walk-forward test, 2007&ndash;2026; 2016+ data is survivorship-free and point-in-time, pre-2016 carries a survivorship caveat (disclosed in full); price returns, net of modeled costs where shown.<br />
         <strong className="text-ink font-medium">Live track record now accruing.</strong> See <a href="/methodology" className="text-claret underline underline-offset-2 decoration-1">methodology</a> for all assumptions.
       </p>
 
       <div className="bg-paper-card border-l-[3px] border-claret p-8 mt-12 max-w-[62ch]">
         <h3 className="font-display text-[1.15rem] font-semibold text-ink mb-3" style={{ fontVariationSettings: '"opsz" 48' }}>
-          Why the lower number is the point.
+          Why the drawdown is the whole game.
         </h3>
         <p className="text-ink leading-[1.7]">
-          Raw momentum's higher headline return is mostly an illusion &mdash; <strong className="font-medium">almost no one survives a 57% drawdown to collect it.</strong> In 2008 it lost nearly half its value in a single year; the index did the same twice in two decades. Investors abandon strategies at the bottom. By holding the worst drawdown near 19% across twenty-one years, RigaCap is something you can actually stay invested in through a full cycle &mdash; which is the only way the returns ever reach your account.<br />
-          <em className="font-display italic text-claret">That behavior, not the headline return, is the reason to subscribe.</em>
+          Raw momentum returns 13.2% a year on paper &mdash; but <strong className="font-medium">almost no one survives a 57% drawdown to collect it.</strong> In 2008 it lost nearly half its value in a single year; the index did the same twice in two decades. Investors abandon strategies at the bottom. Maximizer doesn't just cut that loss to a third &mdash; it <strong className="font-medium">out-earns raw momentum outright</strong> (14.5% vs 13.2%). Trimming the worst drawdown to a level you can actually hold is what makes the return reachable at all &mdash; and it's what lets you safely dial the risk <strong className="font-medium">up</strong> to Maximizer instead of blowing up.<br />
+          <em className="font-display italic text-claret">The discipline is the product. The setting is your choice.</em>
         </p>
       </div>
 
@@ -328,7 +395,7 @@ const FounderSection = () => (
             </p>
             <p>
               There's no team, no outside capital, and no marketing department. That's the point.
-              The Ensemble strategy is what I'd been running privately. RigaCap is the version I'm willing to put my name on.
+              The engine behind both tiers is what I'd been running privately. RigaCap is the version I'm willing to put my name on.
             </p>
           </div>
           <a href="/about" className="inline-block mt-8 px-7 py-4 border border-rule-dark text-ink text-[1.05rem] font-medium rounded-[2px] no-underline hover:border-ink transition-all">
@@ -350,7 +417,7 @@ const HowItWorksSection = () => (
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
         {[
-          { title: 'Scan', text: 'Algorithms evaluate ~6,500 US stocks daily, filtered to ~4,000 that meet liquidity and price criteria.' },
+          { title: 'Scan', text: 'Algorithms evaluate 6,500 US stocks daily, filtered to 4,000 that meet liquidity and price criteria.' },
           { title: 'Signal', text: 'When timing, momentum, and risk all align, subscribers receive an alert with entry, stop, and target levels.' },
           { title: 'Execute', text: 'You place the trade through your own broker. RigaCap never touches your capital.' },
           { title: 'Exit', text: 'Trailing stops manage risk automatically. Regime changes trigger systematic de-risking.' },
@@ -379,12 +446,12 @@ const PricingSection = ({ onGetStarted, founding }) => {
       <SectionLabel>Pricing</SectionLabel>
       <div className="max-w-[680px] mb-4">
         <h2 className="font-display text-ink mb-4 tracking-[-0.02em]" style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.75rem)', fontVariationSettings: '"opsz" 96' }}>
-          Two paths in. <em className="text-claret italic">Cancel anytime.</em>
+          One engine. <em className="text-claret italic">Your dial.</em>
         </h2>
         <p className="text-ink-mute text-[1.05rem] leading-[1.65]">
-          The standard rate reflects the value delivered to a self-directed investor with a meaningful portfolio.
-          The founding rate rewards the first 100 subscribers with a locked-in price while the live track record is being built.
-          Advisory firms applying the strategy across client accounts license it at the firm level.
+          Start with <strong className="text-ink font-medium">Preserver</strong>, the capital-preservation base &mdash; founding members lock the rate while the live record builds.
+          Add <strong className="text-ink font-medium">Maximizer</strong> when you want more offense (launching this month, seatbelt included).
+          Advisory firms license the engine at the firm level. Cancel anytime.
         </p>
       </div>
 
@@ -394,17 +461,17 @@ const PricingSection = ({ onGetStarted, founding }) => {
           <span className="absolute -top-3 left-8 bg-claret text-paper text-[0.78rem] font-medium tracking-[0.15em] uppercase px-3 py-1">
             Founding &middot; First 100
           </span>
-          <h3 className="font-display text-[1.3rem] font-medium text-ink mb-1" style={{ fontVariationSettings: '"opsz" 72' }}>Founding Member</h3>
-          <p className="font-display italic text-ink-mute text-[1rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>For those who sign up first.</p>
+          <h3 className="font-display text-[1.3rem] font-medium text-ink mb-1" style={{ fontVariationSettings: '"opsz" 72' }}>Preserver</h3>
+          <p className="font-display italic text-ink-mute text-[1rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>The capital-preservation dial.</p>
           <div className="mb-1">
             <span className="font-display text-[3.5rem] font-normal text-ink leading-none tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>$59</span>
             <span className="text-ink-mute text-[1.05rem] ml-1">/month</span>
           </div>
           <p className="text-ink-mute text-[1rem] leading-relaxed mt-3">
-            Locked at this rate for <strong className="text-claret font-medium">12 months.</strong> Transitions to $129/month afterward. Only <strong className="text-claret font-medium">100 founding seats</strong> &mdash; then it closes.
+            Founding rate, locked <strong className="text-claret font-medium">12 months</strong> &mdash; then $129/month, or <strong className="text-claret font-medium">$1,099/year</strong>. Only <strong className="text-claret font-medium">100 founding seats</strong>, then it closes.
           </p>
           <ul className="list-none my-7 pt-6 border-t border-rule flex-1 space-y-1.5">
-            {['Everything in the standard plan', 'Direct reply line to Erik', 'Grandfathered access to future features', 'Recognition as a founding subscriber', 'Your feedback shapes the product'].map(item => (
+            {['Every buy & sell call the model makes', 'Daily email digest', 'Entry, stop & exit levels', 'Regime-adaptive risk engine', 'Portfolio tracking dashboard', 'Direct reply line to Erik', 'Grandfathered on future features'].map(item => (
               <li key={item} className="text-ink-mute text-[1rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
             ))}
           </ul>
@@ -426,29 +493,32 @@ const PricingSection = ({ onGetStarted, founding }) => {
           )}
         </div>
 
-        {/* Standard */}
-        <div className="bg-paper-card border border-rule p-10 flex flex-col">
-          <h3 className="font-display text-[1.3rem] font-medium text-ink mb-1" style={{ fontVariationSettings: '"opsz" 72' }}>Standard</h3>
-          <p className="font-display italic text-ink-mute text-[1rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>Available once founding seats close.</p>
+        {/* Maximizer — add-on, launching this month (waitlist; not charged until signals live) */}
+        <div className="bg-paper-card border border-rule p-10 flex flex-col relative">
+          <span className="absolute -top-3 left-8 bg-ink text-paper text-[0.78rem] font-medium tracking-[0.15em] uppercase px-3 py-1">
+            Add-on &middot; Launching this month
+          </span>
+          <h3 className="font-display text-[1.3rem] font-medium text-ink mb-1" style={{ fontVariationSettings: '"opsz" 72' }}>+ Maximizer</h3>
+          <p className="font-display italic text-ink-mute text-[1rem] mb-6" style={{ fontVariationSettings: '"opsz" 24' }}>Aggressive growth, seatbelt on.</p>
           <div className="mb-1">
-            <span className="font-display text-[3.5rem] font-normal text-ink leading-none tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>$129</span>
+            <span className="font-display text-[3.5rem] font-normal text-ink leading-none tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>+$100</span>
             <span className="text-ink-mute text-[1.05rem] ml-1">/month</span>
           </div>
           <p className="text-ink-mute text-[1rem] leading-relaxed mt-3">
-            Or <strong className="text-claret font-medium">$1,099/year</strong> billed annually &mdash; three months free.
+            Layers onto Preserver &mdash; the aggressive breakout engine with a momentum-crash brake. <strong className="text-claret font-medium">Founding members get first access</strong> at launch.
           </p>
           <ul className="list-none my-7 pt-6 border-t border-rule flex-1 space-y-1.5">
-            {['Unlimited real-time signals', 'Daily email digest', 'Entry, stop, and target levels', 'Market-regime risk filter', 'Portfolio tracking dashboard', '4,000+ stocks scanned daily', 'Full methodology access'].map(item => (
+            {['Everything in Preserver', 'Aggressive breakout engine in trending markets', 'Volatility seatbelt on the crash tail', 'Higher-return profile for growth-seekers', 'Toggle on or off anytime'].map(item => (
               <li key={item} className="text-ink-mute text-[1rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
             ))}
           </ul>
           <button
-            onClick={() => onGetStarted('monthly')}
+            onClick={() => onGetStarted('founding')}
             className="w-full py-4 border border-ink text-ink text-[1.05rem] font-medium rounded-[2px] text-center hover:bg-ink hover:text-paper transition-colors"
           >
-            Start 7-Day Free Trial
+            Join the founding list
           </button>
-          <p className="text-center text-[0.88rem] text-ink-light mt-3">Credit card required &middot; Cancel anytime</p>
+          <p className="text-center text-[0.88rem] text-ink-light mt-3">First access when signals go live</p>
         </div>
 
         {/* Advisory firms */}
@@ -464,7 +534,7 @@ const PricingSection = ({ onGetStarted, founding }) => {
             <strong className="text-claret font-medium">You remain the fiduciary.</strong>
           </p>
           <ul className="list-none my-7 pt-6 border-t border-rule flex-1 space-y-1.5">
-            {['Everything in Standard', 'Multiple adviser seats', 'Internal use across client books', 'Client-presentable methodology & track record', 'A 19% worst drawdown clients can sit through', 'Direct line to the founder'].map(item => (
+            {['Preserver + Maximizer, firm-wide', 'Multiple adviser seats', 'Internal use across client books', 'Client-presentable methodology & track record', 'Drawdowns clients can sit through — 13% to 20%, not 55%', 'Direct line to the founder'].map(item => (
               <li key={item} className="text-ink-mute text-[1rem] pl-5 relative before:content-['—'] before:absolute before:left-0 before:text-claret">{item}</li>
             ))}
           </ul>
@@ -484,13 +554,14 @@ const PricingSection = ({ onGetStarted, founding }) => {
 
 const faqItems = [
   { q: 'Who is this for?', a: <>Two kinds of people. Self-directed investors with meaningful portfolios who've decided indexing alone is too passive and individual active trading has been too emotional — if you've tried to run your own momentum strategy and found yourself overriding your own rules, this is a system that will do the boring parts consistently whether you feel like it or not. And registered investment advisers, who license it at the firm level as a disciplined momentum sleeve their clients can actually hold through a full cycle — see the <a href="/for-advisers" className="text-claret underline underline-offset-2 decoration-1">For Advisers page</a>.</> },
-  { q: 'Who is this NOT for?', a: "Anyone whose goal is beating the index every year. In the 21-year backtest this strategy trailed the S&P in most rolling windows — its entire value concentrates in the years markets break, when it kept the worst loss near 19% while the index lost half. If watching the market run while your account grinds along would make you quit, you'd be paying insurance premiums and cancelling right before the fire. We'd rather tell you that on the front page than learn it from your cancellation survey." },
-  { q: 'Is a 0.73 Sharpe over 21 years actually good?', a: 'Better than it sounds — long-horizon Sharpe ratios live on a compressed scale. Numbers above 1 come from short windows and overfit backtests; over decades the air gets thin. The S&P 500 scored 0.54 across our same 21-year window, and the highest lifetime figure ever measured for any stock or fund with 30+ years of history is Warren Buffett\u2019s 0.79 (\u201cBuffett\u2019s Alpha,\u201d Frazzini, Kabiller & Pedersen, 2018). Ours is backtested and his is real — that distinction matters — but two honest decades put you in that neighborhood, not the neighborhood of strategies promising Sharpe 2.' },
-  { q: 'What returns should I actually expect?', a: "Our twenty-one-year walk-forward backtest (2007–2026) compounds at 8.3% annualized with a 19% maximum drawdown — through the 2008 financial crisis, the COVID crash, and the 2022 bear, a stretch in which the index lost more than half its value twice and raw momentum lost 57%. Those are backtested figures; the strategy now runs live, but its real-time record is just beginning. Underwrite conservatively — think mid-to-high single digits — until that live record builds, which we publish as it does. Past performance, including backtested performance, does not predict future results." },
-  { q: "Why don't you publish flashier numbers like other services?", a: "Because we anchor on what survives scrutiny. We rebuilt our research data to be survivorship-free and strictly point-in-time, then extended it back through 2008 — and each time the honest numbers came in more conservative than our earlier figures, we revised them down and said so. Most services lead with cherry-picked windows or zero-friction simulations no subscriber reproduces. We'd rather publish a true 8% with a 19% worst drawdown across two decades than a flattering number we can't defend." },
+  { q: 'Who is this NOT for?', a: "Anyone who'll bail the moment they trail the market. Both tiers are built to keep you invested through a full cycle, not to win every quarter — even Maximizer, the aggressive setting, is designed to survive the drawdowns that make people capitulate. If watching the index run while your account grinds along for a stretch would make you quit, you'd be paying insurance premiums and cancelling right before the fire. We'd rather tell you that on the front page than learn it from your cancellation survey." },
+  { q: "What's the difference between Preserver and Maximizer?", a: <>Same engine, one knob &mdash; you choose how hard to push. Preserver is the capital-preservation setting: strong momentum returns with a tight drawdown (walk-forward tested at 31% a year over the last two years, 13% worst loss). Maximizer dials up the offense &mdash; an aggressive breakout strategy in trending markets, with a volatility &ldquo;seatbelt&rdquo; that automatically eases exposure when its own turbulence spikes (walk-forward tested at 49% a year, 17% worst loss). Maximizer isn&rsquo;t <em className="italic">better</em>, it&rsquo;s <em className="italic">more</em> &mdash; more return and more drawdown, in roughly equal measure &mdash; so pick the setting that matches how much volatility you can actually sit through. Preserver is the flagship and buyable today; Maximizer is a +$100/month add-on launching this month, with founding members getting first access. Both are walk-forward tested; the live record is just beginning.</> },
+  { q: 'Is your Sharpe ratio actually good?', a: 'Read it honestly. Long-horizon Sharpe ratios live on a compressed scale. Numbers above 1 come from short windows and overfit backtests; over decades the air gets thin. The S&P 500 scored 0.54 across our same 21-year window; Preserver walk-forward tested at 0.88 and Maximizer at 0.95. The highest lifetime figure ever measured for any fund with 30+ years of real history is Warren Buffett\u2019s 0.79 (\u201cBuffett\u2019s Alpha,\u201d Frazzini, Kabiller & Pedersen, 2018). Ours is walk-forward tested and his is real — that distinction matters — and our pre-2016 data carries a survivorship caveat that flatters the early years, so we hold these as strong-but-honest, not a claim to have out-Sharped Buffett.' },
+  { q: 'What returns should I actually expect?', a: "Depends on your setting. Over a 21-year walk-forward (2007–2026, through the 2008 crisis, the COVID crash, and the 2022 bear) Preserver compounds at 8.6% a year with a 13% maximum drawdown; Maximizer at 14.5% with a 20% drawdown — versus the S&P's 9.8% at a 55% drawdown, and raw momentum's 13.2% at 57%. The last two years were far stronger (Preserver 31%, Maximizer 49%), but a two-year window is a tailwind, not a promise — the 21-year figures are the honest anchor because they include every crash. Underwrite to those. Past performance, including walk-forward and simulated results, does not predict future results." },
+  { q: "Why don't you publish flashier numbers like other services?", a: "Because we anchor on what survives scrutiny. We rebuilt our research data to be survivorship-free and strictly point-in-time, then extended it back through 2008 — and each time the honest numbers came in more conservative than our earlier figures, we revised them down and said so. Most services lead with cherry-picked windows or zero-friction simulations no subscriber reproduces. We'd rather publish honest walk-forward figures — Preserver's 8.6% at a 13% worst drawdown, Maximizer's 14.5% at 20% — than a flattering number we can't defend." },
   { q: 'Why $129/month?', a: "You're not paying for a return forecast — you're paying for disciplined risk management: a momentum implementation with roughly a third of the raw factor's drawdown across twenty-one years, and the discipline to keep you invested through a cycle instead of bailing at the bottom. On a meaningful portfolio, the value of not abandoning a strategy in a drawdown dwarfs the $1,548/year — and it's less than a traditional advisor's fee." },
   { q: 'How many signals do you generate?', a: "RigaCap holds a diversified basket of positions, refreshed as fresh signals appear — typically several new entries in a normal month, fewer when the market turns hostile. It's selective, not silent: turnover stays low by design, but the strategy is invested whenever conditions support it." },
-  { q: 'Has the system ever had a down year?', a: "Yes — and we'd rather tell you than hide it. Across twenty-one years of walk-forward backtest the strategy had losing years (2017 and 2018 among them), but the worst peak-to-trough loss across the entire span — including the 2008 financial crisis, the COVID crash, and the 2022 bear — stayed near 19%. The design is built for participation in trends and protection in stress, not to win every quarter. (Backtested; the live record is accruing now.)" },
+  { q: 'Has the system ever had a down year?', a: "Yes — and we'd rather tell you than hide it. Across twenty-one years of walk-forward testing both tiers had losing years (2017 and 2018 among them), but the worst peak-to-trough loss across the entire span — including the 2008 financial crisis, the COVID crash, and the 2022 bear — stayed at 13% for Preserver and 20% for Maximizer, while the market lost 55%. The design is built for participation in trends and protection in stress, not to win every quarter. (Walk-forward tested; the live record is accruing now.)" },
   { q: 'If it works this well, why sell signals instead of running a fund?', a: "Running a fund requires regulatory infrastructure, institutional capital, and a 2+ year live track record — I'm building that now. In the meantime, signals let me prove the system in live markets with real subscribers while bootstrapping. You get access to the same engine I'll eventually deploy with my own capital." },
   { q: 'Can I cancel anytime?', a: 'Yes. No contracts, no commitments. Cancel from your account settings at any time; access continues until the end of your billing period.' },
   { q: 'Do you provide financial advice?', a: 'No. RigaCap provides algorithmic signals and educational information only. RigaCap is not a registered investment advisor. Always do your own research and consider consulting a licensed professional before making investment decisions.' },
@@ -547,7 +618,7 @@ const Footer = () => (
             RigaCap<span className="text-claret">.</span>
           </Link>
           <p className="mt-4 text-[1rem] text-ink-mute leading-relaxed max-w-[32ch]">
-            Ensemble trading signals. The market, measured. Built by one quant researcher, shipping honestly.
+            Regime-adaptive trading signals. The market, measured. Built by one quant researcher, shipping honestly.
           </p>
         </div>
         <div>

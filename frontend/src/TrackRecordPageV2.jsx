@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 import TopNav from './components/TopNav';
-import PortfolioRace from './PortfolioRace';
+import TierRaceChart from './TierRaceChart';
 
 const SectionLabel = ({ children }) => (
   <div className="flex items-center gap-3 mb-5">
@@ -21,9 +21,12 @@ const Navbar = () => <TopNav />;
 // 100% of paid clicks are mobile, so the drawdown columns must not be off-screen.
 const GREEN = '#2D5F3F', RED = '#8F2D3D';
 const RECENT_ROWS = [
-  { name: 'RigaCap — risk-managed', hi: true, cells: [
-    { v: '+32.0%', tone: 'ink', w: 'font-medium' }, { v: '2.20', tone: 'ink', w: 'font-medium' },
-    { v: '3.76', hex: GREEN, w: 'font-semibold' }, { v: '8.5%', hex: GREEN, w: 'font-semibold' }] },
+  { name: 'RigaCap Preserver', hi: true, cells: [
+    { v: '+31.3%', tone: 'ink', w: 'font-medium' }, { v: '1.75', tone: 'ink', w: 'font-medium' },
+    { v: '2.43', hex: GREEN, w: 'font-semibold' }, { v: '12.9%', hex: GREEN, w: 'font-semibold' }] },
+  { name: 'RigaCap Maximizer', hi: true, cells: [
+    { v: '+48.9%', tone: 'ink', w: 'font-medium' }, { v: '1.94', tone: 'ink', w: 'font-medium' },
+    { v: '2.83', hex: GREEN, w: 'font-semibold' }, { v: '17.3%', hex: GREEN, w: 'font-semibold' }] },
   { name: 'S&P 500 (price)', cells: [
     { v: '+19.9%', tone: 'mute' }, { v: '1.18', tone: 'mute' }, { v: '1.05', tone: 'mute' }, { v: '19.0%', tone: 'mute' }] },
   { name: 'Raw momentum (gross)', cells: [
@@ -32,8 +35,10 @@ const RECENT_ROWS = [
 const FOUNDATION_ROWS = [
   { name: 'Raw 12-month momentum, net of costs', cells: [
     { v: '13.2%', tone: 'mute' }, { v: '0.69', tone: 'mute' }, { v: '57%', hex: RED, w: 'font-medium' }] },
-  { name: 'RigaCap — risk-managed', hi: true, cells: [
-    { v: '8.3%', tone: 'ink', w: 'font-medium' }, { v: '0.73', tone: 'ink', w: 'font-medium' }, { v: '19%', hex: GREEN, w: 'font-semibold' }] },
+  { name: 'RigaCap Preserver', hi: true, cells: [
+    { v: '8.6%', tone: 'ink', w: 'font-medium' }, { v: '0.88', tone: 'ink', w: 'font-medium' }, { v: '13%', hex: GREEN, w: 'font-semibold' }] },
+  { name: 'RigaCap Maximizer', hi: true, cells: [
+    { v: '14.5%', tone: 'ink', w: 'font-medium' }, { v: '0.95', tone: 'ink', w: 'font-medium' }, { v: '20%', hex: GREEN, w: 'font-semibold' }] },
   { name: 'S&P 500 (SPY, price only)', italic: true, cells: [
     { v: '9.8%', tone: 'mute' }, { v: '—', tone: 'mute' }, { v: '55%', tone: 'mute' }] },
 ];
@@ -101,7 +106,7 @@ export default function TrackRecordPageV2() {
             Twenty-one years. Three crashes. <em className="text-claret italic">No cherry-picking.</em>
           </h1>
           <p className="text-ink-mute text-[1.05rem] leading-[1.65]">
-            Performance validated through twenty-one years of point-in-time walk-forward simulation &mdash; no hindsight, no curve-fitting.
+            Performance validated through twenty-one years of point-in-time walk-forward simulation &mdash; no hindsight, no curve-fitting.<br />
             The wins, the losses, and the worst drawdown all published.
           </p>
         </div>
@@ -112,10 +117,10 @@ export default function TrackRecordPageV2() {
         <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-rule">
             {[
-              ['+32%', 'Last 24 Months', 'annualized · vs S&P +20% · backtest'],
-              ['2.20', 'Recent Sharpe', 'last 24 months · vs S&P 1.18'],
-              ['8.3%', 'Annualized', 'Walk-forward, 2007–2026'],
-              ['19%', 'Max Drawdown', '21 years · vs 57% for raw momentum'],
+              ['$1.39M', 'Maximizer, from $100k', '21-yr walk-forward · the S&P made $535k'],
+              ['$500k', 'Preserver, from $100k', 'at a quarter of the market’s drawdown'],
+              ['+0.1%', 'Both Tiers, 2008', 'essentially flat · the S&P lost 36%'],
+              ['21 yrs', 'Every Regime', 'no hindsight, no curve-fitting'],
             ].map(([value, label, subtitle]) => (
               <div key={label} className="bg-paper-card p-6 sm:p-8 text-center">
                 <div className="font-display text-3xl sm:text-4xl font-normal text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>{value}</div>
@@ -132,7 +137,7 @@ export default function TrackRecordPageV2() {
           (drawdown badges, era shading, behavioral panic-sell overlay). */}
       <section className="mt-14">
         <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
-          <PortfolioRace />
+          <TierRaceChart />
         </div>
       </section>
 
@@ -147,9 +152,9 @@ export default function TrackRecordPageV2() {
           {/* Recent 24 months — held-out walk-forward window (Jun 2024 – May 2026) */}
           <PerfTable label="The Last 24 Months" columns={['Annualized', 'Sharpe', 'Calmar', 'Max Drawdown']} rows={RECENT_ROWS} />
           <p className="mb-12 text-[1rem] text-ink leading-[1.65]">
-            June 2024 through May 2026, a held-out walk-forward window (backtested, not yet live money):
-            <strong className="font-medium"> RigaCap beat the index by 12 points a year at well under half its drawdown</strong> &mdash;
-            twice the S&amp;P's Sharpe, three-and-a-half times its Calmar. Raw momentum earned more, gross of costs &mdash;
+            June 2024 through May 2026, a held-out walk-forward window (not yet live money):
+            <strong className="font-medium"> Preserver beat the index by 11 points a year, Maximizer by 29</strong> &mdash; both at
+            a smaller drawdown than the S&amp;P, and both with a higher Sharpe and Calmar. Raw momentum earned more, gross of costs &mdash;
             and took a 38% drawdown <em>during a bull market</em> to collect it. Defense isn't the same as sitting out the bull.
           </p>
 
@@ -164,12 +169,12 @@ export default function TrackRecordPageV2() {
 
           <div className="mt-6 border-l-[3px] border-claret pl-5 py-1">
             <p className="text-[1.05rem] text-ink leading-relaxed mb-0">
-              <span className="font-medium">For context on that 0.73:</span> Sharpe ratios above 1 live in short windows and
+              <span className="font-medium">On those Sharpe ratios:</span> figures above 1 live in short windows and
               overfit backtests &mdash; over decades, the scale compresses. The S&amp;P 500 scored <span className="font-mono">0.54</span> across
-              this same 21-year window. The highest lifetime figure ever measured for any stock or fund with 30+ years of
-              history is Warren Buffett's <span className="font-mono">0.79</span> (Frazzini, Kabiller &amp; Pedersen,
-              &ldquo;Buffett&rsquo;s Alpha,&rdquo; 2018). Ours is backtested and his is real &mdash; but that is the
-              neighborhood two honest decades put you in.
+              this same 21-year window; Preserver walk-forward tested at <span className="font-mono">0.88</span> and Maximizer at <span className="font-mono">0.95</span>. The highest lifetime figure ever measured for any fund with 30+ years of
+              real history is Warren Buffett's <span className="font-mono">0.79</span> (Frazzini, Kabiller &amp; Pedersen,
+              &ldquo;Buffett&rsquo;s Alpha,&rdquo; 2018). Ours is walk-forward and his is real &mdash; and our pre-2016 data carries a
+              survivorship caveat that flatters the early years, so we hold these as strong-but-honest.
             </p>
           </div>
 
@@ -181,19 +186,23 @@ export default function TrackRecordPageV2() {
             </div>
             <div>
               {[
-                ['2008 financial crisis', 'S&P −37.7%', '−0.5%', 'in cash by design'],
-                ['COVID crash year', 'S&P +15.2%', '+31.9%', 'exit & re-entry'],
-                ['2022 inflation bear', 'S&P −19.9%', '−7.5%', 'shallow & recoverable'],
-                ['2018 whipsaw (our worst)', 'S&P −7.0%', '−12.3%', 'the honest wart'],
-              ].map(([regime, window, ret, dd]) => (
-                <div key={regime} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between py-3 border-b border-rule text-[1.05rem]">
-                  <div><span className="font-medium text-ink">{regime}</span> <span className="text-ink-light text-[0.88rem]">· {window}</span></div>
-                  <div className="flex items-baseline gap-3 font-mono text-[1rem]"><span className="w-16 sm:w-20 sm:text-right" style={{ color: ret.startsWith('−') || ret.startsWith('-') ? '#8F2D3D' : '#2D5F3F' }}>{ret}</span><span className="text-ink-mute italic font-body sm:w-48 sm:text-right">{dd}</span></div>
+                ['2008 financial crisis', 'S&P −36%', '+0.1%', '+0.1%', 'in cash by design'],
+                ['COVID crash year · 2020', 'S&P +17%', '+12.4%', '+38.8%', 'exit & re-entry'],
+                ['2022 inflation bear', 'S&P −19%', '−6.9%', '−1.8%', 'a fraction of the index'],
+                ['2019 melt-up (our wart)', 'S&P +31%', '+5.9%', '+1.0%', 'defense lags a runaway bull'],
+              ].map(([regime, window, pres, mx, note]) => (
+                <div key={regime} className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between py-3 border-b border-rule text-[1.05rem]">
+                  <div className="sm:w-60"><span className="font-medium text-ink">{regime}</span> <span className="text-ink-light text-[0.88rem]">· {window}</span></div>
+                  <div className="flex items-baseline gap-4 font-mono text-[1rem]">
+                    <span className="flex items-baseline gap-1.5"><span className="text-ink-light font-body text-[0.7rem] uppercase tracking-wide">Pres</span><span className="w-12 text-right" style={{ color: pres.startsWith('−') ? '#8F2D3D' : '#2D5F3F' }}>{pres}</span></span>
+                    <span className="flex items-baseline gap-1.5"><span className="text-ink-light font-body text-[0.7rem] uppercase tracking-wide">Max</span><span className="w-12 text-right" style={{ color: mx.startsWith('−') ? '#8F2D3D' : '#2D5F3F' }}>{mx}</span></span>
+                    <span className="text-ink-mute italic font-body text-[0.9rem] hidden md:inline">{note}</span>
+                  </div>
                 </div>
               ))}
             </div>
             <p className="mt-6 text-[1.05rem] text-ink leading-[1.6]">
-              Calendar years, continuous run &mdash; including our worst one, because you should see it. A liquidity collapse the strategy sat out almost entirely, a crash year it turned into its best, a bear it cut to a third of the index's loss &mdash; and a whipsaw year it lost more than the index. <strong className="font-medium">The drawdown stayed bounded through all of it.</strong> That resilience &mdash; not a headline return &mdash; is the point.
+              Calendar years, continuous run &mdash; including the honest wart, because you should see it. A liquidity collapse both tiers sat out almost entirely, a COVID crash year Maximizer turned into a 39% gain, a 2022 bear cut to a fraction of the index's loss &mdash; and a 2019 melt-up where defense left real return on the table. <strong className="font-medium">The losses stayed bounded through all of it.</strong> That resilience &mdash; not a single headline return &mdash; is the point.
             </p>
           </div>
         </div>
@@ -206,9 +215,9 @@ export default function TrackRecordPageV2() {
 
           <div className="grid sm:grid-cols-3 gap-px bg-rule">
             {[
-              ['\u22120.5% through 2008', 'S&P fell 38%', 'While the index lost over a third in the worst financial year since the Depression, RigaCap ended 2008 essentially flat \u2014 the regime filter had it in cash by design.'],
-              ['A third of the drawdown', 'vs raw momentum', 'The same momentum factor nets ~13% over two decades with a brutal 57% drawdown. RigaCap trades some of that raw return for a 19% worst case across 21 years \u2014 the risk engineering is the edge.'],
-              ['Steps back in stress', 'capital preservation', 'When the market turns hostile and losses cluster, the strategy pauses new entries rather than chase a falling market \u2014 sidestepping the falling knife that turns a bad week into a deep drawdown.'],
+              ['+0.1% through 2008', 'S&P fell 36%', 'While the index lost over a third in the worst financial year since the Depression, both RigaCap tiers ended 2008 essentially flat \u2014 the regime filter had them in cash by design.'],
+              ['Beats raw momentum', 'at a third the drawdown', 'The same momentum factor nets 13.2% over two decades with a brutal 57% drawdown. Maximizer earns more \u2014 14.5% \u2014 at a third of that pain; Preserver holds its worst loss to 13%. The risk engineering is the edge.'],
+              ['Steps back in stress', 'capital preservation', 'When the market turns hostile and losses cluster, both tiers pause new entries rather than chase a falling market \u2014 sidestepping the falling knife that turns a bad week into a deep drawdown.'],
             ].map(([title, subtitle, desc]) => (
               <div key={title} className="bg-paper-card p-8">
                 <div className="font-display text-2xl text-ink mb-1" style={{ fontVariationSettings: '"opsz" 96' }}>{title}</div>
@@ -226,8 +235,8 @@ export default function TrackRecordPageV2() {
           <div className="bg-paper-card border-l-[3px] border-claret p-8">
             <h3 className="font-display text-[1.15rem] font-semibold text-ink mb-3">The bear-market test.</h3>
             <p className="text-ink leading-[1.7]">
-              The twenty-one-year span included the 2008 financial crisis &mdash; in which the index lost over half its value and raw momentum lost 46% in a single year &mdash; plus COVID and the 2022 bear. <strong className="font-medium">RigaCap's worst peak-to-trough across all of it stayed near 19%; it ended 2008 essentially flat and held its 2022 loss to a third of the index's</strong> &mdash;{' '}
-              not by luck, but by design. Risk-based sizing and trailing-stop discipline kept the strategy on the right side of risk &mdash; responding to data as it changed, not predicting the drawdown.<br />
+              The twenty-one-year span included the 2008 financial crisis &mdash; in which the index lost over half its value and raw momentum lost 46% in a single year &mdash; plus COVID and the 2022 bear. <strong className="font-medium">The worst peak-to-trough across all of it stayed at 13% for Preserver and 20% for Maximizer; both tiers ended 2008 essentially flat and cut the 2022 bear to a fraction of the index's loss</strong> &mdash;{' '}
+              not by luck, but by design. Risk-based sizing and trailing-stop discipline kept both tiers on the right side of risk &mdash; responding to data as it changed, not predicting the drawdown.<br />
               <em className="font-display italic text-claret">That behavior, not the headline return, is the reason to subscribe.</em>
             </p>
           </div>

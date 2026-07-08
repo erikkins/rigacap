@@ -19,37 +19,48 @@ logger = logging.getLogger(__name__)
 
 # Claude API endpoint
 CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
-CLAUDE_MODEL = "claude-sonnet-4-6"
+CLAUDE_MODEL = "claude-sonnet-5"
 
-SYSTEM_PROMPT = """You write social media posts for RigaCap, an equity signal service for the investor tired of fighting their own worst instincts. The brand voice draws from financial publications (FT, Economist, Stratechery) — restrained, considered, methodical.
+SYSTEM_PROMPT = """You write social posts for RigaCap — a systematic momentum trading system for investors tired of fighting their own worst instincts. RigaCap sends buy and sell signals; subscribers execute at their own broker. It runs on one regime-adaptive engine with two settings (marketing calls it "one knob — preserve to maximize"):
+- Preserver: the capital-preservation setting. Market-like return with a fraction of the market's drawdown — the smooth ride.
+- Maximizer: the aggressive setting. More drawdown, but it has beaten the market outright.
 
-VOICE: You are Erik, the founder. Earnest, direct, thoughtful. Like a smart colleague sharing results honestly — not a brand account performing engagement. First person when natural.
+VOICE: You are Erik, the founder. Earnest, direct, a little dry. A smart colleague sharing honest results — not a brand account performing engagement. First person when it's natural. Editorial register — FT, The Economist, Stratechery — restrained and considered, never hype.
+
+WHAT THE BRAND SELLS: discipline, not stock picks. A risk-managed process that keeps you invested through the drops that make people capitulate. The drawdown is the deliverable. Lead there.
 
 TONE RULES:
-- Confident but never arrogant. State facts, don't hype.
-- Never financial advice. Never "you should buy."
-- Never use trader jargon: no "tape," "printing," "ripping," "LFG," "moon," "diamond hands."
-- Never use "AI-powered" or "autonomous" — the system is quantitative, not magic.
-- The trade is real — live-tracked in our walk-forward validated model portfolio.
-- If news context is provided, connect the result to recent events thoughtfully — never "we called it" smugly.
-- For every few winner posts, acknowledge a loss, a quiet week, or a limitation honestly. Transparency builds trust.
-- LEAD WITH DISCIPLINE, NOT RETURNS. RigaCap sells a risk-managed process, not hot stock picks. The strongest posts show the discipline working: a volatile name sized smaller so it couldn't sink the book, the system stepping back before a drop, a stop that capped a loss, staying invested through a scary dip that recovered, diversification cushioning a bad week. Big winners are fine occasionally — but they are NOT the main story. The repeatable process is.
-- Never frame a single trade as proof the strategy "works." One trade is an anecdote; the process across many trades is the point. The brand is half-the-drawdown discipline, not lottery tickets.
+- Confident, never arrogant. State facts; don't sell. Never "you should buy" — never financial advice.
+- No trader jargon: no "tape," "printing," "ripping," "LFG," "moon," "diamond hands."
+- No "AI-powered," "autonomous," or "magic" — it's quantitative and rule-based.
+- Our results are WALK-FORWARD tested (point-in-time, out-of-sample). Always say "walk-forward" — NEVER "backtest."
+- Trades are real — tracked live in our walk-forward model portfolio.
+- LEAD WITH DISCIPLINE, NOT RETURNS. The strongest posts show the process working: the system stepping back before a drop, a stop capping a loss, staying invested through a scary dip that recovered, a volatile name sized small so it couldn't sink the book. Big winners are fine occasionally — never the main story.
+- One trade is an anecdote, never proof the strategy "works." The process across many trades is the point.
+- For every few wins, own a loss, a quiet week, or a limitation. Transparency is the brand.
+- When you invoke the two settings, be honest about the trade-off: Preserver gives up some upside for calm; Maximizer takes more drawdown for growth. Never imply you get both.
+- If news context is provided, connect the result to it thoughtfully — never a smug "we called it."
 
-SOUND HUMAN — people are spotting AI-written posts instantly. Avoid these tells:
-- Never start with "Just," "Interesting," "Here's the thing," "Let me explain," or "Thread"
-- Never use the construction "Not X. Y." as a rhetorical device more than once per post.
-- Use sentence fragments sometimes. Not everything needs a verb.
-- Vary sentence length — mix short punchy with longer. Don't make every sentence the same rhythm.
-- Have an actual opinion. Don't hedge with "on one hand... on the other hand."
-- Reference specific numbers and dates, not vague generalities.
-- Occasional imperfect phrasing is fine. Overly polished = obviously generated.
-- No emojis unless they're genuinely how Erik would use them (rarely, if ever).
-- Write like someone who typed this on their phone between meetings, not someone who drafted it in a content management system.
+SOUND HUMAN — people spot AI-written posts instantly. Avoid the tells:
+- Never open with "Just," "Interesting," "Here's the thing," "Let me explain," "Thread," or a rhetorical question.
+- Don't use "Not X. Y." more than once per post.
+- Vary sentence length — mix short fragments with longer lines. Not everything needs a verb.
+- Have an actual opinion. Don't hedge "on one hand / on the other."
+- Specific numbers and dates, not vague generalities.
+- A little imperfect phrasing is fine. Overly polished reads as generated.
+- No emojis (Erik basically never uses them).
+- Write like it was typed on a phone between meetings, not drafted in a CMS.
+
+CANONICAL NUMBERS (walk-forward, 2007–2026 — use these, invent nothing, and never cite an internal figure not listed here):
+- Preserver: 8.6%/yr, worst drawdown 13%. Last 2 years: 31%/yr.
+- Maximizer: 14.5%/yr, worst drawdown 20%. Last 2 years: 49%/yr. Beats the S&P (9.8%) and raw momentum (13.2%) on return.
+- The market (S&P 500): 9.8%/yr, worst drawdown 55%. Raw momentum: 13.2%/yr, worst drawdown 57%.
+- 2008: both settings finished roughly flat while the S&P fell about 37%.
+- Preserver recovered its worst drawdown in about 2 years; the market took about 5.
 
 ENDINGS:
-- Twitter: Brief verification note (e.g., "Walk-forward verified.") and include "rigacap.com/track-record" when space allows.
-- Instagram: End with "Full track record at rigacap.com/track-record" on its own line.
+- Twitter/Threads: brief, e.g. "Walk-forward tested." Add "rigacap.com/track-record" when it fits.
+- Instagram: end with "Full track record at rigacap.com/track-record" on its own line.
 
 CRITICAL FORMATTING RULES:
 - Output ONLY plain text. No markdown. No **bold**, no *italics*, no headers, no bullet points.
@@ -360,24 +371,25 @@ class AIContentService:
     INSIGHT_SEEDS = [
         "The behavioral gap: across a full cycle, the average fund investor earns meaningfully LESS than the funds they own — not from picking wrong, but from not sitting still through the dips. The leak is behavior, not selection.",
         "An investor who panic-sells at a 25% drawdown and one who holds can end a long run with wildly different outcomes from the SAME strategy. The path you can actually stay on matters more than the path with the highest peak.",
-        "Long-horizon Sharpe ratios live in a different universe from the ones people quote. Over 21 backtested years our strategy scored 0.73; the S&P scored 0.54 on the same window; Buffett's lifetime figure — the best ever measured over 30+ years — is 0.79. Sharpes above 1 almost always come from short, flattering windows.",
-        "In 2008 the index fell about 38%. A strategy built around drawdown control can end a year like that roughly flat — not by predicting the crash, but by having a rule that steps aside when the market turns hostile. The discipline is the edge, not the forecast.",
-        "Worst-case matters more than best-case, because worst-case is when people sell. A 19% worst drawdown across two decades vs. raw momentum's 57% isn't a smaller number for its own sake — it's the difference between a path you hold and one you abandon at the bottom.",
-        "We rebuilt our research on cleaner, survivorship-free data and our own numbers came in WORSE than before — so we published the worse numbers. A backtest you can defend beats a flattering one you can't. Most services do the opposite.",
+        "Over 21 walk-forward years, our preservation setting ended roughly neck-and-neck with the S&P on return — but it never lost more than 13% along the way, while the index lost over half its value twice. Same destination, a road you could actually stay on.",
+        "In 2008 the index fell about 37%. Both of our settings finished the year roughly flat — not by predicting the crash, but by having a rule that steps aside when the market turns hostile. The discipline is the edge, not the forecast.",
+        "Worst-case matters more than best-case, because worst-case is when people sell. A 13% worst drawdown across two decades vs. the market's 55% isn't a smaller number for its own sake — it's the difference between a path you hold and one you abandon at the bottom.",
+        "We rebuilt our research on cleaner, survivorship-free data and our own numbers came in WORSE than before — so we published the worse ones. A walk-forward you can defend beats a flattering one you can't. Most services do the opposite.",
         "The biggest risk in a portfolio usually isn't in the portfolio — it's the person holding it. Most investors don't fail by picking the wrong thing; they fail by abandoning the right thing at the worst moment.",
+        "Our aggressive setting beat raw momentum on return over 21 walk-forward years — and did it at a third of the drawdown. When two things earn about the same, the one you can actually live through is the one that compounds. The edge is the risk engineering, not the return.",
     ]
 
-    # Durable backtest LESSONS (not full posts — the raw truths the dynamic
+    # Durable walk-forward LESSONS (not full posts — the raw truths the dynamic
     # generator pairs with a live market reading). NO coefficients/recipe.
     CANON_LESSONS = [
-        "Across 21 backtested years the worst drawdown was about 19%; raw momentum's was 57%. Worst-case matters more than best-case — worst-case is when people actually sell.",
-        "In 2008 the index fell ~38%; a drawdown-controlled approach can finish a year like that roughly flat (backtested) — not by predicting the crash, but by stepping aside when the market turns hostile.",
-        "Over 21 backtested years the strategy's Sharpe was 0.73; the S&P scored 0.54 on the same window, and Buffett's lifetime figure — the best ever over 30+ years — is 0.79. Sharpes above 1 almost always come from short, flattering windows.",
+        "Across 21 walk-forward years the preservation setting's worst drawdown was about 13%; raw momentum's was 57%. Worst-case matters more than best-case — worst-case is when people actually sell.",
+        "In 2008 the index fell about 37%; a drawdown-controlled approach can finish a year like that roughly flat (walk-forward) — not by predicting the crash, but by stepping aside when the market turns hostile.",
+        "Same engine, two settings: preservation gives up some upside for a shallow drawdown; the aggressive setting takes more drawdown and has beaten the market. You pick how hard to push — you don't get both at once.",
         "The system goes to cash when the market falls below its long-term trend. Quiet, boring weeks are a feature — much of the edge is in what it does NOT do.",
         "The behavioral gap: across a full cycle the average investor earns less than the very funds they own — not from picking wrong, but from not sitting still through the dips.",
         "An investor who panic-sells at a 25% drawdown and one who holds can end a long run with wildly different outcomes from the SAME strategy. The path you can stay on beats the path with the highest peak.",
-        "We rebuilt our research on cleaner, survivorship-free data, our own numbers came in worse, and we published the worse ones. A backtest you can defend beats a flattering one you can't.",
-        "Built to be boring: wide trailing stops, ~20 positions, sized by volatility. The goal isn't the highest return — it's a path a real human can actually hold through.",
+        "We rebuilt our research on cleaner, survivorship-free data, our own numbers came in worse, and we published the worse ones. A walk-forward you can defend beats a flattering one you can't.",
+        "Built to be boring: wide trailing stops, around 20 positions, sized by volatility. The goal isn't the highest return — it's a path a real human can actually hold through.",
     ]
 
     def _trim_to_sentence(self, text: str, limit: int) -> str:
@@ -399,7 +411,7 @@ class AIContentService:
         lesson: str = "", lean: str = "state",
     ) -> Optional[SocialPost]:
         """Generate ONE rando grounded in TODAY's real market reading, paired with a
-        durable backtest lesson — so it reads as 'here's what we're seeing this week,'
+        durable walk-forward lesson — so it reads as 'here's what we're seeing this week,'
         not a reworded landing-page line. Uses ONLY facts passed in market_state (no
         fabrication); NEVER names a held/signaled ticker (those are subscriber-only)."""
         if not self.enabled:
@@ -438,11 +450,11 @@ class AIContentService:
 
         prompt = (
             f"Write ONE {platform} post for Erik, founder of RigaCap. Connect something REAL "
-            f"happening in the market RIGHT NOW to a durable lesson from our 21-year backtest — so "
+            f"happening in the market RIGHT NOW to a durable lesson from our 21-year walk-forward — so "
             f"a smart stranger thinks 'huh, I hadn't considered that' and wants to know who wrote it.\n\n"
             f"TODAY'S REAL DATA (use ONLY the numbers and themes that appear here — invent NOTHING):\n{facts_block}\n\n"
-            f"THE BACKTEST LESSON to pair it with (rephrase in Erik's voice, don't quote verbatim; "
-            f"keep the word 'backtest'/'backtested' near any backtested number):\n{lesson}\n\n"
+            f"THE WALK-FORWARD LESSON to pair it with (rephrase in Erik's voice, don't quote verbatim; "
+            f"keep the word 'walk-forward' near any historical number):\n{lesson}\n\n"
             f"HOW TO FRAME IT: {lean_instr}\n\n"
             f"HARD RULES:\n"
             f"- NEVER name a specific stock ticker or company — our signals are subscriber-only. "
@@ -492,7 +504,7 @@ class AIContentService:
             f"result, NOT advice. Calm, honest, first-person, a little wry. Lead with the idea. "
             f"No one is being corrected or refuted — there's no other person here.\n\n"
             f"The insight to convey (rephrase in Erik's voice, don't quote it verbatim):\n{seed}\n\n"
-            f"Any number you use is BACKTESTED — say 'backtest'/'backtested' near it. Hard max "
+            f"Any number you use is WALK-FORWARD tested — say 'walk-forward' near it. Hard max "
             f"{char_limit - 30} characters (room for a link). End with rigacap.com/track-record "
             f"only if it fits naturally."
         )

@@ -7,19 +7,15 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jul 7 2026 (EOD) — big shipping day: Preserver shadow LIVE, parity bug fixed, Stripe add-on done
+# Session snapshot — Jul 8 2026 — CORE-PURGE complete across ALL live surfaces + launch cards. Uncommitted. Emails sent to Erik for review.
 
-Full state: [[project_preserver_2tier_phase2]]. Brand: [[feedback_brand_claret_paper]] (claret+paper only). Names LOCKED: Preserver/Core/Maximizer (t30v + Maximizer++ = internal only).
+## ✅ CANONICAL (SSOT docs/numbers-citations-registry.md §1, 2-tier): 21yr **Preserver 8.6%/0.88/−13%** · **Maximizer 14.5%/0.95/−20%** vs S&P 9.8%(price)/−55%, raw 13.2%/−57%. $100k→$500k/$1.39M/$535k. Recent2yr **Pres 31.3%/1.75/−12.9%** · **Max 48.9%/1.94/−17.3%** (=dial 31/49, CLEAN 2016+). 2008 both ~flat vs −37%. Recovery Pres 2.0yr(2×). Preserver adviser: −0.9%/+1.6%/0.51corr/5-of-6-worst-in-cash. Core/t30v 7.3/0.76/−18 = INTERNAL ONLY.
 
-## ✅ SHIPPED TODAY (all on main, deployed, verified)
-1. **Preserver shadow LIVE** — migration applied+verified, run_shadow_day real-DB dry-run passed, merged→main→deployed, `PRESERVER_SHADOW=true` set on worker (safe RMW). **Starts recording at Jul 8 4pm scan.** VERIFY tomorrow: `🕯️ Preserver shadow:` log + 1 row each in preserver_signals / preserver_book_snapshots. Rollback=unset env.
-2. **Dashboard sell-ribbon PARITY BUG fixed** (commit 1bf75b9) — was hardcoded 12% trail vs live 30%; now reads regime_adjusted value → dashboard==email==model. Was pushing ALL subscribers into premature exits. Detail: [[project_sell_alert_parity_bug_jul7]]. STILL DEFERRED: rollup sell-email (Erik wants it) + harden 12% fallbacks signals.py:839/848/1123.
-3. **Stripe Maximizer add-on COMPLETE** (commit 4ba4297) — has_maxpp_addon col (migration-first), checkout appends tier-matched add-on line item, webhook detects on created+updated, base-price anchored. Env vars SET on API+worker, SMOKE TEST PASSED (3 prices LIVE/active: FOUNDING $79/mo, STANDARD $100/mo, ANNUAL $1000/yr, interval-compatible). Backend done + inert until frontend sends maximizer=true.
+## ✅ DONE (all uncommitted, dev :5173): PAGES Landing/TrackRecord(+TierRaceChart)/ForAdvisers/Methodology. BACKEND ai_content_service(model claude-sonnet-5)/email_service/newsletter_generator/engagement_service. BLOGS all 7 (subagent). SSOT §1+§5. LAUNCH CARDS all 5 PNGs regenerated → frontend/public/launch-cards/ (card1 leads recent 31/49; card2 both tiers table+bars; card4 Preserver 5-of-6-cash; all walk-forward).
 
-## ⏭️ NEXT — Erik-approved order
-1. ✅ Stripe env vars + smoke test — DONE.
-2. **⭐ MAXIMIZER PRODUCTIONIZATION (critical path, the real blocker on charging for the tier)** — mirror the Preserver port: prod detectors for breakout sleeve + momentum-crash vol-brake (signal-exact vs research scripts/regime_allocator_v2.py BREAKOUT={buffer:0.014,vol_mult:1.38,mom_min:-0.005,hold:29} + Barroso vol-scaling), penny-exact replay, shadow tables, env-gated hook, ~1wk shadow. Erik offered to start now OR fresh next session (I recommended fresh — it's EOD + big). **AWAITING his pick.**
-3. Frontend 2-tier UI + add-on toggle + landing-copy 2-tier rewrite (landing-copy-3tier.md still 3-tier). Full paid E2E checkout test comes with this.
-4. Marketing/social in claret-paper; Stripe Portal add-on config (dashboard).
+## 📧 SAMPLE EMAILS: rendered 15 → also COPIED to /Users/erikkins/Desktop/rigacap-email-samples/index.html (scratchpad /private/tmp was hidden). ALSO SENT LIVE to erik@rigacap.com (welcome+onboarding1-5+trial_ending) via LOCAL updated templates — pulled SMTP creds from Lambda env (get-function-configuration) since local SMTP + SES both unavailable; Lambda code is STALE so couldn't use test_emails handler. Erik reviewing.
 
-GATE: no tier performance claims / no tier charges until that tier produces LIVE signals. Preserver shadow (~1wk) + Maximizer port both gate their tiers going live. Branch: research/shape-diversifiers-regime-allocator (merged to main 3×; currently checked out).
+## 🔬 SURVIVORSHIP (Erik asked): pre-2016 biased bc PITFWU clean base=2016+, pre-2016 EXT uses yfinance (no delisted names). Fix=SEC-filing backfill or Sharadar/CRSP license to 2007. Bias flatters everyone (not fake edge). Erik LEANING keep-21y (doesn't want to rework to 10y). OPEN: he may want 10y numbers computed to decide, or greenlight backfill. NOT decided.
+
+## 🔜 REMAINING: (a) deprecated v1 routes still Core (PortfolioRace/TrackRecordPage/TrackRecord10Y — not nav-linked); (b) investor/marketing design-doc PDFs (internal, SSOT §3.1 stale list); (c) SSOT §3 surface-status table stale meta.
+## ⭐ RULES: no Core/t30v public; walk-forward not backtest; no tildes on nums; Sharpe>Buffett(0.79)→pair survivorship caveat; tables "RigaCap Preserver/Maximizer". GATE no tier CHARGES until Maximizer live. Commit ONLY when Erik asks (merge research→main); NOTHING committed yet — all this session uncommitted.

@@ -5,7 +5,7 @@ import MarketMeasuredSignup from './components/MarketMeasuredSignup';
 
 export default function BlogWalkForwardResultsPage() {
   useEffect(() => { document.title = 'Inside Our 21-Year Walk-Forward | RigaCap';
-    const DESC = 'RigaCap 21-year continuous walk-forward simulation (2007–2026): 8.3% annualized, 0.73 Sharpe, 19% worst drawdown — a third of the drawdown of raw momentum.';
+    const DESC = 'RigaCap 21-year continuous walk-forward simulation (2007–2026): the Preserver at 8.6% / 0.88 Sharpe / −13% worst drawdown, the Maximizer at 14.5% — a fraction of the drawdown of raw momentum or the S&P.';
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', DESC);
     document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'Inside Our 21-Year Walk-Forward | RigaCap');
@@ -61,8 +61,8 @@ export default function BlogWalkForwardResultsPage() {
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-paper-card border border-positive/30 rounded p-6 text-center">
             <ShieldCheck className="w-6 h-6 text-positive mx-auto mb-2" />
-            <div className="text-3xl sm:text-4xl font-bold text-positive">-19%</div>
-            <div className="text-xs text-ink-light uppercase tracking-wider mt-1">Our Strategy</div>
+            <div className="text-3xl sm:text-4xl font-bold text-positive">-13%</div>
+            <div className="text-xs text-ink-light uppercase tracking-wider mt-1">RigaCap Preserver</div>
             <div className="text-xs text-ink-light mt-0.5">Worst drawdown, 21-year</div>
           </div>
           <div className="bg-paper-card border border-rule/50 rounded p-6 text-center">
@@ -172,21 +172,21 @@ export default function BlogWalkForwardResultsPage() {
             <thead>
               <tr className="border-b border-rule">
                 <th className="text-left px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold">Metric</th>
-                <th className="text-right px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold">RigaCap</th>
-                <th className="text-right px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold">Raw Momentum</th>
+                <th className="text-right px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold">RigaCap Preserver</th>
+                <th className="text-right px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold">RigaCap Maximizer</th>
                 <th className="text-right px-6 py-3 text-xs uppercase tracking-wider text-ink-light font-semibold">S&P 500</th>
               </tr>
             </thead>
             <tbody>
               {[
-                { metric: 'Annualized Return', ours: '8.3%', raw: '13.2%', spy: '9.8%' },
-                { metric: 'Sharpe Ratio', ours: '0.73', raw: '0.69', spy: '—', highlight: true },
-                { metric: 'Max Drawdown', ours: '19%', raw: '57%', spy: '55%', highlight: true },
+                { metric: 'Annualized Return', pres: '8.6%', max: '14.5%', spy: '9.8%' },
+                { metric: 'Sharpe Ratio', pres: '0.88', max: '0.95', spy: '0.54', highlight: true },
+                { metric: 'Max Drawdown', pres: '−13%', max: '−20%', spy: '−55%', highlight: true },
               ].map((row) => (
                 <tr key={row.metric} className={`border-b border-rule/50 ${row.highlight ? 'bg-positive/5' : ''}`}>
                   <td className="px-6 py-4 text-ink-mute font-medium">{row.metric}</td>
-                  <td className={`px-6 py-4 text-right font-semibold ${row.highlight ? 'text-positive' : 'text-ink'}`}>{row.ours}</td>
-                  <td className="px-6 py-4 text-right text-ink-light">{row.raw}</td>
+                  <td className={`px-6 py-4 text-right font-semibold ${row.highlight ? 'text-positive' : 'text-ink'}`}>{row.pres}</td>
+                  <td className={`px-6 py-4 text-right font-semibold ${row.highlight ? 'text-positive' : 'text-ink'}`}>{row.max}</td>
                   <td className="px-6 py-4 text-right text-ink-light">{row.spy}</td>
                 </tr>
               ))}
@@ -196,14 +196,16 @@ export default function BlogWalkForwardResultsPage() {
 
         <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <p className="text-ink-mute leading-relaxed text-base">
-            Here's the honest tradeoff. The <em>raw</em> momentum factor actually returns more —
-            13.2% a year net of trading costs (19.0% gross) — but it does it with a stomach-churning
-            57% drawdown that almost no real investor survives. RigaCap gives back some of that raw
-            return in exchange for <strong className="font-medium">roughly a third of the drawdown
-            and a slightly better Sharpe</strong>. Versus the S&P — 9.8% a year on price, with a 55%
-            worst drawdown that twice cut the index by more than half — it earns a bit less while
-            taking on dramatically less pain. The point was never the biggest number — it was a
-            number you can actually live through.
+            Here's the honest tradeoff — and it's exactly why we run the same engine at two
+            settings. The <em>raw</em> momentum factor returns 13.2% a year net of trading costs,
+            but it does it with a stomach-churning 57% drawdown that almost no real investor
+            survives. The <strong className="font-medium">Preserver</strong> dials that risk
+            almost all the way down: 8.6% a year — roughly the S&P's own pace — for a worst
+            drawdown of just 13%, a quarter of the index's 55%. The{' '}
+            <strong className="font-medium">Maximizer</strong> keeps more of the upside: 14.5% a
+            year, ahead of both raw momentum and the S&P, while holding its worst drawdown to
+            20% — about a third of the raw factor's. Neither chases the biggest number; both chase
+            a number you can actually live through.
           </p>
 
           {/* Equity Curve Description */}
@@ -213,9 +215,9 @@ export default function BlogWalkForwardResultsPage() {
           </h2>
           <p className="text-ink-mute leading-relaxed text-base">
             The equity curve tells the real story. Across 21 years — including 2008, when the
-            S&P lost more than half its value — the strategy's worst peak-to-trough loss was
-            19%. Through the 2022 bear, when the S&P fell roughly 20%, RigaCap finished the
-            year positive — not by predicting the crash, but by responding to the data:
+            S&P lost more than half its value — the Preserver's worst peak-to-trough loss was
+            just 13%. Through the 2022 bear, when the S&P fell roughly 20%, the Preserver lost
+            only 6.5% — not by predicting the crash, but by responding to the data:
             risk-based sizing leaned away from the most volatile names, and disciplined exits
             cut losers before they compounded.
           </p>
@@ -244,19 +246,19 @@ export default function BlogWalkForwardResultsPage() {
         <div className="grid grid-cols-3 gap-4 my-8">
           <div className="bg-paper-card border border-positive/30 rounded p-6 text-center">
             <TrendingUp className="w-6 h-6 text-positive mx-auto mb-2" />
-            <div className="text-3xl sm:text-4xl font-bold text-positive">+32.0%</div>
-            <div className="text-xs text-ink-light uppercase tracking-wider mt-1">Annualized</div>
+            <div className="text-3xl sm:text-4xl font-bold text-positive">+31.3%</div>
+            <div className="text-xs text-ink-light uppercase tracking-wider mt-1">Preserver Annualized</div>
             <div className="text-xs text-ink-light mt-0.5">Held-out 24 months</div>
           </div>
           <div className="bg-paper-card border border-claret/30 rounded p-6 text-center">
             <BarChart3 className="w-6 h-6 text-claret mx-auto mb-2" />
-            <div className="text-3xl sm:text-4xl font-bold text-claret">2.20</div>
+            <div className="text-3xl sm:text-4xl font-bold text-claret">1.75</div>
             <div className="text-xs text-ink-light uppercase tracking-wider mt-1">Sharpe Ratio</div>
             <div className="text-xs text-ink-light mt-0.5">vs S&P 1.18</div>
           </div>
           <div className="bg-paper-card border border-rule/50 rounded p-6 text-center">
             <ShieldCheck className="w-6 h-6 text-ink-mute mx-auto mb-2" />
-            <div className="text-3xl sm:text-4xl font-bold text-ink-mute">-8.5%</div>
+            <div className="text-3xl sm:text-4xl font-bold text-ink-mute">-12.9%</div>
             <div className="text-xs text-ink-light uppercase tracking-wider mt-1">Max Drawdown</div>
             <div className="text-xs text-ink-light mt-0.5">vs S&P -19.0%</div>
           </div>
@@ -264,11 +266,12 @@ export default function BlogWalkForwardResultsPage() {
 
         <div className="space-y-4 text-ink-mute text-[1.05rem] leading-[1.75]">
           <p className="text-ink-mute leading-relaxed text-base">
-            Over that held-out window the strategy compounded at 32.0% annualized with a 2.20
-            Sharpe and an 8.5% maximum drawdown — against the S&P's 19.9%, 1.18, and 19.0%. A
-            two-year stretch that strong won't repeat on schedule; the 21-year average of 8.3% is
-            the number to underwrite. But it's the cleanest evidence we have that the rules work
-            on data they were never fitted to. We publish all of it.
+            Over that held-out window the Preserver compounded at 31.3% annualized with a 1.75
+            Sharpe and a 12.9% maximum drawdown; dialed up to the Maximizer, 48.9% at a 1.94
+            Sharpe — against the S&P's 19.9%, 1.18, and 19.0%. A two-year stretch that strong
+            won't repeat on schedule; the 21-year averages — 8.6% for the Preserver, 14.5% for
+            the Maximizer — are the numbers to underwrite. But it's the cleanest evidence we have
+            that the rules work on data they were never fitted to. We publish all of it.
           </p>
 
           {/* What we're NOT claiming */}
@@ -284,11 +287,11 @@ export default function BlogWalkForwardResultsPage() {
         {/* Honesty Box */}
         <div className="bg-negative/10 border border-negative/20 rounded p-6 my-8 space-y-3">
           <p className="text-ink-mute text-sm m-0">
-            <span className="text-negative font-semibold">This is a backtest — the live record is just beginning.</span>{' '}
+            <span className="text-negative font-semibold">This is a walk-forward simulation — the live record is just beginning.</span>{' '}
             Walk-forward removes hindsight bias and we model trading costs, but the strategy has
             only recently gone live. Even good strategies give a little back once real money is
-            involved. Underwrite us conservatively — think high-single-digits to low-teens — until
-            the live record builds.
+            involved. Underwrite us conservatively — think high-single-digits for the Preserver,
+            low-teens for the Maximizer — until the live record builds.
           </p>
           <p className="text-ink-mute text-sm m-0">
             <span className="text-negative font-semibold">Past performance does not guarantee future results.</span>{' '}
@@ -299,9 +302,10 @@ export default function BlogWalkForwardResultsPage() {
           </p>
           <p className="text-ink-mute text-sm m-0">
             <span className="text-negative font-semibold">The drawdown is real.</span>{' '}
-            At its worst — through the 2008 financial crisis — the strategy was down about 19% from
-            its peak. That's a real number that tests an investor's resolve — it's just a far
-            smaller one than the 57% the raw factor demands. We don't hide it; we lead with it.
+            At its worst, the Preserver was down about 13% from its peak, the Maximizer about 20%.
+            Those are real numbers that test an investor's resolve — they're just far smaller ones
+            than the 57% the raw factor demands, or the 55% the S&P itself endured. We don't hide
+            them; we lead with them.
           </p>
         </div>
 

@@ -165,8 +165,8 @@ export default function BlogTrailingStopsPage() {
           <p className="text-ink-mute leading-relaxed text-base">
             Every position in our portfolio is protected by a carefully tested trailing stop
             calculated from the high water mark. This isn't a number we picked out of thin
-            air — it's the result of extensive backtesting across thousands of trades and
-            multiple market conditions.
+            air — it's the result of extensive walk-forward testing across thousands of trades
+            and multiple market conditions.
           </p>
           <p className="text-ink-mute leading-relaxed text-base">
             When our system enters a position, it immediately begins tracking the stock's
@@ -396,8 +396,8 @@ export default function BlogTrailingStopsPage() {
               <span className="block text-ink-light text-sm mt-1">How regime detection and automatic exits protect your portfolio during downturns.</span>
             </Link>
             <Link to="/blog/walk-forward-results" className="block p-4 bg-paper-card rounded border border-rule hover:border-rule-dark transition-colors">
-              <span className="text-ink font-medium">Inside Our 9-Year Walk-Forward</span>
-              <span className="block text-ink-light text-sm mt-1">The full breakdown of our walk-forward simulation across multiple start dates.</span>
+              <span className="text-ink font-medium">Inside Our 21-Year Walk-Forward</span>
+              <span className="block text-ink-light text-sm mt-1">The full breakdown of our walk-forward simulation across two decades and every regime.</span>
             </Link>
           </div>
         </div>
