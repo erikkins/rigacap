@@ -702,12 +702,17 @@ class SocialPostingService:
 
     # ── UTM tracking ────────────────────────────────────────────────
 
-    _UTM_PLATFORM_MAP = {
-        "twitter": "twitter",
-        "instagram": "instagram",
-        "threads": "threads",
-        "tiktok": "tiktok",
+    # Platform -> clean vanity-redirect code. The vanity route (App.jsx) stamps
+    # the UTM on redirect, so the POSTED link stays short + brand-safe: no
+    # funnel-looking "?utm_source=…" string in the caption (which reads as scammy
+    # to Meta's filters and is useless on IG, where captions aren't clickable).
+    # Platforms with no vanity route (tiktok) are left untouched.
+    _VANITY_CODE = {
+        "twitter": "x",
+        "instagram": "ig",
+        "threads": "t",
     }
+    _VANITY_PREFIXES = ("x", "ig", "t")
 
     _RIGACAP_URL_RE = re.compile(
         r'(https?://(?:www\.)?rigacap\.com)(/[^\s)"\']*)?\b',
@@ -716,24 +721,25 @@ class SocialPostingService:
 
     @staticmethod
     def _inject_utm(text: str, platform: str) -> str:
-        """Append UTM params to any rigacap.com URL in text."""
-        source = SocialPostingService._UTM_PLATFORM_MAP.get(platform, platform)
-        utm = urllib.parse.urlencode({
-            "utm_source": source,
-            "utm_medium": "social",
-            "utm_campaign": "post",
-        })
+        """Rewrite rigacap.com links to the platform's clean vanity redirect
+        (e.g. https://rigacap.com/ig/track-record). Attribution is stamped on the
+        redirect, so GA4 still sees the origin — the posted URL is just short and
+        legit-looking, not a UTM funnel string."""
+        code = SocialPostingService._VANITY_CODE.get(platform)
+        if not code:
+            return text  # no vanity route -> leave the link untouched (tiktok)
 
-        def _add_utm(m):
-            base = m.group(1)
-            path = m.group(2) or ""
-            # Don't double-add if UTM already present
-            if "utm_source" in path:
-                return m.group(0)
-            sep = "&" if "?" in path else "?"
-            return f"{base}{path}{sep}{utm}"
+        def _to_vanity(m):
+            base = m.group(1)                            # https://rigacap.com
+            path = (m.group(2) or "").rstrip("/")
+            seg = path.lstrip("/").split("?", 1)[0]      # drop any pre-existing query
+            first = seg.split("/", 1)[0]
+            if first in SocialPostingService._VANITY_PREFIXES:
+                return m.group(0)                        # already a vanity link
+            dest = f"/{code}/{seg}" if seg else f"/{code}"
+            return f"{base}{dest}"
 
-        return SocialPostingService._RIGACAP_URL_RE.sub(_add_utm, text)
+        return SocialPostingService._RIGACAP_URL_RE.sub(_to_vanity, text)
 
     # ── Unified publish ──────────────────────────────────────────────
 

@@ -23,11 +23,11 @@ class SocialContentService:
 
     # Hashtag sets by post type
     HASHTAGS = {
-        "trade_result": "#StockTrading #AlgoTrading #WalkForward #TradingSignals #RigaCap",
-        "missed_opportunity": "#StockTrading #MissedTrade #AlgoTrading #TradingSignals #RigaCap",
-        "weekly_recap": "#WeeklyRecap #StockMarket #AlgoTrading #TradingResults #RigaCap",
-        "regime_commentary": "#MarketRegime #StockMarket #TradingStrategy #MarketAnalysis #RigaCap",
-        "monthly_recap": "#MonthlyRecap #StockMarket #AlgoTrading #TradingResults #RigaCap",
+        "trade_result": "",
+        "missed_opportunity": "",
+        "weekly_recap": "",
+        "regime_commentary": "",
+        "monthly_recap": "",
     }
 
     async def generate_from_nightly_wf(

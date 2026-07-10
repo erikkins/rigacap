@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom';
 import { logEvent } from './lib/eventLogger';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import {
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, ComposedChart, Bar, ReferenceLine, ReferenceDot, Legend
@@ -4794,6 +4794,18 @@ function RouteFallback() {
   return <div className="min-h-screen bg-paper" aria-hidden />;
 }
 
+// Destination-aware social vanity redirect: /ig/track-record ->
+// /track-record?utm_source=instagram&utm_medium=social&utm_campaign=post.
+// Social posts link to the clean /<code>/<page>; attribution is stamped here on
+// redirect, so the posted URL stays short + brand-safe (no UTM funnel string).
+function VanityRedirect({ platform }) {
+  const { dest } = useParams();
+  const to = dest
+    ? `/${dest}?utm_source=${platform}&utm_medium=social&utm_campaign=post`
+    : `/?utm_source=${platform}&utm_medium=social&utm_campaign=post`;
+  return <Navigate to={to} replace />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -4848,6 +4860,10 @@ export default function App() {
         <Route path="/x" element={<Navigate to="/?utm_source=twitter&utm_medium=social&utm_campaign=bio" replace />} />
         <Route path="/ig" element={<Navigate to="/?utm_source=instagram&utm_medium=social&utm_campaign=bio" replace />} />
         <Route path="/t" element={<Navigate to="/?utm_source=threads&utm_medium=social&utm_campaign=bio" replace />} />
+        {/* Destination-aware (posts): /ig/track-record -> /track-record?utm_source=instagram... */}
+        <Route path="/x/:dest" element={<VanityRedirect platform="twitter" />} />
+        <Route path="/ig/:dest" element={<VanityRedirect platform="instagram" />} />
+        <Route path="/t/:dest" element={<VanityRedirect platform="threads" />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </Suspense>

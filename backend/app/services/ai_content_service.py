@@ -221,14 +221,11 @@ class AIContentService:
             # so the BODY must leave room for them under the platform char_limit —
             # otherwise body(≤limit) + hashtags exceeds it. (Jun 17 2026: an AI
             # "We Called It" body fit 500 but body+hashtags 400'd Threads' 500 cap.)
-            hashtag_map = {
-                "trade_result": f"#StockTrading #AlgoTrading #WalkForward #RigaCap ${symbol}",
-                "missed_opportunity": f"#StockTrading #MissedTrade #AlgoTrading #RigaCap ${symbol}",
-                "we_called_it": f"#WeCalledIt #AlgoTrading #TradingSignals #RigaCap ${symbol}",
-                "loss_review": f"#TrailingStop #RiskManagement #SystematicTrading #RigaCap ${symbol}",
-            }
-            hashtags = hashtag_map.get(post_type, f"#RigaCap ${symbol}")
-            effective_limit = max(80, char_limit - len(hashtags) - 2)  # 2 = "\n\n"
+            # Hashtags dropped entirely (Jul 2026): they read amateur for an
+            # editorial brand and bring only low-intent / spam-adjacent reach —
+            # worthless for a $250k+ audience. Clean posts read more credible.
+            hashtags = ""
+            effective_limit = max(80, char_limit - 2)
 
             # Too long → REGENERATE a coherent shorter post (don't just hard-truncate,
             # which clips the CTA). Re-prompt Claude up to 2x; truncate only as a last
@@ -475,7 +472,7 @@ class AIContentService:
                 return None
             text = self._strip_markdown(text)
             text = _re.sub(r'^(Twitter|Instagram|Twitter/X|Threads|IG):\s*', '', text, flags=_re.IGNORECASE).strip()
-            hashtags = "#Investing #RiskManagement #MarketsToday #RigaCap"
+            hashtags = ""
             eff_limit = max(120, char_limit - len(hashtags) - 2)
             text = self._trim_to_sentence(text, eff_limit)
             return SocialPost(
@@ -514,7 +511,7 @@ class AIContentService:
                 return None
             text = self._strip_markdown(text)
             text = _re.sub(r'^(Twitter|Instagram|Twitter/X|Threads|IG):\s*', '', text, flags=_re.IGNORECASE).strip()
-            hashtags = "#Investing #RiskManagement #Behavioralfinance #RigaCap"
+            hashtags = ""
             eff_limit = max(120, char_limit - len(hashtags) - 2)
             text = self._trim_to_sentence(text, eff_limit)
             return SocialPost(
