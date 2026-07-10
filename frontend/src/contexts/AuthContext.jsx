@@ -150,7 +150,11 @@ export function AuthProvider({ children }) {
   // Helper: redirect users without a subscription to Stripe checkout
   const redirectToCheckoutIfNeeded = async (userData, accessToken) => {
     if (!userData.subscription) {
+      // Consume the selected plan immediately so a stale value can't leak into
+      // a later, unrelated checkout (or get double-consumed by the App.jsx
+      // auto-checkout effect, which also reads+clears this key). One-shot.
       const plan = localStorage.getItem('rigacap_selected_plan') || 'monthly';
+      localStorage.removeItem('rigacap_selected_plan');
       try {
         const res = await fetch(`${API_URL}/api/billing/create-checkout`, {
           method: 'POST',

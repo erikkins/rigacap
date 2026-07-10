@@ -15,12 +15,17 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
   const [twoFactorError, setTwoFactorError] = useState('');
   const twoFactorInputRef = useRef(null);
 
-  // Store selected plan in localStorage for use during checkout
+  // Store selected plan in localStorage for use during checkout — ONLY when the
+  // user is actually registering (checkout intent). Seeding this on every modal
+  // open (including plain login) caused the /app auto-checkout effect
+  // (App.jsx) to bounce returning unpaid users straight into Stripe on login —
+  // the dashboard flashed for a frame, then redirected, with no error and no
+  // success path. Login must never imply a plan selection.
   useEffect(() => {
-    if (selectedPlan) {
+    if (mode === 'register' && selectedPlan) {
       localStorage.setItem('rigacap_selected_plan', selectedPlan);
     }
-  }, [selectedPlan]);
+  }, [selectedPlan, mode]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -336,8 +341,8 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
   }
 
   return (
-    <div className="fixed inset-0 bg-ink/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-paper rounded max-w-md w-full overflow-hidden border border-rule">
+    <div className="fixed inset-0 bg-ink/60 flex items-center justify-center z-[60] p-4 overflow-y-auto">
+      <div className="bg-paper rounded max-w-md w-full max-h-[90vh] overflow-y-auto border border-rule my-auto">
         {/* Header */}
         <div className="px-6 py-5 border-b border-rule flex justify-between items-center">
           <h2 className="font-display text-xl text-ink" style={{ fontVariationSettings: '"opsz" 48' }}>
