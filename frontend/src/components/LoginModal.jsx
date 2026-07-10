@@ -438,7 +438,7 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  minLength={8}
+                  minLength={mode === 'register' ? 8 : undefined}
                   className="w-full pl-10 pr-12 py-3 border border-rule-dark bg-paper-card focus:outline-none focus:border-ink"
                 />
                 <button
