@@ -92,6 +92,8 @@ export default function SocialTab({ fetchWithAuth }) {
   const [platform, setPlatform] = useState('all');
   const [status, setStatus] = useState('all');
   const [postType, setPostType] = useState('all');
+  const [platformToggles, setPlatformToggles] = useState(null);
+  const [togglingPlatform, setTogglingPlatform] = useState(null);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -99,6 +101,29 @@ export default function SocialTab({ fetchWithAuth }) {
       if (res.ok) setStats(await res.json());
     } catch (err) {
       console.error('Failed to fetch social stats:', err);
+    }
+  }, [fetchWithAuth]);
+
+  const fetchPlatformToggles = useCallback(async () => {
+    try {
+      const res = await fetchWithAuth(`${API_URL}/api/admin/social/platform-toggles`);
+      if (res.ok) { const d = await res.json(); setPlatformToggles(d.toggles || null); }
+    } catch (err) { console.error('Failed to fetch platform toggles:', err); }
+  }, [fetchWithAuth]);
+
+  const togglePlatform = useCallback(async (platform, enabled) => {
+    setTogglingPlatform(platform);
+    try {
+      const res = await fetchWithAuth(`${API_URL}/api/admin/social/platform-toggles`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [platform]: enabled }),
+      });
+      if (res.ok) { const d = await res.json(); setPlatformToggles(d.toggles || null); }
+    } catch (err) {
+      console.error('Failed to toggle platform:', err);
+    } finally {
+      setTogglingPlatform(null);
     }
   }, [fetchWithAuth]);
 
@@ -137,7 +162,8 @@ export default function SocialTab({ fetchWithAuth }) {
   useEffect(() => {
     fetchStats();
     fetchPosts();
-  }, [fetchStats, fetchPosts]);
+    fetchPlatformToggles();
+  }, [fetchStats, fetchPosts, fetchPlatformToggles]);
 
   // Fetch previews for posts that have images
   useEffect(() => {
@@ -347,6 +373,42 @@ export default function SocialTab({ fetchWithAuth }) {
             publishingLive ? 'translate-x-6' : 'translate-x-1'
           }`} />
         </button>
+      </div>
+
+      {/* Per-platform posting pause switches (server-side, S3-backed) */}
+      <div className="rounded-xl border border-gray-200 bg-white px-5 py-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Globe size={16} className="text-gray-500" />
+          <span className="text-sm font-semibold text-gray-800">Platform posting</span>
+          <span className="text-xs text-gray-400">— pause a platform instantly, no credential changes</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { key: 'twitter', label: 'X / Twitter' },
+            { key: 'instagram', label: 'Instagram' },
+            { key: 'threads', label: 'Threads' },
+            { key: 'tiktok', label: 'TikTok' },
+          ].map(({ key, label }) => {
+            const on = platformToggles ? platformToggles[key] !== false : true;
+            const busy = togglingPlatform === key;
+            return (
+              <div key={key} className={`flex items-center justify-between rounded-lg border px-3 py-2.5 ${on ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-gray-800">{label}</span>
+                  <span className={`text-[11px] font-medium ${on ? 'text-green-700' : 'text-amber-700'}`}>{on ? 'Posting' : 'Paused'}</span>
+                </div>
+                <button
+                  onClick={() => togglePlatform(key, !on)}
+                  disabled={busy || platformToggles === null}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${on ? 'bg-green-500' : 'bg-gray-300'} ${busy ? 'opacity-50' : ''}`}
+                  title={on ? `Pause ${label}` : `Resume ${label}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${on ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Stats Bar */}

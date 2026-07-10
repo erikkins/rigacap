@@ -304,6 +304,23 @@ async def get_stats(
     }
 
 
+@router.get("/platform-toggles")
+async def get_platform_toggles_endpoint(_admin=Depends(get_admin_user)):
+    """Per-platform posting on/off state (the Social tab pause switches)."""
+    from app.services.social_platform_toggles import get_platform_toggles
+    return {"toggles": get_platform_toggles(force=True)}
+
+
+@router.post("/platform-toggles")
+async def set_platform_toggles_endpoint(payload: dict, _admin=Depends(get_admin_user)):
+    """Flip one or more platforms on/off. Body e.g. {"instagram": false}."""
+    from app.services.social_platform_toggles import set_platform_toggles, PLATFORMS
+    updates = {k: v for k, v in (payload or {}).items() if k in PLATFORMS}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No valid platform in payload")
+    return {"toggles": set_platform_toggles(updates)}
+
+
 @router.post("/generate-chart/{post_id}")
 async def generate_chart_card(
     post_id: int,

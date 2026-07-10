@@ -200,6 +200,14 @@ class PostSchedulerService:
                     skipped += 1
                     continue
 
+            # Admin per-platform pause (Social tab toggle) — skip like a cooldown
+            # so the post stays pending and publishes when the platform is re-enabled.
+            from app.services.social_platform_toggles import is_platform_enabled
+            if not is_platform_enabled(post.platform):
+                logger.info(f"Skipping post {post.id} ({post.platform}) — platform paused by admin toggle")
+                skipped += 1
+                continue
+
             # Mark as 'publishing' + increment attempts BEFORE the API call.
             # Prevents duplicate posts when two concurrent invocations (cron +
             # manual trigger) grab the same post. The second invocation sees
