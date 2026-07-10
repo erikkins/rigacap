@@ -7,9 +7,16 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
-# Session snapshot — Jul 8 2026 — 🚀 SHIPPED LIVE. 2-tier rebrand DEPLOYED to main. Tomorrow: email/social design polish.
+# Session snapshot — Jul 10 2026 (Fri) — 🚨 META ACCOUNT RESTRICTED (fraud/scam flag). 2-tier rebrand LIVE+healthy 2 days. Erik back from COVID.
 
-## ✅ DEPLOYED (pushed to main 19a9eb2, "Deploy RigaCap" run 28967245050 in progress ~4min): full 2-tier rebrand. Merge research/shape-diversifiers→main was CLEAN (main already had Preserver/Maximizer engine+Stripe from earlier; research only added marketing). Frontend prod-built 2×. SSOT double-banner resolved (removed stale Jul-1 Core banner), canonical_numbers.json flagged superseded.
+## 🚨🚨 URGENT (Jul 10) — INSTAGRAM/META RESTRICTION: "rigacapital" (RigaCap IG/FB) got restricted Jul 2 for "fraud, scams and deceptive practices" → **can't share links until Aug 1**, 21 days to appeal ("Request review"). CAUSE = account PATTERN not one post: perf/"signals" claims + external link in EVERY post + #TradingResults/#AlgoTrading hashtags = Meta's investment-scam classifier. Trigger example = the June "Monthly Recap" IG post (DARK off-brand card, link, scammy hashtags — it's a TEMPLATE post from social_content_service.py monthly-recap, ai_generated=False). RISK: continued auto-posting same pattern → escalation to PERMANENT ban.
+## PLAN (proposed, awaiting Erik go): (1) PAUSE IG/FB auto-posting NOW (stop the bleeding) — check if simple flag flip; (2) DRAFT the appeal (I draft, Erik submits) — lean on legitimacy: RigaCap LLC registered/D&B-verified, signals-only (no custody/not broker/RIA), on-site disclaimers+ToS, walk-forward transparency, past-perf≠future; (3) REWORK content so it can't re-trigger: KILL external links in IG/FB posts→"link in bio", soften results/signals framing→lead with education/insight, drop #TradingResults/#AlgoTrading/#TradingSignals, on-brand claret/paper cards (dark card is off-brand+scam-adjacent). Erik agreed socials>badge bc profiles/posts still show Core+scammy. Social publishers: social_posting_service.py (post_to_twitter/instagram/threads/tiktok), post_scheduler_service, social_content_service (templates incl monthly recap), scheduler.py _publish_scheduled_posts. NO bio/profile-update API found (bios are manual).
+
+## ⏸️ DEFERRED by this: badge (found it — entitlement via AuthContext→/api/auth/me→subscription.has_maxpp_addon; Maximizer if addon ELSE Preserver — NEVER both, Erik confirmed; ~15min), email drip redesign, dashboard-book-swap-to-Preserver (needs shadow promotion), public walk-forward trades on TrackRecord, 10y-vs-21y.
+
+## OG snapshot header (still true):
+
+## ✅ DEPLOYED & CONFIRMED GREEN (main 19a9eb2, "Deploy RigaCap" run 28967245050 = success 4m, Jul 8). Site healthy Jul 10: rigacap.com HTTP 200, track-record-curves.json serving. 2 days of live daily-scans/emails/social on new tier numbers + Sonnet 5. Merge research→main was CLEAN. SSOT double-banner resolved; canonical_numbers.json flagged superseded.
 
 ## ✅ CANONICAL (SSOT §1): 21yr **Preserver 8.6%/0.88/−13%** · **Maximizer 14.5%/0.95/−20%** vs S&P 9.8%(price)/−55%, raw 13.2%/−57%. Recent2yr **Pres 31.3%/1.75/−12.9%** · **Max 48.9%/1.94/−17.3%** (=dial 31/49, CLEAN 2016+). $100k→$500k/$1.39M/$535k. 2008 both ~flat vs −37%. Recovery Pres 2.0yr(2×). Preserver adviser: −0.9%/+1.6%/0.51corr/5-of-6-cash. Core/t30v 7.3/0.76/−18 INTERNAL ONLY.
 
