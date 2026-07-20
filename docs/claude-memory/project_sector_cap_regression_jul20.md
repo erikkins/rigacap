@@ -31,6 +31,11 @@ scripts/sector_cap_t30v_sweep.py → pwf.run (scripts/pitfwu_wf.py, added `secto
 
 cap=0 wins on EVERY metric incl drawdown (capping RAISED MaxDD). OPPOSITE of the old-strategy breakthrough: t30v runs 20 pos + wide 30% trail → already diversified; capping just evicts the high-momentum leaders that drive return, no DD benefit. So the config "same uncertainty" caution was correct.
 
+## FOLLOW-UP (Jul 20) — PER-REBALANCE ENTRY THROTTLES (Erik's "daily sector cap" idea, distinct from static cap)
+Built additive backtester attrs (backtester.py, disabled-by-default 0): `max_sector_entries_per_rebalance` (cap same-sector NEW entries/rebalance) + `max_entries_per_rebalance` (entry pacing). Wired via pitfwu_wf.run(max_sector_entries=, max_entries_per_rebalance=) + bt.symbol_sectors from /tmp/sectors_cache.json. Driver: scripts/entry_throttle_multistart.py (10 quarterly starts 2021-24, 3y windows — surfaces cold-start-into-rotation that aggregates hide).
+
+Distribution (10 starts, 3y): baseline ann med 5.55/min 2.35, sharpe 0.41, mdd med 22.9/max 35.2. sec-entry=2 & =3 WORSE on everything (reject — benches momentum leaders). **sec2+pace8: worst-case mdd 35.2→32.1 (~9% better), worst-case ann 2.35→2.45, median ann 5.55→5.06, sharpe 0.41→0.38** = modest DEFENSIVE tilt (give a little median for better tails) → fits PRESERVER mandate, NOT Core. KEY: PACING is the helpful ingredient, sector-cap the harmful one. NEXT (offered): test PACING-ALONE {6,8,10} (combo suggests it may be cleaner win w/o the cap's drag). Caveat: 3y windows are 2022-bear-heavy (low absolute returns).
+
 ## CONCLUSIONS
 - **Don't add sector cap** (Core: breaks marketing parity for zero gain; Preserver: same engine → hurts there too).
 - **Live −7% is NOT fixable via cap** — it's t30v's normal concentrated-momentum drawdown (5-week single-theme correction). Full-5y same concentration = 17.5%/yr; leaders carry it. "Premium paid in drawdowns" already owns this.
