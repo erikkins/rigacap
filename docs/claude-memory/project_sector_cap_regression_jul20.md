@@ -36,10 +36,13 @@ Built additive backtester attrs (backtester.py, disabled-by-default 0): `max_sec
 
 Distribution (10 starts, 3y): baseline ann med 5.55/min 2.35, sharpe 0.41, mdd med 22.9/max 35.2. sec-entry=2 & =3 WORSE on everything (reject — benches momentum leaders). **sec2+pace8: worst-case mdd 35.2→32.1 (~9% better), worst-case ann 2.35→2.45, median ann 5.55→5.06, sharpe 0.41→0.38** = modest DEFENSIVE tilt (give a little median for better tails) → fits PRESERVER mandate, NOT Core. KEY: PACING is the helpful ingredient, sector-cap the harmful one. NEXT (offered): test PACING-ALONE {6,8,10} (combo suggests it may be cleaner win w/o the cap's drag). Caveat: 3y windows are 2022-bear-heavy (low absolute returns).
 
-## ⭐ PACING-ONLY = THE CLEAN LEVER (Jul 20). pace=8 PARETO-BEATS baseline on ALL 6 metrics.
-Distribution (10 starts, 3y windows): baseline ann med 5.55/min 2.35, sharpe 0.41/0.22, mdd med 22.86/max 35.23.
-**pace=8: ann med 6.03/min 2.87, sharpe 0.43/0.25, mdd med 22.38/max 33.91 — better on EVERY metric (median+worst-case return, median+min Sharpe, median+max MaxDD).** pace=6 too aggressive (one worst-case start hurt), pace=10 barely binds. Why: all-in-one-day sets whole book's cost basis on one day (often a momentum local-top); pacing DCAs entries over ~3 rebalances → less single-day timing risk + adapts to rotation. DIRECTLY fixes the live −7% (would've bought ~8 not 20 on Jun 15). Config = max_entries_per_rebalance=8, sector cap OFF (sector cap always hurts).
-Caveats: 10 starts / 2022-heavy 3y windows (confirm on wider + bull window); pitfwu/ensemble proxy path — productionizing needs pacing wired into LIVE entry path (currently backtester-only, default-off). RECO: include pace=8 in PRESERVER (own numbers, no parity issue); Core would improve too but re-opens marketing-baseline-parity (marketed t30v had no pacing → re-baseline). Offered wider confirmation sweep before locking.
+## PACING — 10-start result was SMALL-SAMPLE LUCK; wider sweep did NOT confirm. VERDICT: don't adopt.
+- 10-start run (2021-24 quarterly): pace=8 looked like a Pareto win (better on all 6 metrics). ⚠️ THAT DID NOT REPLICATE.
+- **WIDER sweep (29 MONTHLY starts 2021-01→2023-06, 3y windows):**
+  - ALL(n=29): baseline ann med 6.98/min −2.76, sharpe 0.49, mdd med 21.22/max 35.23. pace=6 ann med 7.37/min −3.87, sharpe 0.52. pace=8 ann med 7.01/min −4.32, mdd max 34.15.
+  - Pacing gives small MEDIAN return/Sharpe bump (pace=6 best) BUT makes WORST-CASE return WORSE (min −2.76→−4.32) + only marginal worst-case-DD help. Bull subset (n=5): all within noise.
+- Why: pacing helps top-inception (the −7% case) but hurts bottom-inception (misses early rally, under-invested) → net ~wash, slightly better middle / worse tails = WRONG shape for Preserver (wants better tails).
+- **DECISION: leave strategy as-is. Don't adopt pacing OR sector cap.** Live −7% = genuine concentrated-momentum drawdown variance; Preserver's SLEEVES are the real defensive mechanism, not entry throttles. Good process note: wider sweep caught the small-sample artifact before we built on it. Backtester throttle attrs (default-off) + research scripts remain, harmless/uncommitted.
 
 ## CONCLUSIONS
 - **Don't add sector cap** (Core: breaks marketing parity for zero gain; Preserver: same engine → hurts there too).
