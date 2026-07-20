@@ -1,5 +1,8 @@
 # Stocker App - Key Learnings
 
+## ❌ SECTOR CAP DOES NOT HELP t30v (Jul 20) — live Core −7% is normal concentration DD, not fixable by capping
+- [Finding + sweep data + why it's OFF](project_sector_cap_regression_jul20.md) — live Core Jun15→Jul17 −7.2% vs SPY −1.5% (7 Tech day-1 names). Cap is OFF for MARKETING-BASELINE PARITY (marketed 20yr record had no cap) — Erik's hunch was right. Sweep: cap hurts t30v on EVERY metric (opposite of the old-6pos breakthrough; t30v's 20pos+wide-trail is already diversified). DON'T add to Core OR Preserver. Real DD defense = Preserver sleeves.
+
 ## 🎨 BRAND = CLARET + PAPER (editorial). NEVER navy/gold (retired)
 - [Brand tokens + rule](feedback_brand_claret_paper.md) — paper #F5F1E8 / ink #141210 / claret #7A2430; Fraunces + IBM Plex Sans. Source: frontend/tailwind.config.js. Ref impl: rigacap-2tier-product-overview.html.
 
