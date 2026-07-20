@@ -19,10 +19,21 @@ metadata:
 - **CORS/2FA login bug FIXED + DEPLOYED** (commit 923c320, CI success). Trusted-device login sends X-2FA-Trust header → browser preflight → CORS allow-list (main.py:320) lacked it → OPTIONS 400 → silent login fail (Safari, where Erik trusted device). Added "X-2FA-Trust" to allow_headers. 2FA is ADMIN-ONLY (two_factor.py:153 get_admin_user) so blast radius = Erik's admin acct only. Erik unblocked live via console: `localStorage.removeItem('2fa_trust_token'); location.reload()`.
 - **Shadow tables pulled** (via {"db_read": "..."} worker handler, main.py:9442 — CAST dates to ::text or it throws MarshalError → tripped worker-errors alarm once, self-inflicted, recovered). Findings: Preserver+Maximizer snapshots Jul8–17 (8 days). Preserver equity PINNED at exactly $100k every day = run_shadow_day is a STUB (not replaying a real book). Maximizer DOES move (100000→99172 by Jul17, real replay). preserver_signals=64 rows, maximizer_signals=only 6 (Jul14–16, breakout rarely fires in rotating_bull).
 
-### OPEN / NEXT (Erik's asks):
-1. **Jul 18 scan GAP** — ensemble_signals AND preserver_signals both last_date=Jul17, 0 rows Jul18. WHOLE Friday scan didn't persist (not shadow-specific). NEXT: pull worker logs Jul18 ~4pm ET to see if EventBridge fired/errored.
-2. **Erik wants: separate portfolio BOOKS + transaction/fill logs (STRs) per tier (Core/Preserver/Maximizer) + admin side-by-side compare view.** Today: only shadow snapshots exist, NO fills table any tier, Preserver book is a stub. Scope = promote Preserver stub→real replayed book, add *_fills table per tier, build admin 3-book view.
-3. CORS fix note: also leaves nothing else uncommitted from this session.
+### 🚨🚨 BIGGEST FINDING (Jul 20) — LIVE CORE BOOK IS DOWN 7% & UNDERPERFORMING; ROOT CAUSE = SECTOR CAP DISABLED
+- Erik: "every trade a 30% loser." VERIFIED via model_positions (portfolio_type='live'): all 9 closed trades = trailing_stop, −21% to −30% FROM ENTRY (P&L calc is CORRECT, NOT a bug). Off-high ~30-34% (30% trail working as designed).
+- **Core live Jun15→Jul17: $100k→$92,785 = −7.2% vs SPY −1.5%** (flat market). Now 51% cash, 12 pos.
+- **ROOT CAUSE = `MOMENTUM_SECTOR_CAP=0` (config.py:107, cap≤0 = DISABLED, not in env). No sector limit → day-1 book piled into 10 correlated semis (MU/INTC/MRVL/SNDK/TSM) + crypto miners (CIFR/WULF/RIOT/CORZ/NBIS) → single-theme wipeout.** Comment: "NOT REVERTED — same uncertainty as scoring weights" → left at 0 deliberately, so re-enabling = strategy change needing BACKTEST, not a hot-flip.
+- Compounding: (2) wide 30% trail gives back gains+principal (by design/thesis), (3) all-in day-1 near tops. Maximizer breakout shadow was ~flat (−0.8%) — concentration hit Core specifically.
+- IMPLICATIONS: Preserver mirrors Core → same −7% live record (the RIA credibility anchor is RED). Don't market on live numbers. Tier backtest numbers (Pres +25.8%/Max +63.5% ttm) are BACKTEST not live.
+- **AWAITING ERIK**: I recommended (no live change) → run a SECTOR-CAP WALK-FORWARD (max 2-3/sector) over full history to see if capping helps before touching live book. Erik to decide.
+
+### OTHER OPEN / NEXT:
+1. **Jul 18 scan GAP** — ensemble_signals/model_portfolio_snapshots both last=Jul17; Jul18(Fri) missing AND Jul20(Mon) scan not landed yet as of 16:09 ET. WHOLE scans missing, not shadow-specific. Watch tonight's scan; pull worker logs if it fails again.
+2. **WS1 (tier plumbing) PAUSED mid-build** for the perf finding. Plan: return-stream mirror of Core t30v leg into Preserver/Maximizer books (Core inception Jun15 $100k; whole period rotating_bull so Preserver==Core exactly). preserver_service.py PreserverBook.advance_day was about to get t30v_value leg. Full scope written to design/documents/preserver-productionization-design.md §"Phase 2.5". Decisions LOCKED: mirror Core (Preserver full/Maximizer range_bound-only), align+backfill to Jun15.
+3. **Migration PARKED** — backend/migrations/tier_fills.sql WRITTEN (per-tier fill log). Run via {"run_migration":true} worker AFTER today's scan completes + off-hours. NOT near 4pm scan.
+4. db_read gotcha: CAST dates to ::text or worker throws MarshalError → trips worker-errors alarm (self-inflicted once, recovered).
+
+### UNCOMMITTED this session: design doc §2.5 + tier_fills.sql (+ pre-existing Phase-2 files). COMMITTED+PUSHED: 923c320 (CORS fix).
 
 ---
 # (Jul 10 context below — still the live working state)
