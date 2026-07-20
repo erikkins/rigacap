@@ -7,6 +7,26 @@ metadata:
   originSessionId: 2dce3134-d861-45c4-a371-80378750f8c0
 ---
 
+# Session snapshot
+
+## ▶▶▶ RESUME — Jul 20 2026 (returning after ~10 days).
+
+### DEPLOYMENT STATE (verified in code + live Lambda env):
+- **SERVING**: NEITHER tier served — everyone still gets Core (t30v). Preserver + Maximizer both SHADOW-only, env-gated (main.py:1671/1692). WORKER env: PRESERVER_SHADOW=true, MAXIMIZER_SHADOW=true (both recording). Tier-aware serving + /app widget still PARKED.
+- **BILLING**: BOTH tiers fully configured + SELLABLE. Base price IDs (price_1TOqqk…) AND Maximizer add-on IDs (STRIPE_PRICE_ID_MAXPP_FOUNDING/_STANDARD/_ANNUAL = price_1Tqf2n…) ALL set in prod. Erik's "Maximize not deployed" was WRONG — both symmetric; only missing step for either = tier-aware serving.
+
+### DONE THIS SESSION:
+- **CORS/2FA login bug FIXED + DEPLOYED** (commit 923c320, CI success). Trusted-device login sends X-2FA-Trust header → browser preflight → CORS allow-list (main.py:320) lacked it → OPTIONS 400 → silent login fail (Safari, where Erik trusted device). Added "X-2FA-Trust" to allow_headers. 2FA is ADMIN-ONLY (two_factor.py:153 get_admin_user) so blast radius = Erik's admin acct only. Erik unblocked live via console: `localStorage.removeItem('2fa_trust_token'); location.reload()`.
+- **Shadow tables pulled** (via {"db_read": "..."} worker handler, main.py:9442 — CAST dates to ::text or it throws MarshalError → tripped worker-errors alarm once, self-inflicted, recovered). Findings: Preserver+Maximizer snapshots Jul8–17 (8 days). Preserver equity PINNED at exactly $100k every day = run_shadow_day is a STUB (not replaying a real book). Maximizer DOES move (100000→99172 by Jul17, real replay). preserver_signals=64 rows, maximizer_signals=only 6 (Jul14–16, breakout rarely fires in rotating_bull).
+
+### OPEN / NEXT (Erik's asks):
+1. **Jul 18 scan GAP** — ensemble_signals AND preserver_signals both last_date=Jul17, 0 rows Jul18. WHOLE Friday scan didn't persist (not shadow-specific). NEXT: pull worker logs Jul18 ~4pm ET to see if EventBridge fired/errored.
+2. **Erik wants: separate portfolio BOOKS + transaction/fill logs (STRs) per tier (Core/Preserver/Maximizer) + admin side-by-side compare view.** Today: only shadow snapshots exist, NO fills table any tier, Preserver book is a stub. Scope = promote Preserver stub→real replayed book, add *_fills table per tier, build admin 3-book view.
+3. CORS fix note: also leaves nothing else uncommitted from this session.
+
+---
+# (Jul 10 context below — still the live working state)
+
 # Session snapshot — Jul 10 2026 (Fri) — 2-tier LIVE. Meta resolved. NOW: ZERO-SUBS FUNNEL INVESTIGATION (the real problem). Google Ads PAUSED.
 
 ## 🚨🚨 TOP PRIORITY (Erik, Jul 10): "why don't we have a single sub?" — SOLVED (mostly): 3 MECHANICAL SIGNUP BLOCKERS FOUND + FIXED (build green, UNCOMMITTED, awaiting Erik's deploy call). ZERO paying subs EVER from marketing ($695 ads/134clk/0 AND organic/0). Root = the signup path was literally BROKEN on mobile (80% of traffic), not just soft friction.
