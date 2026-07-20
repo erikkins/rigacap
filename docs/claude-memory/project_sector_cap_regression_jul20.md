@@ -36,6 +36,11 @@ Built additive backtester attrs (backtester.py, disabled-by-default 0): `max_sec
 
 Distribution (10 starts, 3y): baseline ann med 5.55/min 2.35, sharpe 0.41, mdd med 22.9/max 35.2. sec-entry=2 & =3 WORSE on everything (reject — benches momentum leaders). **sec2+pace8: worst-case mdd 35.2→32.1 (~9% better), worst-case ann 2.35→2.45, median ann 5.55→5.06, sharpe 0.41→0.38** = modest DEFENSIVE tilt (give a little median for better tails) → fits PRESERVER mandate, NOT Core. KEY: PACING is the helpful ingredient, sector-cap the harmful one. NEXT (offered): test PACING-ALONE {6,8,10} (combo suggests it may be cleaner win w/o the cap's drag). Caveat: 3y windows are 2022-bear-heavy (low absolute returns).
 
+## ⭐ PACING-ONLY = THE CLEAN LEVER (Jul 20). pace=8 PARETO-BEATS baseline on ALL 6 metrics.
+Distribution (10 starts, 3y windows): baseline ann med 5.55/min 2.35, sharpe 0.41/0.22, mdd med 22.86/max 35.23.
+**pace=8: ann med 6.03/min 2.87, sharpe 0.43/0.25, mdd med 22.38/max 33.91 — better on EVERY metric (median+worst-case return, median+min Sharpe, median+max MaxDD).** pace=6 too aggressive (one worst-case start hurt), pace=10 barely binds. Why: all-in-one-day sets whole book's cost basis on one day (often a momentum local-top); pacing DCAs entries over ~3 rebalances → less single-day timing risk + adapts to rotation. DIRECTLY fixes the live −7% (would've bought ~8 not 20 on Jun 15). Config = max_entries_per_rebalance=8, sector cap OFF (sector cap always hurts).
+Caveats: 10 starts / 2022-heavy 3y windows (confirm on wider + bull window); pitfwu/ensemble proxy path — productionizing needs pacing wired into LIVE entry path (currently backtester-only, default-off). RECO: include pace=8 in PRESERVER (own numbers, no parity issue); Core would improve too but re-opens marketing-baseline-parity (marketed t30v had no pacing → re-baseline). Offered wider confirmation sweep before locking.
+
 ## CONCLUSIONS
 - **Don't add sector cap** (Core: breaks marketing parity for zero gain; Preserver: same engine → hurts there too).
 - **Live −7% is NOT fixable via cap** — it's t30v's normal concentrated-momentum drawdown (5-week single-theme correction). Full-5y same concentration = 17.5%/yr; leaders carry it. "Premium paid in drawdowns" already owns this.
