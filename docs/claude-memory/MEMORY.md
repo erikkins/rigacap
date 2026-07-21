@@ -1,5 +1,8 @@
 # Stocker App - Key Learnings
 
+## 🚨🚨 CRITICAL (Jul 21) — PRODUCTION tiers DON'T reproduce the MARKETED edge (rule B erases it)
+- [Reconciliation research-vs-production](project_tier_reconciliation_jul21.md) — Core reconciles, but production Preserver LOSES its DD edge (marketed −13.5% → served −22.5% ≈ Core) and production Maximizer LOSES its return edge (marketed 36.2%/yr → served 11.7%, below Core). Cause = rule-B hold-to-exit (single-pool) vs research's idealized instant costless return-stream. Marketed numbers NOT deliverable as ported = integrity issue. NEXT: backtest Option A (hard-rotate) to see if it recovers the edge; reopens design-doc Option A-vs-B.
+
 ## ⚠️ MAXIMIZER: NEVER COLD-START the vol-brake (Jul 21) — cold Jun15 launch=−22%, warmed=−12%
 - [Finding + warm-start requirement](project_maximizer_coldstart_jul21.md) — vol-brake reads book eq_hist; 0 history = no brake for 21d = catastrophic bad-timed launch. Production WS3 MUST warm-start (seed eq_hist from backtested equity). Even warmed, Maximizer −12% > Core −7.5% > SPY −1.7% over the Jun15-Jul20 DRAWDOWN (higher-beta = expected; full-cycle is the real test). Live shadow flat only b/c it launched Jul8 into cash.
 
