@@ -15,10 +15,13 @@ metadata:
 2. ✅ **Sector-cap + pacing investigation CLOSED → DON'T ADOPT EITHER.** Live Core −7% (Jun15→Jul17 vs SPY −1.5%) = genuine concentrated-momentum drawdown (7 Tech day-1 names), NOT a bug. Sector cap hurts t30v; pacing looked great on 10 starts but the 29-start wider sweep did NOT confirm (worse tails). Strategy stays AS-IS. Preserver SLEEVES are the real defense. Full: [[project_sector_cap_regression_jul20]].
 3. ✅ **tier_fills MIGRATION RUN + VERIFIED in prod** (off-hours, scan done). Table live, 16 cols. Migration-first state = SAFE (no SQLAlchemy model references it yet).
 
-**NEXT (resume the tier plumbing — Erik greenlit, decisions locked: MIRROR Core / align+backfill to Jun15 inception $100k):**
-- **WS1** = Preserver Core-leg mirror (return-stream: leg rides Core's daily total_value return from model_portfolio_snapshots portfolio_type='live'; whole live period was rotating_bull so Preserver==Core exactly) + backfill from Jun15. Fixes the flat-$100k stub. Maximizer only mirrors Core in range_bound (rotating_bull=breakout, already works).
-- **WS2** = TierFill SQLAlchemy model + emit fills on entry/exit (2nd commit, migration-first — table already exists).
-- **WS3/4/5** = tier-aware serving (derive tier from Stripe items, billing._maxpp_price_ids) + admin 3-book compare view + per-tier subscriber UI. WS3 gates SELLING Maximizer (LandingV2 CTA not wired; backend billing IS ready).
+**WS1 PROGRESS (Jul 21) — books DONE + tested, Preserver backfilled + VERIFIED:**
+- ✅ t30v-leg mirror added to PreserverBook + MaximizerBook (backend/app/services/preserver_service.py + maximizer_service.py): `self.t30v_value` return-stream leg rides Core daily return (core_ret param on advance_day); rotating_bull/range_bound pour cash→leg; sleeve regimes release leg over T30V_TURNOVER_DAYS=85 (rule B). Also fixed latent cash-going-negative bug in sleeve entry (alloc reserves cost). Offline tests PASS (Preserver==Core in rotating_bull exactly; Maximizer=breakout in rotating_bull w/ t30v leg=0, =Core in range_bound). run_shadow_day (both) now fetches core_ret from model_portfolio_snapshots(portfolio_type='live') + persists/restores t30v_value in positions_json. Modules compile+import OK.
+- ✅ **Preserver BACKFILL done + verified** (deploy-free via db_read INSERT...ON CONFLICT): 23 days Jun15→Jul20, Preserver now = Core curve ($99,850→$92,372, was flat $100k stub). Core is now −7.5% ($92,511 Jul20).
+- ⬜ **Maximizer backfill Jun15→Jul7 gap** = REMAINING (needs breakout replay over local panel; Jul8-20 already in shadow).
+- 🚨 **DEPLOY DEPENDENCY (before 4pm ET today):** WS1 service changes are UNCOMMITTED. Backfilled snapshots use new positions_json format (has t30v_value). If tonight's scan runs OLD deployed code it will MISREAD the format → write $0 Preserver row. Changes are shadow-only/records-only/try-except-isolated/never-served = LOW RISK. AWAITING ERIK: commit+push WS1 services now? (offered).
+
+**AFTER WS1:** WS2 = TierFill model + emit fills (table exists). WS3/4/5 = tier-aware serving (derive tier from Stripe items via billing._maxpp_price_ids) + admin 3-book compare view + per-tier UI. WS3 gates SELLING Maximizer (LandingV2 CTA not wired; backend billing ready).
 
 **OPEN/CLEANUP:**
 - ~~Jul 18 scan gap~~ = NOT A GAP (Erik corrected). Jul 17=Fri, Jul 18=Sat, Jul 19=Sun. Scans Jul17(Fri)→Jul20(Mon) correctly skip the weekend. No missing scan. (I wrongly flagged this twice — Jul 20 is Monday.)
