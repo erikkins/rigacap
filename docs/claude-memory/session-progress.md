@@ -9,6 +9,24 @@ metadata:
 
 # Session snapshot
 
+## ☀️ AM RESUME (Jul 21) — read this first. Erik went to bed Jul 20 ~22:35 ET.
+**THIS SESSION'S OUTCOMES:**
+1. ✅ **Safari/2FA login bug FIXED + SHIPPED** (commit 923c320): added `X-2FA-Trust` to CORS allow_headers (main.py:320). Admin-only impact. Erik unblocked live.
+2. ✅ **Sector-cap + pacing investigation CLOSED → DON'T ADOPT EITHER.** Live Core −7% (Jun15→Jul17 vs SPY −1.5%) = genuine concentrated-momentum drawdown (7 Tech day-1 names), NOT a bug. Sector cap hurts t30v; pacing looked great on 10 starts but the 29-start wider sweep did NOT confirm (worse tails). Strategy stays AS-IS. Preserver SLEEVES are the real defense. Full: [[project_sector_cap_regression_jul20]].
+3. ✅ **tier_fills MIGRATION RUN + VERIFIED in prod** (off-hours, scan done). Table live, 16 cols. Migration-first state = SAFE (no SQLAlchemy model references it yet).
+
+**NEXT (resume the tier plumbing — Erik greenlit, decisions locked: MIRROR Core / align+backfill to Jun15 inception $100k):**
+- **WS1** = Preserver Core-leg mirror (return-stream: leg rides Core's daily total_value return from model_portfolio_snapshots portfolio_type='live'; whole live period was rotating_bull so Preserver==Core exactly) + backfill from Jun15. Fixes the flat-$100k stub. Maximizer only mirrors Core in range_bound (rotating_bull=breakout, already works).
+- **WS2** = TierFill SQLAlchemy model + emit fills on entry/exit (2nd commit, migration-first — table already exists).
+- **WS3/4/5** = tier-aware serving (derive tier from Stripe items, billing._maxpp_price_ids) + admin 3-book compare view + per-tier subscriber UI. WS3 gates SELLING Maximizer (LandingV2 CTA not wired; backend billing IS ready).
+
+**OPEN/CLEANUP:**
+- ~~Jul 18 scan gap~~ = NOT A GAP (Erik corrected). Jul 17=Fri, Jul 18=Sat, Jul 19=Sun. Scans Jul17(Fri)→Jul20(Mon) correctly skip the weekend. No missing scan. (I wrongly flagged this twice — Jul 20 is Monday.)
+- UNCOMMITTED: design doc §Phase-2.5, backend/migrations/tier_fills.sql, backtester.py (default-OFF throttle attrs — for a REJECTED feature; decide keep-as-dormant vs revert), scripts/pitfwu_wf.py (+sector_cap/throttle params), scripts/sector_cap_t30v_sweep.py + entry_throttle_multistart.py (research). None touch live behavior. /tmp/sectors_cache.json seeded locally.
+- Maximizer sellable in billing but NOT purchasable on LandingV2 (CTA not wired) — Erik wants sellable once serving plumbing live.
+
+---
+
 ## ▶▶▶ RESUME — Jul 20 2026 (returning after ~10 days).
 
 ### DEPLOYMENT STATE (verified in code + live Lambda env):
