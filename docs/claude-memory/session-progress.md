@@ -9,7 +9,24 @@ metadata:
 
 # Session snapshot
 
-## ☀️ AM RESUME (Jul 21) — read this first. Erik went to bed Jul 20 ~22:35 ET.
+## 🌙 END OF DAY — Jul 21 2026 (Erik called it ~evening). READ THIS FIRST.
+**What SHIPPED to prod today (honest — mostly shadow, nothing customer-facing):**
+- ✅ CORS/2FA login fix (923c320) — real, small (admin trusted-device login).
+- ✅ tier_fills table (migration ran in prod) + Preserver overlay shadow services (6f45dfd, a12e0e1) + Preserver backfill — ALL SHADOW-ONLY, no subscriber sees it. No tier served, no marketing changed. Product did NOT move for customers today.
+
+**The real win = ANALYSIS (the blocker cleared): both tiers now VALIDATED on honest, production-faithful, survivorship-free (PITFWU) numbers:**
+- **PRESERVER = t30v + CAPITULATION CASH-OVERLAY** (exposure→0.25 in capitulation, else 1.0; return=exposure×core_ret; one-time trim cost). Prod single-pool BEATS Core: 2021-26 14.5%/1.06/−19.1% vs Core 14.3/0.96/−23.1; last-2yr 35.3/2.16/−10.5. COMMITTED. [[project_tier_reconciliation_jul21]]
+- **MAXIMIZER = REGIME-GATED BREAKOUT (rotating_bull) + vol-target.** Confirmed PENNY-TO-PENNY: 38.7%/1.25/−24.3% (2021-26), 79.1%/1.80 (last-2yr). Orthogonal to Core, real, deliverable. NOT yet wired to serving. Real prod pipeline gates via route().
+- KILLED dead-ends: rule-B hold-to-exit (erases edge), sector cap (doesn't help t30v), pacing (fragile), leveraged-Core (Erik rejected), oversold-tilt (sleeve-capture, doesn't port).
+
+**METHODOLOGY RULES locked (Erik, load-bearing):** [[feedback_research_maps_to_prod]] (warm-start always; ONE full-history PITFWU curve; only EXPOSURE-SCALING ports, SLEEVE-CAPTURE doesn't; validate penny-to-penny) + [[feedback_slow_down_verify]] (verify code/data before concluding; suspect my OWN test first — I made a chain of wrong calls today, all test-harness bugs).
+
+**NEXT SESSION (the actual SHIP):** (1) wire TIER-AWARE SERVING (WS3) so subscribers get their tier — derive tier from Stripe items (billing._maxpp_price_ids); (2) re-baseline BOTH tiers' marketing to honest numbers; (3) Maximizer serving = gated-breakout book + warm vol-target; (4) WS2 TierFill emit, WS4 admin 3-book compare, WS5 per-tier UI. NO more analysis rabbit holes — we know what to build.
+**Uncommitted:** many research scripts (scripts/breakout_*, overlay_*, tier_*, maximizer_*), design doc §2.5, tier_fills.sql, backtester.py throttle attrs (rejected, default-off), LandingV2/x-banner (pre-existing). Maximizer's prod construction NOT wired into maximizer_service run_shadow_day (still old ad-hoc book).
+
+---
+
+## ☀️ AM RESUME (Jul 21) — (superseded by END OF DAY above; kept for detail)
 **THIS SESSION'S OUTCOMES:**
 1. ✅ **Safari/2FA login bug FIXED + SHIPPED** (commit 923c320): added `X-2FA-Trust` to CORS allow_headers (main.py:320). Admin-only impact. Erik unblocked live.
 2. ✅ **Sector-cap + pacing investigation CLOSED → DON'T ADOPT EITHER.** Live Core −7% (Jun15→Jul17 vs SPY −1.5%) = genuine concentrated-momentum drawdown (7 Tech day-1 names), NOT a bug. Sector cap hurts t30v; pacing looked great on 10 starts but the 29-start wider sweep did NOT confirm (worse tails). Strategy stays AS-IS. Preserver SLEEVES are the real defense. Full: [[project_sector_cap_regression_jul20]].
