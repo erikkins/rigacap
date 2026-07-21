@@ -1,5 +1,8 @@
 # Stocker App - Key Learnings
 
+## 🧪 METHODOLOGY RULE (Jul 21) — RESEARCH MUST MAP TO PRODUCTION (penny-to-penny)
+- [One warm full-history curve; only exposure-scaling ports](feedback_research_maps_to_prod.md) — ALWAYS warm-start (prod has years of history); ONE canonical PITFWU curve over full history, slice windows; PITFWU penny-to-penny w/ prod. Only EXPOSURE-SCALING (raise cash) constructions reproduce in the single-pool book; SLEEVE-CAPTURE (breakout, oversold-tilt) do NOT (idealized return-stream flatters them). VALIDATE every research result through the prod day-step on the same warm curve before trusting/marketing. Caused a full session of whiplash when ignored.
+
 ## 🚨🚨 CRITICAL (Jul 21) — PRODUCTION tiers DON'T reproduce the MARKETED edge (rule B erases it)
 - [Reconciliation + the deliverable fix](project_tier_reconciliation_jul21.md) — Core reconciles, but rule-B production tiers LOSE the marketed edge (Preserver DD −22.5≈Core; Maximizer 11.7% below Core). Option A (hard-rotate) recovers it but = 8 full rotates/yr (tax/exec-brutal in taxable). Confirmation filter = fragile dead-end. ✅ **RESOLUTION = OVERLAY: keep t30v book, RAISE CASH in capitulation (E≈0.25) — 2021-26: 17.9%/1.23/−18.8% at ~4 PARTIAL cash-raises/yr; beats Core (−23.7) by ~5pp DD at higher return, tax-light/deliverable.** Does NOT hit marketed −13.5% (that was idealized); realistic ~−19% → re-baseline marketing. NEXT: robustness-test E multi-start + oversold-tilt refinement + Maximizer overlay.
 
