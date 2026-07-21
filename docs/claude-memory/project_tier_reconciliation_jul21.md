@@ -80,4 +80,18 @@ Preserver overlay = keep t30v book (NO liquidation), RAISE CASH in capitulation 
 ## ✅✅ PRESERVER LOCKED + VALIDATED IN PRODUCTION (Jul 21, commit a12e0e1)
 Re-implemented PreserverBook as EXPOSURE-SCALED mirror (return = exposure × core_ret; exposure=0.25 in capitulation else 1.0; one-time trim cost on flip). NOT cash-moving (that was buggy: thrashed → prod ≈ Core −24%). VALIDATED prod single-pool: 2021-26 Preserver 14.5%/1.06/−19.1% BEATS Core 14.3%/0.96/−23.1%; LAST-2YR 35.3%/2.16/−10.5% vs Core 37.5%/2.08/−12.0%. Maps penny-to-penny w/ research return-stream. Dropped oversold-tilt (sleeve-capture, doesn't port). Committed+pushed (shadow-only). TODO: final numbers on FULL-history warm canonical curve for marketing; wire WS2/3/4/5.
 
-## MAXIMIZER = REFRAME NEEDED (task #6, in progress). Per [[feedback_research_maps_to_prod]]: breakout is a SLEEVE-CAPTURE → does NOT port (prod 11.7% vs research 17%). So the breakout OFFENSE itself is the problem, not just the crash defense. An aggressive tier that PORTS must be EXPOSURE-SCALING. Candidate: Maximizer = Core book with EXPOSURE>1 (leverage) in favorable rotating_bull + vol-target de-risk when book vol spikes (Barroso, warm-started) — ports penny-to-penny unlike breakout. BIG: redefines Maximizer (leveraged-Core-vol-targeted, not breakout) — needs Erik buy-in before building.
+## MAXIMIZER = REFRAME NEEDED (task #6, in progress). Per [[feedback_research_maps_to_prod]]: breakout is a SLEEVE-CAPTURE → does NOT port (prod 11.7% vs research 17%). So the breakout OFFENSE itself is the problem, not just the crash defense. An aggressive tier that PORTS must be EXPOSURE-SCALING. Candidate: leveraged-Core+vol-target — REJECTED by Erik (Core's rotating_bull is bad; want alpha ORTHOGONAL to Core, keep breakout).
+
+## ✅✅ MAXIMIZER SOLVED (return-stream; Jul 21) — feasible ORTHOGONAL breakout + VOL-TARGET ≈ research
+Breakout signal = IDENTICAL to research (same params, ported). Earlier "doesn't port (11.7)" = the AD-HOC single-pool MaximizerBook cold-starting + entry-time vol-brake; NOT the sleeve itself. 28-window multi-start:
+| variant | ann med | Sharpe | mdd med | feasible |
+|---|---|---|---|---|
+| Core | 7.9 | 0.56 | −18.8 | — |
+| Max research* (full regime switching) | 17.0 | 1.02 | −19.9 | ❌ ~8 rotates/yr |
+| Max bkout-only (undefended) | 16.1 | 0.80 | −24.3 | ✅ |
+| Max bk+capcash | 16.6 | 0.83 | −24.3 | ✅ (useless — wrong regime) |
+| **Max bk+VOLTGT** | **16.8** | **1.02** | **−20.4** | ✅ **WINNER** |
+| Max bk+vt+cap | 16.7 | 1.04 | −20.4 | ✅ |
+- **WINNER = breakout sleeve held CONTINUOUSLY + VOL-TARGET exposure overlay** (Barroso, scales book exposure by target/realized-vol). ≈ MATCHES infeasible research (17.0/1.02/−19.9) WITHOUT the infeasible book-switching. Orthogonal to Core, feasible (gradual hold=29 + exposure trims, NO rotation), ports (standing book + exposure-scaling).
+- KEY: vol-target is Maximizer's defense (responds to book vol ANY regime → catches the rotating_bull breakout crash); capitulation overlay USELESS for it (opposite of Preserver). bk+capcash proved it (−24.3, no help).
+- NEXT: VALIDATE in production single-pool (STANDING warm breakout book + vol-target exposure overlay), like Preserver. Band the vol-target (material moves, not daily micro) for feasibility. If ports → Maximizer deliverable. Then BOTH tiers done.

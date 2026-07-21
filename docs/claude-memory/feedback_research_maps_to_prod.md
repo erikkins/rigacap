@@ -11,6 +11,9 @@ metadata:
 
 **Why:** A whole session of tier analysis got muddied because backtests were run on inconsistently-warmed t30v curves (cold-start 2021-01 in one script, 2-mo warm 2020-11 in another) → different "Core" numbers (17.5% vs 14.3%) → apples-to-oranges comparisons + whiplash. Production has YEARS of history and is ALWAYS warm. Research that cold-starts (or warms inconsistently) does NOT describe what production will do.
 
+## RULE 0 — ONLY TEST OPERATIONALLY-FEASIBLE SCENARIOS (Erik, reinforced Jul 21)
+A research construction is worthless if a real subscriber can't execute it. "Sell your entire portfolio every other day" is NOT feasible (taxes: short-term gains on every rotation; execution burden on a manual signals product; slippage). Feasibility = turnover a human can actually run. This KILLED Option A (hard-rotate, ~8 full-book rotations/yr). Feasible = gradual/natural turnover (hold-based sleeve turnover ~few names/week) + occasional EXPOSURE trims (raise cash) — NOT wholesale name-rotation on every regime flip. Always report turnover (rotations/yr, tax character) and judge feasibility BEFORE celebrating a backtest.
+
 ## THE RULES (apply to every backtest/comparison going forward)
 1. **ONE canonical curve, computed over FULL PITFWU history (2016→present), sliced per window** so every measurement window is FULLY WARM. Never cold-start research; never use inconsistent start dates. PITFWU must be **penny-to-penny with prod** (validated on common dates — see [[project_signal_parity_jun13]] / PITFWU loop).
 2. **Production is ALWAYS warm-start** (history exists) → warm-start ALL research to match. Cold-start numbers (e.g. Maximizer −22% cold vs −12% warm) are NOT production-representative.
