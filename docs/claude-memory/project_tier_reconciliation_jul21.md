@@ -65,4 +65,16 @@ Preserver overlay = keep t30v book (NO liquidation), RAISE CASH in capitulation 
 - HONEST: does NOT reach marketed −13.5% (idealized return-stream captured oversold-BOUNCE upside; pure cash doesn't). Realistic floor ~−19%. Deliverable claim = "~5pp less DD than Core, tax-efficiently," NOT "half the drawdown."
 - Robust: flat+monotonic across E (no −30% surprises), intuitive mechanism → less overfit-prone than confirmation filter.
 
-## NEXT (offered): (1) robustness-test E multi-start; (2) partial OVERSOLD-BOUNCE tilt with freed cash → push DD −19%→toward −13.5%; (3) apply overlay to Maximizer; (4) RE-BASELINE Preserver marketing to deliverable ~18%/1.2/−19% (beats Core −24%) not research figures.
+## ✅ RESOLVED (Jul 21) — robustness + tilt + Maximizer overlay (scripts/overlay_robustness.py, 28 monthly 3y starts)
+| variant | ann med | ann min | Sh | mdd med | mdd WORST |
+|---|---|---|---|---|---|
+| Core | 7.9 | 1.0 | 0.56 | −18.8 | −23.7 |
+| **P tilt E.25** | **10.2** | **3.0** | **0.77** | **−13.9** | **−18.8** |
+| Max research | 17.0 | 6.8 | 1.02 | −19.9 | −19.9 |
+| Max tilt E.25 | 15.4 | 5.1 | 0.92 | −19.9 | −19.9 |
+
+### PRESERVER = SOLVED. Ship: t30v + capitulation TILT-overlay E=0.25 (keep book, in capitulation reduce t30v exposure to 25% + put freed 75% in oversold-bounce; ~4 partial trims/yr). DOMINATES Core on every metric incl TAIL: worst-case DD −18.8% (< Core median!) vs Core worst −23.7%; higher median+min return; Sharpe 0.77 vs 0.56. tilt>cash (bounce recapture). E=.25>.5. Robust, low overfit. Re-baseline Preserver marketing to deliverable ~10%/0.77/−14% median (−18.8 worst), NOT research figures.
+
+### MAXIMIZER = overlay is the WRONG TOOL. DD unchanged (−19.9 median==worst, identical all variants) + overlay COSTS return (17.0→15.4). Because Maximizer's dominant DD = the 2022 momentum crash which happens in ROTATING_BULL (breakout leg crashing), NOT capitulation → capitulation overlay never engages. Maximizer's correct defense = the VOL-BRAKE on breakout entries (must WARM-START, see [[project_maximizer_coldstart_jul21]]). ALSO: production single-pool only captured 11.7% vs 17% return-stream — breakout edge is LOSSY to implement. Maximizer = separate open workstream (warm vol-brake + breakout-capture gap) OR launch Preserver-only first, hold Maximizer.
+
+## RECOMMENDATION: lock Preserver (flagship), treat Maximizer separately / consider Preserver-only launch. Then: re-baseline marketing, wire the overlay into production preserver_service, resume WS2/3/4/5.
