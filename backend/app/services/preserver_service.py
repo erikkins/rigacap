@@ -24,13 +24,20 @@ from app.services.preserver_sleeves import route  # noqa: F401  (used by run_sha
 CAP0 = 100_000.0
 COST = 0.0015
 SLEEVE_SOURCES = ("pullback_ma", "oversold_bounce")
+# The t30v leg MIRRORS the live Core book in rotating_bull / range_bound (~70% of days).
+# It's a return-stream: the leg's dollar value rides Core's daily total return, so during a
+# pure-t30v stretch Preserver == Core. On a flip to a defensive-sleeve regime, rule B holds
+# Core names to their own exits — approximated here by releasing the leg to cash over Core's
+# ~4-month turnover so freed capital funds the active sleeve. (Release path is dormant until a
+# non-t30v regime actually occurs; the whole live period so far is rotating_bull.)
+T30V_TURNOVER_DAYS = 85
 
 
 class PreserverBook:
-    """Single-pool sleeve book. `advance_day` is one trading day. Rule B: never churn held
-    positions on a regime flip — they exit by their own `exit_date`; new entries only from
-    the active sleeve. Equity is the sleeve portion's mark-to-market (the t30v leg is added
-    separately in prod from the live model portfolio)."""
+    """Single capital pool = mirrored t30v leg + defensive-sleeve positions. `advance_day` is
+    one trading day. Rule B: never churn held positions on a regime flip — sleeve names exit by
+    their own hold, the t30v leg rotates out over Core's turnover; new entries only from the
+    active book. Equity = cash + t30v leg + sleeve marks."""
 
     def __init__(self, n_positions: int = 15, cap0: float = CAP0, cost: float = COST):
         self.n = n_positions
@@ -38,9 +45,11 @@ class PreserverBook:
         self.cost = cost
         self.pos: Dict[str, dict] = {}   # symbol -> {shares, entry, exit_date, source, last}
         self.last: Dict[str, float] = {}
+        self.t30v_value = 0.0            # $ in the mirrored Core (t30v) leg
 
     def equity(self) -> float:
-        return self.cash + sum(p["shares"] * self.last.get(s, p["last"]) for s, p in self.pos.items())
+        return (self.cash + self.t30v_value
+                + sum(p["shares"] * self.last.get(s, p["last"]) for s, p in self.pos.items()))
 
     def source_counts(self) -> Dict[str, int]:
         out: Dict[str, int] = {}
@@ -48,22 +57,37 @@ class PreserverBook:
             out[p["source"]] = out.get(p["source"], 0) + 1
         return out
 
-    def advance_day(self, today, active_source: str, candidates: List[dict], price_of: Dict[str, float]) -> float:
+    def advance_day(self, today, active_source: str, candidates: List[dict],
+                    price_of: Dict[str, float], core_ret: float = 0.0) -> float:
         """One trading day. candidates: ranked [{symbol, hold}] for the active sleeve today.
-        price_of: {symbol: today_close}. Returns end-of-day equity. Live-robust: positions age
-        by a `days_held` counter (one per advance) and exit at their `hold` — no future-calendar
-        dependency. Rule B: existing positions are never churned on a regime flip."""
+        price_of: {symbol: today_close}. core_ret: the live Core book's daily total return —
+        the mirrored t30v leg earns it (so Preserver == Core during rotating_bull/range_bound).
+        Returns end-of-day equity. Rule B: existing positions are never churned on a flip."""
         for s, px in price_of.items():
             if px == px:  # not NaN
                 self.last[s] = px
-        # 1) age + exits — each position by ITS OWN hold (rule B: mixed sources coexist)
+        # 0) the mirrored t30v leg earns the live Core book's return for the day
+        if self.t30v_value and core_ret == core_ret:  # core_ret not NaN
+            self.t30v_value *= (1.0 + core_ret)
+        # 1) age + exits — each SLEEVE position by ITS OWN hold (rule B: mixed sources coexist)
         for p in self.pos.values():
             p["days_held"] += 1
         for s in [s for s, p in self.pos.items() if p["days_held"] >= p["hold"]]:
             self.cash += self.pos[s]["shares"] * self.last.get(s, self.pos[s]["last"]) * (1 - self.cost)
             del self.pos[s]
-        # 2) entries — only when the active book is a defensive sleeve (t30v leg is live-referenced)
-        if active_source in SLEEVE_SOURCES:
+        # 2a) t30v-routed regime (rotating_bull / range_bound): be fully in the Core book —
+        #     pour any free cash into the mirrored t30v leg. This is what un-stubs Preserver.
+        if active_source == "t30v":
+            if self.cash > 0:
+                self.t30v_value += self.cash * (1 - self.cost)
+                self.cash = 0.0
+        # 2b) defensive-sleeve regime: rule B — don't churn the t30v leg; release it to cash
+        #     over Core's turnover so freed capital funds the active sleeve, then enter names.
+        elif active_source in SLEEVE_SOURCES:
+            if self.t30v_value > 0:
+                rel = self.t30v_value / T30V_TURNOVER_DAYS
+                self.cash += rel
+                self.t30v_value -= rel
             free = self.n - len(self.pos)
             for cand in candidates:
                 if free <= 0:
@@ -74,7 +98,8 @@ class PreserverBook:
                 price = price_of.get(s)
                 if price is None or price != price:
                     continue
-                alloc = min(self.equity() / self.n, self.cash)
+                # reserve the entry cost so cash can't go negative when alloc is cash-bound
+                alloc = min(self.equity() / self.n, self.cash / (1 + self.cost))
                 if alloc <= 0:
                     break
                 shares = alloc / price
@@ -90,9 +115,11 @@ class PreserverBook:
                 for s, p in self.pos.items()]
 
     @classmethod
-    def from_state(cls, cash: float, positions: List[dict], last: Dict[str, float] = None, **kw) -> "PreserverBook":
+    def from_state(cls, cash: float, positions: List[dict], last: Dict[str, float] = None,
+                   t30v_value: float = 0.0, **kw) -> "PreserverBook":
         b = cls(**kw)
         b.cash = cash
+        b.t30v_value = t30v_value or 0.0
         b.last = dict(last or {})
         for p in positions or []:
             b.pos[p["symbol"]] = {"shares": p["shares"], "entry": p["entry"], "hold": p["hold"],
@@ -131,9 +158,27 @@ async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_po
     if last_row and isinstance(last_row.positions_json, dict):
         st = last_row.positions_json
         book = PreserverBook.from_state(cash=st.get("cash", CAP0), positions=st.get("positions", []),
-                                        n_positions=n_positions)
+                                        t30v_value=st.get("t30v_value", 0.0), n_positions=n_positions)
     else:
         book = PreserverBook(n_positions=n_positions)
+
+    # Core's daily total return for the mirrored t30v leg (portfolio_type='live'). Two most
+    # recent snapshots as-of today; if today's isn't written yet the leg picks it up next day.
+    core_ret = 0.0
+    try:
+        from app.core.database import ModelPortfolioSnapshot
+        from datetime import datetime as _dtm, time as _tm
+        _cut = _dtm.combine(sd, _tm(23, 59, 59))
+        _tv = (await db.execute(
+            select(ModelPortfolioSnapshot.total_value)
+            .where(ModelPortfolioSnapshot.portfolio_type == "live",
+                   ModelPortfolioSnapshot.snapshot_date <= _cut)
+            .order_by(ModelPortfolioSnapshot.snapshot_date.desc()).limit(2)
+        )).scalars().all()
+        if len(_tv) == 2 and _tv[1]:
+            core_ret = _tv[0] / _tv[1] - 1.0
+    except Exception as _cre:
+        print(f"⚠️ Preserver shadow: core_ret fetch failed (leg flat today): {_cre}")
 
     # 2) route + today's routed candidates (sleeve regimes feed the book; t30v leg is live-referenced)
     src, cands = build_daily_signals(data_cache, regime, t30v_signals, sd, max_positions=n_positions)
@@ -149,8 +194,8 @@ async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_po
         except Exception:
             pass
 
-    # 4) advance the sleeve book one trading day
-    equity = book.advance_day(sd, src, book_cands, price_of)
+    # 4) advance the book one trading day (t30v leg earns core_ret; sleeve leg per rule B)
+    equity = book.advance_day(sd, src, book_cands, price_of, core_ret=core_ret)
 
     # 5) persist today's routed candidates (upsert) + the book snapshot (upsert)
     for c in cands:
@@ -166,7 +211,7 @@ async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_po
                   "hold_days": stmt.excluded.hold_days, "status": stmt.excluded.status})
         await db.execute(stmt)
 
-    snap = {"cash": book.cash, "positions": book.to_positions()}
+    snap = {"cash": book.cash, "positions": book.to_positions(), "t30v_value": book.t30v_value}
     snap_stmt = pg_insert(PreserverBookSnapshot).values(
         snapshot_date=sd, regime=regime, active_source=src, equity=equity, positions_json=snap)
     snap_stmt = snap_stmt.on_conflict_do_update(

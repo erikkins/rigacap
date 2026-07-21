@@ -28,6 +28,9 @@ COST = 0.0015
 SLEEVE_SOURCES = ("pullback_ma", "oversold_bounce", "breakout")
 _BRAKE_SOURCE = "breakout"
 _VOL_WIN = 20  # trailing daily returns for the realized-vol brake input
+# Maximizer mirrors Core (t30v leg) ONLY in range_bound (rotating_bull routes to breakout).
+# Same rule-B turnover release as Preserver when a t30v leg exists and the regime flips.
+T30V_TURNOVER_DAYS = 85
 
 
 class MaximizerBook:
@@ -41,9 +44,11 @@ class MaximizerBook:
         self.pos: Dict[str, dict] = {}
         self.last: Dict[str, float] = {}
         self.eq_hist: List[float] = []   # trailing book equity, for the vol-brake (causal)
+        self.t30v_value = 0.0            # $ in the mirrored Core (t30v) leg — funded only in range_bound
 
     def equity(self) -> float:
-        return self.cash + sum(p["shares"] * self.last.get(s, p["last"]) for s, p in self.pos.items())
+        return (self.cash + self.t30v_value
+                + sum(p["shares"] * self.last.get(s, p["last"]) for s, p in self.pos.items()))
 
     def source_counts(self) -> Dict[str, int]:
         out: Dict[str, int] = {}
@@ -63,21 +68,35 @@ class MaximizerBook:
             return 1.0
         return min(1.0, VOL_TARGET / rv)
 
-    def advance_day(self, today, active_source: str, candidates: List[dict], price_of: Dict[str, float]) -> float:
+    def advance_day(self, today, active_source: str, candidates: List[dict],
+                    price_of: Dict[str, float], core_ret: float = 0.0) -> float:
         """One trading day. candidates: ranked [{symbol, hold}] for the active sleeve today.
-        price_of: {symbol: today_close}. Returns end-of-day equity."""
+        price_of: {symbol: today_close}. core_ret: live Core book daily total return — the
+        mirrored t30v leg earns it (Maximizer == Core in range_bound). Returns EOD equity."""
         for s, px in price_of.items():
             if px == px:  # not NaN
                 self.last[s] = px
+        # 0) the mirrored t30v leg earns the live Core book's return for the day
+        if self.t30v_value and core_ret == core_ret:  # core_ret not NaN
+            self.t30v_value *= (1.0 + core_ret)
         # 1) age + exits — each position by ITS OWN hold (rule B: mixed sources coexist)
         for p in self.pos.values():
             p["days_held"] += 1
         for s in [s for s, p in self.pos.items() if p["days_held"] >= p["hold"]]:
             self.cash += self.pos[s]["shares"] * self.last.get(s, self.pos[s]["last"]) * (1 - self.cost)
             del self.pos[s]
-        # 2) entries — only when the active book is a sleeve (Core t30v leg is live-referenced).
-        #    Breakout entries wear the vol-brake (scale exposure by the causal vol_scale factor).
-        if active_source in SLEEVE_SOURCES:
+        # 2a) range_bound (t30v-routed): mirror Core — pour any free cash into the t30v leg.
+        if active_source == "t30v":
+            if self.cash > 0:
+                self.t30v_value += self.cash * (1 - self.cost)
+                self.cash = 0.0
+        # 2b) sleeve regime (breakout / pullback_ma / oversold_bounce): rule B — release any
+        #     t30v leg to cash over turnover, then enter names. Breakout wears the vol-brake.
+        elif active_source in SLEEVE_SOURCES:
+            if self.t30v_value > 0:
+                rel = self.t30v_value / T30V_TURNOVER_DAYS
+                self.cash += rel
+                self.t30v_value -= rel
             brake = self._vol_scale_factor() if active_source == _BRAKE_SOURCE else 1.0
             free = self.n - len(self.pos)
             for cand in candidates:
@@ -89,7 +108,8 @@ class MaximizerBook:
                 price = price_of.get(s)
                 if price is None or price != price:
                     continue
-                alloc = min(self.equity() / self.n, self.cash) * brake   # vol-brake exposure scale
+                # reserve entry cost so cash can't go negative when cash-bound; then vol-brake scale
+                alloc = min(self.equity() / self.n, self.cash / (1 + self.cost)) * brake
                 if alloc <= 0:
                     break
                 shares = alloc / price
@@ -110,9 +130,10 @@ class MaximizerBook:
 
     @classmethod
     def from_state(cls, cash: float, positions: List[dict], last: Dict[str, float] = None,
-                   eq_hist: List[float] = None, **kw) -> "MaximizerBook":
+                   eq_hist: List[float] = None, t30v_value: float = 0.0, **kw) -> "MaximizerBook":
         b = cls(**kw)
         b.cash = cash
+        b.t30v_value = t30v_value or 0.0
         b.last = dict(last or {})
         b.eq_hist = list(eq_hist or [])
         for p in positions or []:
@@ -149,9 +170,27 @@ async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_po
     if last_row and isinstance(last_row.positions_json, dict):
         st = last_row.positions_json
         book = MaximizerBook.from_state(cash=st.get("cash", CAP0), positions=st.get("positions", []),
-                                        eq_hist=st.get("eq_hist", []), n_positions=n_positions)
+                                        eq_hist=st.get("eq_hist", []), t30v_value=st.get("t30v_value", 0.0),
+                                        n_positions=n_positions)
     else:
         book = MaximizerBook(n_positions=n_positions)
+
+    # Core's daily total return for the mirrored t30v leg (funded only in range_bound).
+    core_ret = 0.0
+    try:
+        from app.core.database import ModelPortfolioSnapshot
+        from datetime import datetime as _dtm, time as _tm
+        _cut = _dtm.combine(sd, _tm(23, 59, 59))
+        _tv = (await db.execute(
+            select(ModelPortfolioSnapshot.total_value)
+            .where(ModelPortfolioSnapshot.portfolio_type == "live",
+                   ModelPortfolioSnapshot.snapshot_date <= _cut)
+            .order_by(ModelPortfolioSnapshot.snapshot_date.desc()).limit(2)
+        )).scalars().all()
+        if len(_tv) == 2 and _tv[1]:
+            core_ret = _tv[0] / _tv[1] - 1.0
+    except Exception as _cre:
+        print(f"⚠️ Maximizer shadow: core_ret fetch failed (leg flat today): {_cre}")
 
     # 2) route + today's routed candidates
     src, cands = build_daily_signals(data_cache, regime, t30v_signals, sd, max_positions=n_positions)
@@ -167,8 +206,8 @@ async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_po
         except Exception:
             pass
 
-    # 4) advance the sleeve book one trading day
-    equity = book.advance_day(sd, src, book_cands, price_of)
+    # 4) advance the book one trading day (t30v leg earns core_ret; breakout leg per rule B)
+    equity = book.advance_day(sd, src, book_cands, price_of, core_ret=core_ret)
 
     # 5) persist today's routed candidates (upsert) + the book snapshot (upsert)
     for c in cands:
@@ -184,7 +223,8 @@ async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_po
                   "hold_days": stmt.excluded.hold_days, "status": stmt.excluded.status})
         await db.execute(stmt)
 
-    snap = {"cash": book.cash, "positions": book.to_positions(), "eq_hist": book.eq_hist}
+    snap = {"cash": book.cash, "positions": book.to_positions(), "eq_hist": book.eq_hist,
+            "t30v_value": book.t30v_value}
     snap_stmt = pg_insert(MaximizerBookSnapshot).values(
         snapshot_date=sd, regime=regime, active_source=src, equity=equity, positions_json=snap)
     snap_stmt = snap_stmt.on_conflict_do_update(
