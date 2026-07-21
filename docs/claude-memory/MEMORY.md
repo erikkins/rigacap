@@ -1,5 +1,8 @@
 # Stocker App - Key Learnings
 
+## 🐢 SLOW DOWN, don't assume (Jul 21) — verify code/data before concluding
+- [Verify-first, guesses flagged as guesses](feedback_slow_down_verify.md) — chain of confident-wrong calls (survivorship ×2, universe breadth, "research data biased") all caught by Erik, root = MY buggy validation (wrong universe fn) + rushing. Read the actual path FIRST; suspect my own test before blaming strategy/data. Fast-wrong worse than slow-right.
+
 ## 🧪 METHODOLOGY RULE (Jul 21) — RESEARCH MUST MAP TO PRODUCTION (penny-to-penny)
 - [One warm full-history curve; only exposure-scaling ports](feedback_research_maps_to_prod.md) — ALWAYS warm-start (prod has years of history); ONE canonical PITFWU curve over full history, slice windows; PITFWU penny-to-penny w/ prod. Only EXPOSURE-SCALING (raise cash) constructions reproduce in the single-pool book; SLEEVE-CAPTURE (breakout, oversold-tilt) do NOT (idealized return-stream flatters them). VALIDATE every research result through the prod day-step on the same warm curve before trusting/marketing. Caused a full session of whiplash when ignored.
 

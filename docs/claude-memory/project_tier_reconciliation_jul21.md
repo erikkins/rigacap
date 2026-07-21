@@ -94,4 +94,14 @@ Breakout signal = IDENTICAL to research (same params, ported). Earlier "doesn't 
 | Max bk+vt+cap | 16.7 | 1.04 | −20.4 | ✅ |
 - **WINNER = breakout sleeve held CONTINUOUSLY + VOL-TARGET exposure overlay** (Barroso, scales book exposure by target/realized-vol). ≈ MATCHES infeasible research (17.0/1.02/−19.9) WITHOUT the infeasible book-switching. Orthogonal to Core, feasible (gradual hold=29 + exposure trims, NO rotation), ports (standing book + exposure-scaling).
 - KEY: vol-target is Maximizer's defense (responds to book vol ANY regime → catches the rotating_bull breakout crash); capitulation overlay USELESS for it (opposite of Preserver). bk+capcash proved it (−24.3, no help).
-- NEXT: VALIDATE in production single-pool (STANDING warm breakout book + vol-target exposure overlay), like Preserver. Band the vol-target (material moves, not daily micro) for feasibility. If ports → Maximizer deliverable. Then BOTH tiers done.
+- NEXT: VALIDATE in production single-pool (STANDING warm breakout book + vol-target exposure overlay), like Preserver. Band the vol-target for feasibility.
+
+## 🚨 MAXIMIZER PRODUCTION VALIDATION FAILED (Jul 21) — breakout edge is a RESEARCH-DATA (survivorship) ARTIFACT
+Built prod construction (maximizer_portfolio.replay_sleeve('breakout') standing book + vol_scaled_returns) — validated warm on survivorship-free PITFWU. Got ~12-14%, way below research. Chased the gap:
+- Universe breadth (top-100→400) barely moved it → NOT breadth (Erik's hypothesis ruled out).
+- CLEAN apples-to-apples (breakout SLEEVE alone, same construction, scripts/breakout_apples.py): **research breakout (shape_tpe, 424 sym) 38.7%/1.25/−24.3% (2021-26), 79.1%/1.80 (last-2yr) vs PRODUCTION breakout (PITFWU, 530 sym) 6.9%/0.43/−39.3%, 21.8%/1.04.**
+- Production universe is BIGGER (530>424) yet underperforms + WORSE DD (−39 vs −24) = capturing the breakouts that CRASHED/DELISTED (present in surv-free PITFWU, ABSENT from research shape_tpe data). ⇒ **research breakout is SURVIVORSHIP-INFLATED — in the RESEARCH (shape_tpe) pipeline, NOT PITFWU (Erik correct: PITFWU is clean; that's WHY it's truthful).**
+- TRUTHFUL deliverable breakout = 6.9% (2021-26)/−39% DD — WORSE than Core on return AND drawdown. Maximizer's "aggressive alpha" does NOT survive honest data.
+- DEFINITIVE NAIL (offered, not yet run): restrict PITFWU breakout to the same 424 survivor names → if jumps to ~38% = survivorship confirmed 100%.
+- **RECOMMENDATION (firm): PRESERVER-ONLY LAUNCH.** Preserver validated/real/beats Core. Maximizer shelved — edge is a research artifact. AWAITING ERIK.
+- CAUTION for ALL research: shape_tpe/regime_allocator pipeline may be survivorship-biased; ALWAYS validate on PITFWU (see [[feedback_research_maps_to_prod]]).
