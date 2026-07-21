@@ -57,3 +57,12 @@ Tier edge REQUIRES fast rotation. EVERY turnover-reduction (rule B, confirmation
 
 ## NEXT DIRECTION (recommended, offered): OVERLAY/HEDGE, not rotation
 Get fast DD protection WITHOUT full liquidation: on a capitulation flip raise cash partially / add hedge / lean on the existing volatility basket instead of selling the whole book → fast DD cut, far less turnover/tax. + Account-type SEGMENTATION: Option A (fast rotate) for tax-advantaged (turnover free); hedged/gentle for taxable. Rotation-filter tuning = abandoned (fragile). Prototype overlay/hedge next.
+
+## ✅ OVERLAY/HEDGE PROTOTYPE (Jul 21) = THE DELIVERABLE CONSTRUCTION (best so far)
+Preserver overlay = keep t30v book (NO liquidation), RAISE CASH in capitulation only (exposure→E); return=exp×t30v_ret; turnover=partial trim on cap enter/exit only. scripts/tier_vintages_daily.py.
+2021-26: Core 17.5/1.10/−23.7 | OptionA 17.1/1.19/−18.7 (6.7 full rotates/yr) | **overlay E=0.25 17.9/1.23/−18.8 (4.4 PARTIAL cash-raises/yr)** | E=0.5 17.8/1.20/−20.4 | E=0.75 17.6/1.15/−22.0. LAST-2YR overlay E=0.25 = 32.9/1.87/−12.9 (3/yr).
+- **overlay E=0.25 MATCHES Option A's DD with BETTER return+Sharpe & HALF the turnover, as partial trims not full rotations = tax/exec-friendly = DELIVERABLE in taxable.** vs Core: −18.8 vs −23.7 (~5pp less DD) at higher return+Sharpe → Preserver FINALLY preserves better than Core. Answers "where does Preserver preserve": raises cash fast in capitulation.
+- HONEST: does NOT reach marketed −13.5% (idealized return-stream captured oversold-BOUNCE upside; pure cash doesn't). Realistic floor ~−19%. Deliverable claim = "~5pp less DD than Core, tax-efficiently," NOT "half the drawdown."
+- Robust: flat+monotonic across E (no −30% surprises), intuitive mechanism → less overfit-prone than confirmation filter.
+
+## NEXT (offered): (1) robustness-test E multi-start; (2) partial OVERSOLD-BOUNCE tilt with freed cash → push DD −19%→toward −13.5%; (3) apply overlay to Maximizer; (4) RE-BASELINE Preserver marketing to deliverable ~18%/1.2/−19% (beats Core −24%) not research figures.
