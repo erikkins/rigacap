@@ -1,5 +1,8 @@
 # Stocker App - Key Learnings
 
+## ⚠️ MAXIMIZER: NEVER COLD-START the vol-brake (Jul 21) — cold Jun15 launch=−22%, warmed=−12%
+- [Finding + warm-start requirement](project_maximizer_coldstart_jul21.md) — vol-brake reads book eq_hist; 0 history = no brake for 21d = catastrophic bad-timed launch. Production WS3 MUST warm-start (seed eq_hist from backtested equity). Even warmed, Maximizer −12% > Core −7.5% > SPY −1.7% over the Jun15-Jul20 DRAWDOWN (higher-beta = expected; full-cycle is the real test). Live shadow flat only b/c it launched Jul8 into cash.
+
 ## ❌ SECTOR CAP DOES NOT HELP t30v (Jul 20) — live Core −7% is normal concentration DD, not fixable by capping
 - [Finding + sweep data + why it's OFF](project_sector_cap_regression_jul20.md) — live Core Jun15→Jul17 −7.2% vs SPY −1.5% (7 Tech day-1 names). Cap is OFF for MARKETING-BASELINE PARITY (marketed 20yr record had no cap) — Erik's hunch was right. Sweep: cap hurts t30v on EVERY metric (opposite of the old-6pos breakthrough; t30v's 20pos+wide-trail is already diversified). DON'T add to Core OR Preserver. Real DD defense = Preserver sleeves.
 
