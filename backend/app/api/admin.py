@@ -4711,3 +4711,68 @@ async def get_newsletter_signups(
         "by_report": by_report,
         "by_source": by_source,
     }
+
+
+# ============================================================================
+# Tier books — Core / Preserver / Maximizer side-by-side compare + STR fill logs
+# ============================================================================
+
+@router.get("/tier-books")
+async def get_tier_books(limit: int = 40, admin: User = Depends(get_admin_user),
+                         db: AsyncSession = Depends(get_db)):
+    """Admin: 3-book comparison. Latest equity + recent transaction log (STR) per tier.
+    Core = live model portfolio; Preserver/Maximizer = shadow books + tier_fills. Read-only."""
+    from app.core.database import (
+        ModelPortfolioSnapshot, PreserverBookSnapshot, MaximizerBookSnapshot, TierFill,
+    )
+
+    async def _latest(model, where=None):
+        q = select(model).order_by(model.snapshot_date.desc()).limit(1)
+        if where is not None:
+            q = q.where(where)
+        return (await db.execute(q)).scalars().first()
+
+    # Latest equity per book.
+    core_snap = await _latest(ModelPortfolioSnapshot, ModelPortfolioSnapshot.portfolio_type == "live")
+    pres_snap = await _latest(PreserverBookSnapshot)
+    max_snap = await _latest(MaximizerBookSnapshot)
+
+    def _iso(d):
+        return d.isoformat() if d is not None else None
+
+    books = {
+        "core": {
+            "equity": round(float(core_snap.total_value), 2) if core_snap and core_snap.total_value else None,
+            "as_of": _iso(getattr(core_snap, "snapshot_date", None)),
+            "note": "Live model portfolio (t30v). Preserver mirrors these names; source of truth for Core/Preserver per-name trades.",
+        },
+        "preserver": {
+            "equity": round(float(pres_snap.equity), 2) if pres_snap and pres_snap.equity else None,
+            "as_of": _iso(getattr(pres_snap, "snapshot_date", None)),
+            "regime": getattr(pres_snap, "regime", None),
+            "note": "Core names + capitulation exposure overlay. tier_fills logs the overlay (exposure) actions.",
+        },
+        "maximizer": {
+            "equity": round(float(max_snap.equity), 2) if max_snap and max_snap.equity else None,
+            "as_of": _iso(getattr(max_snap, "snapshot_date", None)),
+            "regime": getattr(max_snap, "regime", None),
+            "held": len((max_snap.positions_json or {}).get("positions", [])) if max_snap and isinstance(max_snap.positions_json, dict) else 0,
+            "note": "Gated breakout book + vol-target. tier_fills logs breakout entries + 29-day hold-exits.",
+        },
+    }
+
+    # Recent STR fills per tier (from tier_fills).
+    fills = {}
+    for tier in ("core", "preserver", "maximizer"):
+        rows = (await db.execute(
+            select(TierFill).where(TierFill.tier == tier)
+            .order_by(TierFill.fill_date.desc(), TierFill.id.desc()).limit(limit)
+        )).scalars().all()
+        fills[tier] = [{
+            "fill_date": r.fill_date.isoformat() if r.fill_date else None,
+            "symbol": r.symbol, "side": r.side, "shares": r.shares, "price": r.price,
+            "gross": r.gross, "source": r.source, "regime": r.regime, "reason": r.reason,
+            "days_held": r.days_held, "realized_pnl": r.realized_pnl, "vol_scale": r.vol_scale,
+        } for r in rows]
+
+    return {"books": books, "fills": fills}

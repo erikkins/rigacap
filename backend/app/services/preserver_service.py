@@ -51,6 +51,7 @@ class PreserverBook:
         self.last: Dict[str, float] = {}
         self.t30v_value = 0.0            # $ in the mirrored Core (t30v) leg (== book equity)
         self.exposure = 1.0              # current Core exposure (1.0, or CAP_EXPOSURE in capitulation)
+        self.day_fills: List[dict] = []  # discrete overlay actions (exposure trim/restore) for the STR
 
     def equity(self) -> float:
         return (self.cash + self.t30v_value
@@ -67,6 +68,7 @@ class PreserverBook:
         """One trading day. core_ret: the live Core book's daily total return. The book is the
         Core book scaled by a regime EXPOSURE (return = exposure × core_ret) — full Core normally,
         CAP_EXPOSURE in capitulation (raise the rest to cash). Returns end-of-day equity."""
+        self.day_fills = []
         # initial deploy: put the pool into the mirrored Core leg on the first day
         if self.t30v_value == 0.0 and self.cash > 0:
             self.t30v_value = self.cash * (1 - self.cost)
@@ -74,7 +76,18 @@ class PreserverBook:
         # regime EXPOSURE: full Core normally; CAP_EXPOSURE in capitulation (raise the rest to cash)
         exposure = CAP_EXPOSURE if active_source == DEFENSIVE_SOURCE else 1.0
         if exposure != self.exposure:                     # one-time cost to trim / restore exposure
+            moved = abs(exposure - self.exposure) * self.t30v_value  # $ shifted between Core and cash
             self.t30v_value *= (1.0 - abs(exposure - self.exposure) * self.cost)
+            # STR: log the overlay action (defensive trim to cash, or restore to full Core).
+            self.day_fills.append({
+                # shares=1 so gross carries the $ amount shifted between Core and cash.
+                "symbol": "PORTFOLIO",
+                "side": "sell" if exposure < self.exposure else "buy",
+                "shares": 1.0, "price": round(moved, 2),
+                "cost": abs(exposure - self.exposure) * self.t30v_value * self.cost,
+                "source": "exposure",
+                "reason": "exposure_trim" if exposure < self.exposure else "exposure_restore",
+            })
             self.exposure = exposure
         # the mirrored Core leg earns the EXPOSURE-SCALED Core return. This is exactly the
         # validated research return-stream (daily return = exposure × core_ret), so the served
@@ -172,6 +185,14 @@ async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_po
 
     # 4) advance the book one trading day (t30v leg earns core_ret; sleeve leg per rule B)
     equity = book.advance_day(sd, src, book_cands, price_of, core_ret=core_ret)
+
+    # 4b) STR: persist Preserver-specific overlay actions (exposure trim/restore) to tier_fills.
+    # (Per-name Preserver trades == the Core t30v book's trades — not duplicated here.)
+    try:
+        from app.services.maximizer_service import emit_tier_fills
+        await emit_tier_fills(db, "preserver", sd, regime, book.day_fills)
+    except Exception as _fe:
+        print(f"⚠️ Preserver tier_fills emit: {_fe}")
 
     # 5) persist today's routed candidates (upsert) + the book snapshot (upsert)
     for c in cands:

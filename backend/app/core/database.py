@@ -231,6 +231,30 @@ class MaximizerBookSnapshot(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class TierFill(Base):
+    """Per-tier transaction/fill log (STRs) for Core / Preserver / Maximizer. Populated by the
+    daily shadow hook. Table created DB-first via tier_fills.sql (already applied in prod).
+    One row per tier/day/symbol/side (upsert-friendly). See tier_fills.sql for column notes."""
+    __tablename__ = "tier_fills"
+
+    id = Column(Integer, primary_key=True)
+    tier = Column(String(12), nullable=False)          # core | preserver | maximizer
+    fill_date = Column(Date, nullable=False)
+    symbol = Column(String(10), nullable=False)
+    side = Column(String(4), nullable=False)           # buy | sell
+    shares = Column(Float, nullable=False)
+    price = Column(Float, nullable=False)              # fill price (today's close in the book)
+    gross = Column(Float)                              # shares * price
+    cost = Column(Float)                               # transaction cost applied to this fill
+    source = Column(String(20))                        # t30v | breakout | pullback_ma | oversold_bounce | exposure
+    regime = Column(String(20))                        # 7-regime label that day
+    reason = Column(String(24))                        # entry | hold_exit | stop | regime_exit | rebalance | exposure_trim | exposure_restore
+    days_held = Column(Integer)                        # sells only
+    realized_pnl = Column(Float)                       # sells only
+    vol_scale = Column(Float)                          # maximizer entries: vol-brake factor
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class Position(Base):
     """Open trading positions"""
     __tablename__ = "positions"
@@ -246,8 +270,13 @@ class Position(Base):
     highest_price = Column(Float)
     signal_id = Column(Integer, ForeignKey("signals.id"))
     status = Column(String(20), default="open")  # open, closed
+    # Strategy that opened this trade — the exit rule follows the trade, not the user's
+    # current tier. 'preserver' => 30% trailing stop; 'breakout' (Maximizer) => 29-trading-
+    # day time-stop. ('preserver' is the customer-facing label for the t30v engine.) Column
+    # added DB-first via position_source.sql. DEPLOY-ORDER: ships ONLY after it has run.
+    source = Column(String(20), nullable=False, server_default="preserver", default="preserver")
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     trades = relationship("Trade", back_populates="position")
 
 
@@ -800,6 +829,11 @@ class Subscription(Base):
     # maximizer_addon_entitlement.sql (server_default keeps existing rows safe).
     has_maxpp_addon = Column(Boolean, nullable=False, server_default="false", default=False)
 
+    # Admin COMP entitlement for Maximizer (grant the tier without paying). Column added
+    # DB-first via compmax_entitlement.sql. Effective tier: has_maxpp_addon OR compmax.
+    # DEPLOY-ORDER: this line ships ONLY after compmax_entitlement.sql has run in prod.
+    compmax = Column(Boolean, nullable=False, server_default="false", default=False)
+
     # Billing periods
     current_period_start = Column(DateTime, nullable=True)
     current_period_end = Column(DateTime, nullable=True)
@@ -869,7 +903,8 @@ class Subscription(Base):
             "current_period_end": self.current_period_end.isoformat() if self.current_period_end else None,
             "cancel_at_period_end": self.cancel_at_period_end,
             "has_stripe_subscription": bool(self.stripe_subscription_id),
-            "has_maximizer": bool(self.has_maxpp_addon),
+            # Maximizer entitlement = paid add-on OR admin comp.
+            "has_maximizer": bool(self.has_maxpp_addon or self.compmax),
         }
 
 

@@ -54,6 +54,8 @@ class MaximizerBook:
         self.last: Dict[str, float] = {}
         self.bk_eq_hist: List[float] = []  # breakout sleeve equity history (r_bk + vol-target)
         self.max_value = cap0            # the vol-scaled Maximizer equity (what we report)
+        self.day_fills: List[dict] = []  # discrete fills recorded on the most recent advance_day
+        self._last_vol_scale = 1.0
 
     def _bk_equity(self) -> float:
         return self.bk_cash + sum(p["shares"] * self.last.get(s, p["last"]) for s, p in self.pos.items())
@@ -78,15 +80,26 @@ class MaximizerBook:
     def advance_day(self, today, active_source: str, candidates: List[dict],
                     price_of: Dict[str, float], core_ret: float = 0.0) -> float:
         """One trading day. candidates = ranked breakout names for today (empty unless the regime
-        is routed to breakout). Returns the vol-scaled Maximizer equity."""
+        is routed to breakout). Returns the vol-scaled Maximizer equity. Records the day's discrete
+        fills in self.day_fills (entries + hold-exits) for the per-tier STR log."""
+        self.day_fills: List[dict] = []
         for s, px in price_of.items():
             if px == px:  # not NaN
                 self.last[s] = px
-        # exits — breakout positions by their own hold
+        # exits — breakout positions by their own hold (time-stop)
         for p in self.pos.values():
             p["days_held"] += 1
         for s in [s for s, p in self.pos.items() if p["days_held"] >= p["hold"]]:
-            self.bk_cash += self.pos[s]["shares"] * self.last.get(s, self.pos[s]["last"]) * (1 - self.cost)
+            p = self.pos[s]
+            px = self.last.get(s, p["last"])
+            proceeds = p["shares"] * px * (1 - self.cost)
+            self.bk_cash += proceeds
+            self.day_fills.append({
+                "symbol": s, "side": "sell", "shares": p["shares"], "price": px,
+                "cost": p["shares"] * px * self.cost, "source": BREAKOUT_SOURCE,
+                "reason": "hold_exit", "days_held": p["days_held"],
+                "realized_pnl": (px - p["entry"]) * p["shares"],
+            })
             del self.pos[s]
         # entries — ONLY the gated breakout sleeve (fires only when routed to breakout)
         if active_source == BREAKOUT_SOURCE:
@@ -107,6 +120,10 @@ class MaximizerBook:
                 self.bk_cash -= alloc + alloc * self.cost
                 self.pos[s] = {"shares": shares, "entry": price, "hold": int(cand.get("hold", 29)),
                                "days_held": 0, "source": BREAKOUT_SOURCE, "last": price}
+                self.day_fills.append({
+                    "symbol": s, "side": "buy", "shares": shares, "price": price,
+                    "cost": alloc * self.cost, "source": BREAKOUT_SOURCE, "reason": "entry",
+                })
                 free -= 1
         # vol-target: scale today's breakout return into the reported Maximizer equity
         bk_eq = self._bk_equity()
@@ -114,6 +131,10 @@ class MaximizerBook:
         r_bk = (bk_eq / prev - 1.0) if prev else 0.0
         vs = self._vol_scale()                       # from PRIOR history (lagged), before append
         self.max_value *= (1.0 + vs * r_bk)
+        self._last_vol_scale = vs                     # stamp on today's entry fills (STR)
+        for f in self.day_fills:
+            if f["side"] == "buy":
+                f["vol_scale"] = vs
         self.bk_eq_hist.append(bk_eq)
         if len(self.bk_eq_hist) > 60:
             self.bk_eq_hist = self.bk_eq_hist[-60:]
@@ -137,6 +158,38 @@ class MaximizerBook:
                                   "days_held": p["days_held"], "source": p.get("source", BREAKOUT_SOURCE),
                                   "last": (last or {}).get(p["symbol"], p["entry"])}
         return b
+
+
+async def emit_tier_fills(db, tier: str, fill_date, regime: str, fills: List[dict]) -> int:
+    """Persist a book's discrete fills into tier_fills (STR log). Idempotent per
+    (tier, fill_date, symbol, side). Never raises into the caller (best-effort log)."""
+    if not fills:
+        return 0
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+    from app.core.database import TierFill
+    n = 0
+    for f in fills:
+        try:
+            shares = float(f.get("shares") or 0)
+            price = float(f.get("price") or 0)
+            stmt = pg_insert(TierFill).values(
+                tier=tier, fill_date=fill_date, symbol=f["symbol"], side=f["side"],
+                shares=shares, price=price, gross=shares * price, cost=f.get("cost"),
+                source=f.get("source"), regime=regime, reason=f.get("reason"),
+                days_held=f.get("days_held"), realized_pnl=f.get("realized_pnl"),
+                vol_scale=f.get("vol_scale"))
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["tier", "fill_date", "symbol", "side"],
+                set_={"shares": stmt.excluded.shares, "price": stmt.excluded.price,
+                      "gross": stmt.excluded.gross, "cost": stmt.excluded.cost,
+                      "source": stmt.excluded.source, "regime": stmt.excluded.regime,
+                      "reason": stmt.excluded.reason, "days_held": stmt.excluded.days_held,
+                      "realized_pnl": stmt.excluded.realized_pnl, "vol_scale": stmt.excluded.vol_scale})
+            await db.execute(stmt)
+            n += 1
+        except Exception as e:
+            print(f"⚠️ tier_fills emit ({tier} {f.get('symbol')}): {e}")
+    return n
 
 
 async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_positions: int = 15):
@@ -188,6 +241,9 @@ async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_po
 
     # 4) advance the book one trading day (gated breakout sleeve + book-level vol-target)
     equity = book.advance_day(sd, src, book_cands, price_of)
+
+    # 4b) STR: persist today's discrete breakout fills (entries + hold-exits) to tier_fills.
+    await emit_tier_fills(db, "maximizer", sd, regime, book.day_fills)
 
     # 5) persist today's routed candidates (upsert) + the book snapshot (upsert)
     for c in cands:

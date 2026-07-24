@@ -216,6 +216,7 @@ class OpenPositionRequest(BaseModel):
     shares: Optional[float] = None
     price: Optional[float] = None
     entry_date: Optional[str] = None  # YYYY-MM-DD, for time-travel mode
+    source: Optional[str] = None  # 'preserver' (trailing) | 'breakout' (Maximizer hold) — scopes the exit rule
 
 
 class EquityPoint(BaseModel):
@@ -10791,15 +10792,20 @@ async def open_position(request: OpenPositionRequest, user: User = Depends(get_c
     else:
         entry_date = datetime.now()
 
+    # Scope the trade to the strategy that opened it so the exit rule follows the trade,
+    # not the user's current tier. Only accept the known sources; anything else = preserver.
+    src = request.source if request.source in ("preserver", "breakout") else "preserver"
+
     position = DBPosition(
         user_id=user.id,
         symbol=symbol,
         entry_date=entry_date,
         entry_price=price,
-        shares=round(shares, 2),
         stop_loss=round(price * (1 - settings.STOP_LOSS_PCT / 100), 2),
         profit_target=round(price * (1 + settings.PROFIT_TARGET_PCT / 100), 2),
+        shares=round(shares, 2),
         highest_price=price,
+        source=src,
         status="open"
     )
 

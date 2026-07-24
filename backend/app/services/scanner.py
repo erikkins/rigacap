@@ -1036,6 +1036,56 @@ class ScannerService:
         return sorted(watchlist, key=lambda x: -x['pct_above_dwap'])
 
 
+    def _breakout_hold_guidance(self, pos: dict, symbol: str, entry_price: float,
+                                current_price: float) -> dict:
+        """Sell guidance for a breakout (Maximizer) trade: a 29-trading-day HOLD-to-exit
+        time-stop with a day-X/29 countdown. No trailing stop. SELL fires when the hold
+        elapses. entry_date drives the countdown (approximate trading days via business
+        days; holidays add ~1-2d drift, acceptable for a hold countdown)."""
+        from datetime import datetime as _dt, date as _date
+        import numpy as _np
+
+        HOLD = 29
+        entry_raw = pos.get('entry_date')
+        entry_d = None
+        if entry_raw:
+            try:
+                entry_d = _dt.strptime(str(entry_raw)[:10], '%Y-%m-%d').date()
+            except Exception:
+                entry_d = None
+        today = _date.today()
+        if entry_d:
+            days_held = int(_np.busday_count(entry_d, today))
+        else:
+            days_held = 0
+        days_left = max(0, HOLD - days_held)
+        # approx calendar exit date from trading days left (~5 trading / 7 calendar)
+        from datetime import timedelta as _td
+        exit_date_approx = (today + _td(days=int(round(days_left * 7 / 5)))).isoformat()
+        pnl_pct = ((current_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
+
+        if days_held >= HOLD:
+            action = 'sell'
+            action_reason = f"Time-stop reached — breakout hold of {HOLD} trading days is complete; sell."
+        else:
+            action = 'hold'
+            action_reason = (
+                f"Breakout hold — day {days_held}/{HOLD}, ~{days_left} trading days left "
+                f"(time-stop exit ~{exit_date_approx}). No trailing stop."
+            )
+        return {
+            **pos,
+            'current_price': round(current_price, 2),
+            'action': action,
+            'action_reason': action_reason,
+            'exit_rule': 'hold',
+            'hold_days': HOLD,
+            'days_held': days_held,
+            'days_left': days_left,
+            'exit_date_approx': exit_date_approx,
+            'pnl_pct': round(pnl_pct, 1),
+        }
+
     def generate_sell_signals(
         self,
         positions: List[dict],
@@ -1067,6 +1117,14 @@ class ScannerService:
                 current_price = float(self.data_cache[symbol].iloc[-1]['close'])
             else:
                 current_price = pos.get('current_price', entry_price)
+
+            # Breakout (Maximizer) trades exit on a 29-TRADING-DAY time-stop, NOT a trailing
+            # stop — the exit rule is scoped to the strategy that OPENED the trade (pos.source),
+            # independent of the user's current tier. 'preserver' trades (and legacy nulls)
+            # fall through to the trailing-stop logic below unchanged.
+            if pos.get('source') == 'breakout':
+                results.append(self._breakout_hold_guidance(pos, symbol, entry_price, current_price))
+                continue
 
             # Calculate high water mark
             high_water_mark = max(entry_price, stored_highest or entry_price, current_price or entry_price)
@@ -1122,6 +1180,7 @@ class ScannerService:
                 'current_price': round(current_price, 2),
                 'action': action,
                 'action_reason': action_reason,
+                'exit_rule': 'trailing',
                 'trailing_stop_level': round(trailing_stop_level, 2),
                 'distance_to_stop_pct': round(distance_to_stop_pct, 1),
                 'high_water_mark': round(high_water_mark, 2),

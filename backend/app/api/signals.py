@@ -511,13 +511,20 @@ async def get_missed_opportunities(
     - **days**: Look back period (default 90 days)
     - **limit**: Maximum results to return (default 10)
     """
-    from app.services.backtester import backtester_service
+    from app.services.backtester import backtester_service, ExitStrategyConfig, ExitStrategyType
 
-    # Run backtest for the specified period
+    # Run backtest for the specified period. Use the LIVE t30v exit (30% trailing, no profit
+    # target) — NOT the backtester's stale 12% default — so "missed opportunities" reflect
+    # the returns the model actually would have realized. Passing the default painted misses
+    # that would've been stopped out 18pp earlier than the live book (Jul 2026 parity fix).
     try:
         result = backtester_service.run_backtest(
             lookback_days=days,
-            use_momentum_strategy=True
+            use_momentum_strategy=True,
+            exit_strategy=ExitStrategyConfig(
+                strategy_type=ExitStrategyType.TRAILING_STOP,
+                trailing_stop_pct=30.0,
+            ),
         )
     except Exception as e:
         print(f"[MISSED] Backtest failed: {e}")
@@ -836,16 +843,18 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
                           f"source={_ap_row.source})")
                 else:
                     regime_effective_params = {
-                        'trailing_stop_pct': settings.TRAILING_STOP_PCT,
+                        # t30v live default is 30% trailing (config's 12% is legacy DWAP).
+                        # Using 12 here mis-priced buy-signal stops AND missed-opps.
+                        'trailing_stop_pct': 30.0,
                         'near_50d_high_pct': settings.NEAR_50D_HIGH_PCT,
                         'max_positions': settings.MAX_POSITIONS,
                         'position_size_pct': settings.POSITION_SIZE_PCT,
                     }
-                    print("📊 No adaptive params in DB — using config defaults")
+                    print("📊 No adaptive params in DB — using t30v defaults (30% trail)")
             except Exception as _ap_err:
                 print(f"⚠️ Adaptive params read failed (using defaults): {_ap_err}")
                 regime_effective_params = {
-                    'trailing_stop_pct': settings.TRAILING_STOP_PCT,
+                    'trailing_stop_pct': 30.0,
                     'near_50d_high_pct': settings.NEAR_50D_HIGH_PCT,
                     'max_positions': settings.MAX_POSITIONS,
                     'position_size_pct': settings.POSITION_SIZE_PCT,
@@ -1120,7 +1129,9 @@ async def compute_shared_dashboard_data(db: AsyncSession, momentum_top_n: int = 
 
     # --- Missed opportunities ---
     missed_opportunities = []
-    TRAILING_STOP_PCT = (regime_effective_params['trailing_stop_pct'] / 100) if regime_effective_params else 0.12
+    # Live t30v exit (30% trailing); fall back to 30% (NOT the legacy 12%) if regime params
+    # are unavailable so missed-opps match what the model would actually have realized.
+    TRAILING_STOP_PCT = (regime_effective_params['trailing_stop_pct'] / 100) if regime_effective_params else 0.30
     try:
         from app.core.database import WalkForwardSimulation
         import json as _json
@@ -1800,6 +1811,8 @@ async def _get_positions_with_guidance(db: AsyncSession, user, regime_forecast_d
                 'current_price': current_price,
                 'highest_price': float(getattr(p, 'highest_price', None) or p.entry_price),
                 'sector': getattr(p, 'sector', '') or '',
+                # Strategy that opened the trade — drives which exit rule applies below.
+                'source': getattr(p, 'source', None) or 'preserver',
             })
 
         if pos_dicts:
@@ -1842,6 +1855,7 @@ async def get_dashboard_data(
     momentum_top_n: int = 30,
     fresh_days: int = 5,
     as_of_date: Optional[str] = None,
+    preview_tier: Optional[str] = None,
 ):
     """
     Unified dashboard endpoint.
@@ -1869,15 +1883,18 @@ async def get_dashboard_data(
 
     # --- Check subscription status ---
     has_valid_sub = False
+    subscription = None
     if user:
+        # Load the subscription for everyone (admins included) so tier serving can read
+        # the Maximizer entitlement (has_maxpp_addon / compmax); admins still bypass the
+        # validity gate below.
+        sub_result = await db.execute(
+            select(Subscription).where(Subscription.user_id == user.id)
+        )
+        subscription = sub_result.scalar_one_or_none()
         if user.is_admin():
             has_valid_sub = True
         else:
-            # Load subscription if not already loaded
-            sub_result = await db.execute(
-                select(Subscription).where(Subscription.user_id == user.id)
-            )
-            subscription = sub_result.scalar_one_or_none()
             has_valid_sub = subscription is not None and subscription.is_valid()
 
     # --- Time-travel mode (admin only) — always compute live ---
@@ -1960,10 +1977,52 @@ async def get_dashboard_data(
         if m.get('symbol', '') not in open_syms
     ]
 
+    # --- Tier-aware serving (WS3, flag-gated, reversible) ---
+    # Everyone is served the Preserver base; Maximizer-entitled users see the breakout
+    # book in rotating_bull. Off (TIER_SERVING unset) => legacy Core payload unchanged.
+    tier_meta = {'tier': None, 'signal_source': 'preserver', 'exit_rule': 'trailing', 'tier_note': None}
+    upsell_missed = []
+    try:
+        from app.services import tier_serving
+        if tier_serving.tier_serving_enabled():
+            _preview = preview_tier if (user and user.is_admin()) else None
+            tier = tier_serving.resolve_tier(
+                subscription, is_admin=bool(user and user.is_admin()), preview_tier=_preview
+            )
+            overlay = await tier_serving.apply_tier_serving(
+                db, cached, tier, scanner_service.data_cache, buy_signals
+            )
+            # Re-annotate held state on the (possibly swapped) list.
+            served = []
+            for s in overlay['buy_signals']:
+                annotated = dict(s)
+                annotated['in_user_position'] = s.get('symbol', '') in open_syms
+                served.append(annotated)
+            buy_signals = served
+            tier_meta = {k: overlay.get(k) for k in ('tier', 'signal_source', 'exit_rule', 'tier_note')}
+            # Maximizer serves breakout-based missed-opps (real closed breakout winners),
+            # filtered like the base list (drop names the user already holds).
+            if overlay.get('missed_opportunities') is not None:
+                missed_opportunities = [
+                    m for m in overlay['missed_opportunities']
+                    if m.get('symbol', '') not in open_syms
+                ]
+            # Preserver upsell: breakout winners Maximizer caught (separate block).
+            upsell_missed = overlay.get('upsell_missed') or []
+    except Exception as e:
+        import traceback
+        print(f"⚠️ tier serving skipped (serving Core base): {e}")
+        print(traceback.format_exc()[:1500])
+
     return {
         'regime_forecast': cached.get('regime_forecast'),
         'regime_adjustments': cached.get('regime_adjustments'),
         'buy_signals': buy_signals,
+        'tier': tier_meta['tier'],
+        'signal_source': tier_meta['signal_source'],
+        'exit_rule': tier_meta['exit_rule'],
+        'tier_note': tier_meta['tier_note'],
+        'upsell_missed': upsell_missed,
         'positions_with_guidance': positions_with_guidance,
         'watchlist': cached.get('watchlist', []),
         'market_stats': cached.get('market_stats', {}),

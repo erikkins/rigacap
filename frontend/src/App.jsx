@@ -257,7 +257,7 @@ const ErrorDisplay = ({ message, onRetry }) => (
 // LoginModal is now imported from ./components/LoginModal
 
 // Buy Modal Component
-const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanced', timeTravelDate = null, lastPositionDollars = null }) => {
+const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanced', timeTravelDate = null, lastPositionDollars = null, source = 'preserver' }) => {
   // Default the share count to the user's last BUY's dollar amount. New
   // users (no prior BUY) get a $10K default. Clamp to avoid 9999-share
   // nonsense when `price` falls through its fallback chain to 0.
@@ -279,6 +279,7 @@ const BuyModal = ({ symbol, price, stockInfo, onClose, onBuy, viewMode = 'advanc
         symbol,
         shares,
         price: entryPrice,
+        source,  // scope the trade to the strategy that opened it (t30v | breakout)
         ...(timeTravelDate && { entry_date: timeTravelDate }),
       });
       logEvent('record_entry_success', { symbol, shares, price: entryPrice, position_id: result.position?.id });
@@ -1320,6 +1321,7 @@ const StockChartModal = ({ symbol, type, data, onClose, onAction, liveQuote, vie
           viewMode={viewMode}
           timeTravelDate={timeTravelDate}
           lastPositionDollars={lastPositionDollars}
+          source={data?.source || 'preserver'}
           onClose={() => setShowBuyModal(false)}
           onBuy={(positionData) => {
             onAction && onAction(positionData);
@@ -3782,6 +3784,7 @@ function Dashboard() {
                       };
 
                       const renderSimpleSignal = (s) => {
+                        const isBreakout = s.source === 'breakout';
                         const label = s.signal_strength_label || (() => {
                           const score = s.ensemble_score || 0;
                           if (score >= 88) return 'Very Strong';
@@ -3789,10 +3792,6 @@ function Dashboard() {
                           if (score >= 61) return 'Moderate';
                           return 'Weak';
                         })();
-                        const labelColor = label === 'Very Strong' ? 'bg-positive text-white' :
-                                          label === 'Strong' ? 'bg-positive/10 text-positive' :
-                                          label === 'Moderate' ? 'bg-claret/10 text-ink' :
-                                          'bg-paper-deep text-ink-mute';
                         return (
                           <div
                             key={s.symbol}
@@ -3812,15 +3811,27 @@ function Dashboard() {
                           >
                             <div className="flex items-baseline gap-2 min-w-0">
                               <span className="font-display text-[1.1rem] font-medium tracking-tight truncate" style={{ fontVariationSettings: '"opsz" 48' }}>{s.symbol}</span>
-                              {renderContinuityBadge(s)}
+                              {isBreakout && <span className="font-mono text-[0.58rem] tracking-[0.16em] uppercase text-claret border border-claret/40 px-1.5 py-0.5 whitespace-nowrap">Breakout</span>}
+                              {!isBreakout && renderContinuityBadge(s)}
                             </div>
                             <span className="font-mono text-[0.88rem] text-ink-mute text-right">${s.price?.toFixed(2)}</span>
-                            <span className="font-mono text-[0.7rem] tracking-[0.1em] uppercase text-claret text-right whitespace-nowrap">
-                              <span className="text-ink">{Math.round(s.ensemble_score || 0)}</span> · {label}
-                            </span>
+                            {isBreakout ? (
+                              /* Breakout: show the 29-day hold countdown, not a momentum score */
+                              <span className="font-mono text-[0.7rem] tracking-[0.1em] uppercase text-ink-mute text-right whitespace-nowrap">
+                                {s.status === 'holding'
+                                  ? <><span className="text-ink">Day {s.days_held}/{s.hold_days}</span> · {s.days_left}d left</>
+                                  : <>New · hold {s.hold_days}d</>}
+                              </span>
+                            ) : (
+                              <span className="font-mono text-[0.7rem] tracking-[0.1em] uppercase text-claret text-right whitespace-nowrap">
+                                <span className="text-ink">{Math.round(s.ensemble_score || 0)}</span> · {label}
+                              </span>
+                            )}
                             <div className="text-right">
                               {s.in_user_position ? (
                                 <span className="font-body text-[0.7rem] font-medium tracking-[0.12em] uppercase px-2.5 py-1 bg-paper-card text-ink-mute border border-rule whitespace-nowrap inline-block">Held</span>
+                              ) : isBreakout && s.status === 'holding' ? (
+                                <span className="font-body text-[0.7rem] font-medium tracking-[0.12em] uppercase px-2.5 py-1 bg-paper-card text-ink-mute border border-rule whitespace-nowrap inline-block">Mirror</span>
                               ) : s.is_fresh && (
                                 <span className="font-body text-[0.7rem] font-medium tracking-[0.12em] uppercase px-2.5 py-1 bg-ink text-paper border border-ink hover:bg-claret hover:border-claret transition-colors whitespace-nowrap inline-block">+ Entry</span>
                               )}
@@ -3829,7 +3840,9 @@ function Dashboard() {
                         );
                       };
 
-                      const renderAdvancedSignal = (s) => (
+                      const renderAdvancedSignal = (s) => {
+                        const isBreakout = s.source === 'breakout';
+                        return (
                         <tr
                           key={s.symbol}
                           className={`cursor-pointer transition-colors ${
@@ -3846,15 +3859,25 @@ function Dashboard() {
                             <span className="font-display text-[1.05rem] font-medium tracking-tight" style={{ fontVariationSettings: '"opsz" 48' }}>
                               {s.symbol}
                             </span>
-                            {renderContinuityBadge(s)}
+                            {isBreakout
+                              ? <span className="font-mono text-[0.58rem] tracking-[0.16em] uppercase text-claret border border-claret/40 px-1.5 py-0.5 ml-2 whitespace-nowrap">Breakout</span>
+                              : renderContinuityBadge(s)}
                           </td>
                           <td className="px-3 py-3 text-right font-mono text-[0.88rem]">${s.price?.toFixed(2)}</td>
-                          <td className="px-3 py-3 text-right font-mono text-[0.88rem] text-positive">+{s.pct_above_dwap?.toFixed(1)}%</td>
+                          <td className="px-3 py-3 text-right font-mono text-[0.88rem] text-positive">
+                            {isBreakout ? <span className="text-ink-mute">—</span> : <>+{s.pct_above_dwap?.toFixed(1)}%</>}
+                          </td>
                           <td className="px-3 py-3 text-center font-mono text-[0.95rem] text-ink">
-                            {Math.round(s.ensemble_score || 0)}
+                            {isBreakout
+                              ? (s.status === 'holding' ? `${s.days_held}/${s.hold_days}` : <span className="text-ink-mute">—</span>)
+                              : Math.round(s.ensemble_score || 0)}
                           </td>
                           <td className="px-3 py-2.5 text-center">
-                            {(() => {
+                            {isBreakout ? (
+                              <span className="font-mono text-[0.7rem] tracking-[0.12em] uppercase text-claret whitespace-nowrap">
+                                {s.status === 'holding' ? `${s.days_left}d to exit` : `Hold ${s.hold_days}d`}
+                              </span>
+                            ) : (() => {
                               const label = s.signal_strength_label || (() => {
                                 const score = s.ensemble_score || 0;
                                 if (score >= 88) return 'Very Strong';
@@ -3870,6 +3893,10 @@ function Dashboard() {
                               <span className="font-body text-[0.7rem] font-medium tracking-[0.1em] uppercase px-2.5 py-1 bg-paper-card text-ink-mute border border-rule whitespace-nowrap inline-block">
                                 Held
                               </span>
+                            ) : isBreakout && s.status === 'holding' ? (
+                              <span className="font-body text-[0.7rem] font-medium tracking-[0.1em] uppercase px-2.5 py-1 bg-paper-card text-ink-mute border border-rule whitespace-nowrap inline-block">
+                                Mirror
+                              </span>
                             ) : s.is_fresh && (
                               <button
                                 onClick={(e) => {
@@ -3883,7 +3910,8 @@ function Dashboard() {
                             )}
                           </td>
                         </tr>
-                      );
+                        );
+                      };
 
                       return (
                         <div>
@@ -3930,6 +3958,18 @@ function Dashboard() {
                                   })()}
                                 </span>
                                 <p className="font-display italic text-[1rem] text-ink leading-[1.6]">{dashboardData.market_context}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Tier note — expectation-setter for the active regime/tier
+                              (e.g. "your Maximizer book is hunting breakouts, held ~29
+                              trading days" or the Preserver capitulation posture). Served
+                              by the tier-aware dashboard path; absent => nothing renders. */}
+                          {dashboardData?.tier_note && (
+                            <div className="px-4 pt-3">
+                              <div className="py-3 px-4 bg-claret/5 border-l-2 border-claret font-display italic text-[0.9rem] text-ink leading-[1.55]" style={{ fontVariationSettings: '"opsz" 24' }}>
+                                {dashboardData.tier_note}
                               </div>
                             </div>
                           )}
@@ -4419,6 +4459,36 @@ function Dashboard() {
                   </div>
                 </div>
               )
+            )}
+
+            {/* Maximizer upsell — breakout winners the Maximizer book caught (real closed
+                trades), shown to Preserver users only (backend populates upsell_missed just
+                for them). "What the aggressive tier would have added." */}
+            {(dashboardData?.upsell_missed?.length > 0) && (
+              <div className="mt-6 border border-claret/30 bg-claret/5 rounded p-4">
+                <div className="flex items-baseline justify-between mb-3">
+                  <h3 className="font-display text-[1.05rem] font-medium text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 32' }}>
+                    What Maximizer caught
+                  </h3>
+                  <span className="font-mono text-[0.62rem] tracking-[0.16em] uppercase text-claret">Upgrade</span>
+                </div>
+                <p className="font-display italic text-[0.88rem] text-ink-mute mb-3 leading-[1.5]" style={{ fontVariationSettings: '"opsz" 24' }}>
+                  Breakout trades the Maximizer tier closed for a gain in rotating-bull regimes — a 29-day hold, no trailing stop. Add Maximizer to mirror these.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {dashboardData.upsell_missed.slice(0, 6).map((m) => (
+                    <div
+                      key={m.symbol}
+                      className="bg-paper-card border border-claret/30 rounded px-3 py-2 text-center cursor-pointer hover:bg-paper-deep transition-colors"
+                      onClick={() => setChartModal({ type: 'missed', data: m, symbol: m.symbol })}
+                    >
+                      <span className="font-display text-[0.95rem] font-medium text-ink" style={{ fontVariationSettings: '"opsz" 32' }}>{m.symbol}</span>
+                      <div className="text-positive font-mono font-bold text-[0.82rem]">+{m.would_be_return?.toFixed(0)}%</div>
+                      <div className="font-mono text-[0.6rem] text-ink-mute">{m.days_held}d hold</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
 
             {/* Backtest/Walk-Forward summary */}
