@@ -1,19 +1,20 @@
-"""Maximizer book + shadow orchestration — mirrors preserver_service.
+"""Maximizer book + shadow orchestration — the CERTIFIED construction.
 
-MaximizerBook == PreserverBook (single capital pool, hold-to-exit rule B) with TWO additions:
-  1. `breakout` is an active sleeve source (rotating_bull entries), alongside pullback_ma
-     (calm_bull) and oversold_bounce (capitulation). range_bound routes to Core t30v (the live
-     model portfolio, referenced read-only — not re-entered here), same as Preserver's rotating
-     leg.
-  2. The breakout leg wears the Barroso VOL-BRAKE: breakout entries are scaled down when the
-     book's own recent realized vol spikes (the momentum-crash "seatbelt"). This is an
-     ENTRY-TIME exposure approximation of the research return-stream brake
-     (scripts/tier_vintages_daily.py `vol_scale`) — rule B forbids continuously rescaling held
-     positions, so the book scales exposure at entry only. Faithful-in-RANGE, not penny-exact
-     (same modeling posture as the Preserver single-pool book).
+MaximizerBook = a full-notional gated-BREAKOUT standing book + a CONTINUOUS book-level
+VOL-TARGET (Barroso). Validated penny-to-penny vs maximizer_portfolio.replay_sleeve('breakout')
++ vol_scaled_returns (see project_tier_reconciliation_jul21 — 38.7%/79.1% survivorship-free).
+
+  - Breakout sleeve holds real positions (hold-to-exit); entries fire ONLY on days routed to
+    breakout (rotating_bull) — build_daily_signals returns src='breakout' only then, so in every
+    other regime the book adds nothing and held names age out. That IS the regime gate.
+  - Reported equity earns the sleeve's daily return SCALED by the vol-target (target / trailing
+    realized vol, lagged, capped 1.0) — exposure-scaling on the return stream, which ports.
+  - NO t30v leg (the earlier ad-hoc book had entry-time brake + a t30v leg — both wrong; the
+    ungated/entry-brake version under-captured badly). The Preserver/t30v layer is served
+    SEPARATELY: a Maximizer subscriber gets Preserver signals + this breakout layer, delineated.
 
 Additive / offline-testable: takes prices + candidates as args, no DB. `run_shadow_day` wires
-it into the daily scan behind the MAXIMIZER_SHADOW env flag (dark until enabled).
+it into the daily scan behind the MAXIMIZER_SHADOW env flag.
 """
 from __future__ import annotations
 
@@ -25,44 +26,50 @@ from app.services.maximizer_sleeves import route, VOL_TARGET  # noqa: F401 (rout
 
 CAP0 = 100_000.0
 COST = 0.0015
-SLEEVE_SOURCES = ("pullback_ma", "oversold_bounce", "breakout")
-_BRAKE_SOURCE = "breakout"
-_VOL_WIN = 20  # trailing daily returns for the realized-vol brake input
-# Maximizer mirrors Core (t30v leg) ONLY in range_bound (rotating_bull routes to breakout).
-# Same rule-B turnover release as Preserver when a t30v leg exists and the regime flips.
-T30V_TURNOVER_DAYS = 85
+BREAKOUT_SOURCE = "breakout"
+_VOL_WIN = 20  # trailing window for the book-level realized-vol target
 
 
 class MaximizerBook:
-    """Single-pool sleeve book with the breakout leg + vol-brake. `advance_day` is one trading
-    day. Rule B: held positions exit by their own hold, never churned on a regime flip."""
+    """CERTIFIED Maximizer construction (validated penny-to-penny vs maximizer_portfolio):
+    a full-notional gated-BREAKOUT standing book + a CONTINUOUS book-level VOL-TARGET.
+
+    - The breakout sleeve holds real positions (hold-to-exit); entries fire ONLY when the day
+      is routed to breakout (rotating_bull, via route()/build_daily_signals) — in every other
+      regime build_daily_signals returns a non-breakout source, so the book adds nothing and
+      the held breakout names simply age out. That IS the regime gate (the earlier ungated /
+      entry-time-braked ad-hoc book was wrong — see project_tier_reconciliation_jul21).
+    - The reported Maximizer equity earns the breakout sleeve's daily return SCALED by the
+      Barroso vol-target (target / trailing realized vol, lagged, capped 1.0). Exposure-scaling
+      on the return stream = maximizer_portfolio.vol_scaled_returns, so it ports faithfully.
+    - NO t30v leg here: the Preserver/t30v layer is served separately (a Maximizer subscriber
+      gets Preserver signals + this breakout layer, delineated).
+    `core_ret` is accepted but unused (interface compat with the shadow hook)."""
 
     def __init__(self, n_positions: int = 15, cap0: float = CAP0, cost: float = COST):
         self.n = n_positions
-        self.cash = cap0
         self.cost = cost
-        self.pos: Dict[str, dict] = {}
+        self.bk_cash = cap0              # full-notional breakout sleeve book (cash side)
+        self.pos: Dict[str, dict] = {}   # breakout positions
         self.last: Dict[str, float] = {}
-        self.eq_hist: List[float] = []   # trailing book equity, for the vol-brake (causal)
-        self.t30v_value = 0.0            # $ in the mirrored Core (t30v) leg — funded only in range_bound
+        self.bk_eq_hist: List[float] = []  # breakout sleeve equity history (r_bk + vol-target)
+        self.max_value = cap0            # the vol-scaled Maximizer equity (what we report)
+
+    def _bk_equity(self) -> float:
+        return self.bk_cash + sum(p["shares"] * self.last.get(s, p["last"]) for s, p in self.pos.items())
 
     def equity(self) -> float:
-        return (self.cash + self.t30v_value
-                + sum(p["shares"] * self.last.get(s, p["last"]) for s, p in self.pos.items()))
+        return self.max_value
 
     def source_counts(self) -> Dict[str, int]:
-        out: Dict[str, int] = {}
-        for p in self.pos.values():
-            out[p["source"]] = out.get(p["source"], 0) + 1
-        return out
+        return {BREAKOUT_SOURCE: len(self.pos)} if self.pos else {}
 
-    def _vol_scale_factor(self) -> float:
-        """Barroso brake: target / trailing-realized-vol (annualized), capped at 1.0. Computed
-        from the book's OWN prior daily returns (causal — uses history BEFORE today's entries),
-        mirroring the research `vol_scale` lag. Returns 1.0 (no brake) until enough history."""
-        if len(self.eq_hist) < _VOL_WIN + 1:
+    def _vol_scale(self) -> float:
+        """Barroso vol-target: target / trailing realized vol of the breakout sleeve (annualized,
+        LAGGED — computed from history BEFORE today, so causal), capped at 1.0. 1.0 until warm."""
+        if len(self.bk_eq_hist) < _VOL_WIN + 1:
             return 1.0
-        eq = pd.Series(self.eq_hist[-(_VOL_WIN + 1):])
+        eq = pd.Series(self.bk_eq_hist[-(_VOL_WIN + 1):])
         rv = float(eq.pct_change().std() * (252 ** 0.5))
         if rv <= 0 or rv != rv:
             return 1.0
@@ -70,34 +77,19 @@ class MaximizerBook:
 
     def advance_day(self, today, active_source: str, candidates: List[dict],
                     price_of: Dict[str, float], core_ret: float = 0.0) -> float:
-        """One trading day. candidates: ranked [{symbol, hold}] for the active sleeve today.
-        price_of: {symbol: today_close}. core_ret: live Core book daily total return — the
-        mirrored t30v leg earns it (Maximizer == Core in range_bound). Returns EOD equity."""
+        """One trading day. candidates = ranked breakout names for today (empty unless the regime
+        is routed to breakout). Returns the vol-scaled Maximizer equity."""
         for s, px in price_of.items():
             if px == px:  # not NaN
                 self.last[s] = px
-        # 0) the mirrored t30v leg earns the live Core book's return for the day
-        if self.t30v_value and core_ret == core_ret:  # core_ret not NaN
-            self.t30v_value *= (1.0 + core_ret)
-        # 1) age + exits — each position by ITS OWN hold (rule B: mixed sources coexist)
+        # exits — breakout positions by their own hold
         for p in self.pos.values():
             p["days_held"] += 1
         for s in [s for s, p in self.pos.items() if p["days_held"] >= p["hold"]]:
-            self.cash += self.pos[s]["shares"] * self.last.get(s, self.pos[s]["last"]) * (1 - self.cost)
+            self.bk_cash += self.pos[s]["shares"] * self.last.get(s, self.pos[s]["last"]) * (1 - self.cost)
             del self.pos[s]
-        # 2a) range_bound (t30v-routed): mirror Core — pour any free cash into the t30v leg.
-        if active_source == "t30v":
-            if self.cash > 0:
-                self.t30v_value += self.cash * (1 - self.cost)
-                self.cash = 0.0
-        # 2b) sleeve regime (breakout / pullback_ma / oversold_bounce): rule B — release any
-        #     t30v leg to cash over turnover, then enter names. Breakout wears the vol-brake.
-        elif active_source in SLEEVE_SOURCES:
-            if self.t30v_value > 0:
-                rel = self.t30v_value / T30V_TURNOVER_DAYS
-                self.cash += rel
-                self.t30v_value -= rel
-            brake = self._vol_scale_factor() if active_source == _BRAKE_SOURCE else 1.0
+        # entries — ONLY the gated breakout sleeve (fires only when routed to breakout)
+        if active_source == BREAKOUT_SOURCE:
             free = self.n - len(self.pos)
             for cand in candidates:
                 if free <= 0:
@@ -108,20 +100,24 @@ class MaximizerBook:
                 price = price_of.get(s)
                 if price is None or price != price:
                     continue
-                # reserve entry cost so cash can't go negative when cash-bound; then vol-brake scale
-                alloc = min(self.equity() / self.n, self.cash / (1 + self.cost)) * brake
+                alloc = min(self._bk_equity() / self.n, self.bk_cash / (1 + self.cost))
                 if alloc <= 0:
                     break
                 shares = alloc / price
-                self.cash -= alloc + alloc * self.cost
-                self.pos[s] = {"shares": shares, "entry": price, "hold": int(cand.get("hold", 20)),
-                               "days_held": 0, "source": active_source, "last": price}
+                self.bk_cash -= alloc + alloc * self.cost
+                self.pos[s] = {"shares": shares, "entry": price, "hold": int(cand.get("hold", 29)),
+                               "days_held": 0, "source": BREAKOUT_SOURCE, "last": price}
                 free -= 1
-        eq = self.equity()
-        self.eq_hist.append(eq)
-        if len(self.eq_hist) > 60:      # cap history (brake only needs ~21)
-            self.eq_hist = self.eq_hist[-60:]
-        return eq
+        # vol-target: scale today's breakout return into the reported Maximizer equity
+        bk_eq = self._bk_equity()
+        prev = self.bk_eq_hist[-1] if self.bk_eq_hist else CAP0
+        r_bk = (bk_eq / prev - 1.0) if prev else 0.0
+        vs = self._vol_scale()                       # from PRIOR history (lagged), before append
+        self.max_value *= (1.0 + vs * r_bk)
+        self.bk_eq_hist.append(bk_eq)
+        if len(self.bk_eq_hist) > 60:
+            self.bk_eq_hist = self.bk_eq_hist[-60:]
+        return self.max_value
 
     # ── persistence (shadow book survives across daily runs via a snapshot row) ──
     def to_positions(self) -> List[dict]:
@@ -129,16 +125,16 @@ class MaximizerBook:
                 for s, p in self.pos.items()]
 
     @classmethod
-    def from_state(cls, cash: float, positions: List[dict], last: Dict[str, float] = None,
-                   eq_hist: List[float] = None, t30v_value: float = 0.0, **kw) -> "MaximizerBook":
+    def from_state(cls, bk_cash: float, positions: List[dict], last: Dict[str, float] = None,
+                   bk_eq_hist: List[float] = None, max_value: float = CAP0, **kw) -> "MaximizerBook":
         b = cls(**kw)
-        b.cash = cash
-        b.t30v_value = t30v_value or 0.0
+        b.bk_cash = bk_cash if bk_cash is not None else CAP0
+        b.max_value = max_value if max_value is not None else CAP0
         b.last = dict(last or {})
-        b.eq_hist = list(eq_hist or [])
+        b.bk_eq_hist = list(bk_eq_hist or [])
         for p in positions or []:
             b.pos[p["symbol"]] = {"shares": p["shares"], "entry": p["entry"], "hold": p["hold"],
-                                  "days_held": p["days_held"], "source": p["source"],
+                                  "days_held": p["days_held"], "source": p.get("source", BREAKOUT_SOURCE),
                                   "last": (last or {}).get(p["symbol"], p["entry"])}
         return b
 
@@ -169,33 +165,17 @@ async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_po
     )).scalars().first()
     if last_row and isinstance(last_row.positions_json, dict):
         st = last_row.positions_json
-        book = MaximizerBook.from_state(cash=st.get("cash", CAP0), positions=st.get("positions", []),
-                                        eq_hist=st.get("eq_hist", []), t30v_value=st.get("t30v_value", 0.0),
+        book = MaximizerBook.from_state(bk_cash=st.get("bk_cash", CAP0), positions=st.get("positions", []),
+                                        bk_eq_hist=st.get("bk_eq_hist", []), max_value=st.get("max_value", CAP0),
                                         n_positions=n_positions)
     else:
         book = MaximizerBook(n_positions=n_positions)
 
-    # Core's daily total return for the mirrored t30v leg (funded only in range_bound).
-    core_ret = 0.0
-    try:
-        from app.core.database import ModelPortfolioSnapshot
-        from datetime import datetime as _dtm, time as _tm
-        _cut = _dtm.combine(sd, _tm(23, 59, 59))
-        _tv = (await db.execute(
-            select(ModelPortfolioSnapshot.total_value)
-            .where(ModelPortfolioSnapshot.portfolio_type == "live",
-                   ModelPortfolioSnapshot.snapshot_date <= _cut)
-            .order_by(ModelPortfolioSnapshot.snapshot_date.desc()).limit(2)
-        )).scalars().all()
-        if len(_tv) == 2 and _tv[1]:
-            core_ret = _tv[0] / _tv[1] - 1.0
-    except Exception as _cre:
-        print(f"⚠️ Maximizer shadow: core_ret fetch failed (leg flat today): {_cre}")
-
-    # 2) route + today's routed candidates
+    # 2) route + today's routed candidates. Only the breakout sleeve feeds the Maximizer book
+    #    (gated: build_daily_signals returns src='breakout' only in rotating_bull).
     src, cands = build_daily_signals(data_cache, regime, t30v_signals, sd, max_positions=n_positions)
     book_cands = ([{"symbol": c["symbol"], "hold": SLEEVE_HOLD[src]} for c in cands]
-                  if src in SLEEVE_SOURCES else [])
+                  if src == BREAKOUT_SOURCE else [])
 
     # 3) today's prices (latest close per symbol from the shared cache)
     price_of = {}
@@ -206,8 +186,8 @@ async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_po
         except Exception:
             pass
 
-    # 4) advance the book one trading day (t30v leg earns core_ret; breakout leg per rule B)
-    equity = book.advance_day(sd, src, book_cands, price_of, core_ret=core_ret)
+    # 4) advance the book one trading day (gated breakout sleeve + book-level vol-target)
+    equity = book.advance_day(sd, src, book_cands, price_of)
 
     # 5) persist today's routed candidates (upsert) + the book snapshot (upsert)
     for c in cands:
@@ -223,8 +203,8 @@ async def run_shadow_day(db, signal_date, regime, t30v_signals, data_cache, n_po
                   "hold_days": stmt.excluded.hold_days, "status": stmt.excluded.status})
         await db.execute(stmt)
 
-    snap = {"cash": book.cash, "positions": book.to_positions(), "eq_hist": book.eq_hist,
-            "t30v_value": book.t30v_value}
+    snap = {"bk_cash": book.bk_cash, "positions": book.to_positions(),
+            "bk_eq_hist": book.bk_eq_hist, "max_value": book.max_value}
     snap_stmt = pg_insert(MaximizerBookSnapshot).values(
         snapshot_date=sd, regime=regime, active_source=src, equity=equity, positions_json=snap)
     snap_stmt = snap_stmt.on_conflict_do_update(
