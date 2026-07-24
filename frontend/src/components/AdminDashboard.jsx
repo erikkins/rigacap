@@ -12,12 +12,14 @@ import SocialTab from './SocialTab';
 import HygieneTab from './HygieneTab';
 import LeadsTab from './LeadsTab';
 import TrafficTab from './TrafficTab';
+import TierBooksTab from './TierBooksTab';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: Activity },
   { id: 'portfolio', label: 'Portfolio', icon: Briefcase },
+  { id: 'tierbooks', label: 'Tier Books', icon: BarChart3 },
   { id: 'strategies', label: 'Strategies', icon: TrendingUp },
   { id: 'lab', label: 'Strategy Lab', icon: Beaker },
   { id: 'autopilot', label: 'Auto-Pilot', icon: Bot },
@@ -37,7 +39,7 @@ export default function AdminDashboard() {
     try {
       const params = new URLSearchParams(window.location.search);
       const fromUrl = params.get('tab');
-      if (fromUrl && ['overview','portfolio','strategies','lab','autopilot','social','newsletter','leads','traffic','hygiene','users'].includes(fromUrl)) {
+      if (fromUrl && ['overview','portfolio','tierbooks','strategies','lab','autopilot','social','newsletter','leads','traffic','hygiene','users'].includes(fromUrl)) {
         return fromUrl;
       }
     } catch (e) {}
@@ -421,6 +423,9 @@ export default function AdminDashboard() {
         <ModelPortfolioTab fetchWithAuth={fetchWithAuth} />
       )}
 
+      {activeTab === 'tierbooks' && (
+        <TierBooksTab fetchWithAuth={fetchWithAuth} />
+      )}
       {activeTab === 'strategies' && (
         <StrategiesTab
           strategies={strategies}
