@@ -2610,6 +2610,14 @@ function Dashboard() {
               <h1 className="font-display text-lg sm:text-xl font-semibold text-ink tracking-tight" style={{ fontVariationSettings: '"opsz" 144' }}>RigaCap<span className="text-claret">.</span></h1>
               <p className="text-[0.65rem] font-medium tracking-[0.2em] uppercase text-ink-mute hidden sm:block">Ensemble Signals</p>
             </div>
+            {/* Tier badge — which product the subscriber is on (has_maximizer add-on -> Maximizer). */}
+            {user?.subscription && (
+              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
+                user.subscription.has_maximizer ? 'bg-claret/10 text-claret' : 'bg-rule-dark/10 text-ink-mute'
+              }`}>
+                {user.subscription.has_maximizer ? 'Maximizer' : 'Preserver'}
+              </span>
+            )}
           </div>
 
           <nav className="flex items-center border border-rule-dark bg-paper-card">
@@ -3072,10 +3080,10 @@ function Dashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
-                  {/* Regime TELL — expectation-setter (not a trade signal). tier defaults to
-                      'preserver' (the sold base tier); derive 'maximizer' from subscription once
-                      tier-aware serving (WS3) lands. */}
-                  <RegimeTell regime={dashboardData.regime_forecast.current_regime} tier="preserver" />
+                  {/* Regime TELL — expectation-setter (not a trade signal). Tier from the
+                      subscription (has_maximizer add-on -> 'maximizer', else base 'preserver'). */}
+                  <RegimeTell regime={dashboardData.regime_forecast.current_regime}
+                              tier={user?.subscription?.has_maximizer ? 'maximizer' : 'preserver'} />
                   {regimeExpanded && (() => {
                     const rf = dashboardData.regime_forecast;
                     const regimeColors = {
