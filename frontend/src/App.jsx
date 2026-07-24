@@ -2176,9 +2176,15 @@ function Dashboard() {
         setTimeTravelPresets(buildTimeTravelPresets(cached));
       }
 
-      // Step 2: Fetch from authenticated API (signals + user positions with sell guidance)
+      // Step 2: Fetch from authenticated API (signals + user positions with sell guidance).
+      // Forward ?preview_tier= from the URL so admins can dark-launch preview a tier
+      // (backend restricts this to admins; ignored for everyone else + when TIER_SERVING off).
+      const _previewTier = new URLSearchParams(window.location.search).get('preview_tier');
+      const _dashUrl = _previewTier
+        ? `${API_BASE}/api/signals/dashboard?preview_tier=${encodeURIComponent(_previewTier)}`
+        : `${API_BASE}/api/signals/dashboard`;
       try {
-        const res = await fetch(`${API_BASE}/api/signals/dashboard`, {
+        const res = await fetch(_dashUrl, {
           headers: api._authHeaders(),
           signal,
         });
