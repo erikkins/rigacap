@@ -57,6 +57,7 @@ import SubscriptionBanner from './components/SubscriptionBanner';
 import CookieConsent from './components/CookieConsent';
 import PageViewBeacon from './components/PageViewBeacon';
 import TwoFactorSettings from './components/TwoFactorSettings';
+import RegimeTell from './RegimeTell';
 // DoubleSignals, MomentumRankings, ApproachingTrigger removed — absorbed into unified dashboard
 
 // ============================================================================
@@ -3071,6 +3072,10 @@ function Dashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
+                  {/* Regime TELL — expectation-setter (not a trade signal). tier defaults to
+                      'preserver' (the sold base tier); derive 'maximizer' from subscription once
+                      tier-aware serving (WS3) lands. */}
+                  <RegimeTell regime={dashboardData.regime_forecast.current_regime} tier="preserver" />
                   {regimeExpanded && (() => {
                     const rf = dashboardData.regime_forecast;
                     const regimeColors = {
