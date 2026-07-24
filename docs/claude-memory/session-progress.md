@@ -9,6 +9,11 @@ metadata:
 
 # Session snapshot
 
+## ▶ Jul 24 2026 — RESUMED. Erik: re-run the sleeves over recent timelines on the CERTIFIED constructions to check if prior calcs were wrong; "how does July look, Core/Preserver/Maximizer?"
+- IN FLIGHT: scripts/tier_july.py (Core=t30v pwf.run; Preserver=Core×exposure[0.25 in capitulation]; Maximizer=GATED breakout×vol-target). Warm from 2020-06, reports July-MTD + trailing-3mo/12mo + SPY + July regime mix. /tmp/tier_july.log, Monitor beaam792x.
+- Will compare trailing-12mo vs OLD pre-bug numbers (recent_tier_curves.json Jul-9: Preserver +25.8%, Maximizer +63.5%) to see if prior calcs were off. NOTE: July likely all rotating_bull → Preserver≈Core in July (diverges only in defensive regimes); Maximizer = gated breakout shows its own number.
+- REMEMBER (verify-first, Erik's feedback): report facts only, no conclusions until numbers seen.
+
 ## 🌙 END OF DAY — Jul 21 2026 (Erik called it ~evening). READ THIS FIRST.
 **What SHIPPED to prod today (honest — mostly shadow, nothing customer-facing):**
 - ✅ CORS/2FA login fix (923c320) — real, small (admin trusted-device login).
