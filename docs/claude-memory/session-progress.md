@@ -7,9 +7,14 @@ metadata:
   originSessionId: b87c584c-343d-4a11-aca7-a450196570be
 ---
 
-# Session progress — updated 2026-09-04
+# Session progress — updated 2026-09-05
 
-## ✅ JUST FIXED + DEPLOYED (44dcba8) — FreeProofView table alignment (Erik's morning bug)
+## ✅ SEP 5 — Newsletter Maximizer time-stops + D7 ribbon offset
+- **Newsletter logic (SHIPPED bcfbd6f, deploying):** weekly "Market, Measured." only counted PRESERVER stops (model_positions portfolio_type='live', reasons trailing_stop/stop_loss/regime_exit) → "0 stops" true for Preserver but blind to Maximizer. Maximizer breakout book's 29-day time-stops live in `tier_fills` (tier='maximizer', side='sell', reason='hold_exit'). Added a tier_fills count (additive, try/except), surfaced as a DISTINCT data-block fact ("scheduled clock exit, NOT loss-cut"), updated §01 + §03 prompts to keep the two exit types distinct. Erik: DON'T regen — this week's letter is LOCKED; fix is for NEXT week's generation (also fixes the §03 "0 stops" bullet auto). newsletter_generator_service.py.
+- **D7 "first week graded" regime ribbon offset (FIXED in scratchpad build_drip.py):** year labels were left-anchored at each year's START boundary (text-anchor default=start, x=i*w) → sat at far-left of each block = looked offset. Fixed to CENTER each label under its year's SPAN midpoint (text-anchor=middle, x=(i0+i1)/2*w) + partial-year min-gap guard (skip if span*w<24). Mirrors frontend BlogSectorObservatoryPage.jsx year-axis convention. Regenerated ribbon_fixed.png, Erik approved. NOTE: drip still NOT productionized (build_drip.py is a scratchpad sample; carry this fix into email_service.send_onboarding_email when porting). Fixed build_drip.py saved to session scratchpad.
+- **Newsletter design (dawn header):** Erik floated adding sun/moon+dawn image like the digest; my rec = KEEP text-forward (essay genre ≠ product-email genre; restraint = premium signal). Erik agreed ("looks like a high end newsletter"). Offered 2 optional light-touch family cues if ever wanted: (1) thin dawn-gradient hairline under masthead replacing the 2px solid rule, (2) small spire/eclipse logomark above kicker. NOT built.
+
+## ✅ SEP 4 (44dcba8) — FreeProofView table alignment (Erik's morning bug)
 - Both the "21-year walk-forward record" table AND "Recent catches" in components/FreeProofView.jsx used `flex justify-between` → middle value floated by left label/ticker width ("Raw momentum (no floor)" shoved its 13.2%/yr right; days-held wobbled by ticker length). Fixed BOTH to `grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]` (label left / value centered / DD-or-return right), tabular-nums + whitespace-nowrap. Build green, pushed, deploying.
 
 ## ✅ ANSWERED — preview expired/noaccount view (Erik's ask)
