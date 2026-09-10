@@ -4009,22 +4009,30 @@ async def snaptrade_connect(
     from app.core.database import SnaptradeUser
     from app.core.config import settings as _settings
     from sqlalchemy import select as _select
-    if not st.is_configured():
-        raise HTTPException(status_code=503, detail="Brokerage connect is not configured")
-    # PAID-ONLY. Live brokerage sync bills ~$1/user/day, so it's a paid-subscriber feature — not
-    # a trial one. require_valid_subscription already let trials through (they're "valid"), so
-    # reject anything that isn't a currently-paid/comped 'active' subscription. The frontend shows
-    # non-paid users a preview instead of ever calling this; this 402 is the server-side backstop.
-    if not (user.is_admin() or (user.subscription and user.subscription.status == "active")):
+    # PAID-ONLY. Live brokerage sync bills per connected user/day, so it's a paid-subscriber
+    # feature — not a trial one. require_valid_subscription already let trials through (they're
+    # "valid"), so reject anything that isn't a currently-paid/comped 'active' subscription (admins
+    # exempt). The frontend shows non-paid users a preview instead of calling this; the 402 is the
+    # server-side backstop.
+    is_paid = bool(user.subscription and user.subscription.status == "active")
+    if not (user.is_admin() or is_paid):
         raise HTTPException(status_code=402, detail="Connecting a brokerage is available on a paid plan")
     row = (await db.execute(_select(SnaptradeUser).where(SnaptradeUser.user_id == user.id))).scalars().first()
     if row and row.status == "active" and row.user_secret:
+        # Existing connection — must keep using the key it was registered under.
+        env = row.st_env or "prod"
+        if not st.is_configured(env):
+            raise HTTPException(status_code=503, detail="Brokerage connect is not configured")
         secret = st.decrypt_secret(row.user_secret)
     else:
-        # New user, OR a previously-deregistered user reconnecting after resubscribing: register
-        # fresh (deleteUser freed the old userId) and (re)activate the same row.
+        # New user, OR a previously-deregistered user reconnecting: register fresh (deleteUser freed
+        # the old userId) and (re)activate the row. Env is chosen by ROLE: admins demo on the test
+        # key (5-connection cap), paying subscribers on the production key.
+        env = "test" if user.is_admin() else "prod"
+        if not st.is_configured(env):
+            raise HTTPException(status_code=503, detail="Brokerage connect is not configured")
         try:
-            secret = await st.register_user(str(user.id))
+            secret = await st.register_user(str(user.id), env=env)
         except Exception as e:
             logger.warning(f"snaptrade register failed for {user.id}: {e}")
             secret = None
@@ -4033,14 +4041,15 @@ async def snaptrade_connect(
         if row:
             row.status = "active"
             row.user_secret = st.encrypt_secret(secret)
+            row.st_env = env
             row.deregistered_at = None
             row.deregistered_reason = None
         else:
-            db.add(SnaptradeUser(user_id=user.id, user_secret=st.encrypt_secret(secret)))
+            db.add(SnaptradeUser(user_id=user.id, user_secret=st.encrypt_secret(secret), st_env=env))
         await db.commit()
     redirect = (getattr(_settings, "FRONTEND_URL", None) or "https://rigacap.com") + "/app?snaptrade=connected"
     try:
-        uri = await st.login_redirect_uri(str(user.id), secret, redirect)
+        uri = await st.login_redirect_uri(str(user.id), secret, redirect, env=env)
     except Exception as e:
         logger.warning(f"snaptrade login failed for {user.id}: {e}")
         uri = None
@@ -4059,14 +4068,16 @@ async def snaptrade_holdings(
     from app.services import snaptrade_service as st
     from app.core.database import SnaptradeUser
     from sqlalchemy import select as _select
-    if not st.is_configured():
-        return {"configured": False, "connected": False, "symbols": [], "sources": [], "account_count": 0}
     row = (await db.execute(_select(SnaptradeUser).where(SnaptradeUser.user_id == user.id))).scalars().first()
     if not row or row.status != "active" or not row.user_secret:
         # never connected, or deregistered (secret nulled) — either way, nothing live to read
-        return {"configured": True, "connected": False, "symbols": [], "sources": [], "account_count": 0}
+        return {"configured": st.is_configured("prod") or st.is_configured("test"),
+                "connected": False, "symbols": [], "sources": [], "account_count": 0}
+    env = row.st_env or "prod"      # read under the key this connection was registered on
+    if not st.is_configured(env):
+        return {"configured": False, "connected": False, "symbols": [], "sources": [], "account_count": 0}
     try:
-        h = await st.all_holdings(str(user.id), st.decrypt_secret(row.user_secret))
+        h = await st.all_holdings(str(user.id), st.decrypt_secret(row.user_secret), env=env)
     except Exception as e:
         logger.warning(f"snaptrade holdings failed for {user.id}: {e}")
         raise HTTPException(status_code=502, detail="Could not fetch holdings")
@@ -4088,13 +4099,14 @@ async def snaptrade_disconnect(
     from app.services import snaptrade_service as st
     from app.core.database import SnaptradeUser
     from sqlalchemy import select as _select
-    if not st.is_configured():
-        raise HTTPException(status_code=503, detail="Brokerage connect is not configured")
     row = (await db.execute(_select(SnaptradeUser).where(SnaptradeUser.user_id == user.id))).scalars().first()
-    if not row:
+    if not row or row.status != "active" or not row.user_secret:
         raise HTTPException(status_code=404, detail="No brokerage connection")
+    env = row.st_env or "prod"
+    if not st.is_configured(env):
+        raise HTTPException(status_code=503, detail="Brokerage connect is not configured")
     try:
-        await st.remove_authorization(str(user.id), st.decrypt_secret(row.user_secret), req.authorization_id)
+        await st.remove_authorization(str(user.id), st.decrypt_secret(row.user_secret), req.authorization_id, env=env)
     except Exception as e:
         logger.warning(f"snaptrade disconnect failed for {user.id}: {e}")
         raise HTTPException(status_code=502, detail="Could not disconnect the brokerage")

@@ -142,6 +142,9 @@ class SnaptradeUser(Base):
     status = Column(String(20), nullable=False, server_default="active", default="active")
     deregistered_at = Column(DateTime, nullable=True)
     deregistered_reason = Column(String(40), nullable=True)   # churn|trial_expired|idle|user_disconnect|admin|reconcile
+    # Which SnapTrade key issued this connection: 'test' (demo key, 5-connection cap — admins) or
+    # 'prod' (production key — paying subscribers). Fixed at register time; every later call uses it.
+    st_env = Column(String(8), nullable=False, server_default="test", default="test")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, onupdate=datetime.utcnow)
 

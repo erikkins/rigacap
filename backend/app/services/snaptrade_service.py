@@ -30,8 +30,25 @@ logger = logging.getLogger(__name__)
 HOST = "https://api.snaptrade.com"
 
 
-def is_configured() -> bool:
-    return bool(os.environ.get("SNAPTRADE_CLIENT_ID") and os.environ.get("SNAPTRADE_CONSUMER_KEY"))
+def _creds(env: str = "prod"):
+    """Resolve (clientId, consumerKey) for a SnapTrade environment. 'test' = the demo key
+    (5-connection cap — used for admin demos); 'prod' = the production key (real subscribers).
+    Each SnapTrade userSecret is issued by ONE key, so a connection's env is fixed at register
+    time (snaptrade_users.st_env) and every later call must use the same env. Test falls back to
+    the unprefixed SNAPTRADE_CLIENT_ID/CONSUMER_KEY so the existing (test) env keeps working
+    without renaming; prod reads the dedicated SNAPTRADE_PROD_* pair."""
+    if (env or "prod").lower() == "test":
+        cid = os.environ.get("SNAPTRADE_TEST_CLIENT_ID") or os.environ.get("SNAPTRADE_CLIENT_ID")
+        key = os.environ.get("SNAPTRADE_TEST_CONSUMER_KEY") or os.environ.get("SNAPTRADE_CONSUMER_KEY")
+    else:
+        cid = os.environ.get("SNAPTRADE_PROD_CLIENT_ID")
+        key = os.environ.get("SNAPTRADE_PROD_CONSUMER_KEY")
+    return cid, key
+
+
+def is_configured(env: str = "prod") -> bool:
+    cid, key = _creds(env)
+    return bool(cid and key)
 
 
 # --- At-rest encryption for the per-user userSecret (KMS-backed) -----------------------------
@@ -64,20 +81,21 @@ def decrypt_secret(stored: str) -> str:
     return _kms_client().decrypt(CiphertextBlob=blob)["Plaintext"].decode()
 
 
-def _sign(path: str, query: str, body) -> str:
-    key = os.environ["SNAPTRADE_CONSUMER_KEY"]
+def _sign(consumer_key: str, path: str, query: str, body) -> str:
     # Signature covers {content, path, query} in that key order, compact-serialized.
     msg = json.dumps({"content": body, "path": path, "query": query}, separators=(",", ":"))
-    return base64.b64encode(hmac.new(key.encode(), msg.encode(), hashlib.sha256).digest()).decode()
+    return base64.b64encode(hmac.new(consumer_key.encode(), msg.encode(), hashlib.sha256).digest()).decode()
 
 
-async def _call(method: str, path: str, query_extra: Optional[dict] = None, body=None):
-    client_id = os.environ["SNAPTRADE_CLIENT_ID"]
+async def _call(method: str, path: str, env: str = "prod", query_extra: Optional[dict] = None, body=None):
+    client_id, consumer_key = _creds(env)
+    if not (client_id and consumer_key):
+        raise RuntimeError(f"snaptrade env '{env}' is not configured")
     q = {"clientId": client_id, "timestamp": str(int(time.time()))}
     if query_extra:
         q.update(query_extra)
     qs = urlencode(sorted(q.items()))
-    headers = {"Signature": _sign(path, qs, body), "Content-Type": "application/json"}
+    headers = {"Signature": _sign(consumer_key, path, qs, body), "Content-Type": "application/json"}
     url = f"{HOST}{path}?{qs}"
     data = json.dumps(body, separators=(",", ":")) if body is not None else None
     async with httpx.AsyncClient(timeout=30) as client:
@@ -91,32 +109,32 @@ async def _call(method: str, path: str, query_extra: Optional[dict] = None, body
     return r.json() if r.content else None
 
 
-async def register_user(user_id: str) -> str:
+async def register_user(user_id: str, env: str = "prod") -> str:
     """Register (idempotent-ish) a SnapTrade user; returns the userSecret to persist."""
-    res = await _call("POST", "/api/v1/snapTrade/registerUser", body={"userId": user_id})
+    res = await _call("POST", "/api/v1/snapTrade/registerUser", env, body={"userId": user_id})
     return (res or {}).get("userSecret")
 
 
-async def login_redirect_uri(user_id: str, user_secret: str, custom_redirect: str) -> Optional[str]:
+async def login_redirect_uri(user_id: str, user_secret: str, custom_redirect: str, env: str = "prod") -> Optional[str]:
     """Connection-portal URL. `custom_redirect` = where the user returns after connecting."""
     res = await _call(
-        "POST", "/api/v1/snapTrade/login",
+        "POST", "/api/v1/snapTrade/login", env,
         query_extra={"userId": user_id, "userSecret": user_secret},
         body={"customRedirect": custom_redirect},
     )
     return (res or {}).get("redirectURI")
 
 
-async def list_accounts(user_id: str, user_secret: str) -> list:
-    res = await _call("GET", "/api/v1/accounts", query_extra={"userId": user_id, "userSecret": user_secret})
+async def list_accounts(user_id: str, user_secret: str, env: str = "prod") -> list:
+    res = await _call("GET", "/api/v1/accounts", env, query_extra={"userId": user_id, "userSecret": user_secret})
     return res or []
 
 
-async def account_positions(user_id: str, user_secret: str, account_id: str) -> list:
+async def account_positions(user_id: str, user_secret: str, account_id: str, env: str = "prod") -> list:
     # The legacy /positions and /holdings are 410 for accounts created after 2026-05-11.
     # Current endpoint = /positions/all (equity + ETF + options + …); positions under "results".
     res = await _call(
-        "GET", f"/api/v1/accounts/{account_id}/positions/all",
+        "GET", f"/api/v1/accounts/{account_id}/positions/all", env,
         query_extra={"userId": user_id, "userSecret": user_secret},
     )
     if isinstance(res, dict):
@@ -132,24 +150,24 @@ def _extract_symbol(pos: dict) -> Optional[str]:
     return sym.upper() if isinstance(sym, str) and sym else None
 
 
-async def remove_authorization(user_id: str, user_secret: str, authorization_id: str) -> None:
+async def remove_authorization(user_id: str, user_secret: str, authorization_id: str, env: str = "prod") -> None:
     """Disconnect a brokerage CONNECTION (removes all its accounts). The legacy
     DELETE /authorizations/{id} is 410; the current path is DELETE /connection/{id}
     (connectionId == the authorization id). Async: 200 = queued for deletion."""
     await _call(
-        "DELETE", f"/api/v1/connection/{authorization_id}",
+        "DELETE", f"/api/v1/connection/{authorization_id}", env,
         query_extra={"userId": user_id, "userSecret": user_secret},
     )
 
 
-async def delete_user(user_id: str) -> None:
+async def delete_user(user_id: str, env: str = "prod") -> None:
     """Deregister a SnapTrade user entirely — removes the user AND all their brokerage
     connections. THIS is what stops SnapTrade's per-connected-user daily billing; removing
     individual authorizations is not guaranteed to. Authenticated at the client level
     (clientId + signature), so no userSecret is required. Idempotent from our side: a 404
     (already gone) is swallowed so cleanup/reconcile can run repeatedly without erroring."""
     try:
-        await _call("DELETE", "/api/v1/snapTrade/deleteUser", query_extra={"userId": user_id})
+        await _call("DELETE", "/api/v1/snapTrade/deleteUser", env, query_extra={"userId": user_id})
     except RuntimeError as e:
         if "404" in str(e):
             logger.info(f"snaptrade deleteUser {user_id}: already absent (404) — treating as done")
@@ -157,12 +175,12 @@ async def delete_user(user_id: str) -> None:
         raise
 
 
-async def all_holdings(user_id: str, user_secret: str) -> dict:
+async def all_holdings(user_id: str, user_secret: str, env: str = "prod") -> dict:
     """Union of position tickers across EVERY connected account (multi-brokerage), plus the
     connected brokerages GROUPED BY CONNECTION (authorization) — so two accounts at one
     broker show as one entry, and each carries the authorization_id used to disconnect it."""
     import asyncio
-    accounts = await list_accounts(user_id, user_secret)
+    accounts = await list_accounts(user_id, user_secret, env)
     brokers = {}       # authorization_id (or institution) -> {institution, authorization_id, accounts}
     account_ids = []
     for acct in accounts:
@@ -179,7 +197,7 @@ async def all_holdings(user_id: str, user_secret: str) -> dict:
             account_ids.append(aid)
     # Fetch positions across accounts IN PARALLEL — each broker sync is ~1-2s; sequential stacks up.
     results = await asyncio.gather(
-        *[account_positions(user_id, user_secret, aid) for aid in account_ids],
+        *[account_positions(user_id, user_secret, aid, env) for aid in account_ids],
         return_exceptions=True,
     )
     symbols = set()

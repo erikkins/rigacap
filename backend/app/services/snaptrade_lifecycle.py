@@ -48,17 +48,20 @@ async def deregister(db: AsyncSession, user_id, reason: str, *, apply: bool = Tr
     if not apply:
         return {"user_id": str(uid), "action": "would_deregister", "reason": reason}
 
+    # Deregister under the SAME key the connection was registered on (test vs prod).
+    env = row.st_env or "prod"
+
     # Stop billing FIRST. Only soft-status the row once SnapTrade confirms — a failed call
     # leaves the row 'active' so the next daily sweep retries it.
-    # SAFETY: if SnapTrade isn't configured on THIS Lambda (e.g. keys missing on the worker), we
-    # must NOT soft-status — doing so would mark the row deregistered while billing keeps running.
-    # Leave it 'active' and bail so a properly-configured run cleans it up.
-    if not st.is_configured():
-        logger.warning(f"snaptrade deregister: not configured on this runtime — skipping {uid} "
-                       f"(row left 'active' to avoid a false deregister while billing continues)")
-        return {"user_id": str(uid), "action": "skipped_not_configured", "reason": reason}
+    # SAFETY: if this env's key isn't configured on THIS Lambda (e.g. keys missing on the worker),
+    # we must NOT soft-status — doing so would mark the row deregistered while billing keeps
+    # running. Leave it 'active' and bail so a properly-configured run cleans it up.
+    if not st.is_configured(env):
+        logger.warning(f"snaptrade deregister: env '{env}' not configured on this runtime — skipping "
+                       f"{uid} (row left 'active' to avoid a false deregister while billing continues)")
+        return {"user_id": str(uid), "action": "skipped_not_configured", "env": env, "reason": reason}
     try:
-        await st.delete_user(str(uid))
+        await st.delete_user(str(uid), env=env)
     except Exception as e:
         logger.warning(f"snaptrade deregister: deleteUser failed for {uid} ({reason}): {e}")
         return {"user_id": str(uid), "action": "error", "reason": reason, "error": str(e)}
