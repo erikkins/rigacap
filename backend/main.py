@@ -1038,6 +1038,51 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"statusCode": 500, "error": str(e)}
 
+    # SnapTrade cost reconcile — deregister any 'active' snaptrade_users row whose subscriber is no
+    # longer a currently-paid ('active' + valid) plan, so we stop paying ~$1/user/day for them. This
+    # is the PRIMARY cleanup for no-card trial abandoners (they never fire a Stripe cancel webhook).
+    # DEFAULTS TO DRY-RUN (log only). Pass {"snaptrade_reconcile":{"apply":true}} to actually delete.
+    if event.get("snaptrade_reconcile"):
+        opts = event.get("snaptrade_reconcile")
+        apply = bool(opts.get("apply")) if isinstance(opts, dict) else False
+        print(f"🧹 SnapTrade reconcile (apply={apply})")
+        try:
+            async def _reconcile():  # noqa: E306
+                from sqlalchemy import select
+                from app.core.database import async_session, SnaptradeUser, Subscription
+                from app.services.snaptrade_lifecycle import deregister
+                flagged = []
+                async with async_session() as db:
+                    rows = (await db.execute(
+                        select(SnaptradeUser).where(SnaptradeUser.status == "active")
+                    )).scalars().all()
+                    for row in rows:
+                        sub = (await db.execute(
+                            select(Subscription).where(Subscription.user_id == row.user_id)
+                        )).scalar_one_or_none()
+                        # Keep ONLY currently-paid subscribers (mirrors the connect gate). Trial /
+                        # canceled / expired / past_due / no-sub all get deregistered.
+                        keep = bool(sub and sub.status == "active" and sub.is_valid())
+                        if keep:
+                            continue
+                        res = await deregister(db, row.user_id, reason="reconcile", apply=apply)
+                        flagged.append({
+                            "user_id": str(row.user_id),
+                            "sub_status": (sub.status if sub else None),
+                            "is_valid": bool(sub and sub.is_valid()),
+                            "action": res.get("action"),
+                        })
+                    return {"scanned_active": len(rows), "flagged_count": len(flagged),
+                            "flagged": flagged, "applied": apply}
+            result = _run_async(_reconcile())
+            print(f"🧹 SnapTrade reconcile results: {result}")
+            return {"statusCode": 200, "body": result}
+        except Exception as e:
+            import traceback
+            print(f"❌ SnapTrade reconcile failed: {e}")
+            print(traceback.format_exc())
+            return {"statusCode": 500, "error": str(e)}
+
     # Unwind pre-universe-change model portfolio positions
     if event.get("unwind_old_positions"):
         print("🔄 Unwinding pre-universe-change model portfolio positions")

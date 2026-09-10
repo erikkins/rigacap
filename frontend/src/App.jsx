@@ -517,6 +517,11 @@ function parseHoldingsCsv(text) {
 // Owns the user's manual/CSV list (localStorage) + live SnapTrade holdings, so both surfaces
 // read ONE held-set. Call once per page (Dashboard / MirrorCockpit) and thread down.
 function useMirrorHoldings() {
+  const { user, isAdmin } = useAuth();
+  // Live brokerage sync is a PAID feature (it bills ~$1/user/day). Trials/free get the Mirror via
+  // manual/CSV entry and, when they click Connect, a preview of what they'll unlock once subscribed.
+  // Admins connect for testing regardless of plan (mirrors the server-side gate in signals.py).
+  const canConnectBroker = isAdmin || user?.subscription?.status === 'active';
   const KEY = 'rigacap_mirror_holdings';
   const SNAP_KEY = 'rigacap_mirror_snap';
   const [holdings, setHoldings] = useState(() => {
@@ -534,6 +539,7 @@ function useMirrorHoldings() {
   const [snapReady, setSnapReady] = useState(!!cachedSnap);   // gate the alignment render until holdings are known
   const [snapOpen, setSnapOpen] = useState(false);            // connection-portal modal
   const [snapLink, setSnapLink] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);      // non-paid "here's what you'll unlock" teaser
   const [csvMsg, setCsvMsg] = useState('');
 
   const addSymbols = (syms) => {
@@ -580,6 +586,7 @@ function useMirrorHoldings() {
     }
   }, []);   // eslint-disable-line react-hooks/exhaustive-deps
   const connectBroker = async () => {
+    if (!canConnectBroker) { setPreviewOpen(true); return; }   // non-paid: show the teaser, never call the API
     setSnap(s => ({ ...s, loading: true }));
     try {
       const r = await api.post('/api/signals/mirror/snaptrade/connect', {});
@@ -602,9 +609,85 @@ function useMirrorHoldings() {
   return {
     holdings, effective, heldSet, manualSet,
     snap, snapSymbols, snapReady, snapOpen, snapLink, setSnapOpen,
+    canConnectBroker, previewOpen, setPreviewOpen,
     addSymbols, removeSymbol, onCsv, csvMsg,
     connectBroker, disconnectBroker, fetchSnapHoldings,
   };
+}
+
+// Non-paid preview of the brokerage-connect flow. Shows what a subscriber unlocks — link any of
+// 50+ brokerages, read-only, auto-syncing Mirror — WITHOUT touching the live connect API or naming
+// the underlying provider. Trials/free hit this when they click "Connect brokerage". Evokes the
+// real institution picker but in brand claret/paper; broker tiles are illustrative (no live logos).
+const PREVIEW_BROKERS = [
+  { n: 'Charles Schwab', d: 'schwab.com', i: 'CS' },
+  { n: 'Fidelity', d: 'fidelity.com', i: 'F' },
+  { n: 'Vanguard', d: 'vanguard.com', i: 'V' },
+  { n: 'Robinhood', d: 'robinhood.com', i: 'R' },
+  { n: 'E*Trade', d: 'etrade.com', i: 'E' },
+  { n: 'Merrill Edge', d: 'merrilledge.com', i: 'M' },
+  { n: 'Interactive Brokers', d: 'ibkr.com', i: 'IB' },
+  { n: 'Webull', d: 'webull.com', i: 'W' },
+];
+function BrokerConnectPreview({ onClose }) {
+  const [loading, setLoading] = useState(false);
+  const subscribe = async () => {
+    setLoading(true);
+    try {
+      const d = await api.post('/api/billing/create-checkout', { plan: 'monthly' });
+      if (window.gtag) window.gtag('event', 'begin_checkout', { value: 129, currency: 'USD' });
+      window.location.href = d.checkout_url;
+    } catch { setLoading(false); }
+  };
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm" onClick={onClose}>
+      <div className="relative w-full max-w-md bg-paper rounded-2xl shadow-2xl border border-rule overflow-hidden" onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} aria-label="Close" className="absolute top-3 right-3 text-ink-light hover:text-ink text-xl leading-none">×</button>
+        {/* connect motif — RigaCap ⇄ your institution */}
+        <div className="pt-7 flex items-center justify-center gap-3">
+          <div className="w-11 h-11 rounded-full bg-claret text-white flex items-center justify-center font-serif text-lg">R</div>
+          <span className="text-ink-light text-lg">⇄</span>
+          <div className="w-11 h-11 rounded-full border border-rule bg-paper-deep flex items-center justify-center text-ink-mute">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M5 10h14M5 10l7-5 7 5M6 10v9M18 10v9M10 10v9M14 10v9"/></svg>
+          </div>
+        </div>
+        <div className="px-6 pt-3 pb-6 text-center">
+          <h3 className="font-serif text-xl text-ink">Connect your brokerage</h3>
+          <p className="text-[0.82rem] text-ink-mute mt-1.5 leading-relaxed">
+            Link any of <span className="text-ink font-medium">50+ brokerages</span> — read-only — and your Mirror stays in sync with the book on its own. No manual typing.
+          </p>
+          <div className="mt-5 relative">
+            <div className="absolute inset-x-0 -top-2.5 flex justify-center z-10">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-claret text-white text-[0.58rem] font-semibold tracking-[0.12em] uppercase shadow">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a5 5 0 00-5 5v3H6a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2v-9a2 2 0 00-2-2h-1V6a5 5 0 00-5-5zm-3 8V6a3 3 0 016 0v3H9z"/></svg>
+                Preview
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 opacity-70 pointer-events-none pt-1.5">
+              {PREVIEW_BROKERS.map(b => (
+                <div key={b.n} className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-rule bg-paper-deep text-left">
+                  <div className="w-7 h-7 rounded-full bg-ink/[0.05] border border-rule flex items-center justify-center text-[0.58rem] font-semibold text-ink-mute shrink-0">{b.i}</div>
+                  <div className="min-w-0">
+                    <div className="text-[0.72rem] text-ink font-medium truncate">{b.n}</div>
+                    <div className="text-[0.6rem] text-ink-light truncate">{b.d}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="text-[0.64rem] text-ink-light mt-2">…and 40+ more, including your IRA custodian</div>
+          </div>
+          <button onClick={subscribe} disabled={loading}
+            className="mt-5 w-full py-2.5 rounded-lg bg-claret text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
+            {loading ? 'Opening…' : 'Subscribe to connect'}
+          </button>
+          <button onClick={onClose} className="mt-2 w-full py-1.5 text-[0.76rem] text-ink-light hover:text-ink-mute">Maybe later</button>
+          <p className="text-[0.62rem] text-ink-light mt-3 leading-relaxed">
+            Read-only. We see holdings only to compare against the book — never to trade, move money, or touch your login.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // Tool-safe by design: every line is a factual set-comparison of the PUBLISHED book vs
@@ -614,6 +697,7 @@ const MirrorCheck = ({ book, preserverBook, tier, regimeName, onOpenChart, onAli
   const {
     holdings, effective, heldSet, manualSet,
     snap, snapSymbols, snapReady, snapOpen, snapLink, setSnapOpen,
+    previewOpen, setPreviewOpen,
     addSymbols, removeSymbol, onCsv, csvMsg,
     connectBroker, disconnectBroker, fetchSnapHoldings,
   } = holdingsApi;
@@ -919,7 +1003,7 @@ const MirrorCheck = ({ book, preserverBook, tier, regimeName, onOpenChart, onAli
             <input type="file" accept=".csv,text/csv,text/plain" className="hidden" onChange={onCsv} />
           </label>
           <button type="button" onClick={connectBroker} disabled={snap.loading}
-            title="Connect a brokerage via SnapTrade (read-only)"
+            title="Connect your brokerage (read-only)"
             className="text-[0.78rem] font-medium px-3 py-1.5 border border-claret/50 rounded-lg text-claret hover:bg-claret/[0.06] transition-colors disabled:opacity-50">
             {snap.loading ? 'Opening…' : snap.connected ? 'Connect another brokerage' : 'Connect brokerage'}
           </button>
@@ -1022,6 +1106,7 @@ const MirrorCheck = ({ book, preserverBook, tier, regimeName, onOpenChart, onAli
           />
         </Suspense>
       )}
+      {previewOpen && <BrokerConnectPreview onClose={() => setPreviewOpen(false)} />}
     </div>
   );
 };

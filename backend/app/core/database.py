@@ -128,11 +128,20 @@ class PushToken(Base):
 
 class SnaptradeUser(Base):
     """SnapTrade per-user connection secret (Mirror tab, read-only holdings). The SnapTrade
-    userId = our user's UUID (deterministic); only the returned userSecret is persisted."""
+    userId = our user's UUID (deterministic); only the returned userSecret is persisted.
+
+    We never hard-delete this row (keep the connection history). On deregister — churn, expired
+    trial, admin, or the reconcile sweep — SnapTrade's user is deleted to stop the ~$1/user/day
+    billing, and here we soft-status to 'deregistered', stamp when/why, and null the now-dead
+    user_secret. status='active' is exactly the set of users we're currently paying for. See
+    services/snaptrade_lifecycle.py. Columns added DB-first via run_migration (Sep 2026)."""
     __tablename__ = "snaptrade_users"
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    user_secret = Column(String(255), nullable=False)
+    user_secret = Column(String(255), nullable=True)   # nulled on deregister (dead credential)
+    status = Column(String(20), nullable=False, server_default="active", default="active")
+    deregistered_at = Column(DateTime, nullable=True)
+    deregistered_reason = Column(String(40), nullable=True)   # churn|trial_expired|idle|user_disconnect|admin|reconcile
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, onupdate=datetime.utcnow)
 

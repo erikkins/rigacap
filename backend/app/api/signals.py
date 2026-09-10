@@ -4011,10 +4011,18 @@ async def snaptrade_connect(
     from sqlalchemy import select as _select
     if not st.is_configured():
         raise HTTPException(status_code=503, detail="Brokerage connect is not configured")
+    # PAID-ONLY. Live brokerage sync bills ~$1/user/day, so it's a paid-subscriber feature — not
+    # a trial one. require_valid_subscription already let trials through (they're "valid"), so
+    # reject anything that isn't a currently-paid/comped 'active' subscription. The frontend shows
+    # non-paid users a preview instead of ever calling this; this 402 is the server-side backstop.
+    if not (user.is_admin() or (user.subscription and user.subscription.status == "active")):
+        raise HTTPException(status_code=402, detail="Connecting a brokerage is available on a paid plan")
     row = (await db.execute(_select(SnaptradeUser).where(SnaptradeUser.user_id == user.id))).scalars().first()
-    if row:
+    if row and row.status == "active" and row.user_secret:
         secret = st.decrypt_secret(row.user_secret)
     else:
+        # New user, OR a previously-deregistered user reconnecting after resubscribing: register
+        # fresh (deleteUser freed the old userId) and (re)activate the same row.
         try:
             secret = await st.register_user(str(user.id))
         except Exception as e:
@@ -4022,7 +4030,13 @@ async def snaptrade_connect(
             secret = None
         if not secret:
             raise HTTPException(status_code=502, detail="Could not start a brokerage connection")
-        db.add(SnaptradeUser(user_id=user.id, user_secret=st.encrypt_secret(secret)))
+        if row:
+            row.status = "active"
+            row.user_secret = st.encrypt_secret(secret)
+            row.deregistered_at = None
+            row.deregistered_reason = None
+        else:
+            db.add(SnaptradeUser(user_id=user.id, user_secret=st.encrypt_secret(secret)))
         await db.commit()
     redirect = (getattr(_settings, "FRONTEND_URL", None) or "https://rigacap.com") + "/app?snaptrade=connected"
     try:
@@ -4048,7 +4062,8 @@ async def snaptrade_holdings(
     if not st.is_configured():
         return {"configured": False, "connected": False, "symbols": [], "sources": [], "account_count": 0}
     row = (await db.execute(_select(SnaptradeUser).where(SnaptradeUser.user_id == user.id))).scalars().first()
-    if not row:
+    if not row or row.status != "active" or not row.user_secret:
+        # never connected, or deregistered (secret nulled) — either way, nothing live to read
         return {"configured": True, "connected": False, "symbols": [], "sources": [], "account_count": 0}
     try:
         h = await st.all_holdings(str(user.id), st.decrypt_secret(row.user_secret))

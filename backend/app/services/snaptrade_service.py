@@ -142,6 +142,21 @@ async def remove_authorization(user_id: str, user_secret: str, authorization_id:
     )
 
 
+async def delete_user(user_id: str) -> None:
+    """Deregister a SnapTrade user entirely — removes the user AND all their brokerage
+    connections. THIS is what stops SnapTrade's per-connected-user daily billing; removing
+    individual authorizations is not guaranteed to. Authenticated at the client level
+    (clientId + signature), so no userSecret is required. Idempotent from our side: a 404
+    (already gone) is swallowed so cleanup/reconcile can run repeatedly without erroring."""
+    try:
+        await _call("DELETE", "/api/v1/snapTrade/deleteUser", query_extra={"userId": user_id})
+    except RuntimeError as e:
+        if "404" in str(e):
+            logger.info(f"snaptrade deleteUser {user_id}: already absent (404) — treating as done")
+            return
+        raise
+
+
 async def all_holdings(user_id: str, user_secret: str) -> dict:
     """Union of position tickers across EVERY connected account (multi-brokerage), plus the
     connected brokerages GROUPED BY CONNECTION (authorization) — so two accounts at one

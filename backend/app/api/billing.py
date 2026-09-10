@@ -661,6 +661,16 @@ async def handle_subscription_deleted(sub: dict, db: AsyncSession):
         await db.commit()
         print(f"✅ Webhook: subscription deleted/canceled")
 
+        # Stop paying SnapTrade's ~$1/user/day for a churned subscriber: deregister them (keeps
+        # the row, soft-statuses it). Best-effort — deregister never raises, and the daily
+        # reconcile sweep is the backstop if this misses. (Note: no-card trial abandoners never
+        # fire this webhook — the sweep, keyed on is_valid(), is what catches those.)
+        try:
+            from app.services.snaptrade_lifecycle import deregister as _st_deregister
+            await _st_deregister(db, subscription.user_id, reason="churn")
+        except Exception as _e:
+            print(f"⚠️ SnapTrade deregister on churn failed (sweep will retry): {_e}")
+
         # Send win-back email to the cancelled subscriber
         try:
             user_result = await db.execute(
