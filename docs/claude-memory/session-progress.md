@@ -7,7 +7,10 @@ metadata:
   originSessionId: b87c584c-343d-4a11-aca7-a450196570be
 ---
 
-# Session progress — updated 2026-09-05
+# Session progress — updated 2026-09-10
+
+## ✅ SEP 10 — SnapTrade production key (in progress, Erik driving)
+- Erik getting SnapTrade PRODUCTION key; form has a "Describe your application" field. Gave him READ-ONLY framing (Mirror feature: connect brokerage → read holdings/positions → show alignment vs model book + personalized perf). Emphasized we do NOT place trades/move funds (matches "signals only, execute via your broker" posture). Provided short + long descriptions + data-minimization language. FLAGGED: decide read-only vs trading scopes NOW (trading scope added later = re-review); recommended staying read-only. No code touched this turn — awaiting Erik's next step (likely SnapTrade SDK wiring for the Mirror connect flow).
 
 ## ✅ SEP 5 — Newsletter Maximizer time-stops + D7 ribbon offset
 - **Newsletter logic (SHIPPED bcfbd6f, deploying):** weekly "Market, Measured." only counted PRESERVER stops (model_positions portfolio_type='live', reasons trailing_stop/stop_loss/regime_exit) → "0 stops" true for Preserver but blind to Maximizer. Maximizer breakout book's 29-day time-stops live in `tier_fills` (tier='maximizer', side='sell', reason='hold_exit'). Added a tier_fills count (additive, try/except), surfaced as a DISTINCT data-block fact ("scheduled clock exit, NOT loss-cut"), updated §01 + §03 prompts to keep the two exit types distinct. Erik: DON'T regen — this week's letter is LOCKED; fix is for NEXT week's generation (also fixes the §03 "0 stops" bullet auto). newsletter_generator_service.py.
