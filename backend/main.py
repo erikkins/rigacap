@@ -1038,41 +1038,46 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"statusCode": 500, "error": str(e)}
 
-    # SnapTrade cost reconcile — deregister any 'active' snaptrade_users row whose subscriber is no
-    # longer a currently-paid ('active' + valid) plan, so we stop paying ~$1/user/day for them. This
-    # is the PRIMARY cleanup for no-card trial abandoners (they never fire a Stripe cancel webhook).
-    # DEFAULTS TO DRY-RUN (log only). Pass {"snaptrade_reconcile":{"apply":true}} to actually delete.
+    # SnapTrade cost reconcile — deregister any 'active' PROD-key connection whose subscriber is no
+    # longer currently-paid ('active' + valid), so we stop paying ~$1/user/day for them. Scoped to
+    # st_env='prod' (the TEST key is a free demo, handled by snaptrade_free_test_slots) and admins
+    # are exempt. Trials can't reach prod (the connect gate blocks them), so prod rows are only ever
+    # real paying users. DEFAULTS TO DRY-RUN. Pass {"snaptrade_reconcile":{"apply":true}} to delete.
     if event.get("snaptrade_reconcile"):
         opts = event.get("snaptrade_reconcile")
         apply = bool(opts.get("apply")) if isinstance(opts, dict) else False
-        print(f"🧹 SnapTrade reconcile (apply={apply})")
+        print(f"🧹 SnapTrade reconcile (prod, apply={apply})")
         try:
             async def _reconcile():  # noqa: E306
                 from sqlalchemy import select
-                from app.core.database import async_session, SnaptradeUser, Subscription
+                from app.core.database import async_session, SnaptradeUser, Subscription, User
                 from app.services.snaptrade_lifecycle import deregister
                 flagged = []
                 async with async_session() as db:
                     rows = (await db.execute(
-                        select(SnaptradeUser).where(SnaptradeUser.status == "active")
+                        select(SnaptradeUser).where(
+                            SnaptradeUser.status == "active", SnaptradeUser.st_env == "prod")
                     )).scalars().all()
                     for row in rows:
+                        user = (await db.execute(select(User).where(User.id == row.user_id))).scalar_one_or_none()
+                        if user and user.is_admin():
+                            continue     # never touch an admin's connection
                         sub = (await db.execute(
                             select(Subscription).where(Subscription.user_id == row.user_id)
                         )).scalar_one_or_none()
-                        # Keep ONLY currently-paid subscribers (mirrors the connect gate). Trial /
-                        # canceled / expired / past_due / no-sub all get deregistered.
+                        # Keep ONLY currently-paid subscribers (mirrors the connect gate).
                         keep = bool(sub and sub.status == "active" and sub.is_valid())
                         if keep:
                             continue
                         res = await deregister(db, row.user_id, reason="reconcile", apply=apply)
                         flagged.append({
                             "user_id": str(row.user_id),
+                            "email": (user.email if user else None),
                             "sub_status": (sub.status if sub else None),
                             "is_valid": bool(sub and sub.is_valid()),
                             "action": res.get("action"),
                         })
-                    return {"scanned_active": len(rows), "flagged_count": len(flagged),
+                    return {"scanned_prod_active": len(rows), "flagged_count": len(flagged),
                             "flagged": flagged, "applied": apply}
             result = _run_async(_reconcile())
             print(f"🧹 SnapTrade reconcile results: {result}")
@@ -1080,6 +1085,80 @@ def handler(event, context):
         except Exception as e:
             import traceback
             print(f"❌ SnapTrade reconcile failed: {e}")
+            print(traceback.format_exc())
+            return {"statusCode": 500, "error": str(e)}
+
+    # Free TEST-key connection slots (the demo key is capped at 5). Deregister every 'active'
+    # st_env='test' connection that is NOT an admin's — demo/gawker squatters left from before the
+    # paid gate. Admins keep their demo connections. DEFAULTS TO DRY-RUN.
+    if event.get("snaptrade_free_test_slots"):
+        opts = event.get("snaptrade_free_test_slots")
+        apply = bool(opts.get("apply")) if isinstance(opts, dict) else False
+        print(f"🧹 SnapTrade free-test-slots (apply={apply})")
+        try:
+            async def _free_test():  # noqa: E306
+                from sqlalchemy import select
+                from app.core.database import async_session, SnaptradeUser, User
+                from app.services.snaptrade_lifecycle import deregister
+                freed = []
+                async with async_session() as db:
+                    rows = (await db.execute(
+                        select(SnaptradeUser).where(
+                            SnaptradeUser.status == "active", SnaptradeUser.st_env == "test")
+                    )).scalars().all()
+                    for row in rows:
+                        user = (await db.execute(select(User).where(User.id == row.user_id))).scalar_one_or_none()
+                        if user and user.is_admin():
+                            continue     # keep admin demo connections
+                        res = await deregister(db, row.user_id, reason="test_slot", apply=apply)
+                        freed.append({"user_id": str(row.user_id), "email": (user.email if user else None),
+                                      "action": res.get("action")})
+                    return {"scanned_test_active": len(rows), "freed_count": len(freed),
+                            "freed": freed, "applied": apply}
+            result = _run_async(_free_test())
+            print(f"🧹 SnapTrade free-test-slots results: {result}")
+            return {"statusCode": 200, "body": result}
+        except Exception as e:
+            import traceback
+            print(f"❌ SnapTrade free-test-slots failed: {e}")
+            print(traceback.format_exc())
+            return {"statusCode": 500, "error": str(e)}
+
+    # Admin peek: which tickers a connected user pulled (symbols + brokerage only — no balances, no
+    # secrets ever leave the Lambda). Admin-gated by the fact that a direct Lambda invoke already
+    # requires AWS creds. Usage: {"snaptrade_holdings_for": "<email or user_id>"}.
+    if event.get("snaptrade_holdings_for"):
+        ident = str(event.get("snaptrade_holdings_for"))
+        print(f"🔎 SnapTrade holdings peek for {ident}")
+        try:
+            async def _peek():  # noqa: E306
+                from sqlalchemy import select
+                from app.core.database import async_session, SnaptradeUser, User
+                from app.services import snaptrade_service as st
+                import uuid as _u
+                async with async_session() as db:
+                    user = (await db.execute(select(User).where(User.email == ident))).scalar_one_or_none()
+                    if not user:
+                        try:
+                            user = (await db.execute(select(User).where(User.id == _u.UUID(ident)))).scalar_one_or_none()
+                        except Exception:
+                            user = None
+                    if not user:
+                        return {"error": f"no user for {ident}"}
+                    row = (await db.execute(select(SnaptradeUser).where(SnaptradeUser.user_id == user.id))).scalar_one_or_none()
+                    if not row or row.status != "active" or not row.user_secret:
+                        return {"email": user.email, "connected": False}
+                    env = row.st_env or "prod"
+                    h = await st.all_holdings(str(user.id), st.decrypt_secret(row.user_secret), env=env)
+                    return {"email": user.email, "env": env,
+                            "connected": h.get("account_count", 0) > 0,
+                            "symbols": h.get("symbols", []), "sources": h.get("sources", [])}
+            result = _run_async(_peek())
+            print(f"🔎 holdings peek: {result}")
+            return {"statusCode": 200, "body": result}
+        except Exception as e:
+            import traceback
+            print(f"❌ holdings peek failed: {e}")
             print(traceback.format_exc())
             return {"statusCode": 500, "error": str(e)}
 
