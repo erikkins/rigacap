@@ -1038,6 +1038,42 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"statusCode": 500, "error": str(e)}
 
+    # SnapTrade diagnostics/admin (use `in event` — an empty-dict payload is falsy so .get()-guards skip it):
+    #   {"snaptrade_list_users":{"env":"prod"|"test"}}         -> userIds registered under that key
+    #   {"snaptrade_admin_delete":{"user_id":"..","env":".."}} -> force deleteUser (unstick a user)
+    if "snaptrade_list_users" in event:
+        opts = event.get("snaptrade_list_users") or {}
+        env = (opts.get("env") if isinstance(opts, dict) else None) or "prod"
+        try:
+            async def _lu():  # noqa: E306
+                from app.services import snaptrade_service as st
+                ids = await st.list_users(env=env)
+                return {"env": env, "count": len(ids), "user_ids": ids}
+            result = _run_async(_lu())
+            print(f"👥 snaptrade list_users: {result}")
+            return {"statusCode": 200, "body": result}
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            return {"statusCode": 500, "error": str(e)}
+
+    if "snaptrade_admin_delete" in event:
+        opts = event.get("snaptrade_admin_delete") or {}
+        uid = opts.get("user_id")
+        env = opts.get("env") or "prod"
+        try:
+            async def _ad():  # noqa: E306
+                from app.services import snaptrade_service as st
+                await st.delete_user(str(uid), env=env)
+                return {"deleted": uid, "env": env}
+            result = _run_async(_ad())
+            print(f"🗑️ snaptrade admin delete: {result}")
+            return {"statusCode": 200, "body": result}
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            return {"statusCode": 500, "error": str(e)}
+
     # SnapTrade cost reconcile — deregister any 'active' PROD-key connection whose subscriber is no
     # longer currently-paid ('active' + valid), so we stop paying ~$1/user/day for them. Scoped to
     # st_env='prod' (the TEST key is a free demo, handled by snaptrade_free_test_slots) and admins

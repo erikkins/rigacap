@@ -175,6 +175,13 @@ async def delete_user(user_id: str, env: str = "prod") -> None:
         raise
 
 
+async def list_users(env: str = "prod") -> list:
+    """All SnapTrade userIds registered under this env's key. GET /snapTrade/listUsers → [userId,...].
+    Diagnostic — lets us see the true server-side state (which env a user actually lives under)."""
+    res = await _call("GET", "/api/v1/snapTrade/listUsers", env)
+    return res or []
+
+
 async def all_holdings(user_id: str, user_secret: str, env: str = "prod") -> dict:
     """Union of position tickers across EVERY connected account (multi-brokerage), plus the
     connected brokerages GROUPED BY CONNECTION (authorization) — so two accounts at one
