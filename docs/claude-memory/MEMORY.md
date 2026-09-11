@@ -1,7 +1,7 @@
 # Stocker App - Key Learnings
 
 ## ⏱️ SESSION SNAPSHOT (auto-checkpoint) — read on resume
-- [session-progress](session-progress.md) — Aug 31: Mirror tour bounce fix (spotlights reordered top→bottom); heatmap 2016/2017 year-label garble fix; Sector Observatory ported to `/blog/sector-observatory` + 4 social cards. Uncommitted; awaiting Erik go/adjust.
+- [session-progress](session-progress.md) — Sep 11: SnapTrade prod go-live work. SHIPPED to main: dual-key routing (admin→test / paying→prod), KMS at-rest encryption, soft-delete lifecycle + reconcile sweep (dry-run), user_secret→TEXT (KMS bug fix), email verification gating live-connect for trials. Env vars set on both Lambdas. Prod connect PROVEN (real holdings flow); Schwab pending ~2wk approval. Parked: reconcile-sweep scheduling, drip productionization. Also: Claude Code on 2.1.197, Fable 5.1 needs 2.1.255+ (upgrade to use).
 
 ## 🔵 COMPETITIVE REF — IBD MarketSurge "Blue Dot" early-momentum indicator (Aug 30)
 - [IBD Blue Dot](reference_ibd_bluedot.md) — Erik spotted it in socials; FYI not a build. "Catch top stocks earlier" RS/accumulation early-momentum trigger, $49.95/6wk trial. Signal-earliness posture = opposite of ours; our momentum visual = the eclipse, edge = anti-capitulation/behavioral. Use for positioning contrast only.
