@@ -4821,7 +4821,7 @@ async def pageviews_summary(
         ("pageview", "Landed"), ("scroll_50", "Read past fold"), ("reach_cta", "Saw the offer"),
         ("cta_hero", "Clicked hero CTA"), ("cta_trial", "Clicked trial CTA"),
         ("signup_open", "Opened signup"), ("signup_submit", "Submitted signup"),
-        ("signup_success", "Account created"), ("checkout_redirect", "Reached Stripe"),
+        ("signup_success", "Account created"), ("checkout_redirect", "Started checkout (upgrade)"),
         ("newsletter_submit", "Newsletter (soft)"), ("bounce", "Bounced (no engage)"),
     ]
 
@@ -4854,7 +4854,7 @@ async def pageviews_summary(
         ("oauth_apple_success", "Apple login OK"),
         ("signup_submit", "Email submitted"),
         ("signup_success", "Account created (any path)"),
-        ("checkout_redirect", "Reached Stripe"),
+        ("checkout_redirect", "Started checkout (upgrade)"),
     ]
     auth_counts = dict((await db.execute(
         select(PageView.event, func.count()).where(where, PageView.event.in_([k for k, _ in _auth_order]))
