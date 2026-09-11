@@ -1294,6 +1294,36 @@ resource "aws_lambda_permission" "eventbridge" {
 }
 
 # ============================================================================
+# EventBridge - SnapTrade reconcile sweep. Deregisters any 'active' PROD-key
+# connection whose subscriber is no longer paid (admins exempt, prod-scoped) so
+# we stop paying ~$1/user/month for churned users. Daily at 4 AM ET — well
+# before month-end (SnapTrade bills monthly; deleting a user removes it from the
+# following month's invoice). apply=true actually deregisters; the handler is a
+# no-op when there are no lapsed prod connections.
+# ============================================================================
+
+resource "aws_cloudwatch_event_rule" "snaptrade_reconcile" {
+  name                = "${local.prefix}-snaptrade-reconcile"
+  description         = "Deregister lapsed prod SnapTrade connections daily (cost cleanup)"
+  schedule_expression = "cron(0 8 * * ? *)" # 08:00 UTC = 4 AM ET daily
+}
+
+resource "aws_cloudwatch_event_target" "snaptrade_reconcile" {
+  rule      = aws_cloudwatch_event_rule.snaptrade_reconcile.name
+  target_id = "lambda-worker"
+  arn       = aws_lambda_function.worker.arn
+  input     = jsonencode({ snaptrade_reconcile = { apply = true } })
+}
+
+resource "aws_lambda_permission" "snaptrade_reconcile" {
+  statement_id  = "AllowSnaptradeReconcileEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.worker.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.snaptrade_reconcile.arn
+}
+
+# ============================================================================
 # EventBridge - Lambda Warmer (keeps Lambda warm to avoid cold starts)
 # ============================================================================
 
