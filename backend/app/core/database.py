@@ -813,6 +813,12 @@ class User(Base):
     referred_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     referral_count = Column(Integer, default=0)
 
+    # Email verification. Gates live brokerage connect for trial users (so we never pay SnapTrade
+    # for a bogus/gawker signup). OAuth signups are auto-verified (Google/Apple already confirmed
+    # the address). Columns added DB-first via run_migration (Sep 2026).
+    email_verified_at = Column(DateTime, nullable=True)
+    email_verification_sent_at = Column(DateTime, nullable=True)
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, nullable=True)
@@ -856,6 +862,7 @@ class User(Base):
             "referral_code": self.referral_code,
             "referral_count": self.referral_count or 0,
             "totp_enabled": bool(self.totp_enabled),
+            "email_verified": self.email_verified_at is not None,
             "portfolio_size": float(self.portfolio_size) if self.portfolio_size is not None else 10000.0,
             "last_position_dollars": float(self.last_position_dollars) if self.last_position_dollars is not None else None,
         }

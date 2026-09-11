@@ -2428,6 +2428,52 @@ Reply to this email anytime — it comes straight to me. — Erik
             email_type="free_welcome",
         )
 
+    async def send_verification_email(self, to_email: str, name: str, verify_url: str) -> bool:
+        """Confirm-your-email link. Verifying unlocks live brokerage connect for trial users."""
+        first_name = name.split()[0] if name else "there"
+
+        content = f"""
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
+                    {first_name},
+                </p>
+                <p style="font-size: 17px; color: #141210; margin: 0 0 24px; line-height: 1.65;">
+                    One quick step to confirm this is really you. Verifying your email unlocks
+                    connecting your brokerage so the Mirror can show how your holdings line up with
+                    the book.
+                </p>
+                <div style="text-align: center; margin: 32px 0;">
+                    <a href="{verify_url}"
+                       style="display: inline-block; background: #141210; color: #F5F1E8; font-size: 13px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; padding: 14px 36px; text-decoration: none;">
+                        Verify Email
+                    </a>
+                </div>
+                <p style="font-size: 14px; color: #8A8279; margin: 0 0 16px; line-height: 1.5;">
+                    This link expires in 48 hours. If you didn't create a RigaCap account, you can
+                    safely ignore this email.
+                </p>
+                <p style="font-family: 'Courier New', monospace; font-size: 11px; color: #8A8279; margin: 16px 0 0; word-break: break-all;">
+                    {verify_url}
+                </p>"""
+        html = self._email_wrapper("Confirm your email", content)
+
+        text = f"""Confirm your email
+
+Hey {first_name}, one quick step to confirm this is really you. Verifying unlocks connecting your brokerage to the Mirror.
+
+Verify here:
+{verify_url}
+
+This link expires in 48 hours. If you didn't create a RigaCap account, you can safely ignore this email.
+
+— The RigaCap Team"""
+
+        return await self.send_email(
+            to_email=to_email,
+            subject="Confirm your email for RigaCap",
+            html_content=html,
+            text_content=text,
+        )
+
     async def send_password_reset_email(self, to_email: str, name: str, reset_url: str) -> bool:
         """Send a password reset email with a time-limited link."""
         first_name = name.split()[0] if name else "there"

@@ -4009,14 +4009,19 @@ async def snaptrade_connect(
     from app.core.database import SnaptradeUser
     from app.core.config import settings as _settings
     from sqlalchemy import select as _select
-    # PAID-ONLY. Live brokerage sync bills per connected user/day, so it's a paid-subscriber
-    # feature — not a trial one. require_valid_subscription already let trials through (they're
-    # "valid"), so reject anything that isn't a currently-paid/comped 'active' subscription (admins
-    # exempt). The frontend shows non-paid users a preview instead of calling this; the 402 is the
-    # server-side backstop.
+    # Who may connect: admins (test key), paid subscribers, and EMAIL-VERIFIED trials. Verified
+    # trials are allowed because SnapTrade billing is ~$1/user/MONTH and a verified email means a
+    # real human (a bogus/gawker signup can't verify → never costs us). require_valid_subscription
+    # already blocked non-valid (free-floor) users; here we split the two remaining refusal cases so
+    # the frontend can route to the right modal — but this is the server-side backstop; the frontend
+    # normally shows the preview/verify prompt without ever calling this.
     is_paid = bool(user.subscription and user.subscription.status == "active")
-    if not (user.is_admin() or is_paid):
-        raise HTTPException(status_code=402, detail="Connecting a brokerage is available on a paid plan")
+    is_trial = bool(user.subscription and user.subscription.status == "trial")
+    if not user.is_admin():
+        if is_trial and not user.email_verified_at:
+            raise HTTPException(status_code=403, detail="verify_email_required")
+        if not (is_paid or (is_trial and user.email_verified_at)):
+            raise HTTPException(status_code=402, detail="Connecting a brokerage is available on a paid plan")
     row = (await db.execute(_select(SnaptradeUser).where(SnaptradeUser.user_id == user.id))).scalars().first()
     if row and row.status == "active" and row.user_secret:
         # Existing connection — must keep using the key it was registered under.

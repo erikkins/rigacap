@@ -518,10 +518,14 @@ function parseHoldingsCsv(text) {
 // read ONE held-set. Call once per page (Dashboard / MirrorCockpit) and thread down.
 function useMirrorHoldings() {
   const { user, isAdmin } = useAuth();
-  // Live brokerage sync is a PAID feature (it bills ~$1/user/day). Trials/free get the Mirror via
-  // manual/CSV entry and, when they click Connect, a preview of what they'll unlock once subscribed.
-  // Admins connect for testing regardless of plan (mirrors the server-side gate in signals.py).
-  const canConnectBroker = isAdmin || user?.subscription?.status === 'active';
+  // Who can connect a brokerage (mirrors the server gate in signals.py): admins (test key), paid
+  // subscribers, and EMAIL-VERIFIED trials. Verified trials are allowed because a verified email
+  // means a real human — a bogus/gawker signup can't verify. Everyone else gets a modal instead:
+  // unverified trials get a "verify to connect" prompt, free-floor gets the "subscribe" preview.
+  const _sub = user?.subscription;
+  const _emailVerified = !!user?.email_verified;
+  const canConnectBroker = isAdmin || _sub?.status === 'active' || (_sub?.status === 'trial' && _emailVerified);
+  const isUnverifiedTrial = _sub?.status === 'trial' && !_emailVerified;
   const KEY = 'rigacap_mirror_holdings';
   const SNAP_KEY = 'rigacap_mirror_snap';
   const [holdings, setHoldings] = useState(() => {
@@ -539,7 +543,8 @@ function useMirrorHoldings() {
   const [snapReady, setSnapReady] = useState(!!cachedSnap);   // gate the alignment render until holdings are known
   const [snapOpen, setSnapOpen] = useState(false);            // connection-portal modal
   const [snapLink, setSnapLink] = useState(null);
-  const [previewOpen, setPreviewOpen] = useState(false);      // non-paid "here's what you'll unlock" teaser
+  const [previewOpen, setPreviewOpen] = useState(false);      // free-floor "subscribe to connect" teaser
+  const [verifyOpen, setVerifyOpen] = useState(false);        // unverified-trial "verify to connect" prompt
   const [csvMsg, setCsvMsg] = useState('');
 
   const addSymbols = (syms) => {
@@ -586,7 +591,11 @@ function useMirrorHoldings() {
     }
   }, []);   // eslint-disable-line react-hooks/exhaustive-deps
   const connectBroker = async () => {
-    if (!canConnectBroker) { setPreviewOpen(true); return; }   // non-paid: show the teaser, never call the API
+    if (!canConnectBroker) {                       // route to the right modal, never call the API
+      if (isUnverifiedTrial) setVerifyOpen(true);  // trial but email not confirmed → verify prompt
+      else setPreviewOpen(true);                   // free-floor → subscribe teaser
+      return;
+    }
     setSnap(s => ({ ...s, loading: true }));
     try {
       const r = await api.post('/api/signals/mirror/snaptrade/connect', {});
@@ -606,10 +615,19 @@ function useMirrorHoldings() {
   const effective = useMemo(() => [...new Set([...holdings, ...snapSymbols])], [holdings, snapSymbols]);
   const heldSet = useMemo(() => new Set(effective), [effective]);
   const manualSet = useMemo(() => new Set(holdings), [holdings]);   // which chips get an individual ×
+  // Admin preview: ?preview=connect opens the subscribe teaser, ?preview=verify the verify prompt,
+  // so we can eyeball either modal without a real free/trial account.
+  useEffect(() => {
+    if (!isAdmin) return;
+    const p = new URLSearchParams(window.location.search).get('preview');
+    if (p === 'connect') setPreviewOpen(true);
+    else if (p === 'verify') setVerifyOpen(true);
+  }, [isAdmin]);
+
   return {
     holdings, effective, heldSet, manualSet,
     snap, snapSymbols, snapReady, snapOpen, snapLink, setSnapOpen,
-    canConnectBroker, previewOpen, setPreviewOpen,
+    canConnectBroker, previewOpen, setPreviewOpen, verifyOpen, setVerifyOpen,
     addSymbols, removeSymbol, onCsv, csvMsg,
     connectBroker, disconnectBroker, fetchSnapHoldings,
   };
@@ -690,6 +708,46 @@ function BrokerConnectPreview({ onClose }) {
   );
 }
 
+// Shown when an unverified TRIAL user tries to connect — connecting is unlocked by verifying their
+// email (keeps us from paying SnapTrade for bogus signups). Lets them resend the confirmation link.
+function VerifyToConnect({ onClose }) {
+  const [state, setState] = useState('idle');   // idle | sending | sent | error
+  const resend = async () => {
+    setState('sending');
+    try { await api.post('/api/auth/resend-verification', {}); setState('sent'); }
+    catch { setState('error'); }
+  };
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm" onClick={onClose}>
+      <div className="relative w-full max-w-md bg-paper rounded-2xl shadow-2xl border border-rule overflow-hidden" onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} aria-label="Close" className="absolute top-3 right-3 text-ink-light hover:text-ink text-xl leading-none">×</button>
+        <div className="pt-8 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-claret/10 border border-claret/30 flex items-center justify-center">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7A2430" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M4 7l8 6 8-6"/></svg>
+          </div>
+        </div>
+        <div className="px-6 pt-3 pb-6 text-center">
+          <h3 className="font-serif text-xl text-ink">Confirm your email to connect</h3>
+          <p className="text-[0.82rem] text-ink-mute mt-1.5 leading-relaxed">
+            Linking a brokerage unlocks once your email is verified. Check your inbox for the
+            confirmation link from when you signed up — click it, then come back and connect.
+          </p>
+          {state === 'sent' ? (
+            <p className="mt-5 text-[0.84rem] text-positive font-medium">Sent — check your inbox (and spam).</p>
+          ) : (
+            <button onClick={resend} disabled={state === 'sending'}
+              className="mt-5 w-full py-2.5 rounded-lg bg-claret text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
+              {state === 'sending' ? 'Sending…' : 'Resend the verification email'}
+            </button>
+          )}
+          {state === 'error' && <p className="mt-2 text-[0.72rem] text-claret">Couldn&rsquo;t send just now — try again in a minute.</p>}
+          <button onClick={onClose} className="mt-2 w-full py-1.5 text-[0.76rem] text-ink-light hover:text-ink-mute">Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Tool-safe by design: every line is a factual set-comparison of the PUBLISHED book vs
 // what the user holds — never an instruction. The user decides whether to close any gap.
 // Holdings come from the shared useMirrorHoldings hook (holdingsApi); alignment recomputes off the book.
@@ -697,7 +755,7 @@ const MirrorCheck = ({ book, preserverBook, tier, regimeName, onOpenChart, onAli
   const {
     holdings, effective, heldSet, manualSet,
     snap, snapSymbols, snapReady, snapOpen, snapLink, setSnapOpen,
-    previewOpen, setPreviewOpen,
+    previewOpen, setPreviewOpen, verifyOpen, setVerifyOpen,
     addSymbols, removeSymbol, onCsv, csvMsg,
     connectBroker, disconnectBroker, fetchSnapHoldings,
   } = holdingsApi;
@@ -1107,6 +1165,7 @@ const MirrorCheck = ({ book, preserverBook, tier, regimeName, onOpenChart, onAli
         </Suspense>
       )}
       {previewOpen && <BrokerConnectPreview onClose={() => setPreviewOpen(false)} />}
+      {verifyOpen && <VerifyToConnect onClose={() => setVerifyOpen(false)} />}
     </div>
   );
 };
@@ -3225,6 +3284,21 @@ function Dashboard() {
       const url = new URL(window.location);
       url.searchParams.delete('unsubscribe');
       url.searchParams.delete('token');
+      window.history.replaceState({}, '', url.pathname);
+    }
+
+    // Handle email-verification return (from the confirmation-link redirect)
+    const verified = params.get('verified');
+    if (verified) {
+      if (verified === '1') {
+        refreshUser();                       // pick up email_verified → unlocks connect
+        setEmailPrefsToast('verified');
+      } else {
+        setEmailPrefsToast('verify_failed');
+      }
+      setTimeout(() => setEmailPrefsToast(null), 6000);
+      const url = new URL(window.location);
+      url.searchParams.delete('verified');
       window.history.replaceState({}, '', url.pathname);
     }
 
@@ -6499,8 +6573,11 @@ function Dashboard() {
       {/* Email Preferences Toast */}
       {emailPrefsToast && (
         <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
-          <div className={`px-5 py-3 rounded shadow-lg text-sm font-medium text-white ${emailPrefsToast === 'unsubscribed' ? 'bg-orange-500' : 'bg-positive'}`}>
-            {emailPrefsToast === 'unsubscribed' ? 'You have been unsubscribed from all emails.' : 'Email preferences saved.'}
+          <div className={`px-5 py-3 rounded shadow-lg text-sm font-medium text-white ${emailPrefsToast === 'unsubscribed' || emailPrefsToast === 'verify_failed' ? 'bg-orange-500' : 'bg-positive'}`}>
+            {emailPrefsToast === 'unsubscribed' ? 'You have been unsubscribed from all emails.'
+              : emailPrefsToast === 'verified' ? 'Email verified — you can now connect a brokerage.'
+              : emailPrefsToast === 'verify_failed' ? 'That verification link is invalid or expired. Try resending it.'
+              : 'Email preferences saved.'}
           </div>
         </div>
       )}

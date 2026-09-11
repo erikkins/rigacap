@@ -5,6 +5,7 @@ import time
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -17,6 +18,7 @@ from app.core.security import (
     create_access_token,
     create_refresh_token,
     create_challenge_token,
+    create_email_verification_token,
     decode_token,
     get_client_ip,
     get_current_user,
@@ -271,6 +273,26 @@ async def _send_free_welcome(user):
         print(f"⚠️ free-welcome send failed for {getattr(user,'email','?')}: {_e}")
 
 
+async def _send_email_verification(db, user):
+    """Send the confirm-your-email link and stamp email_verification_sent_at. Only for
+    email/password accounts — OAuth signups (Google/Apple) are auto-verified since the provider
+    already confirmed the address. Non-fatal — must NEVER block signup. Verified status gates
+    live brokerage connect for trial users (see signals.py snaptrade_connect)."""
+    try:
+        if not user.email or not user.password_hash:
+            return
+        token = create_email_verification_token(str(user.id))
+        verify_url = f"https://api.rigacap.com/api/auth/verify-email?token={token}"
+        user.email_verification_sent_at = datetime.utcnow()
+        await db.commit()
+        import asyncio
+        asyncio.create_task(
+            email_service.send_verification_email(user.email, user.name or user.email, verify_url)
+        )
+    except Exception as _e:
+        print(f"⚠️ verification-email send failed for {getattr(user,'email','?')}: {_e}")
+
+
 @router.post("/register", response_model=TokenResponse)
 async def register(
     request: RegisterRequest,
@@ -338,6 +360,7 @@ async def register(
 
     await _ping_admin_new_signup(user.email, "email", req)
     await _send_free_welcome(user)
+    await _send_email_verification(db, user)   # email/password signups verify to unlock connect
 
     # Generate tokens
     access_token = create_access_token(str(user.id))
@@ -592,6 +615,7 @@ async def google_auth(
             role="admin" if email == "erik@rigacap.com" else "user",
             referral_code=generate_referral_code(),
             last_login=datetime.utcnow(),
+            email_verified_at=datetime.utcnow(),   # Google already verified the address
         )
 
         # Link referrer if referral code provided
@@ -723,6 +747,7 @@ async def apple_auth(
             role="admin" if email == "erik@rigacap.com" else "user",
             referral_code=generate_referral_code(),
             last_login=datetime.utcnow(),
+            email_verified_at=datetime.utcnow(),   # Apple already verified the address
         )
 
         # Link referrer if referral code provided
@@ -855,6 +880,40 @@ async def reset_password(
     await db.commit()
 
     return {"message": "Password reset successfully. You can now sign in."}
+
+
+@router.get("/verify-email")
+async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
+    """One-click email verification (link target from the confirmation email). Stamps
+    email_verified_at, then redirects to the app. Idempotent."""
+    fe = settings.FRONTEND_URL
+    payload = decode_token(token)
+    if payload is None or payload.get("type") != "email_verify":
+        return RedirectResponse(url=f"{fe}/app?verified=invalid")
+    result = await db.execute(select(User).where(User.id == payload.get("sub")))
+    user = result.scalar_one_or_none()
+    if not user:
+        return RedirectResponse(url=f"{fe}/app?verified=invalid")
+    if not user.email_verified_at:
+        user.email_verified_at = datetime.utcnow()
+        await db.commit()
+    return RedirectResponse(url=f"{fe}/app?verified=1")
+
+
+@router.post("/resend-verification")
+async def resend_verification(
+    req: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Resend the confirmation email to the signed-in user (e.g. from the 'verify to connect'
+    prompt). No-op if already verified. Rate-limited per user."""
+    if user.email_verified_at:
+        return {"verified": True, "message": "Your email is already verified."}
+    if not rate_limiter.check(f"resendverify:{user.id}", max_requests=3, window_seconds=300):
+        raise HTTPException(status_code=429, detail="Too many requests. Try again in a few minutes.")
+    await _send_email_verification(db, user)
+    return {"verified": False, "message": "Verification email sent — check your inbox."}
 
 
 # ============================================================================

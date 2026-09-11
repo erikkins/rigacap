@@ -100,6 +100,17 @@ def create_refresh_token(user_id: str) -> str:
     return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
+def create_email_verification_token(user_id: str) -> str:
+    """Create a JWT for the email-verification link (48-hour expiry)."""
+    expire = datetime.utcnow() + timedelta(hours=48)
+    to_encode = {
+        "sub": user_id,
+        "exp": expire,
+        "type": "email_verify",
+    }
+    return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+
 def create_challenge_token(user_id: str) -> str:
     """Create a short-lived JWT for 2FA challenge (5-minute expiry)."""
     expire = datetime.utcnow() + timedelta(minutes=5)
