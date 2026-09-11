@@ -657,6 +657,16 @@ export default function LandingPageV2() {
   const navigate = useNavigate();
   const { isAuthenticated, loading } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  // Returning from an in-app browser via the "open in browser" escape link → auto-reopen the modal.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('signin') === '1') {
+      setShowLoginModal(true);
+      p.delete('signin');
+      const qs = p.toString();
+      window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+    }
+  }, []);
   const [selectedPlan, setSelectedPlan] = useState('monthly');
 
   // Freeze the "returning visitor" read ONCE at mount. Previously this was a bare

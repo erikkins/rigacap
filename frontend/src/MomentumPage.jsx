@@ -31,6 +31,16 @@ export default function MomentumPage() {
   const navigate = useNavigate();
   const { isAuthenticated, loading } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  // Returning from an in-app browser via the "open in browser" escape link → auto-reopen the modal.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('signin') === '1') {
+      setShowLoginModal(true);
+      p.delete('signin');
+      const qs = p.toString();
+      window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+    }
+  }, []);
   const [isReturningVisitor] = useState(() => localStorage.getItem('rigacap_returning') === 'true');
   const ctaRef = useRef(null);
   const interacted = useRef(false);   // scrolled deep or clicked a CTA

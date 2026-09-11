@@ -3157,6 +3157,16 @@ function Dashboard() {
     return () => window.removeEventListener('resize', sync);
   });
   const [showLoginModal, setShowLoginModal] = useState(false);
+  // Returning from an in-app browser via the "open in browser" escape link → auto-reopen the modal.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('signin') === '1') {
+      setShowLoginModal(true);
+      p.delete('signin');
+      const qs = p.toString();
+      window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+    }
+  }, []);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [chartModal, setChartModal] = useState(null);
   const [dataStatus, setDataStatus] = useState({ loaded: 0, status: 'loading' });

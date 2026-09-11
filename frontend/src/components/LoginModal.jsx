@@ -16,6 +16,19 @@ const isInAppBrowser = () => {
       || (/Android/.test(ua) && /; wv\)/.test(ua));   // generic Android WebView
 };
 
+// iOS gives no programmatic way out of an in-app webview; Android does (intent:// → default browser,
+// where Google/Apple OAuth works). So the escape UX is platform-split.
+const isIOS = () => {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  return /iPhone|iPad|iPod/i.test(ua)
+      || (/Macintosh/.test(ua) && typeof document !== 'undefined' && 'ontouchend' in document);
+};
+// Escape the in-app webview into the default browser. Landing URL carries ?signin=1 so the login
+// modal auto-reopens there (see the ?signin handler on the landing/door pages).
+const androidBrowserIntent = (url) =>
+  `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;action=android.intent.action.VIEW;end`;
+
 export default function LoginModal({ isOpen = true, onClose, onSuccess, initialMode = 'login', selectedPlan = 'monthly' }) {
   const { login, register, loginWithGoogle, loginWithApple, verify2FA, cancel2FA, twoFactorRequired, error, clearError } = useAuth();
   const [mode, setMode] = useState(initialMode);
@@ -60,7 +73,21 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
   };
 
   const [inAppBrowser] = useState(() => isInAppBrowser());
+  const [iosDevice] = useState(() => isIOS());
+  const [linkCopied, setLinkCopied] = useState(false);
   const [gisReady, setGisReady] = useState(false);
+
+  // Reopen THIS page (door context preserved) in the real browser with ?signin=1 so the modal
+  // auto-reopens there and OAuth works. Only used when we're stuck inside an in-app browser.
+  const escapeUrl = (() => {
+    try { const u = new URL(window.location.href); u.searchParams.set('signin', '1'); return u.toString(); }
+    catch { return 'https://rigacap.com/?signin=1'; }
+  })();
+  const copyEscapeLink = async () => {
+    logPublicEvent('oauth_inapp_escape_copy');
+    try { await navigator.clipboard.writeText(escapeUrl); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 3000); }
+    catch { /* clipboard blocked — user can long-press the address bar to copy */ }
+  };
 
   // Reset form when modal opens/closes
   useEffect(() => {
@@ -472,8 +499,31 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
           {(mode === 'login' || regStep === 1) && (
           <>
           {inAppBrowser ? (
-            <div className="mb-6 rounded border border-rule bg-paper-deep p-4 text-sm text-ink-mute leading-relaxed">
-              <strong className="text-ink font-medium">Signing in with Google or Apple?</strong> They don&rsquo;t work inside in-app browsers (LinkedIn, Instagram, Facebook&hellip;). Open <span className="whitespace-nowrap">rigacap.com</span> in Safari or Chrome &mdash; or just continue with email below.
+            <div className="mb-6">
+              <p className="text-sm text-ink-mute leading-relaxed mb-3">
+                <strong className="text-ink font-medium">Create your account with email</strong> — quickest way in, right below. Takes about 20 seconds.
+              </p>
+              {iosDevice ? (
+                <details className="rounded border border-rule bg-paper-deep text-[0.82rem] text-ink-mute"
+                  onToggle={(e) => { if (e.currentTarget.open) logPublicEvent('oauth_inapp_escape_open'); }}>
+                  <summary className="cursor-pointer px-3 py-2.5 text-ink font-medium list-none">Prefer Google or Apple? &rarr;</summary>
+                  <div className="px-3 pb-3 leading-relaxed">
+                    They can&rsquo;t run inside in-app browsers. Open this page in Safari &mdash; tap the
+                    {' '}<strong className="text-ink">&middot;&middot;&middot;</strong> or <strong className="text-ink">&#x2934;</strong> menu, choose
+                    {' '}<strong className="text-ink">Open in Safari</strong>, then sign in with Google or Apple there.
+                    <button type="button" onClick={copyEscapeLink}
+                      className="mt-3 w-full py-2 rounded border border-claret/50 text-claret text-[0.8rem] font-medium hover:bg-claret/[0.06] transition-colors">
+                      {linkCopied ? 'Copied — paste in Safari' : 'Copy link for Safari'}
+                    </button>
+                  </div>
+                </details>
+              ) : (
+                <a href={androidBrowserIntent(escapeUrl)}
+                  onClick={() => logPublicEvent('oauth_inapp_escape_click')}
+                  className="block w-full text-center py-2.5 rounded border border-claret/50 text-claret text-[0.82rem] font-medium hover:bg-claret/[0.06] transition-colors">
+                  Prefer Google or Apple? Open in Chrome &rarr;
+                </a>
+              )}
             </div>
           ) : (
           <>
