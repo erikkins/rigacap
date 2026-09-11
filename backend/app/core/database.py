@@ -138,7 +138,7 @@ class SnaptradeUser(Base):
     __tablename__ = "snaptrade_users"
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    user_secret = Column(String(255), nullable=True)   # nulled on deregister (dead credential)
+    user_secret = Column(Text, nullable=True)   # nulled on deregister; TEXT because KMS-encrypted secrets exceed 255
     status = Column(String(20), nullable=False, server_default="active", default="active")
     deregistered_at = Column(DateTime, nullable=True)
     deregistered_reason = Column(String(40), nullable=True)   # churn|trial_expired|idle|user_disconnect|admin|reconcile
