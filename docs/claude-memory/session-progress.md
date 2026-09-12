@@ -7,7 +7,18 @@ metadata:
   originSessionId: b87c584c-343d-4a11-aca7-a450196570be
 ---
 
-# Session progress — updated 2026-09-10
+# Session progress — updated 2026-09-12
+
+## ✉️ SEP 12 — Email/copy fixes (CODED, migration live, NOT yet committed/pushed)
+Erik flagged 5 inconsistencies + 2 asks. All coded; backend AST OK except LAST scheduler.py edits (bounce-report + unverified-email tuple) unverified — Erik interrupted the parse check. Frontend build GREEN. **NOTHING COMMITTED/PUSHED yet** → not deployed. Prod migration (email_unsendable cols) IS live. Manual Maximizer digest sent to erik@rigacap (status success).
+- **#5 exact-29:** "~29"/"about 29"/"roughly 29" → "29" everywhere (email_service, newsletter_generator prompt+data, tier_serving, maximizer_service, digest_v3, frontend TierBookView/App/MomentumPage). Hold is EXACTLY 29 days.
+- **#9 "tape" (cardinal rule):** newsletter _call_claude now FINAL-CHECKs each section for \btape\b → discard+regen (3 tries, corrective nudge on retry, scrub-to-"market" fallback so it can never ship). Added `import re`. This week's LOCKED draft untouched (Erik: don't rewrite today).
+- **#10 subject/body:** Preserver digest subject "N new" now = today's book BUYS (preserver_todays_actions.buys), matching body "Today's Moves" — was fresh-signal count (2 vs 1 SMCI). email_service send_daily_summary.
+- **#11 bounce handling:** send_email intercepts permanent 5xx (552/550, SMTPRecipientsRefused) via _permanent_smtp_code() → no futile retries, records to _permanent_bounces + pop_permanent_bounces(). Migration LIVE: users.email_unsendable/reason/at. scheduler.send_daily_emails: skips email_unsendable; marks unverified>7d-past-signup as unsendable; after batch drains bounces+marks all + sends DAILY ADMIN SUPPRESSION REPORT (send_admin_alert to ADMIN_EMAILS, only when marks>0). OAuth signups auto-verified so not flagged.
+- **#12 both tiers to Erik:** scheduler ALWAYS_BOTH_TIERS={erik@rigacap.com} → duplicates his subscriber entry with is_maximizer flipped → gets Preserver AND Maximizer daily.
+- **▶ NEXT STEP (awaiting go):** AST-check scheduler.py, then git commit + push all (backend + frontend). Then deploy (~4min CI). Files: newsletter_generator_service, email_service, tier_serving, maximizer_service, digest_v3, database, scheduler (backend); TierBookView, App, MomentumPage (frontend).
+
+## Session progress — updated 2026-09-10
 
 ## 💥 PRICING CORRECTION (Sep 11) — SnapTrade is $1/MONTH/user, NOT $1/day!!
 - Erik misread the pricing all session; "how billing works" = **$1/user/MONTH** (~$0.033/day). ALL the "$1/day / $30/mo / 23-51% of revenue" cost-panic below is WRONG — real COGS ≈ **~1% of a $129 sub = a non-issue.** Everything built is still correct & good hygiene, just NOT urgent. IMPLICATIONS: connect→cache→disconnect gymnastics + round-robin-on-test = UNNECESSARY.
