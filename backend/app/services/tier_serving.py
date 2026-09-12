@@ -699,7 +699,7 @@ async def apply_tier_serving(
             )
             note = (
                 "Rotating-bull: you're seeing both books — the Preserver base signals (30% "
-                "trailing) and your Maximizer breakout book (same-day entries held ~29 trading "
+                "trailing) and your Maximizer breakout book (same-day entries held 29 trading "
                 "days; each card shows its day X/29 countdown). Breakouts sell on time, not on a stop."
             )
         elif held:

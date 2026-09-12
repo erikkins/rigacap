@@ -44,6 +44,10 @@ ADMIN_EMAILS = set(
 # Module-level failure log (per Lambda container lifetime)
 _failure_log: list[dict] = []
 
+# Permanent (5xx) bounces recorded during a send batch. The caller (e.g. the daily-email job)
+# drains these after the batch and marks those users unsendable so we stop retrying dead addresses.
+_permanent_bounces: list[dict] = []
+
 
 def get_email_failures() -> list[dict]:
     """Return accumulated email failures since last clear."""
@@ -53,6 +57,31 @@ def get_email_failures() -> list[dict]:
 def clear_email_failures():
     """Clear the failure log (after admin report is sent)."""
     _failure_log.clear()
+
+
+def pop_permanent_bounces() -> list[dict]:
+    """Return and clear the permanent-bounce list [{to_email, code, reason}, ...]."""
+    out = list(_permanent_bounces)
+    _permanent_bounces.clear()
+    return out
+
+
+def _permanent_smtp_code(exc) -> Optional[int]:
+    """Extract a permanent 5xx SMTP code from an aiosmtplib exception, else None.
+    Handles SMTPResponseException(.code) and SMTPRecipientsRefused(.recipients={addr: resp})."""
+    code = getattr(exc, "code", None)
+    if code is None:
+        recips = getattr(exc, "recipients", None)
+        if isinstance(recips, dict) and recips:
+            codes = []
+            for v in recips.values():
+                c = getattr(v, "code", None)
+                if c is None and isinstance(v, (tuple, list)) and v:
+                    c = v[0]
+                if isinstance(c, int):
+                    codes.append(c)
+            code = max(codes) if codes else None
+    return code if (isinstance(code, int) and 500 <= code < 600) else None
 
 
 def _vix_label(vix) -> str:
@@ -359,6 +388,19 @@ class EmailService:
                 logger.info(f"Email sent to {to_email}: {subject}")
                 return True
             except Exception as e:
+                # Permanent (5xx) rejection — e.g. Yahoo 552, mailbox doesn't exist. Retrying is
+                # futile (it fails identically every time), so record it as a hard bounce and stop.
+                # The daily-email job drains _permanent_bounces and marks the user unsendable.
+                perm_code = _permanent_smtp_code(e)
+                if perm_code is not None:
+                    logger.error(f"Email to {to_email} PERMANENTLY rejected ({perm_code}) — marking unsendable: {e}")
+                    _permanent_bounces.append({"to_email": to_email, "code": perm_code, "reason": f"smtp_{perm_code}"})
+                    _failure_log.append({
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "to_email": to_email, "subject": subject,
+                        "error": str(e), "attempts": attempt, "permanent": True,
+                    })
+                    return False
                 if attempt < max_retries:
                     delay = 2 ** attempt  # 2s, 4s
                     logger.warning(
@@ -658,8 +700,8 @@ class EmailService:
         served_preserver = ((tier != 'maximizer' or breakout_book is not None) and book is not None)
         book_section = self._book_section(book, market_regime, capital) if served_preserver else ''
         if tier == 'maximizer' and not breakout_book:
-            sig_header, sig_subhead = 'Your Maximizer Book', 'Held ~29 days'
-            sig_framing = ("Mirror at today&rsquo;s price. Each breakout is held ~29 trading days then "
+            sig_header, sig_subhead = 'Your Maximizer Book', 'Held 29 days'
+            sig_framing = ("Mirror at today&rsquo;s price. Each breakout is held 29 trading days then "
                            "sold on time &mdash; a late entry just gets fewer of those days, so favor the fresh names.")
         elif served_preserver:
             sig_header, sig_subhead = 'Other Signals', 'Not in our book'
@@ -914,7 +956,7 @@ class EmailService:
             body = "".join(self._holding_row(h, _scale) for h in holdings)
             posture = (f"{held_ct} breakout{'s' if held_ct != 1 else ''} in play"
                        + (f" &middot; {new_ct} entered today" if new_ct else " &middot; none entered today")
-                       + ". Each is held ~29 trading days then sold on time &mdash; no trailing stop.")
+                       + ". Each is held 29 trading days then sold on time &mdash; no trailing stop.")
             # Vol-target exposure gauge: the Barroso vol-brake dials the book's exposure down in
             # choppy markets. None (older snapshots) → omit the line rather than guess.
             _vs = tier_book.get('vol_scale')
@@ -934,7 +976,7 @@ class EmailService:
                 body = "".join(self._signal_row(c) for c in cards)
                 posture = (f"{held_ct} breakout{'s' if held_ct != 1 else ''} in play"
                            + (f" &middot; {new_ct} entered today" if new_ct else " &middot; none entered today")
-                           + ". Each is held ~29 trading days then sold on time &mdash; no trailing stop.")
+                           + ". Each is held 29 trading days then sold on time &mdash; no trailing stop.")
             else:
                 body = ''
                 posture = ("Breakout hunting is paused &mdash; not a rotating-bull regime. "
@@ -946,7 +988,7 @@ class EmailService:
                     <table cellpadding="0" cellspacing="0" style="width: 100%;">
                         <tr>
                             <td style="font-family: Georgia, serif; font-size: 16px; font-weight: 500; color: #7A2430;">&#9670; Maximizer Breakout Book</td>
-                            <td align="right" style="font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #7A2430;">Grow &middot; held ~29d</td>
+                            <td align="right" style="font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #7A2430;">Grow &middot; held 29d</td>
                         </tr>
                     </table>
                 </div>
@@ -1465,10 +1507,14 @@ class EmailService:
         # Include date in subject for historical (time-travel) emails
         is_historical = date and date.date() != _now_et().date()
         date_label = f" [{date.strftime('%b %d, %Y')}]" if is_historical else ""
-        # LEAD with the active count — NEVER open the subject with "0 new" when
-        # signals are live (Jun 17 2026: "0 new …" read exactly like the empty-bug).
-        if fresh_count > 0:
-            subject = (f"📊 RigaCap Daily{date_label}: {fresh_count} new · "
+        # "new" MUST match the body's "Today's moves" — BUY = the instruction, so it counts actual
+        # new book entries today (preserver_todays_actions.buys), NOT the fresh-signal bucket, which
+        # diverges from what the book did (Sep 12 2026: subject said "2 new" while the book made 1
+        # move). Sells are exits, not "new". LEAD with the active count — NEVER open with "0 new"
+        # when signals are live (Jun 17 2026: "0 new …" read exactly like the empty-bug).
+        todays_new = len(((preserver_todays_actions or {}).get('buys')) or [])
+        if todays_new > 0:
+            subject = (f"📊 RigaCap Daily{date_label}: {todays_new} new · "
                        f"{active_count} active · {approaching_count} approaching")
         elif active_count > 0:
             subject = (f"📊 RigaCap Daily{date_label}: {active_count} signal"
@@ -2711,7 +2757,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
                 </p>
 
                 <p style="font-size: 17px; color: #141210; margin: 0 0 24px 0; line-height: 1.65;">
-                    What you <em>do</em> is act at your own broker — RigaCap sends signals, it never touches your money. Say tomorrow's scan flags ABC at $42. The email lands that evening with the entry, the current stop level, and the position weight. At your broker — next morning is fine, this isn't a race — you place the buy and close the laptop. You don't set stop orders and there's nothing to watch intraday: <em>the system</em> tracks the trailing stop, ratcheting it up as the stock rises. If price ever breaches it, you get a sell alert that says so plainly — sell ABC, here's why. Dial toward Maximizer and the breakout book runs the same way at your broker — you just place the buys it flags; the only difference is the exit, which comes on a ~29-day time-stop rather than a trailing stop, with the same plain sell alert when the clock's up. That's the whole judgment call. There isn't one.
+                    What you <em>do</em> is act at your own broker — RigaCap sends signals, it never touches your money. Say tomorrow's scan flags ABC at $42. The email lands that evening with the entry, the current stop level, and the position weight. At your broker — next morning is fine, this isn't a race — you place the buy and close the laptop. You don't set stop orders and there's nothing to watch intraday: <em>the system</em> tracks the trailing stop, ratcheting it up as the stock rises. If price ever breaches it, you get a sell alert that says so plainly — sell ABC, here's why. Dial toward Maximizer and the breakout book runs the same way at your broker — you just place the buys it flags; the only difference is the exit, which comes on a 29-day time-stop rather than a trailing stop, with the same plain sell alert when the clock's up. That's the whole judgment call. There isn't one.
                 </p>
 
                 <table cellpadding="0" cellspacing="0" style="width:100%; border-top: 1px solid #141210; border-bottom: 1px solid #DDD5C7; margin: 28px 0;">
@@ -2759,7 +2805,7 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
                 <div style="border-top: 1px solid #DDD5C7; padding: 20px 0;">
                     <p style="font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #7A2430; margin: 0 0 8px;">Maximizer &middot; a +$100/mo add-on</p>
                     <p style="font-family: Georgia, serif; font-size: 18px; color: #141210; margin: 0 0 8px; font-weight: 500;">Built to grow — with a seatbelt.</p>
-                    <p style="font-size: 15px; color: #5A544E; margin: 0; line-height: 1.6;">Leans into breakouts and adds a volatility brake that pulls in when conditions get rough, plus a roughly 29-day time-stop so capital doesn't sit dead in a name that stalls. More drawdown than Preserver, more upside in trending markets. It's an add-on that runs on top of Preserver — <strong>+$100/mo (+$79/mo at the introductory rate), toggle it on or off anytime.</strong> If your instinct is "put it to work," add this.</p>
+                    <p style="font-size: 15px; color: #5A544E; margin: 0; line-height: 1.6;">Leans into breakouts and adds a volatility brake that pulls in when conditions get rough, plus a 29-day time-stop so capital doesn't sit dead in a name that stalls. More drawdown than Preserver, more upside in trending markets. It's an add-on that runs on top of Preserver — <strong>+$100/mo (+$79/mo at the introductory rate), toggle it on or off anytime.</strong> If your instinct is "put it to work," add this.</p>
                 </div>
 
                 <div style="border-left: 2px solid #7A2430; padding: 16px 20px; background: #FAF7F0; margin: 24px 0;">

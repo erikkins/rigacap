@@ -819,6 +819,13 @@ class User(Base):
     email_verified_at = Column(DateTime, nullable=True)
     email_verification_sent_at = Column(DateTime, nullable=True)
 
+    # Deliverability suppression. Set on a hard SMTP bounce (5xx, e.g. Yahoo 552) or when an account
+    # stays unverified past the grace window — all send jobs skip these so we stop mailing dead/bogus
+    # addresses. Columns added DB-first via run_migration (Sep 2026).
+    email_unsendable = Column(Boolean, nullable=False, server_default="false", default=False)
+    email_unsendable_reason = Column(String(60), nullable=True)   # smtp_552 | unverified | ...
+    email_unsendable_at = Column(DateTime, nullable=True)
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, nullable=True)

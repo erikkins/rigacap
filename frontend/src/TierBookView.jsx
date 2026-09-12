@@ -77,7 +77,7 @@ export default function TierBookView({ book, onSetCapital, onRowClick, radar, ac
             Your {isMax ? 'Maximizer' : 'Preserver'} Book
           </h2>
           <p className="font-display italic text-[0.82rem] text-ink-mute mt-0.5" style={{ fontVariationSettings: '"opsz" 24' }}>
-            Auto-mirrored to the model book — no manual entry. {isMax ? 'Breakouts, held ~29 trading days.' : '30% trailing stop, let winners run.'}
+            Auto-mirrored to the model book — no manual entry. {isMax ? 'Breakouts, held 29 trading days.' : '30% trailing stop, let winners run.'}
           </p>
         </div>
         <div className="flex items-center gap-2">

@@ -187,7 +187,7 @@ export default function MomentumPage() {
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
             {[
               { h: 'Enters on confirmed breakouts', p: 'Not every green candle — a name near its 50-day high, on a real volume surge, ranked by momentum quality. Fewer, better entries, so you’re never the one chasing the top.' },
-              { h: 'Sells on time, not on nerves', p: 'Each breakout is held about 29 trading days, then rotated. A volatility target quietly dials exposure down when the market turns choppy. No white-knuckle exits, no round trips.' },
+              { h: 'Sells on time, not on nerves', p: 'Each breakout is held 29 trading days, then rotated. A volatility target quietly dials exposure down when the market turns choppy. No white-knuckle exits, no round trips.' },
               { h: 'A floor underneath the growth', p: 'Maximizer sits on the Preserver base — so when a real capitulation hits, the same rule that protects conservative capital raises cash for you too.' },
             ].map((c, i) => (
               <div key={i} className="border border-rule rounded bg-paper-card p-6">

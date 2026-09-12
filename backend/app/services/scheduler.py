@@ -1523,6 +1523,9 @@ class SchedulerService:
                 all_users = result.scalars().all()
                 logger.warning(f"📧 Found {len(all_users)} users in DB" + (f", filtering for {target_set}" if target_set else ""))
 
+            from datetime import timedelta as _timedelta
+            _grace_cutoff = datetime.utcnow() - _timedelta(days=7)   # unverified longer than this → suppress
+            unsendable_marks: list[tuple] = []   # (user_id, reason) to persist after the batch
             subscribers = []
             def _is_max(u):
                 s = getattr(u, 'subscription', None)
@@ -1536,9 +1539,25 @@ class SchedulerService:
                     subscribers.append({'email': u.email, 'name': u.name, 'user_id': str(u.id), 'is_maximizer': _is_max(u), 'capital': float(getattr(u, 'portfolio_size', None) or 100000.0)})
                     continue
                 if u.subscription and u.subscription.is_valid():
+                    # Deliverability gate: already-suppressed (hard bounce) → skip silently.
+                    if getattr(u, 'email_unsendable', False):
+                        continue
+                    # Unverified past the grace window → suppress + mark. OAuth signups are
+                    # auto-verified, so this only catches email/password accounts that never confirmed
+                    # (e.g. bogus/gawker signups that also bounce our sends).
+                    if u.email_verified_at is None and u.created_at and u.created_at < _grace_cutoff:
+                        unsendable_marks.append((str(u.id), 'unverified', u.email))
+                        continue
                     if not u.get_email_preference('daily_digest'):
                         continue
                     subscribers.append({'email': u.email, 'name': u.name, 'user_id': str(u.id), 'is_maximizer': _is_max(u), 'capital': float(getattr(u, 'portfolio_size', None) or 100000.0)})
+
+            # Erik gets BOTH tier digests daily (Preserver + Maximizer), not just his entitlement's
+            # one — duplicate his entry with the tier flipped so the loop sends him both emails.
+            ALWAYS_BOTH_TIERS = {'erik@rigacap.com'}
+            for _s in list(subscribers):
+                if (_s['email'] or '').lower() in ALWAYS_BOTH_TIERS:
+                    subscribers.append({**_s, 'is_maximizer': not _s['is_maximizer']})
 
             if not subscribers:
                 fresh_count = len([s for s in buy_signals if s.get('is_fresh')])
@@ -1721,6 +1740,48 @@ class SchedulerService:
                         push_sent += count
                 except Exception as e:
                     logger.debug(f"Push notification failed for {sub['email']}: {e}")
+
+            # Persist deliverability suppression + report it. Hard SMTP bounces (5xx this batch) +
+            # unverified-past-grace accounts get marked unsendable (future jobs skip them), and any
+            # newly-suppressed addresses are emailed to admin as a daily bounce/suppression report.
+            try:
+                from app.services.email_service import pop_permanent_bounces
+                from sqlalchemy import update as _sa_update
+                marks = list(unsendable_marks)   # (user_id, reason, email)
+                bounces = pop_permanent_bounces()
+                if bounces:
+                    reason_by_email = {b['to_email'].lower(): b.get('reason', 'bounce') for b in bounces}
+                    async with async_session() as _bdb:
+                        rows = (await _bdb.execute(
+                            select(DBUser.id, DBUser.email).where(DBUser.email.in_(list({b['to_email'] for b in bounces})))
+                        )).all()
+                    for uid, em in rows:
+                        marks.append((str(uid), reason_by_email.get((em or '').lower(), 'bounce'), em))
+                if marks:
+                    async with async_session() as _mdb:
+                        for uid, reason, _em in marks:
+                            await _mdb.execute(_sa_update(DBUser).where(DBUser.id == uid).values(
+                                email_unsendable=True, email_unsendable_reason=(reason or 'bounce')[:60],
+                                email_unsendable_at=datetime.utcnow()))
+                        await _mdb.commit()
+                    logger.warning(f"📧 Marked {len(marks)} account(s) unsendable: {sorted({m[1] for m in marks})}")
+                    # Daily bounce/suppression report to admin (only on days something was suppressed).
+                    _report = "\n".join(f"  - {(em or '?')} ({reason})" for _uid, reason, em in marks)
+                    _bounced = sum(1 for _u, r, _e in marks if r != 'unverified')
+                    for _admin in ADMIN_EMAILS:
+                        try:
+                            await admin_email_service.send_admin_alert(
+                                _admin,
+                                f"RigaCap email suppression — {len(marks)} account(s) ({_bounced} bounced)",
+                                "Marked unsendable during today's daily-email run (hard SMTP bounce, or "
+                                f"unverified past the grace window):\n\n{_report}\n\n"
+                                "All future sends skip these. To reinstate a false positive, clear "
+                                "email_unsendable on the user.",
+                            )
+                        except Exception:
+                            pass
+            except Exception as _me:
+                logger.error(f"📧 unsendable-marking failed (non-fatal): {_me}")
 
             logger.info(f"📧 Daily emails complete: {sent}/{len(subscribers)} sent, {failed} failed, {push_sent} push")
 

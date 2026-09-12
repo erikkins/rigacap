@@ -255,7 +255,7 @@ def generate_maximizer_briefing(held: int, new_today: int, regime: str,
             return fallback
         base_system = (
             "You write the daily briefing for RigaCap's MAXIMIZER tier — an aggressive, "
-            "systematic breakout book (momentum names bought on a same-day breakout, held ~29 "
+            "systematic breakout book (momentum names bought on a same-day breakout, held 29 "
             "trading days, sold on a hard time-stop, no trailing stop; a book-level vol-target "
             "trims exposure when things get wild). Voice: a sharp, confident analyst friend who "
             "runs an aggressive book and owns it — not hype, not a robot.\n"

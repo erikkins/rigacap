@@ -5539,7 +5539,7 @@ function Dashboard() {
                           )}
 
                           {/* Tier note — expectation-setter for the active regime/tier
-                              (e.g. "your Maximizer book is hunting breakouts, held ~29
+                              (e.g. "your Maximizer book is hunting breakouts, held 29
                               trading days" or the Preserver capitulation posture). Served
                               by the tier-aware dashboard path; absent => nothing renders. */}
                           {dashboardData?.tier_note && (

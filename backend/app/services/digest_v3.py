@@ -258,7 +258,7 @@ def _build_maximizer(breakout_book, market_regime, breakout_radar, market_contex
             body += _row(p.get('symbol', ''), _sector_of(p.get('symbol', '')), "$%.2f" % (p.get('price') or 0), "new entry", '#2D5F3F')
 
     held = [p for p in book if not (p.get('status') == 'new' or p.get('is_fresh'))]
-    body += _sec("The breakout book", str(len(book)), "What the Maximizer sleeve holds now &mdash; each rides a ~29-day time-stop.")
+    body += _sec("The breakout book", str(len(book)), "What the Maximizer sleeve holds now &mdash; each rides a 29-day time-stop.")
     for p in sorted(held, key=lambda x: -(x.get('days_held') or 0)):
         dh = p.get('days_held')
         hold = p.get('hold_days') or 29
