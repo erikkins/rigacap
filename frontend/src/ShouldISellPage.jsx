@@ -153,7 +153,7 @@ export default function ShouldISellPage() {
           <Eyebrow>The real risk</Eyebrow>
           <h2 className="font-display text-[1.9rem] sm:text-[2.3rem] font-medium leading-[1.15] tracking-tight text-ink"
               style={{ fontVariationSettings: '"opsz" 48' }}>
-            You don&rsquo;t lose to bad stocks. You lose to bad timing &mdash; your own.
+            You don&rsquo;t lose to bad stocks.<br />You lose to bad timing &mdash; your own.
           </h2>
           <div className="mt-6 space-y-4 text-[1.08rem] text-ink-mute max-w-2xl">
             <p>
