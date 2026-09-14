@@ -265,6 +265,22 @@ def extract_symbols(text: str) -> List[str]:
     return list(symbols)
 
 
+# Percentage/return figures (e.g. "+45%", "30.5 %", "-12%"). Used by the number-collision
+# guardrail so we never echo a return the source post already states.
+_PCT_RE = re.compile(r'[-+]?\d{1,3}(?:\.\d+)?\s*%')
+
+
+def _percent_figures(text: str) -> List[float]:
+    """All percentage figures in a string as absolute floats (e.g. '+45.0%' -> 45.0)."""
+    out = []
+    for m in _PCT_RE.findall(text or ""):
+        try:
+            out.append(abs(float(m.replace('%', '').replace(' ', ''))))
+        except ValueError:
+            continue
+    return out
+
+
 class ReplyScannerService:
     """Scan followed accounts' tweets, match to trades, generate reply drafts."""
 
@@ -997,6 +1013,14 @@ class ReplyScannerService:
         entry_date = str(trade.get("entry_date", ""))[:10]
         is_wf = bool(trade.get("is_walkforward"))
 
+        # Optics guardrail: if the source post ALREADY states a return within a few points of ours,
+        # do NOT echo a matching number — it reads as parroting their stat ("you just copied us"),
+        # which is exactly what undermines the independent-evidence point. Force a purely behavioral
+        # angle with no number (or SKIP). (Origin: the $LRCX +45% coincidence, Sep 2026 — our WF
+        # 44.96% -> "+45.0%" happened to match a "+45%" in the Tickeron thread.)
+        _our_ret = abs(pnl_pct or 0)
+        number_collision = any(abs(r - _our_ret) <= 5.0 for r in _percent_figures(tweet_text))
+
         if is_wf:
             # Walk-forward test trade (NOT a position we personally held). No precise entry
             # date — WF entries land on rebalance boundaries, so a specific day would be a
@@ -1023,6 +1047,19 @@ class ReplyScannerService:
             f"to the conversation, not a cold sales pitch. Reference the specific stock "
             f"and our trade result briefly. Max {char_limit} chars."
         )
+
+        if number_collision:
+            user_prompt += (
+                "\n\nCRITICAL: The post above ALREADY states a return figure within a few points of ours. "
+                "Do NOT put ANY percentage or return number in your reply — a matching figure reads as "
+                "parroting their stat. Make a PURELY BEHAVIORAL point (discipline, the exit rule, the "
+                "giveback, staying in before the crowd) with NO number at all. If you cannot make an honest "
+                "point without the number, reply with the single word SKIP."
+            )
+            logger.info(
+                f"[reply-scanner] @{username}/{symbol}: number-collision guardrail ON "
+                f"(our {_our_ret:.1f}% ~ a figure in the post) — forcing no-number/behavioral angle"
+            )
 
         system_prompt = (
             THREADS_REPLY_SYSTEM_PROMPT if platform == "threads"
@@ -1070,6 +1107,18 @@ class ReplyScannerService:
                 if text.strip().rstrip(".").upper() == "SKIP" or len(text.strip()) < 15:
                     logger.info(f"[reply-scanner] @{username}/{symbol}: model SKIPPED (no discipline-led angle)")
                     return None
+
+                # Deterministic backstop for the number-collision guardrail: if the post already
+                # states a matching return, the reply must carry NO number. Regenerate if one slipped
+                # through; after 3 tries the loop returns None (skip) rather than echo their stat.
+                if number_collision and _percent_figures(text):
+                    logger.warning(f"[reply-scanner] @{username}/{symbol} attempt {attempt + 1}: cited a number despite collision guardrail, regenerating")
+                    retry_note = (
+                        "YOUR PRIOR DRAFT STILL CONTAINED A PERCENTAGE/RETURN NUMBER. The source post already "
+                        "states a matching figure — you MUST NOT cite ANY number. Rewrite as a purely behavioral "
+                        "point with no percentage at all, or reply with the single word SKIP."
+                    )
+                    continue
 
                 violations = contains_banned(text)
                 if violations:
