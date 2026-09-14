@@ -1559,12 +1559,22 @@ class SchedulerService:
                         continue
                     subscribers.append({'email': u.email, 'name': u.name, 'user_id': str(u.id), 'is_maximizer': _is_max(u), 'capital': float(getattr(u, 'portfolio_size', None) or 100000.0)})
 
-            # Erik gets BOTH tier digests daily (Preserver + Maximizer), not just his entitlement's
-            # one — duplicate his entry with the tier flipped so the loop sends him both emails.
+            # Always-both admins (Erik) get BOTH digests daily regardless of subscription state. On
+            # the automated run an admin with no valid sub isn't in `subscribers` at all, so INJECT
+            # them here (both tiers) rather than only duplicating an existing entry. Respect target
+            # sends: only inject an admin the target list actually includes.
             ALWAYS_BOTH_TIERS = {'erik@rigacap.com'}
-            for _s in list(subscribers):
-                if (_s['email'] or '').lower() in ALWAYS_BOTH_TIERS:
-                    subscribers.append({**_s, 'is_maximizer': not _s['is_maximizer']})
+            for _admin_email in ALWAYS_BOTH_TIERS:
+                if target_set and _admin_email not in target_set:
+                    continue
+                _au = next((x for x in all_users if (x.email or '').lower() == _admin_email), None)
+                if not _au:
+                    continue
+                subscribers = [s for s in subscribers if (s['email'] or '').lower() != _admin_email]
+                _base = {'email': _au.email, 'name': _au.name, 'user_id': str(_au.id),
+                         'capital': float(getattr(_au, 'portfolio_size', None) or 100000.0)}
+                subscribers.append({**_base, 'is_maximizer': False})   # Preserver digest
+                subscribers.append({**_base, 'is_maximizer': True})    # Maximizer digest
 
             if not subscribers:
                 fresh_count = len([s for s in buy_signals if s.get('is_fresh')])
