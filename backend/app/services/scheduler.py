@@ -1539,15 +1539,22 @@ class SchedulerService:
                     subscribers.append({'email': u.email, 'name': u.name, 'user_id': str(u.id), 'is_maximizer': _is_max(u), 'capital': float(getattr(u, 'portfolio_size', None) or 100000.0)})
                     continue
                 if u.subscription and u.subscription.is_valid():
-                    # Deliverability gate: already-suppressed (hard bounce) → skip silently.
-                    if getattr(u, 'email_unsendable', False):
-                        continue
-                    # Unverified past the grace window → suppress + mark. OAuth signups are
-                    # auto-verified, so this only catches email/password accounts that never confirmed
-                    # (e.g. bogus/gawker signups that also bounce our sends).
-                    if u.email_verified_at is None and u.created_at and u.created_at < _grace_cutoff:
-                        unsendable_marks.append((str(u.id), 'unverified', u.email))
-                        continue
+                    # Deliverability gates apply to the AUTOMATED run only — an explicit admin target
+                    # send always delivers (so a false positive can be re-sent after clearing).
+                    if not target_set:
+                        # Already-suppressed (hard bounce) → skip silently.
+                        if getattr(u, 'email_unsendable', False):
+                            continue
+                        # Unverified past the grace window → suppress + mark. GUARD with
+                        # email_verification_sent_at IS NOT NULL: only accounts we ACTUALLY asked to
+                        # verify count — this grandfathers every PRE-verification account (which
+                        # legitimately has verified_at NULL because it signed up before the feature
+                        # existed) so we never suppress an established subscriber. OAuth signups are
+                        # auto-verified, so this only catches email/password gawkers that never confirmed.
+                        if (u.email_verified_at is None and u.email_verification_sent_at is not None
+                                and u.created_at and u.created_at < _grace_cutoff):
+                            unsendable_marks.append((str(u.id), 'unverified', u.email))
+                            continue
                     if not u.get_email_preference('daily_digest'):
                         continue
                     subscribers.append({'email': u.email, 'name': u.name, 'user_id': str(u.id), 'is_maximizer': _is_max(u), 'capital': float(getattr(u, 'portfolio_size', None) or 100000.0)})
