@@ -7,10 +7,13 @@ metadata:
   originSessionId: b87c584c-343d-4a11-aca7-a450196570be
 ---
 
-# Session progress — updated 2026-09-12
+# Session progress — updated 2026-09-14
 
-## ✉️ SEP 12 — Email/copy fixes (CODED, migration live, NOT yet committed/pushed)
-Erik flagged 5 inconsistencies + 2 asks. All coded; backend AST OK except LAST scheduler.py edits (bounce-report + unverified-email tuple) unverified — Erik interrupted the parse check. Frontend build GREEN. **NOTHING COMMITTED/PUSHED yet** → not deployed. Prod migration (email_unsendable cols) IS live. Manual Maximizer digest sent to erik@rigacap (status success).
+## 📣 SEP 14 — AD SERVING review (thread opening, nothing done yet)
+Erik: "look at how our ads are being served?" I gave 3 angles + asked which: (1) ad-door traffic/funnel from OUR DB (/momentum + /should-i-sell: landed→scroll→offer→signup→account + in-app rate) — I can pull now, best post-fix conversion view; (2) Google Ads DELIVERY (impr/spend/CTR/keywords/quality) — NO Ads API wired, needs console screenshot; (3) conversion-tracking health (begin_checkout/GA4→Ads import gaps, stale $39/$349). Recommended starting #1. AWAITING Erik's pick. Tools to pull #1: worker {"parquet_query"} is DuckDB(parquet) not this — use admin endpoint /api/admin/pageviews/summary or worker db_read of page_views; sis_funnel/mom_funnel live in /api/admin/pageviews/summary.
+
+## ✅ SEP 12 — Email/copy fixes SHIPPED (6af0bdc, deployed) + migration live
+Erik flagged 5 inconsistencies + 2 asks. ALL committed/pushed as 6af0bdc (prior commits 8a9a91e etc.). Prod migration (email_unsendable cols) live. Manual Maximizer digest sent to erik@rigacap (success).
 - **#5 exact-29:** "~29"/"about 29"/"roughly 29" → "29" everywhere (email_service, newsletter_generator prompt+data, tier_serving, maximizer_service, digest_v3, frontend TierBookView/App/MomentumPage). Hold is EXACTLY 29 days.
 - **#9 "tape" (cardinal rule):** newsletter _call_claude now FINAL-CHECKs each section for \btape\b → discard+regen (3 tries, corrective nudge on retry, scrub-to-"market" fallback so it can never ship). Added `import re`. This week's LOCKED draft untouched (Erik: don't rewrite today).
 - **#10 subject/body:** Preserver digest subject "N new" now = today's book BUYS (preserver_todays_actions.buys), matching body "Today's Moves" — was fresh-signal count (2 vs 1 SMCI). email_service send_daily_summary.
