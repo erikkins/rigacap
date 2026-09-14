@@ -93,6 +93,11 @@ async def _verify_apple_token(id_token: str) -> dict:
 
 router = APIRouter()
 
+# Sentinel the frontend sends ONLY when the Turnstile challenge couldn't load (in-app webview).
+# We skip Turnstile for it and rely on rate-limit + mandatory email verification instead.
+# Must match TURNSTILE_FAILSAFE_TOKEN in frontend/src/components/LoginModal.jsx.
+TURNSTILE_FAILSAFE_TOKEN = "inapp-webview-unavailable"
+
 
 def generate_referral_code(length=8):
     """Generate a unique referral code (no ambiguous chars O/0/I/1/L)."""
@@ -307,8 +312,14 @@ async def register(
     if not rate_limiter.check(f"register:{client_ip}", max_requests=3, window_seconds=60):
         raise HTTPException(status_code=429, detail="Too many attempts. Please try again later.")
 
-    # Verify Turnstile
-    if not await verify_turnstile(request.turnstile_token, client_ip):
+    # Verify Turnstile — unless the challenge genuinely couldn't load (in-app webview, ~45% of
+    # ad traffic). In that case the client sends TURNSTILE_FAILSAFE_TOKEN and we skip the check,
+    # leaning on the rate-limit above + the mandatory email verification below. A bot gains only
+    # an inert, unverified free account; the "prove you're human" step is DEFERRED to the emailed
+    # verification link (which opens in a real browser, where a bot check can actually run).
+    if request.turnstile_token == TURNSTILE_FAILSAFE_TOKEN:
+        print(f"🔑 [SIGNUP] Turnstile fail-safe (webview) email={request.email} ip={client_ip} — deferred to email verification")
+    elif not await verify_turnstile(request.turnstile_token, client_ip):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Bot verification failed"

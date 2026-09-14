@@ -77,10 +77,11 @@ export default function PortfolioOverlay({ path, onGetStarted }) {
           className="font-display text-[1.6rem] sm:text-[1.95rem] font-medium text-ink leading-tight"
           style={{ fontVariationSettings: '"opsz" 48' }}
         >
-          See where your stocks sit in RigaCap.
+          Before you sell — see what RigaCap makes of your holdings.
         </p>
         <p className="mt-2 text-ink-mute">
-          Paste a few tickers — no signup, nothing tied to your name.
+          Paste a few tickers. See how many RigaCap tracks, and how many have fired a signal
+          in the last five years — no signup, nothing tied to your name.
         </p>
         <div className="mt-5 flex flex-col sm:flex-row gap-3">
           <input

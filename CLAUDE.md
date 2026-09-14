@@ -477,6 +477,7 @@ Run a security audit every 2-3 weeks. Verify:
 - CORS whitelist in API Gateway and FastAPI middleware matches only `rigacap.com` + localhost dev
 - Any new endpoints added since last review have proper auth guards
 - No secrets in frontend bundle or git history
+- **Turnstile fail-safe still relies on its downstream gates.** `/auth/register` skips Turnstile when it receives the `TURNSTILE_FAILSAFE_TOKEN` sentinel (`inapp-webview-unavailable`, sent only when the challenge can't load in an in-app webview — ~45% of ad traffic). This is intentional, but it means bot defense on that path is **entirely** the rate-limit (3/min/IP) + mandatory email verification (account is inert until verified). Confirm both remain in force; if either is weakened, the fail-safe becomes an open signup hole. Constant is duplicated in `backend/app/api/auth.py` and `frontend/src/components/LoginModal.jsx` — keep them in sync.
 
 ## Code Style
 

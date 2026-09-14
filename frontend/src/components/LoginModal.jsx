@@ -5,6 +5,10 @@ import { logPublicEvent } from '../lib/publicEvent';
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+// Sentinel sent ONLY when the Turnstile challenge couldn't load (in-app webview). The backend
+// recognizes it, skips Turnstile, and falls back to rate-limit + email verification. Must match
+// TURNSTILE_FAILSAFE_TOKEN in backend/app/api/auth.py.
+const TURNSTILE_FAILSAFE_TOKEN = 'inapp-webview-unavailable';
 
 // In-app browsers (LinkedIn, Instagram, Facebook, etc.) BLOCK Google/Apple OAuth by policy — the
 // redirect returns but the credential never reaches us, stranding the user on a login loop (first-
@@ -50,6 +54,7 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
   const [loading, setLoading] = useState(false);
   const [localError, setLocalError] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileUnavailable, setTurnstileUnavailable] = useState(false);  // widget couldn't load (webview)
   const turnstileRef = useRef(null);
   // Soft-conversion: capture cold visitors who aren't ready for a trial into the
   // free newsletter instead of letting them leave (Erik Jun 23 — "never let them
@@ -124,13 +129,18 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
   // Load Turnstile widget (register step 2, where the password + create button live)
   useEffect(() => {
     if (!isOpen || !TURNSTILE_SITE_KEY || mode !== 'register' || regStep !== 2) return;
+    setTurnstileUnavailable(false);
 
     const loadTurnstile = () => {
       if (window.turnstile && turnstileRef.current) {
         window.turnstile.render(turnstileRef.current, {
           sitekey: TURNSTILE_SITE_KEY,
-          callback: (token) => setTurnstileToken(token),
-          'error-callback': () => setTurnstileToken(''),
+          callback: (token) => { setTurnstileToken(token); setTurnstileUnavailable(false); },
+          // The challenge iframe often can't load inside in-app webviews — flag it so submit shows
+          // a real path forward instead of a dead-end "complete the verification".
+          'error-callback': () => { setTurnstileToken(''); setTurnstileUnavailable(true); },
+          'timeout-callback': () => { setTurnstileToken(''); setTurnstileUnavailable(true); },
+          'expired-callback': () => setTurnstileToken(''),
         });
       }
     };
@@ -145,7 +155,12 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
           clearInterval(checkInterval);
         }
       }, 100);
-      return () => clearInterval(checkInterval);
+      // If the Cloudflare script never arrives (webview blocked it), stop pretending it will.
+      const giveUp = setTimeout(() => {
+        clearInterval(checkInterval);
+        if (!window.turnstile) setTurnstileUnavailable(true);
+      }, 7000);
+      return () => { clearInterval(checkInterval); clearTimeout(giveUp); };
     }
   }, [isOpen, mode, regStep]);
 
@@ -156,19 +171,28 @@ export default function LoginModal({ isOpen = true, onClose, onSuccess, initialM
 
     try {
       if (mode === 'register') {
-        if (!turnstileToken && TURNSTILE_SITE_KEY) {
+        logPublicEvent('signup_submit');   // funnel: register attempt made — logged BEFORE the
+                                           // Turnstile gate so hard-blocks are visible, not silent.
+        if (!turnstileToken && TURNSTILE_SITE_KEY && !turnstileUnavailable) {
+          // Widget is present but the user hasn't solved it yet — soft-block and wait.
+          logPublicEvent('signup_turnstile_incomplete');
           setLocalError('Please complete the verification');
           setLoading(false);
           return;
         }
-        logPublicEvent('signup_submit');   // funnel: register attempt made
-        const result = await register(email, password, name, turnstileToken || 'dev-bypass');
+        // Fail-safe: when the challenge genuinely couldn't load (in-app webview), proceed with a
+        // sentinel. The backend skips Turnstile for it but STILL enforces rate-limit (3/min/IP) +
+        // mandatory email verification, so a bot gains only an inert, unverified row.
+        const tsToken = turnstileToken || (turnstileUnavailable ? TURNSTILE_FAILSAFE_TOKEN : 'dev-bypass');
+        if (!turnstileToken && turnstileUnavailable) logPublicEvent('signup_turnstile_failsafe');
+        const result = await register(email, password, name, tsToken);
         if (result.success) {
           logPublicEvent('signup_success'); // funnel: account created
           if (!result.redirecting) {
             onSuccess ? onSuccess() : onClose();
           }
         } else {
+          logPublicEvent('signup_register_fail');   // credential/backend rejection (dupe email, etc.)
           setLocalError(result.error);
         }
       } else {

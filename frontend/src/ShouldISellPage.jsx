@@ -122,19 +122,19 @@ export default function ShouldISellPage() {
         <Eyebrow>A calmer read on a scary day</Eyebrow>
         <h1 className="font-display text-[2.3rem] sm:text-[3.1rem] font-medium leading-[1.08] tracking-tight text-ink"
             style={{ fontVariationSettings: '"opsz" 96' }}>
-          Should you sell?
-          <span className="block text-claret mt-2">Probably not the way you&rsquo;re feeling right now.</span>
+          Thinking about selling?
+          <span className="block text-claret mt-2">Don&rsquo;t make that call alone.</span>
         </h1>
         <p className="mt-7 text-[1.15rem] text-ink-mute max-w-2xl">
-          The urge to sell in a falling market is the single most expensive instinct in investing.
-          It feels like protection. It&rsquo;s usually the moment the damage gets locked in.
+          A rules-based system tells you exactly when to hold, when to raise cash, and when to
+          buy back in &mdash; so fear doesn&rsquo;t make the most expensive decision for you.
         </p>
         <div className="mt-9 flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <button
             onClick={() => { logPublicEvent('cta_hero'); handleGetStarted(); }}
             className="bg-claret text-paper font-body font-medium text-[1.02rem] px-7 py-3.5 rounded hover:bg-claret-light transition-colors"
           >
-            See what a rules-based system says to do
+            See what it says to do
           </button>
           <button onClick={scrollToWhy}
             className="font-display italic text-[1rem] text-ink-mute hover:text-claret transition-colors"
@@ -144,10 +144,10 @@ export default function ShouldISellPage() {
         </div>
       </section>
 
-      {/* Portfolio Overlay (Tier 1) — softer first click; public, counts only. */}
-      <PortfolioOverlay path="/should-i-sell" onGetStarted={handleGetStarted} />
-
-      {/* ② THE REAL RISK — behavioral reframe */}
+      {/* ② THE REAL RISK — behavioral reframe. Sits directly below the fold: words,
+          zero friction, continues the emotional thread. (Ticker tool moved down to
+          the last interactive beat — 30-day data showed only ~2% of landers used it,
+          so it doesn't earn a prime near-fold slot.) */}
       <section id="why" className="bg-paper-card border-y border-rule py-16">
         <div className="max-w-3xl mx-auto px-4 sm:px-8">
           <Eyebrow>The real risk</Eyebrow>
@@ -284,6 +284,11 @@ export default function ShouldISellPage() {
           </div>
         </div>
       </section>
+
+      {/* Portfolio Overlay (Tier 1) — softer, personalized last beat before the ask.
+          Public, counts only. Convinced by the reframe/system/proof → now check your
+          own holdings against it, then start. */}
+      <PortfolioOverlay path="/should-i-sell" onGetStarted={handleGetStarted} />
 
       {/* ⑥ CTA — primary trial + soft catch */}
       <section ref={ctaRef} className="bg-ink text-paper py-16">
