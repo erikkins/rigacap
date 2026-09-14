@@ -7397,6 +7397,54 @@ def handler(event, context):
             print(traceback.format_exc())
             return {"status": "error", "error": str(e)}
 
+    if event.get("test_reply"):
+        # Diagnostic: run the reply scanner's match+generate path on a SUPPLIED tweet (no live
+        # Twitter fetch), so we can test a specific thread + the number-collision guardrail.
+        #   {"test_reply":{"tweet_text":"...","username":"Tickeron","symbol":"LRCX"}}
+        print("🧪 test_reply: generating a reply for a supplied tweet")
+        cfg = event["test_reply"]
+
+        async def _test_reply():
+            from app.services.reply_scanner_service import reply_scanner_service, extract_symbols
+            tweet_text = cfg.get("tweet_text", "")
+            username = cfg.get("username", "Tickeron")
+            platform = cfg.get("platform", "twitter")
+            forced_symbol = cfg.get("symbol")
+            async with async_session() as db:
+                syms = [forced_symbol] if forced_symbol else extract_symbols(tweet_text)
+                matches = await reply_scanner_service._match_trade_history(syms, db)
+                if not matches:
+                    return {"status": "no_trade_match", "symbols_extracted": syms}
+                best = max(matches, key=lambda s: matches[s].get("pnl_pct", 0))
+                trade = matches[best]
+                tier = reply_scanner_service.classify_tier(tweet_text, trade)
+                our_ret = abs(trade.get("pnl_pct", 0) or 0)
+                from app.services.reply_scanner_service import _percent_figures
+                tweet_figs = _percent_figures(tweet_text)
+                collision = any(abs(r - our_ret) <= 5.0 for r in tweet_figs)
+                reply = await reply_scanner_service._generate_reply(
+                    tweet_text, username, trade, best, platform=platform, tier=tier
+                )
+                return {
+                    "status": "ok",
+                    "symbol": best,
+                    "trade_return": f"{trade.get('pnl_pct', 0):+.1f}%",
+                    "is_walkforward": bool(trade.get("is_walkforward")),
+                    "tier": tier,
+                    "tweet_figures": tweet_figs,
+                    "collision_detected": collision,
+                    "reply": reply,
+                    "reply_has_number": bool(_percent_figures(reply or "")),
+                }
+
+        try:
+            return _run_async(_test_reply())
+        except Exception as e:
+            import traceback
+            print(f"❌ test_reply failed: {e}")
+            print(traceback.format_exc())
+            return {"status": "error", "error": str(e)}
+
     if event.get("scan_replies"):
         print("🔍 Scanning for reply opportunities")
         config = event["scan_replies"]
