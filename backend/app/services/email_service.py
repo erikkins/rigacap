@@ -103,6 +103,18 @@ def _vix_label(vix) -> str:
     return f'Extreme Fear (VIX: {v:.1f})'
 
 
+# Bulk / marketing email types that MUST be suppressed for hard-bounced (email_unsendable)
+# addresses. This is an ALLOWLIST on purpose: anything NOT listed here — transactional/recovery
+# mail (email verification, password reset, welcome, goodbye) and admin/operational alerts
+# (email_type=None) — is NEVER auto-suppressed, so a false-positive unsendable flag can't lock a
+# real user out of account recovery. Onboarding steps are matched by the "onboarding_step" prefix.
+_SUPPRESS_EMAIL_TYPES = {
+    "daily_digest", "newsletter", "market_measured", "weekly_regime",
+    "sell_alert", "intraday_signal_alert", "double_signal", "winback",
+    "tier_announcement", "trial_ending", "referral_reward",
+}
+
+
 class EmailService:
     """
     Manages email sending for daily summaries and alerts
@@ -112,6 +124,30 @@ class EmailService:
         self.enabled = bool(SMTP_USER and SMTP_PASS)
         if not self.enabled:
             logger.warning("Email service disabled - SMTP credentials not configured")
+        # Suppression cache: lowercased emails flagged email_unsendable. Loaded lazily on the
+        # first bulk send and refreshed every 5 min, so one warm Lambda invocation running a bulk
+        # job does a single lookup that covers all recipients. See _is_suppressed / send_email.
+        self._suppress_set: Optional[set] = None
+        self._suppress_loaded_at: float = 0.0
+
+    async def _is_suppressed(self, to_email: str) -> bool:
+        """True if this address is flagged email_unsendable (hard bounce / bogus). Fail-open on a
+        load error — we'd rather risk one send than silently drop ALL mail if the DB hiccups."""
+        import time
+        now = time.time()
+        if self._suppress_set is None or (now - self._suppress_loaded_at) > 300:
+            try:
+                from app.core.database import async_session, User
+                from sqlalchemy import select
+                async with async_session() as db:
+                    res = await db.execute(select(User.email).where(User.email_unsendable.is_(True)))
+                    self._suppress_set = {e.lower() for (e,) in res.all() if e}
+                self._suppress_loaded_at = now
+            except Exception as e:
+                logger.warning(f"[suppress] failed to load unsendable set: {e}")
+                if self._suppress_set is None:
+                    self._suppress_set = set()
+        return (to_email or "").lower() in self._suppress_set
 
     def _generate_email_token(self, user_id: str, purpose: str = "email_manage") -> str:
         """Generate JWT token for email footer links (30-day expiry)."""
@@ -304,6 +340,16 @@ class EmailService:
         """
         if not self.enabled:
             logger.warning(f"Email service disabled, would have sent to: {to_email}")
+            return False
+
+        # Central suppression chokepoint: never send BULK/marketing mail to a hard-bounced
+        # (email_unsendable) address, regardless of which job built the recipient list. This is
+        # the single guard that covers ALL email processes — the reason wonderboy stopped getting
+        # the daily digest but still got the weekly regime report (that job had no flag check).
+        # Transactional/recovery + admin mail is exempt (not in _SUPPRESS_EMAIL_TYPES).
+        _et = email_type or ""
+        if (_et in _SUPPRESS_EMAIL_TYPES or _et.startswith("onboarding_step")) and await self._is_suppressed(to_email):
+            logger.info(f"[suppress] skipping {_et} to unsendable address: {to_email}")
             return False
 
         # Email engagement tracking — opt-in per call via email_type. Returns
