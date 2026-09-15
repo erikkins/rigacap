@@ -604,10 +604,15 @@ class ReplyScannerService:
         start_time = since_time.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         url = TWITTER_USER_TWEETS_URL.format(user_id=user_id)
+        # Expand referenced tweets + request note_tweet so RETWEETS (whose `text` the API truncates
+        # at "…") and long-form tweets resolve to their FULL text. Without this we reply to — and
+        # run the number-collision guardrail against — a truncated thread (a real hidden number
+        # in the tail is invisible). See the $LRCX +45% retweet case.
         params = {
             "max_results": "10",
             "start_time": start_time,
-            "tweet.fields": "created_at,text,author_id",
+            "tweet.fields": "created_at,text,author_id,note_tweet,referenced_tweets",
+            "expansions": "referenced_tweets.id",
         }
 
         # Build query string for OAuth signature
@@ -628,11 +633,33 @@ class ReplyScannerService:
                 return []
 
             data = resp.json()
-            return data.get("data", [])
+            tweets = data.get("data", [])
+            included = {t["id"]: t for t in data.get("includes", {}).get("tweets", [])}
+            return [{**tw, "text": self._full_tweet_text(tw, included)} for tw in tweets]
 
         except Exception as e:
             logger.error(f"Error fetching tweets for user {user_id}: {e}")
             return []
+
+    @staticmethod
+    def _full_tweet_text(tweet: dict, included: Dict[str, dict]) -> str:
+        """Resolve a tweet's FULL text: prefer its long-form note; for a retweet use the original's
+        full text (the RT `text` field is truncated with "…"); for a quote keep the commentary and
+        append the quoted content for context."""
+        note = (tweet.get("note_tweet") or {}).get("text")
+        text = note or tweet.get("text", "") or ""
+        for ref in (tweet.get("referenced_tweets") or []):
+            if ref.get("type") in ("retweeted", "quoted"):
+                orig = included.get(ref.get("id"))
+                if not orig:
+                    continue
+                orig_text = (orig.get("note_tweet") or {}).get("text") or orig.get("text", "")
+                if not orig_text:
+                    continue
+                if ref["type"] == "retweeted":
+                    return orig_text          # the original IS the content
+                return f"{text}\n\n{orig_text}".strip()   # quote: commentary + quoted body
+        return text
 
     async def _fetch_threads_mentions(
         self, since_hours: int
@@ -1020,6 +1047,12 @@ class ReplyScannerService:
         # 44.96% -> "+45.0%" happened to match a "+45%" in the Tickeron thread.)
         _our_ret = abs(pnl_pct or 0)
         number_collision = any(abs(r - _our_ret) <= 5.0 for r in _percent_figures(tweet_text))
+        # Conservative fallback: if the post text STILL looks truncated (trailing "…" — the API's
+        # cut-off marker we couldn't expand), a return could be hiding in the tail. Suppress our
+        # number rather than risk parroting one we can't see.
+        if not number_collision and tweet_text.rstrip().endswith(("…", "...")):
+            number_collision = True
+            logger.info(f"[reply-scanner] @{username}/{symbol}: source text looks truncated — suppressing number defensively")
 
         if is_wf:
             # Walk-forward test trade (NOT a position we personally held). No precise entry
